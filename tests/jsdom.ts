@@ -9,6 +9,7 @@ const GLOBAL_KEYS = [
   "HTMLButtonElement",
   "HTMLFormElement",
   "HTMLAnchorElement",
+  "HTMLDetailsElement",
   "HTMLDialogElement",
   "HTMLTextAreaElement",
   "HTMLSelectElement",
