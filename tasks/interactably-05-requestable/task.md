@@ -18,16 +18,17 @@ Clean-room implementation slice 5 of the Interactably design (README.md §8.6, �
 
 ## Requirements
 
-- [ ] registry/behaviors/requestable/: config { url, method, target, swap, include, concurrency, after, error } with DOM names requestable-*; state status mapped to data-status; verbs send() and abort(), both synchronous; one AbortController per element (README §9.4, §10.2).
-- [ ] Concurrency policy is derived from the method: GET (idempotent) is latest-wins (abort the previous request), anything else is first-wins (refuse a new send while one is in flight); requestable-concurrency="latest | first | all" overrides (README §8.6).
+- [ ] registry/behaviors/requestable/: config declared with explicit tsyntax signatures, not bare strings where the value set is finite: url "string | undefined", method "'get' | 'post' | 'put' | 'delete' | 'patch' | undefined" (default get), target "string | undefined", swap "'innerHTML' | 'outerHTML' | 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend' | 'delete' | 'none' | undefined", include "string | undefined", concurrency "'latest' | 'first' | 'all' | undefined", after "string | undefined", error "string | undefined"; DOM names requestable-*; state status "'idle' | 'loading' | 'error' | undefined" mapped to data-status; verbs send() and abort(), both synchronous; one AbortController per element (README §5.3, §8.6, §9.4, §10.2, AGENTS.md Signatures).
+- [ ] Concurrency policy is derived from the method: a GET (idempotent) is latest-wins (abort the previous request), anything else is first-wins (refuse a new send while one is in flight); requestable-concurrency="latest | first | all" overrides; compare the method case-insensitively so requestable-method="get" and "GET" behave the same (README §8.6).
 - [ ] send() sets aria-busy synchronously before the fetch and clears it on settle; on success it swaps the response per target/swap then runs runPhrases(el, attrs.after, e.originalEvent); on failure it sets status=error and runs runPhrases(el, attrs.error, e.originalEvent); an AbortError runs neither continuation and logs nothing (README §8.6, §10.2).
 - [ ] Continuations run only if the element is still connected; when the swap replaces the requestable element itself they are skipped (README §8.6).
 - [ ] registry/behaviors/validatable/: tags [form, input, select, textarea], verb validate(undefined) calling el.reportValidity() and calling e.preventDefault() when it returns false, so the executor aborts the chain (README §10.2).
+- [ ] Every finite-value config or state field is expressed as an explicit tsyntax union, and tests assert that a value outside the set is rejected (README §5.3, §11.19; AGENTS.md Signatures).
 - [ ] Tests cover the README §10.2 traces: happy path, validation failure aborting before send, double submit under first-wins, server 500 running the error continuation, an unowned verb logging and stopping, and a response that replaces the form skipping the continuation.
 
 ## Verification
 
-`pnpm check && pnpm test` pass; requestable and validatable tests exist and an order-form end-to-end test reproduces the README §10.2 traces (happy path, validation failure, double submit, 500, unhandled verb, outer swap).
+`pnpm check && pnpm test` pass; requestable and validatable tests exist and an order-form end-to-end test reproduces the README §10.2 traces (happy path, validation failure, double submit, 500, unhandled verb, outer swap); a test asserts an out-of-set requestable-method or requestable-concurrency value is rejected.
 
 ## Prohibited Patterns
 
