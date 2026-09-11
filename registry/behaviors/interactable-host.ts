@@ -1,0 +1,182 @@
+import { defineAutoWebComponent } from "auto-wc";
+import type { Constructor } from "auto-wc";
+import { LEGACY_EVENTS_WITHOUT_IDL } from "../interactable/events.ts";
+import { clearPhraseState, runPhrases } from "../interactable/executor.ts";
+import type { InteractionEvent } from "../interactable/interaction-event.ts";
+import { NotReadyError } from "./implementation-utils.ts";
+import type { ImplementationInstance } from "./implementation-utils.ts";
+import type { Tag } from "./_implementation-definition.ts";
+import {
+  allObservedAttributes,
+  ensureImplementation,
+  getImplementationDef,
+} from "./implementation-registry.ts";
+
+export interface InteractableHost extends HTMLElement {
+  didEnsure: boolean;
+}
+
+interface HostElementBase {
+  connectedCallback?(): void;
+  disconnectedCallback?(): void;
+  attributeChangedCallback?(name: string, oldValue: string | null, newValue: string | null): void;
+}
+
+export function defineInteractableHost(tag: Tag): void {
+  const hostName = `interactable-${tag}`;
+  if (customElements.get(hostName)) return;
+  const observed = allObservedAttributes();
+  if (observed.length === 0) {
+    throw new Error(
+      `[Interactable] cannot define ${hostName}: no implementation has registered config/state; ` +
+        `the observed-attribute union is empty (implementations must be registered before hosts are defined)`,
+    );
+  }
+  const HostFactory = ((Base: Constructor<HTMLElement & HostElementBase>) => {
+    class InteractableHostElement extends Base {
+      didEnsure = false;
+      _implementations = new Map<string, ImplementationInstance>();
+      _interactionCleanup: Array<() => void> = [];
+
+      override connectedCallback(): void {
+        super.connectedCallback?.();
+        this.wireTriggers();
+        this.ensureImplementations();
+      }
+
+      override disconnectedCallback(): void {
+        for (const cleanup of this._interactionCleanup) cleanup();
+        this._interactionCleanup = [];
+        for (const implementation of this._implementations.values()) {
+          implementation.disconnectedCallback?.();
+        }
+        clearPhraseState(this as unknown as Element);
+        super.disconnectedCallback?.();
+      }
+
+      override attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+        for (const implementation of this._implementations.values()) {
+          implementation.attributeChangedCallback?.(name, oldValue, newValue);
+        }
+        super.attributeChangedCallback?.(name, oldValue, newValue);
+      }
+
+      onInteraction(event: InteractionEvent): void {
+        if (!this.didEnsure) {
+          event.handled = true;
+          event.error = new NotReadyError(this.getAttribute("implements"), event.verb);
+          return;
+        }
+        for (const [name, implementation] of this._implementations) {
+          const def = getImplementationDef(name);
+          const signature = def?.verbs[event.verb];
+          if (signature === undefined) continue;
+          event.handled = true;
+          try {
+            const arg = signature.validate(event.arg);
+            const method = (implementation as unknown as Record<string, unknown>)[event.verb];
+            if (typeof method !== "function") {
+              throw new Error(`implementation "${name}" has no method for verb ${event.verb}()`);
+            }
+            event.result = (method as (e: InteractionEvent, arg: unknown) => unknown).call(
+              implementation,
+              event,
+              arg,
+            );
+            if (typeof (event.result as { then?: unknown } | null)?.then === "function") {
+              console.warn(
+                `[Interactable] ${name}.${event.verb}() returned a promise; ` +
+                  `chains are synchronous - continue via a ${name}-* config phrase`,
+              );
+            }
+          } catch (err) {
+            event.error = err;
+          }
+          return;
+        }
+      }
+
+      private wireTriggers(): void {
+        for (const attribute of this.getAttributeNames()) {
+          if (!attribute.startsWith("on-")) continue;
+          const type = attribute.slice(3);
+          const handler = (ev: Event): void => {
+            runPhrases(this, this.getAttribute(attribute) ?? "", ev);
+          };
+          this.addEventListener(type, handler, { passive: true });
+          if (!(("on" + type) in this) && !LEGACY_EVENTS_WITHOUT_IDL.has(type)) {
+            console.warn(
+              `[Interactable] on-${type} on ${describeElement(this)}: <${this.localName}> has no "${type}" ` +
+                `event; custom events are fine, but check the spelling and case`,
+            );
+          }
+          warnIfNativeActionLikelyUnwanted(this, type);
+          this._interactionCleanup.push(() => this.removeEventListener(type, handler));
+        }
+      }
+
+      private ensureImplementations(): void {
+        this.didEnsure = false;
+        const names = (this.getAttribute("implements") ?? "").split(/\s+/).filter((name) => name !== "");
+        const pending: Array<Promise<unknown>> = [];
+        for (const name of names) {
+          const def = getImplementationDef(name);
+          if (def === undefined) {
+            console.error(`[Interactable] implements "${name}": no such implementation is registered`);
+            continue;
+          }
+          if (def.tags !== undefined && !def.tags.includes(this.localName as Tag)) {
+            const tags = def.tags.map((t) => `<${t}>`).join(", ");
+            console.error(`[Interactable] ${name} attaches to ${tags}; skipped on ${describeElement(this)}`);
+            continue;
+          }
+          pending.push(
+            ensureImplementation(this, name, def).then((implementation) => {
+              this._implementations.set(name, implementation);
+              implementation.connectedCallback?.();
+              this.wireImplementationHandlers(implementation);
+            }),
+          );
+        }
+        if (pending.length === 0) {
+          this.didEnsure = true;
+          return;
+        }
+        void Promise.all(pending).then(() => {
+          this.didEnsure = true;
+        });
+      }
+
+      private wireImplementationHandlers(implementation: ImplementationInstance): void {
+        for (const key of Object.keys(implementation)) {
+          if (!/^on[A-Z]/.test(key)) continue;
+          const method = (implementation as unknown as Record<string, unknown>)[key];
+          if (typeof method !== "function") continue;
+          const type = key.slice(2).toLowerCase();
+          const handler = (method as (e: Event) => void).bind(implementation);
+          this.addEventListener(type, handler);
+          this._interactionCleanup.push(() => this.removeEventListener(type, handler));
+        }
+      }
+    }
+    return InteractableHostElement as unknown as Constructor<HTMLElement> & { observedAttributes?: string[] };
+  }) as unknown as Parameters<typeof defineAutoWebComponent>[2];
+  defineAutoWebComponent(hostName, tag, HostFactory, { observedAttributes: observed });
+}
+
+function describeElement(el: Element): string {
+  const id = (el as HTMLElement).id;
+  return id !== "" ? `${el.localName}#${id}` : el.localName;
+}
+
+function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string): void {
+  const implementsValue = el.getAttribute("implements") ?? "";
+  if (implementsValue.split(/\s+/).includes("prevent-default")) return;
+  if (el instanceof HTMLFormElement && type === "submit") {
+    console.warn(`[Interactable] on-submit on ${describeElement(el)}: <form> also submits natively; add implements="prevent-default" to cancel it`);
+  } else if (el instanceof HTMLAnchorElement && el.href && type === "click") {
+    console.warn(`[Interactable] on-click on ${describeElement(el)}: <a href> also navigates; add implements="prevent-default" to cancel it`);
+  } else if (el instanceof HTMLButtonElement && (type === "keydown" || type === "keyup")) {
+    console.warn(`[Interactable] on-${type} on ${describeElement(el)}: <button> also activates on Enter/Space; add implements="prevent-default" to cancel it`);
+  }
+}
