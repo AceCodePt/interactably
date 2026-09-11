@@ -21,7 +21,7 @@ export type KW = typeof SUPPORTED_KEYWORDS;
 
 type SlotOf<S extends Slot> = S extends string ? DSLInfer<KW, S> : S extends Ctor ? InstanceType<S> : never;
 
-export type ArgOf<S extends Sig> = S extends Slot ? SlotOf<S> : { [K in keyof S]: SlotOf<S[K] & Slot> };
+export type ArgOf<S extends Sig> = S extends Slot ? SlotOf<S> : { [K in keyof S]: S[K] extends Slot ? SlotOf<S[K]> : never };
 
 export type Attrs<C extends Record<string, string>, S extends Record<string, string>> =
   { [K in keyof C]: DSLInfer<KW, C[K]> } & { -readonly [K in keyof S]: DSLInfer<KW, S[K]> };
