@@ -14,3 +14,4 @@ export { autoGrow } from "../registry/behaviors/auto-grow/auto-grow.ts";
 export { storage } from "../registry/behaviors/storage/storage.ts";
 export { pasteTransform } from "../registry/behaviors/paste-transform/paste-transform.ts";
 export { condition } from "../registry/behaviors/condition/condition.ts";
+export { jsonTemplate } from "../registry/behaviors/json-template/json-template.ts";
