@@ -26,6 +26,7 @@
     "tsyntax": "^0.1.4"
   },
   "devDependencies": {
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^22.20.2",
     "jsdom": "^30.0.1",
     "rolldown": "^1.2.8",
