@@ -1,0 +1,17 @@
+export { defineImplementation } from "../registry/behaviors/_implementation-definition.ts";
+export type { Attrs, ArgOf, El, Implementation, ImplementationDef, Sig, Slot, Tag } from "../registry/behaviors/_implementation-definition.ts";
+export { defineInteractableHost } from "../registry/behaviors/interactable-host.ts";
+export type { InteractableHost } from "../registry/behaviors/interactable-host.ts";
+export { getImplementationDef, registerImplementation } from "../registry/behaviors/implementation-registry.ts";
+export type { NormalizedImplementationDef } from "../registry/behaviors/implementation-registry.ts";
+export { NotReadyError, bindEvents, valueOf, writeValue } from "../registry/behaviors/implementation-utils.ts";
+export type { BindEventsOptions, BoundEvents, ImplementationInstance } from "../registry/behaviors/implementation-utils.ts";
+export { clearPhraseState, runPhrases } from "../registry/interactable/executor.ts";
+export { parse } from "../registry/interactable/parser.ts";
+export { dispatchInteraction } from "../registry/interactable/dispatch.ts";
+export type { DispatchInteractionOptions } from "../registry/interactable/dispatch.ts";
+export { InteractionEvent } from "../registry/interactable/interaction-event.ts";
+export type { InteractionEventInit } from "../registry/interactable/interaction-event.ts";
+export { matchesKey } from "../registry/interactable/keys.ts";
+export { compileSignature } from "../registry/interactable/signature.ts";
+export type { CompiledSignature, Ctor, Sig as SignatureSlot } from "../registry/interactable/signature.ts";

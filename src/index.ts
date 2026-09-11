@@ -1,12 +1,15 @@
-export { defineImplementation } from "../registry/behaviors/_implementation-definition.ts";
-export { defineInteractableHost } from "../registry/behaviors/interactable-host.ts";
-export {
-  registerImplementation,
-  getImplementationDef,
-} from "../registry/behaviors/implementation-registry.ts";
-export { runPhrases, clearPhraseState } from "../registry/interactable/executor.ts";
-export { dispatchInteraction } from "../registry/interactable/dispatch.ts";
-export { InteractionEvent } from "../registry/interactable/interaction-event.ts";
+export * from "./core.ts";
+export { modifiable } from "../registry/behaviors/modifiable/modifiable.ts";
+export { dirtyable } from "../registry/behaviors/dirtyable/dirtyable.ts";
+export { listable } from "../registry/behaviors/listable/listable.ts";
+export { summable } from "../registry/behaviors/summable/summable.ts";
+export { requestable } from "../registry/behaviors/requestable/requestable.ts";
+export { attributable } from "../registry/behaviors/attributable/attributable.ts";
+export { logger } from "../registry/behaviors/logger/logger.ts";
+export { compute } from "../registry/behaviors/compute/compute.ts";
+export { format } from "../registry/behaviors/format/format.ts";
+export { elementCounter } from "../registry/behaviors/element-counter/element-counter.ts";
+export { validatable } from "../registry/behaviors/validatable/validatable.ts";
 export { noPropagate } from "../registry/behaviors/no-propagate/no-propagate.ts";
 export { preventDefault } from "../registry/behaviors/prevent-default/prevent-default.ts";
 export { revealable } from "../registry/behaviors/revealable/revealable.ts";
