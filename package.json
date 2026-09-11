@@ -1,0 +1,41 @@
+{
+  "name": "interactably",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A trigger grammar and host for customized built-in web components.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --test",
+    "build": "rolldown -c"
+  },
+  "keywords": [
+    "web-components",
+    "custom-elements",
+    "customized-built-ins",
+    "interaction",
+    "declarative",
+    "headless"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "auto-wc": "^0.1.6",
+    "tsyntax": "^0.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "jsdom": "^30.0.1",
+    "rolldown": "^1.2.8",
+    "typescript": "^7.0.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^12.3.4",
+      "onFail": "download"
+    }
+  }
+}
