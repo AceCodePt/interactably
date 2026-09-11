@@ -124,3 +124,42 @@ test("format writes textContent on elements without a value property", async () 
   interact(span, "format", "number");
   assert.equal(span.textContent, "42");
 });
+
+test("an out-of-set format kind is rejected before the verb runs", async () => {
+  const out = hostElement("output", { implements: "format" }) as HTMLOutputElement;
+  document.body.appendChild(out);
+  await flush();
+  out.textContent = "1234.5";
+
+  const event = interact(out, "format", "scientific");
+  assert.ok(event.error instanceof Error);
+  assert.equal(out.textContent, "1234.5");
+});
+
+test("an out-of-set format-notation config is rejected when the verb reads it", async () => {
+  const out = hostElement("output", {
+    implements: "format",
+    "format-notation": "bogus",
+  }) as HTMLOutputElement;
+  document.body.appendChild(out);
+  await flush();
+  out.textContent = "1234.5";
+
+  const event = interact(out, "format", "number");
+  assert.ok(event.error instanceof Error);
+  assert.equal(out.textContent, "1234.5");
+});
+
+test("an out-of-set format-date-style config is rejected when formatting a date", async () => {
+  const out = hostElement("output", {
+    implements: "format",
+    "format-date-style": "bogus",
+  }) as HTMLOutputElement;
+  document.body.appendChild(out);
+  await flush();
+  out.textContent = "2024-01-02";
+
+  const event = interact(out, "format", "date");
+  assert.ok(event.error instanceof Error);
+  assert.equal(out.textContent, "2024-01-02");
+});
