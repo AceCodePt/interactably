@@ -19,6 +19,7 @@ const GLOBAL_KEYS = [
   "HTMLTemplateElement",
   "HTMLSectionElement",
   "Node",
+  "FormData",
   "MutationObserver",
   "Event",
   "CustomEvent",
