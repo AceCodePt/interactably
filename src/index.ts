@@ -10,3 +10,7 @@ export { InteractionEvent } from "../registry/interactable/interaction-event.ts"
 export { noPropagate } from "../registry/behaviors/no-propagate/no-propagate.ts";
 export { preventDefault } from "../registry/behaviors/prevent-default/prevent-default.ts";
 export { revealable } from "../registry/behaviors/revealable/revealable.ts";
+export { autoGrow } from "../registry/behaviors/auto-grow/auto-grow.ts";
+export { storage } from "../registry/behaviors/storage/storage.ts";
+export { pasteTransform } from "../registry/behaviors/paste-transform/paste-transform.ts";
+export { condition } from "../registry/behaviors/condition/condition.ts";
