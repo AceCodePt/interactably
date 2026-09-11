@@ -12,6 +12,10 @@ README.md is the single source of truth for the design of Interactably. Referenc
 - `jsdom` is a dev-only dependency, for tests.
 - The only runtime dependencies are `auto-wc` and `tsyntax`.
 
+## Signatures
+
+Every `config`, `state` and verb scalar signature is a [tsyntax](https://github.com/AceCodePt/tsyntax) string, checked at compile time and at runtime. When a field has a finite set of legal values, spell the set out explicitly as a tsyntax union (for example `"'get' | 'post' | 'put' | 'delete' | 'patch' | undefined"` or `"'latest' | 'first' | 'all' | undefined"`), never as a bare `string`. Use a TypeScript union type for internal non-DSL values. A bare `string` is reserved for genuinely open-ended values such as selectors, URLs and free text.
+
 ## Verification
 
 Before a task is declared done, both must pass on the committed tree:
