@@ -1,7 +1,7 @@
 ---
 wait_human_start: false
 wait_human_merge: false
-dependencies: [interactably-05-requestable]
+dependencies: [interactably-06-explicit-unions]
 ---
 
 # Task: Interactably-06-Package
