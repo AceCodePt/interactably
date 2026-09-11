@@ -1,0 +1,76 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { compileSignature } from "./signature.ts";
+import type { Ctor } from "./signature.ts";
+
+class Widget {
+  name = "widget";
+}
+class Gadget {
+  name = "gadget";
+}
+const WidgetCtor = Widget as unknown as Ctor;
+
+test("string slot validates scalars through tsyntax, no coercion", () => {
+  const sig = compileSignature("number | undefined");
+  assert.equal(sig.validate(5), 5);
+  assert.equal(sig.validate(undefined), undefined);
+  assert.throws(() => sig.validate("5"));
+  assert.throws(() => sig.validate(true));
+});
+
+test("a numeric literal slot accepts only that value", () => {
+  const sig = compileSignature("2");
+  assert.equal(sig.validate(2), 2);
+  assert.throws(() => sig.validate(3));
+  assert.throws(() => sig.validate("2"));
+});
+
+test("string literal unions are exact, not coerced", () => {
+  const sig = compileSignature("'upper' | 'lower'");
+  assert.equal(sig.validate("upper"), "upper");
+  assert.equal(sig.validate("lower"), "lower");
+  assert.throws(() => sig.validate("UPPER"));
+  assert.throws(() => sig.validate("upper "));
+});
+
+test("'undefined' accepts no argument", () => {
+  const sig = compileSignature("undefined");
+  assert.equal(sig.validate(undefined), undefined);
+  assert.throws(() => sig.validate(null));
+  assert.throws(() => sig.validate(0));
+});
+
+test("constructor slot validates with instanceof", () => {
+  const sig = compileSignature(WidgetCtor);
+  assert.ok(sig.validate(new Widget()) instanceof Widget);
+  assert.throws(() => sig.validate(new Gadget()));
+  assert.throws(() => sig.validate("widget"));
+  assert.throws(() => sig.validate(null));
+  assert.throws(() => sig.validate(undefined));
+});
+
+test("a malformed tsyntax string is rejected at compile time", () => {
+  assert.throws(() => compileSignature("banana"));
+  assert.throws(() => compileSignature("string |"));
+});
+
+test("record slot validates field by field", () => {
+  const sig = compileSignature({ root: WidgetCtor, select: "string" });
+  const value = sig.validate({ root: new Widget(), select: ".amount" });
+  assert.deepEqual(value, { root: new Widget(), select: ".amount" });
+
+  assert.throws(() => sig.validate({ root: new Gadget(), select: ".amount" }));
+  assert.throws(() => sig.validate({ root: new Widget() }));
+  assert.throws(() => sig.validate({ root: new Widget(), select: 5 }));
+  assert.throws(() => sig.validate({ root: new Widget(), select: ".amount", extra: 1 }));
+  assert.throws(() => sig.validate("not an object"));
+  assert.throws(() => sig.validate([]));
+});
+
+test("record slot fields may themselves be records of mixed slots", () => {
+  const sig = compileSignature({ root: WidgetCtor, threshold: "number" });
+  const value = sig.validate({ root: new Widget(), threshold: 2 }) as { threshold: number };
+  assert.equal(value.threshold, 2);
+  assert.throws(() => sig.validate({ root: new Widget(), threshold: "2" }));
+});

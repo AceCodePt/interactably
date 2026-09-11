@@ -9,7 +9,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "node --test",
+    "test": "node --import tsx --test",
     "build": "rolldown -c"
   },
   "keywords": [
@@ -29,6 +29,7 @@
     "@types/node": "^22.20.2",
     "jsdom": "^30.0.1",
     "rolldown": "^1.2.8",
+    "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   },
   "devEngines": {

@@ -17,7 +17,7 @@ README.md is the single source of truth for the design of Interactably. Referenc
 Before a task is declared done, both must pass on the committed tree:
 
 - `pnpm check` — `tsc --noEmit`
-- `pnpm test` — `node --test`
+- `pnpm test` — `node --test` under the `tsx` loader (`node --import tsx`); `tsx` is a dev-only dependency because `tsyntax` ships as `.ts` source and Node's native type stripping refuses `node_modules` files.
 
 ## TypeScript posture
 
