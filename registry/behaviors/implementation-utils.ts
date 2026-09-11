@@ -30,6 +30,14 @@ export function valueOf(el: Element): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+export function writeValue(el: HTMLElement, value: string): void {
+  if ("value" in el) {
+    el.value = value;
+  } else {
+    el.textContent = value;
+  }
+}
+
 export interface BindEventsOptions {
   passive?: boolean;
 }
