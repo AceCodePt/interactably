@@ -99,7 +99,6 @@ export default defineConfig([
   {
     tsconfig: "./tsconfig.json",
     input: path.join(root, "src", "core.ts"),
-    external: externals,
     output: {
       format: "esm",
       file: "dist/cdn/interactably-core.js",
@@ -108,7 +107,6 @@ export default defineConfig([
   {
     tsconfig: "./tsconfig.json",
     input: implementationInputs,
-    external: externals,
     plugins: [externalizeCore()],
     output: {
       format: "esm",

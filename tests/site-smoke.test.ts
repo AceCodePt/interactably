@@ -43,6 +43,15 @@ function vendorRefs(...sources: string[]): string[] {
   return [...names];
 }
 
+function bareSpecifiers(source: string): string[] {
+  const found: string[] = [];
+  for (const match of source.matchAll(/(?:from\s+|import\s*\()\s*["']([^"']+)["']/g)) {
+    const spec = match[1];
+    if (spec !== undefined && !spec.startsWith(".") && !spec.startsWith("/")) found.push(spec);
+  }
+  return found;
+}
+
 function bodyMarkup(html: string): string {
   const match = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html);
   assert.ok(match !== null, "site/index.html has a <body>");
@@ -97,6 +106,13 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
     );
     const base = name.replace(/\.js$/, "");
     assert.ok(KNOWN_BUNDLES.has(base), `vendor/${name} is a known bundle (${base})`);
+    const bundle = readFileSync(fileURLToPath(new URL(name, cdnDir)), "utf8");
+    const bare = bareSpecifiers(bundle);
+    assert.deepEqual(
+      bare,
+      [],
+      `vendor/${name} is browser-loadable: no bare specifiers (${bare.join(", ") || "none"})`,
+    );
   }
 
   const dom: JSDOM = setupJsdom();
