@@ -42,7 +42,8 @@
   "scripts": {
     "check": "tsc --noEmit",
     "test": "node --import tsx --test \"**/*.test.ts\"",
-    "build": "rolldown -c && tsc -p tsconfig.build.json && node scripts/rewrite-dts-imports.mjs"
+    "build": "rolldown -c && tsc -p tsconfig.build.json && node scripts/rewrite-dts-imports.mjs",
+    "build:site": "node scripts/build-site.mjs"
   },
   "keywords": [
     "web-components",

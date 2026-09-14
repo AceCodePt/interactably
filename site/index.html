@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactably — declarative interactions demo</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./demo.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Interactably</h1>
+      <p class="lede">
+        A trigger grammar and host for customized built-in web components. Everything below is plain HTML:
+        <code>is="interactable-&hellip;"</code> hosts, <code>implements</code>, <code>on-*</code> triggers and verbs.
+      </p>
+    </header>
+
+    <!-- The demo is mounted by demo.js once the bundles have registered their
+         implementations and hosts, so every element is created upgraded. -->
+    <template id="demo">
+      <section class="card" aria-labelledby="calc-title">
+        <h2 id="calc-title">Price calculator</h2>
+        <p class="note">
+          The total is computed from a formula,
+          <code>format(sum('#list .amount'), { style: 'currency', currency: 'USD' })</code>,
+          re-evaluated by <code>#total.compute()</code> after every change.
+        </p>
+
+        <div class="row">
+          <label>Qty
+            <input is="interactable-input" id="qty" implements="modifiable dirtyable"
+                   type="number" value="1" min="1" max="10"
+                   on-input="#preview.set(this.value)"
+                   on-keydown="escape: this.reset().markClean()">
+          </label>
+          <button is="interactable-button" id="dec" on-click="#qty.dec()" type="button">&minus;</button>
+          <button is="interactable-button" id="inc" on-click="#qty.inc()" type="button">+</button>
+          <button is="interactable-button" id="inc5" on-click="#qty.inc(5)" type="button">+5</button>
+          <button is="interactable-button" id="reset" on-click="#qty.reset().markClean()" type="button">Reset</button>
+          <output is="interactable-output" id="preview" implements="modifiable">1</output>
+        </div>
+
+        <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
+          <li>
+            <input is="interactable-input" class="amount" type="number" value="2.5" on-input="#total.compute()">
+            <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+          </li>
+        </ul>
+        <button is="interactable-button" id="add-row" on-click="#list.adopt(#row-tpl)" type="button">Add row</button>
+        <template id="row-tpl">
+          <li>
+            <input is="interactable-input" class="amount" type="number" value="3.25" on-input="#total.compute()">
+            <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+          </li>
+        </template>
+        <p class="total">
+          Total:
+          <output is="interactable-output" id="total" implements="modifiable"
+                  modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })">0</output>
+        </p>
+      </section>
+
+      <section class="card" aria-labelledby="panel-title">
+        <h2 id="panel-title">Revealable panel</h2>
+        <button is="interactable-button" id="panel-toggle" on-click="#panel.toggle()"
+                aria-expanded="false" aria-controls="panel" type="button">Toggle panel</button>
+        <section is="interactable-section" id="panel" implements="revealable" hidden>
+          <p>
+            This panel is a <code>&lt;section is="interactable-section" implements="revealable"&gt;</code>.
+            <code>revealable</code> derives its strategy from the element: <code>data-open</code> here,
+            <code>open</code> on a <code>&lt;details&gt;</code> or <code>&lt;dialog&gt;</code>, popover state on a
+            <code>[popover]</code>. The trigger is <code>on-click="#panel.toggle()"</code>, and the implementation
+            keeps the button&rsquo;s <code>aria-expanded</code> in sync.
+          </p>
+        </section>
+      </section>
+
+      <section class="card" aria-labelledby="order-title">
+        <h2 id="order-title">Order form &mdash; the asynchronous seam</h2>
+        <p class="note">
+          <code>on-submit="this.send()"</code> POSTs the form; the response swaps into the receipt and
+          <code>requestable-after</code> reveals it. Failures run <code>requestable-error</code>.
+        </p>
+        <form is="interactable-form" id="order" novalidate implements="prevent-default requestable"
+              requestable-url="/api/orders" requestable-method="post"
+              requestable-target="#receipt"
+              requestable-after="#receipt.show(); #alert.hide()"
+              requestable-error="#alert.show()"
+              on-submit="this.send()">
+          <label>Qty
+            <input name="qty" type="number" min="1" required value="2">
+          </label>
+          <button is="interactable-button" type="submit">Place order</button>
+        </form>
+        <section is="interactable-section" id="receipt" implements="revealable" hidden></section>
+        <div is="interactable-div" id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>
+      </section>
+    </template>
+
+    <footer>
+      Built with <a href="https://acecodept.github.io/interactably/">Interactably</a> &middot;
+      <a href="https://github.com/AceCodePt/interactably">source</a>
+    </footer>
+  </main>
+</body>
+</html>
