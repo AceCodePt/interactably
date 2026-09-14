@@ -1,6 +1,6 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 
-export const storage = defineImplementation("storage", {
+export const storable = defineImplementation("storable", {
   config: {
     key: "string | undefined",
     type: "'local' | 'session' | undefined",

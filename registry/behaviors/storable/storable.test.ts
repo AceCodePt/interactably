@@ -29,7 +29,7 @@ before(async () => {
     if (key in win) (globalThis as unknown as Record<string, unknown>)[key] = win[key];
   }
   await import("@behaviors/no-propagate/no-propagate.ts");
-  await import("@behaviors/storage/storage.ts");
+  await import("@behaviors/storable/storable.ts");
   await import("@behaviors/interactable-host.ts");
   const host = await import("@behaviors/interactable-host.ts");
   host.defineInteractableHost("input");
@@ -52,7 +52,7 @@ beforeEach(() => {
 
 function element(tag: string, attributes: Record<string, string>): HTMLElement {
   const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
-  el.setAttribute("implements", "storage");
+  el.setAttribute("implements", "storable");
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
@@ -68,16 +68,16 @@ function interact(el: Element, verb: string): InteractionEvent {
   return event;
 }
 
-test("storage restores the value from localStorage on connect", async () => {
+test("storable restores the value from localStorage on connect", async () => {
   localStorage.setItem("draft", "saved");
-  const el = element("input", { "storage-key": "draft" }) as HTMLInputElement;
+  const el = element("input", { "storable-key": "draft" }) as HTMLInputElement;
   document.body.appendChild(el);
   await flush();
   assert.equal(el.value, "saved");
 });
 
-test("storage persists the value to localStorage on input and change", async () => {
-  const el = element("input", { "storage-key": "draft" }) as HTMLInputElement;
+test("storable persists the value to localStorage on input and change", async () => {
+  const el = element("input", { "storable-key": "draft" }) as HTMLInputElement;
   document.body.appendChild(el);
   await flush();
 
@@ -90,9 +90,9 @@ test("storage persists the value to localStorage on input and change", async () 
   assert.equal(localStorage.getItem("draft"), "changed");
 });
 
-test("storage reads and writes sessionStorage when storage-type is session", async () => {
+test("storable reads and writes sessionStorage when storable-type is session", async () => {
   sessionStorage.setItem("session", "secret");
-  const el = element("input", { "storage-key": "session", "storage-type": "session" }) as HTMLInputElement;
+  const el = element("input", { "storable-key": "session", "storable-type": "session" }) as HTMLInputElement;
   document.body.appendChild(el);
   await flush();
   assert.equal(el.value, "secret");
@@ -103,9 +103,9 @@ test("storage reads and writes sessionStorage when storage-type is session", asy
   assert.equal(localStorage.getItem("session"), null);
 });
 
-test("storage syncs an arbitrary attribute via storage-attr", async () => {
+test("storable syncs an arbitrary attribute via storable-attr", async () => {
   localStorage.setItem("theme", "dark");
-  const el = element("div", { "storage-key": "theme", "storage-attr": "data-theme" }) as HTMLDivElement;
+  const el = element("div", { "storable-key": "theme", "storable-attr": "data-theme" }) as HTMLDivElement;
   document.body.appendChild(el);
   await flush();
   assert.equal(el.getAttribute("data-theme"), "dark");
@@ -116,7 +116,7 @@ test("storage syncs an arbitrary attribute via storage-attr", async () => {
 });
 
 test("save, load and clear are explicit verbs", async () => {
-  const el = element("input", { "storage-key": "draft" }) as HTMLInputElement;
+  const el = element("input", { "storable-key": "draft" }) as HTMLInputElement;
   document.body.appendChild(el);
   await flush();
 
@@ -133,7 +133,7 @@ test("save, load and clear are explicit verbs", async () => {
   assert.equal(el.value, "external");
 });
 
-test("storage without a key never touches storage", async () => {
+test("storable without a key never touches storage", async () => {
   const el = element("input", {}) as HTMLInputElement;
   document.body.appendChild(el);
   await flush();
