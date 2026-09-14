@@ -41,7 +41,12 @@ export function compileSignature(sig: Sig): CompiledSignature {
     return compileSlot(sig);
   }
   const fields = new Map<string, CompiledSignature>();
-  for (const [key, slot] of Object.entries(sig)) fields.set(key, compileSlot(slot));
+  const optional = new Set<string>();
+  for (const [key, slot] of Object.entries(sig)) {
+    const compiled = compileSlot(slot);
+    fields.set(key, compiled);
+    if (acceptsUndefined(compiled)) optional.add(key);
+  }
 
   return {
     validate(value: unknown): unknown {
@@ -51,7 +56,10 @@ export function compileSignature(sig: Sig): CompiledSignature {
       const record = value as Record<string, unknown>;
       const out: Record<string, unknown> = {};
       for (const [key, compiled] of fields) {
-        if (!(key in record)) throw new Error(`missing "${key}"`);
+        if (!(key in record)) {
+          if (optional.has(key)) continue;
+          throw new Error(`missing "${key}"`);
+        }
         out[key] = compiled.validate(record[key]);
       }
       for (const key of Object.keys(record)) {
@@ -60,4 +68,13 @@ export function compileSignature(sig: Sig): CompiledSignature {
       return out;
     },
   };
+}
+
+function acceptsUndefined(compiled: CompiledSignature): boolean {
+  try {
+    compiled.validate(undefined);
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -26,25 +26,23 @@ export function defineInteractableHost(tag: Tag): void {
   const hostName = `interactable-${tag}`;
   if (customElements.get(hostName)) return;
   const observed = allObservedAttributes();
-  if (observed.length === 0) {
-    throw new Error(
-      `[Interactable] cannot define ${hostName}: no implementation has registered config/state; ` +
-        `the observed-attribute union is empty (implementations must be registered before hosts are defined)`,
-    );
-  }
   const HostFactory = ((Base: Constructor<HTMLElement & HostElementBase>) => {
     class InteractableHostElement extends Base {
       didEnsure = false;
       _implementations = new Map<string, ImplementationInstance>();
       _interactionCleanup: Array<() => void> = [];
+      _attributeObserver: MutationObserver | null = null;
 
       override connectedCallback(): void {
         super.connectedCallback?.();
         this.wireTriggers();
+        this.wireAttributeObserver();
         this.ensureImplementations();
       }
 
       override disconnectedCallback(): void {
+        this._attributeObserver?.disconnect();
+        this._attributeObserver = null;
         for (const cleanup of this._interactionCleanup) cleanup();
         this._interactionCleanup = [];
         for (const implementation of this._implementations.values()) {
@@ -59,6 +57,36 @@ export function defineInteractableHost(tag: Tag): void {
           implementation.attributeChangedCallback?.(name, oldValue, newValue);
         }
         super.attributeChangedCallback?.(name, oldValue, newValue);
+      }
+
+      private wireAttributeObserver(): void {
+        const filter = allObservedAttributes();
+        if (filter.length === 0) return;
+        const Observer = this.ownerDocument.defaultView?.MutationObserver;
+        if (Observer === undefined) return;
+        const native = (this.constructor as { observedAttributes?: readonly string[] }).observedAttributes ?? [];
+        const observer = new Observer((mutations) => {
+          for (const mutation of mutations) {
+            if (mutation.type !== "attributes") continue;
+            const name = mutation.attributeName;
+            if (name === null) continue;
+            if (native.includes(name)) continue;
+            const oldValue = mutation.oldValue;
+            const newValue = this.getAttribute(name);
+            for (const implementation of this._implementations.values()) {
+              implementation.attributeChangedCallback?.(name, oldValue, newValue);
+            }
+          }
+        });
+        observer.observe(this, { attributes: true, attributeFilter: filter, attributeOldValue: true });
+        this._attributeObserver = observer;
+      }
+
+      private refreshAttributeObserver(): void {
+        if (this._attributeObserver === null) return;
+        const filter = allObservedAttributes();
+        if (filter.length === 0) return;
+        this._attributeObserver.observe(this, { attributes: true, attributeFilter: filter, attributeOldValue: true });
       }
 
       onInteraction(event: InteractionEvent): void {
@@ -144,6 +172,7 @@ export function defineInteractableHost(tag: Tag): void {
         }
         void Promise.all(pending).then(() => {
           this.didEnsure = true;
+          this.refreshAttributeObserver();
         });
       }
 

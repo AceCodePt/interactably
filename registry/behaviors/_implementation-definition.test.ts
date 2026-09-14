@@ -16,13 +16,13 @@ after(() => {
   teardownJsdom(dom);
 });
 
-test("throws at definition time when a tags-bearing implementation leaves the observed-attribute union empty", () => {
-  assert.throws(() =>
-    defineImplementation("empty-union", { tags: ["section"], verbs: { go: "undefined" } }, () => ({
-      go: () => undefined,
-    })),
-  );
-  assert.equal(getImplementationDef("empty-union"), undefined);
+test("defines a tags-bearing implementation's host even when the observed-attribute union is empty", () => {
+  const def = defineImplementation("empty-union", { tags: ["section"], verbs: { go: "undefined" } }, () => ({
+    go: () => undefined,
+  }));
+  assert.equal(def.name, "empty-union");
+  assert.equal(getImplementationDef("empty-union")?.name, "empty-union");
+  assert.notEqual(customElements.get("interactable-section"), undefined);
 });
 
 test("registers a definition that the registry can look up", () => {

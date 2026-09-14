@@ -74,3 +74,20 @@ test("record slot fields may themselves be records of mixed slots", () => {
   assert.equal(value.threshold, 2);
   assert.throws(() => sig.validate({ root: new Widget(), threshold: "2" }));
 });
+
+test("record slot keys whose signature admits undefined may be omitted", () => {
+  const sig = compileSignature({ method: "'get' | 'post' | 'delete' | undefined", body: "string | undefined" });
+  assert.deepEqual(sig.validate({ method: "post" }), { method: "post" });
+  assert.deepEqual(sig.validate({ method: "get", body: "x" }), { method: "get", body: "x" });
+  assert.deepEqual(sig.validate({}), {});
+  assert.throws(() => sig.validate({ method: "post", body: 5 }));
+  assert.throws(() => sig.validate({ method: 5 }));
+  assert.throws(() => sig.validate({ unexpected: 1 }));
+});
+
+test("record slot keys that do not admit undefined stay required", () => {
+  const sig = compileSignature({ title: "string", count: "number | undefined" });
+  assert.deepEqual(sig.validate({ title: "hello" }), { title: "hello" });
+  assert.throws(() => sig.validate({}));
+  assert.throws(() => sig.validate({ count: 1 }));
+});

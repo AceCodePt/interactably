@@ -348,3 +348,20 @@ test("lifecycle callbacks are forwarded and state writes render through attribut
   receiver.remove();
   assert.ok(calls.includes("stateful.disconnected"));
 });
+
+test("a config attribute registered after the host was defined still reaches attributeChangedCallback", async () => {
+  const lateCalls: string[] = [];
+  defineImplementation("late-config", { config: { events: "string | undefined" }, verbs: {} }, () => ({
+    attributeChangedCallback: (name: string) => {
+      lateCalls.push(name);
+    },
+  }));
+  const host = hostElement("div", { implements: "late-config", "late-config-events": "a" });
+  document.body.appendChild(host);
+  await flush();
+
+  lateCalls.length = 0;
+  host.setAttribute("late-config-events", "b");
+  await flush();
+  assert.deepEqual(lateCalls, ["late-config-events"]);
+});
