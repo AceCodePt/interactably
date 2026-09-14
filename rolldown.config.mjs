@@ -24,7 +24,7 @@ const implementations = [
   "prevent-default",
   "requestable",
   "revealable",
-  "storage",
+  "storable",
   "summable",
   "validatable",
 ];

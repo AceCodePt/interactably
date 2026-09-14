@@ -655,7 +655,7 @@ onInteraction(e: InteractionEvent) {                                // NOT insid
 | `logger` | `logger-trigger` | delete the trigger attribute; `log(e, arg)` verb with `log: "string | number | boolean | undefined"`: `on-click="#log.log(this.value)"`; the triggering element is context, read from `e.source` (§11.24) |
 | `no-propagate` | none | keep; `no-propagate-events` → `config: { events }` (same DOM name); listener helper moves to `bindEvents` in `behavior-utils.ts` (§5.5) |
 | **new** `prevent-default/` | none | twin of `no-propagate` with `preventDefault()`, `passive: false`, default events derived from the element's `on-submit` / `on-click` / keyed `on-keydown` (tag fallback), and `event:key` entries filtered through `matchesKey` (§5.5); replaces the executor-side cancellation |
-| `auto-grow`, `json-template`, `storage`, `paste-transform`, `condition` | none | rename only |
+| `auto-grow`, `json-template`, `storable`, `paste-transform`, `condition` | none | rename only |
 
 Every migrated test changes one line: `dispatchCommand(el, command["show"])` → `dispatchInteraction(el, "show")`; verbs with arguments pass one: `dispatchInteraction(el, "inc", 5)`, `dispatchInteraction(el, "sum", { root, select: ".amount" })`. Each directory's `schema.ts` converts from `Type.Object({...})` to `config` (and rarely `state`) records of tsyntax strings in the same step; hand-prefixed names (`reveal-anchor`, `logger-level`) drop the prefix and move to `config`, which restores it under the new name; any entry duplicating a platform attribute is deleted outright.
 

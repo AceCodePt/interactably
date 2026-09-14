@@ -14,7 +14,7 @@ export { noPropagate } from "@behaviors/no-propagate/no-propagate.ts";
 export { preventDefault } from "@behaviors/prevent-default/prevent-default.ts";
 export { revealable } from "@behaviors/revealable/revealable.ts";
 export { autoGrow } from "@behaviors/auto-grow/auto-grow.ts";
-export { storage } from "@behaviors/storage/storage.ts";
+export { storable } from "@behaviors/storable/storable.ts";
 export { pasteTransform } from "@behaviors/paste-transform/paste-transform.ts";
 export { condition } from "@behaviors/condition/condition.ts";
 export { jsonTemplate } from "@behaviors/json-template/json-template.ts";
