@@ -213,7 +213,8 @@
     <h2 id="grammar">Reference grammar</h2>
     <pre class="code" data-lang="text"><code>attribute := 'on-' event-type
 value     := phrase (';' phrase)*
-phrase    := [key ':'] ref ('.' call)+ ('.' modifier)*
+phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
+unit      := ref ('.' call)+ ('.' modifier)*
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
 arg       := number | "'" string "'" | 'true' | 'false' | ref | read
@@ -221,7 +222,7 @@ read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'</code></pre>
-    <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
+    <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
 
     <h2 id="signatures">Signature slots</h2>
     <div class="tbl-wrap">

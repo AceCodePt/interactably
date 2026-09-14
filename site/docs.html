@@ -125,11 +125,14 @@
 &lt;button on-click="#tour.show().once()"&gt;
 &lt;button on-click="#pb.hide(); #pc.hide(); #pa.show()"&gt;
 &lt;button on-click="#note.transform({mode: 'upper', shift: 2})"&gt;
-&lt;button on-click="#list.removeRow(this)"&gt;</code></pre>
+&lt;button on-click="#list.removeRow(this)"&gt;
+&lt;form   on-submit="#order.validate().send() || #alert.show()"&gt;
+&lt;input  on-change="#form.validate() &amp;&amp; #hint.show()"&gt;</code></pre>
 
         <h3 id="grammar">Grammar <a class="anchor" href="#grammar">#</a></h3>
         <pre class="code" data-lang="text"><code>value     := phrase (';' phrase)*
-phrase    := [key ':'] ref ('.' call)+ ('.' modifier)*
+phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
+unit      := ref ('.' call)+ ('.' modifier)*
 ref       := '#'id | this
 call      := verb '(' [arg | object] ')'
 arg       := number | 'string' | true | false | ref | read
@@ -147,6 +150,8 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
               <tr><td>Self</td><td><code class="inline-code">this.reset()</code></td><td>The element the phrase was read from (the trigger for <code class="inline-code">on-*</code>)</td></tr>
               <tr><td>Chain</td><td><code class="inline-code">#pop.show().focus()</code></td><td><code class="inline-code">.show()</code> then <code class="inline-code">.focus()</code> on the same receiver, in order</td></tr>
               <tr><td>Independent</td><td><code class="inline-code">#pb.hide(); #pa.show()</code></td><td>Two phrases that run regardless of each other</td></tr>
+              <tr><td>And</td><td><code class="inline-code">#form.validate() &amp;&amp; #hint.show()</code></td><td><code class="inline-code">.validate()</code> then, only if it completed, <code class="inline-code">#hint.show()</code> &mdash; possibly on another receiver</td></tr>
+              <tr><td>Or</td><td><code class="inline-code">#form.validate().send() || #alert.show()</code></td><td><code class="inline-code">#alert.show()</code> only if a guard aborted the first unit</td></tr>
               <tr><td>Scalar arg</td><td><code class="inline-code">#qty.inc(5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
               <tr><td>Element arg</td><td><code class="inline-code">#list.removeRow(this)</code></td><td>A ref resolves to the element at fire time</td></tr>
               <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code>, the platform&rsquo;s own types</td></tr>
@@ -171,11 +176,11 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
         <ol>
           <li><strong>Parens are mandatory.</strong> <code class="inline-code">#pop.show</code> is a CSS selector; <code class="inline-code">#pop.show()</code> is a call.</li>
           <li><strong>Receivers are <code class="inline-code">#id</code> or <code class="inline-code">this</code>.</strong> Ids may not contain <code class="inline-code">.</code>. Class or attribute selectors are never receivers.</li>
-          <li><strong>One receiver per phrase.</strong> Two elements is two phrases: <code class="inline-code">#a.hide(); #b.hide()</code>. There is no group form.</li>
+          <li><strong>One receiver per unit.</strong> A <code class="inline-code">.</code> chain stays on one receiver; <code class="inline-code">&amp;&amp;</code>/<code class="inline-code">||</code> units may each name a different one. There is no group form: <code class="inline-code">#a.hide(); #b.hide()</code> is still two phrases.</li>
           <li><strong>Keys are legal only under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code></strong>, one per phrase. Two keys is two phrases: <code class="inline-code">enter: #f.send(); numpadenter: #f.send()</code>. Names match <code class="inline-code">KeyboardEvent.key</code> case-insensitively; <code class="inline-code">space</code> means <code class="inline-code">" "</code>.</li>
           <li><strong>Modifiers trail and apply to the whole phrase.</strong> Order is normalized to: key filter &rarr; throttle/debounce &rarr; chain &rarr; once.</li>
-          <li><strong><code class="inline-code">;</code> is independent, <code class="inline-code">.</code> is sequential and abortable.</strong> A chain stops if a verb&rsquo;s event is <code class="inline-code">preventDefault()</code>-ed, if the verb threw, or if no implementation owns the verb.</li>
-          <li><strong><code class="inline-code">once()</code> is spent on completion</strong>, not on start — a chain stopped by a guard, an error or an unowned verb leaves the phrase live. Chains are synchronous, so &ldquo;completion&rdquo; is unambiguous.</li>
+          <li><strong><code class="inline-code">;</code> is independent, <code class="inline-code">.</code> is sequential and abortable, <code class="inline-code">&amp;&amp;</code>/<code class="inline-code">||</code> continue across receivers.</strong> A <code class="inline-code">.</code> chain stops if a verb&rsquo;s event is <code class="inline-code">preventDefault()</code>-ed, if the verb threw, or if no implementation owns the verb. <code class="inline-code">&amp;&amp;</code> runs the next unit only if the previous one completed; <code class="inline-code">||</code> runs it only if the previous one was stopped by a guard&rsquo;s <code class="inline-code">preventDefault()</code>. An error or unowned verb stops both &mdash; <code class="inline-code">||</code> fires only on a guard abort. One phrase is all <code class="inline-code">&amp;&amp;</code> or all <code class="inline-code">||</code>; mixing is a parse error.</li>
+          <li><strong><code class="inline-code">once()</code> is spent on completion</strong>, not on start — a chain stopped by a guard, an error or an unowned verb leaves the phrase live, and so does a guard-aborted phrase whose <code class="inline-code">||</code> fallback ran. Chains are synchronous, so &ldquo;completion&rdquo; is unambiguous.</li>
           <li><strong>References are late-bound.</strong> <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads resolve at fire time (after any debounce), never at parse time.</li>
           <li><strong>One argument per verb.</strong> A string signature takes one scalar (<code class="inline-code">set(5)</code>); a record signature takes one object literal (<code class="inline-code">setAttr({name: 'aria-expanded', value: 'true'})</code>); <code class="inline-code">"undefined"</code> takes none. Two bare arguments is a grammar error.</li>
           <li><strong>Exactly three properties may be read off a ref</strong> — <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> — with the platform&rsquo;s own types, no coercion. <code class="inline-code">this.parentElement</code> and friends are not legal; relative navigation lives in implementation code.</li>
@@ -199,7 +204,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
 }</code></pre>
         <ul>
           <li><strong>Non-bubbling.</strong> A host receives interactions aimed at itself and nothing else — no <code class="inline-code">if (e.target !== el)</code> guards.</li>
-          <li><strong><code class="inline-code">preventDefault()</code> aborts the rest of the chain.</strong> This is the guard-verb mechanism: <code class="inline-code">validate().send()</code>.</li>
+          <li><strong><code class="inline-code">preventDefault()</code> aborts the rest of the chain.</strong> This is the guard-verb mechanism: <code class="inline-code">validate().send()</code>, with <code class="inline-code">||</code> as the failure branch.</li>
           <li><strong>Three return channels, because a DOM event has none.</strong> <code class="inline-code">dispatchEvent</code> swallows listener exceptions and cannot tell &ldquo;handled&rdquo; from &ldquo;nobody listened&rdquo;. So the host writes <code class="inline-code">handled</code>, <code class="inline-code">error</code>, <code class="inline-code">result</code> onto the event, and the executor reads them after dispatch.</li>
           <li><strong>No <code class="inline-code">isTrusted</code> gate.</strong> Tests dispatch real DOM events on triggers.</li>
           <li><strong>The browser&rsquo;s <code class="inline-code">command</code> event plays no part.</strong> A page can also use native invokers; an implementation may listen to <code class="inline-code">command</code> like any other DOM event.</li>
@@ -531,14 +536,16 @@ export const attributable = defineImplementation("attributable", {
   → runPhrases(this, phrases, ev)
       → key filter; drop phrases whose once() is spent
       → throttle/debounce (timer keyed by element + attribute + phrase index)
-      → resolve the receiver (#id → getElementById, this → the source); missing → console.error, skip phrase
+      → run the units in order (one unit, or all &amp;&amp; / all ||)
+          resolve the unit's receiver (#id → getElementById, this → the source); missing → console.error, stop the phrase
           for each link: resolve arg (scalar, or object literal field by field) → dispatch InteractionEvent
             · host: find the implementation owning the verb → e.handled = true
             · host: validate arg against the signature, call the verb — both inside try/catch → e.error on throw
             · executor, after dispatch:  !e.handled → console.error "no implementation on &lt;receiver&gt; handles verb()", stop
                                         e.error    → console.error once with receiver and verb, stop
-                                        e.defaultPrevented → stop, quiet
-      → once() spent when every link ran and none stopped the chain</code></pre>
+                                        e.defaultPrevented → stop the unit, quiet
+          &amp;&amp;: next unit only if this one completed; ||: next unit only if this one was guard-aborted
+      → once() spent when the phrase completed without any guard abort</code></pre>
         <ul>
           <li><strong>Nested triggers behave like nested <code class="inline-code">onclick</code>.</strong> A click on a button inside a <code class="inline-code">&lt;div on-click&gt;</code> fires the button&rsquo;s phrase, then bubbles and fires the div&rsquo;s. No implicit innermost-wins; suppression is explicit via <code class="inline-code">no-propagate</code> on the inner element.</li>
           <li><strong>Timers and <code class="inline-code">once</code> state are keyed per element</strong> (in a <code class="inline-code">WeakMap</code>) and cleared on disconnect via <code class="inline-code">clearPhraseState</code>.</li>
@@ -617,13 +624,14 @@ export const attributable = defineImplementation("attributable", {
       requestable-target="#receipt"
       requestable-after="#receipt.show(); #alert.hide()"
       requestable-error="#alert.show()"
-      on-submit="this.validate().send()"&gt;
+      on-submit="this.validate().send() || #validate-alert.show()"&gt;
   &lt;input name="qty" type="number" min="1" required&gt;
   &lt;button&gt;Place order&lt;/button&gt;
 &lt;/form&gt;
 &lt;section is="interactable-section" id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
-&lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
-        <p>The form is the receiver of both verbs because a phrase has one receiver, and it is the right one: the form validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event.</p>
+&lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
+&lt;div is="interactable-div" id="validate-alert" implements="revealable" hidden role="alert"&gt;Please check the quantity.&lt;/div&gt;</code></pre>
+        <p>The form is the receiver of both <code class="inline-code">validate()</code> and <code class="inline-code">send()</code> in the first unit; <code class="inline-code">||</code> switches to <code class="inline-code">#validate-alert</code> only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event.</p>
         <p><code class="inline-code">novalidate</code> is load-bearing: without it the browser&rsquo;s interactive validation runs first and, for an invalid form, never fires <code class="inline-code">submit</code> at all. The phrase decides <em>when</em> validation happens; the platform still decides <em>what</em> valid means.</p>
 
         <h2 id="api-reference">API reference <a class="anchor" href="#api-reference">#</a></h2>
@@ -659,6 +667,7 @@ export const attributable = defineImplementation("attributable", {
           <li><strong><code class="inline-code">#id.verb(arg)</code> is member access</strong> and semantically honest: the element has <code class="inline-code">show</code> because it implements <code class="inline-code">revealable</code>. It completes from the left and is a shape models produce reliably.</li>
           <li><strong>One argument per verb</strong>: a scalar or one object literal. Positional lists were rejected because schema order is invisible in HTML — inserting an argument in the middle would silently re-bind every call site. A signature change is a loud parse error instead.</li>
           <li><strong><code class="inline-code">;</code> independent, <code class="inline-code">.</code> sequential and abortable</strong> — two separators, two meanings, which is what justifies keeping both.</li>
+          <li><strong><code class="inline-code">&amp;&amp;</code> / <code class="inline-code">||</code> continue across receivers, and <code class="inline-code">||</code> is guard-only.</strong> A guard&rsquo;s <code class="inline-code">preventDefault()</code> is the one stop the phrase can observe synchronously, so it is the only stop <code class="inline-code">||</code> reacts to; errors and unowned verbs are bugs and stay loud. <code class="inline-code">&amp;&amp;</code> is the success branch. They exist because validation failure was otherwise a dead end — sibling <code class="inline-code">;</code> phrases run regardless and no verb can observe another&rsquo;s abort. One operator per phrase keeps precedence and associativity out of the grammar.</li>
           <li><strong><code class="inline-code">once()</code> spent on completion</strong> so <code class="inline-code">validate().send().once()</code> means &ldquo;send once, after validation passes&rdquo;, not &ldquo;after the first attempt&rdquo;.</li>
           <li><strong>No class or selector receivers.</strong> Classes are global; scoping is a selector language; a selector language is jQuery. Containers + scoped selector <em>arguments</em> cover the dynamic-set case with a 1:1 receiver graph.</li>
           <li><strong>Triggers are hosts, not delegated.</strong> One place decides anything about an element. Cost: <code class="inline-code">is=</code> on every trigger (or the auto-loader), and the Safari polyfill covers more elements.</li>
@@ -682,7 +691,8 @@ export const attributable = defineImplementation("attributable", {
         <h3>Reference grammar</h3>
         <pre class="code" data-lang="text"><code>attribute := 'on-' event-type
 value     := phrase (';' phrase)*
-phrase    := [key ':'] ref ('.' call)+ ('.' modifier)*
+phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
+unit      := ref ('.' call)+ ('.' modifier)*
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
 arg       := number | "'" string "'" | 'true' | 'false' | ref | read
@@ -690,7 +700,7 @@ read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'</code></pre>
-        <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">this</code> is a keyword; an element with <code class="inline-code">id="this"</code> is addressed as <code class="inline-code">#this</code>. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
+        <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">this</code> is a keyword; an element with <code class="inline-code">id="this"</code> is addressed as <code class="inline-code">#this</code>. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
         <h3>Signature language</h3>
         <p>Values in <code class="inline-code">config</code>, <code class="inline-code">state</code> and <code class="inline-code">verbs</code>: a <strong>slot</strong> is either a tsyntax scalar DSL string (<code class="inline-code">string</code>, <code class="inline-code">number</code>, <code class="inline-code">bigint</code>, <code class="inline-code">boolean</code>, <code class="inline-code">undefined</code>, numeric and quoted literals, template literals, <code class="inline-code">|</code> unions) or an element constructor (<code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, &hellip;). A verb signature is one slot or a flat record of slots; an attribute signature is one string slot. A record key whose slot admits <code class="inline-code">undefined</code> may be omitted from the object literal; any other key is required.</p>
         <p class="note" style="margin-top:2rem">The README — this site&rsquo;s <em>source of truth</em> — carries the full appendices, including every &ldquo;alternatives considered&rdquo; answer, and the <code class="inline-code">$</code> baseline the DSL is measured against.</p>

@@ -120,6 +120,13 @@
             <span class="why-a">The host does it for you &mdash; it binds <code class="inline-code">on-*</code> in <code class="inline-code">connectedCallback</code> and cleans up on disconnect. Elements declare what they do: <code class="inline-code">on-*</code>, <code class="inline-code">implements</code>, both, or neither.</span>
           </div>
         </li>
+        <li>
+          <span class="why-n">6</span>
+          <div>
+            <span class="why-q">Why should a failed validation be a dead end?</span>
+            <span class="why-a">A guard&rsquo;s <code class="inline-code">preventDefault()</code> stops the chain, and <code class="inline-code">||</code> is the fallback: <code class="inline-code">on-submit="this.validate().send() || #alert.show()"</code>. <code class="inline-code">&amp;&amp;</code> is the success branch, on whatever element you name.</span>
+          </div>
+        </li>
       </ul>
     </section>
 

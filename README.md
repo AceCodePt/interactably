@@ -170,7 +170,7 @@ class InteractionEvent extends Event {
 ```
 
 - **Non-bubbling.** A host receives interactions aimed at itself and nothing else — no `if (e.target !== el)` guards.
-- **`preventDefault()` aborts the rest of the chain.** This is the guard-verb mechanism: `validate().send()`.
+- **`preventDefault()` aborts the rest of the chain.** This is the guard-verb mechanism: `validate().send()`, with `||` as the failure branch.
 - **Three return channels, because a DOM event has none.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened". So the host writes `handled` (an implementation owned the verb), `error` (validation or the verb body threw), `result` (the return value) onto the event, and the executor reads them after dispatch.
 - **No `isTrusted` gate.** Tests dispatch real DOM events on triggers.
 - **The browser's `command` event plays no part.** A page can also use native invokers; an implementation may listen to `command` like any other DOM event.
