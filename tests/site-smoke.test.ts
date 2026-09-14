@@ -160,6 +160,14 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(qty.value, "2");
   assert.equal(preview.textContent, "2");
   assert.equal(qty.classList.contains("is-dirty"), true, "dirtyable is attached to #qty");
+
+  const escKeydown = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+  qty.dispatchEvent(escKeydown);
+  assert.equal(escKeydown.defaultPrevented, true, "prevent-default derives keydown:escape and cancels the browser's native Escape default");
+  assert.equal(qty.value, "1", "Escape runs this.reset()");
+  assert.equal(preview.textContent, "1");
+  assert.equal(qty.classList.contains("is-dirty"), false, "Escape runs markClean()");
+
   click(byId("reset"));
   assert.equal(qty.value, "1");
   assert.equal(preview.textContent, "1");

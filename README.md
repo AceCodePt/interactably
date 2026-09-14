@@ -261,6 +261,8 @@ The executor never calls `preventDefault()` or `stopPropagation()` (every `on-*`
 
 With `prevent-default-events` omitted, `prevent-default` derives *which* events to cancel from the element's own `on-*` attributes, restricted to `submit`, `click` and `keydown`. A keyed `on-keydown` phrase (`enter: …`) contributes `keydown:enter`; an unkeyed one contributes nothing (a bare `keydown` cancels typing and Tab). Only when the element claims none of the three does the tag decide: `<form>` cancels `submit`, `<a href>` and `<button>` cancel `click`; anything else derives nothing and warns. `prevent-default-events` is a comma-separated list of `event` or `event:key` entries. Entries are one event or one event-key pair each.
 
+A keyed `on-keydown` phrase that *replaces* a browser default should always carry `implements="prevent-default"`. Escape is the case that bites: the browser cancels an in-progress edit (clears `type="search"`, reverts the field to its last committed value) as the keydown **default action**, which runs *after* the page's listeners. So `on-keydown="escape: this.reset()"` on its own sets the value first and the browser then overwrites it — Escape appears to do nothing. Deriving `keydown:escape` cancels that default and leaves the phrase as the only action.
+
 `no-propagate` is its twin: `no-propagate-events`, default `"click"`, handler is `stopPropagation`. Both listen on the element, so both also receive events bubbling up from descendants — put them on the element whose keys or actions are meant, not an ancestor.
 
 ### Revealable
@@ -551,15 +553,16 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
   import "interactably/dist/cdn/modifiable.js";
   import "interactably/dist/cdn/dirtyable.js";
   import "interactably/dist/cdn/listable.js";
+  import "interactably/dist/cdn/prevent-default.js";
   import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
   for (const tag of ["input", "output", "button", "ul"]) defineInteractableHost(tag);   // idempotent
 </script>
 
 <label>Qty
-  <input is="interactable-input" id="qty" implements="modifiable dirtyable"
+  <input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
-         on-keydown="escape: this.reset().markClean()">
+         on-keydown="escape: this.reset().markClean()">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
 </label>
 <button is="interactable-button" on-click="#qty.dec()">−</button>
 <button is="interactable-button" on-click="#qty.inc()">+</button>
