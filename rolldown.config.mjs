@@ -12,8 +12,6 @@ const implementations = [
   "auto-grow",
   "condition",
   "dirtyable",
-  "element-counter",
-  "format",
   "json-template",
   "listable",
   "logger",
@@ -24,7 +22,6 @@ const implementations = [
   "requestable",
   "revealable",
   "storable",
-  "summable",
   "validatable",
 ];
 

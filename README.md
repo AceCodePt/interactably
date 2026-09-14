@@ -51,7 +51,7 @@ Everything below the parser (the host mixin, the registry, lazy loading, the CLI
 | `request-url`, `logger-level` (hand-prefixed config) | `config: { url: … }` → `requestable-url` in the DOM, `attrs.url` in code, read-only | Authored tier; prefix applied by the library |
 | `dirty-state`, ad-hoc `data-*` | `state: { open: "boolean" }` → `data-open`, `attrs.open` read/write | Live tier; only for state the platform does not already hold |
 | TypeBox `Type.Object({…})` attribute schema | [tsyntax](https://github.com/AceCodePt/tsyntax) string per attribute: `"number \| undefined"` | Same string validates at compile time and at runtime |
-| `command: { show: "show" }` | `verbs: { show: "undefined", set: "string", removeRow: HTMLElement, sum: { root: HTMLElement, select: "string" } }` | A string or constructor is one argument; a record is an object argument |
+| `command: { show: "show" }` | `verbs: { show: "undefined", set: "string", removeRow: HTMLElement, setAttr: { name: "string", value: "string" } }` | A string or constructor is one argument; a record is an object argument |
 
 ---
 
@@ -88,7 +88,8 @@ modifier  := debounce(ms) | throttle(ms) | once()
 <input  on-keydown="escape: this.reset(); enter: #form.validate().send()">
 <button on-click="#tour.show().once()">
 <button on-click="#pb.hide(); #pc.hide(); #pa.show()">
-<input  on-input="#total.sum({root: #list, select: '.amount'})">
+<input  on-input="#total.compute()">
+<output id="total" implements="modifiable" modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })">
 <button on-click="#list.removeRow(this)">
 <button on-click="#note.transform({mode: 'upper', shift: 2})">
 ```
@@ -103,7 +104,7 @@ modifier  := debounce(ms) | throttle(ms) | once()
 6. **`;` is independent, `.` is sequential.** Phrases separated by `;` run regardless of each other. Links in a `.` chain run in order, synchronously, and **abort** if a verb's `interaction` event is `preventDefault()`-ed, if the verb threw, or if no implementation on the receiver owns the verb. Verbs are synchronous (§8.6); a chain never awaits.
 7. **`once()` is consumed on chain completion**, not on start. A chain stopped by a guard, an error or an unowned verb leaves the phrase live. Because chains are synchronous, "completion" is unambiguous: the phrase is spent before the DOM listener that fired it returns. Since a phrase has exactly one receiver, there is nothing else to track.
 8. **References are late-bound.** `#id`, `this` and property reads (`this.value`, `#qty.valueAsNumber`) are resolved when the phrase *fires* (after any debounce), not when the event arrived, and never at parse time (§8.2). Nothing else happens at event time: the executor does not cancel or stop the DOM event (§8.3), so there is no decision that could depend on resolution.
-9. **A verb takes one argument.** A verb declared with a string signature takes one scalar, positionally: `set(5)`, `transform('upper')`, `removeRow(this)`. A verb declared with a record signature takes one **object literal** whose keys are the record's keys: `sum({root: #list, select: '.amount'})`. A verb declared `"undefined"` takes none. Two bare arguments (`sum(#list, '.amount')`) is a grammar error; there is no positional order to get wrong because the grammar never has one (§11.21).
+9. **A verb takes one argument.** A verb declared with a string signature takes one scalar, positionally: `set(5)`, `transform('upper')`, `removeRow(this)`. A verb declared with a record signature takes one **object literal** whose keys are the record's keys: `setAttr({name: 'aria-expanded', value: 'true'})`. A verb declared `"undefined"` takes none. Two bare arguments (`setAttr('aria-expanded', 'true')`) is a grammar error; there is no positional order to get wrong because the grammar never has one (§11.21).
 10. **Argument kinds:** number, single-quoted string, `true`/`false`, `#id` (resolves to the element), `this` (the element the phrase was read from: the trigger for `on-*`, the implementation's own element for a continuation phrase, §5.4), a **property read**, `ref.value`, `ref.checked` or `ref.valueAsNumber` (rule 11); or an object literal, one level deep, whose values are those kinds. No nested objects, no arrays, no expression language; `set(qty * 2)` is not legal.
 11. **`this` and `#id` are element references; exactly three properties may be read from them.** In receiver position a dot is always followed by a call: `this.reset()` sends a verb to the trigger. In argument position a ref may be followed by one of a closed list of platform property names with no parentheses: `this.value`, `#agree.checked`, `#qty.valueAsNumber`. These are reads of the platform's own properties, with the platform's own types: `value` is whatever the element's `value` property holds (a string on `<input>`, `<select>` and `<textarea>`, a number on `<progress>`, `<meter>` and `<li>`), `checked` is a boolean, `valueAsNumber` is a number or `NaN`. Nothing is coerced; a `"number"` signature fed `this.value` from a text field fails validation with a message that names `valueAsNumber`. Reading a property the resolved element does not have (`#panel.checked` on a `<div>`) is a `console.error` and the phrase is skipped. `this.parentElement`, `this.closest('li')`, `this.dataset.x` and every other property are not legal; the list is closed, and relative navigation lives in implementation code. A read is never a receiver and never appears mid-chain: `this.value` alone is not a phrase, and `#a.value.set(1)` is a grammar error.
 12. **Selectors appear only inside string arguments** (`'.amount'`, `':scope > li'`). An implementation that accepts one scopes it to an element it was also given. The grammar sees a string; the implementation's schema types it as a selector.
@@ -122,7 +123,7 @@ modifier  := debounce(ms) | throttle(ms) | once()
 ```ts
 class InteractionEvent extends Event {
   readonly verb: string;            // "show"
-  readonly arg: unknown;            // resolved: 5 | "currency" | HTMLElement | { root: HTMLElement, select: ".amount" } | undefined
+  readonly arg: unknown;            // resolved: 5 | "currency" | HTMLElement | { name: string, value: string } | undefined
   readonly source: Element;         // the element whose attribute the phrase came from (what `this` resolved to)
   readonly originalEvent: Event;    // click / input / keydown …
   handled: boolean;                 // set true by the host when an implementation owned the verb
@@ -225,17 +226,16 @@ export const listable = defineImplementation("listable", {
   clear:     ()         => { while (el.children.length > (attrs["min-rows"] ?? 0)) el.lastElementChild!.remove(); },
 }));
 
-export const summable = defineImplementation("summable", {
-  tags: ["output", "span", "td"],
-  config: { precision: "number | undefined" },
-  verbs: { sum: { root: HTMLElement, select: "string" } },  // element slot + tsyntax slot
-}, (el, attrs) => ({
-  sum: (_e, { root, select }) => {
-    let total = 0;
-    for (const n of root.querySelectorAll<HTMLInputElement>(select)) total += Number(n.value) || 0;
-    el.textContent = total.toFixed(attrs.precision ?? 2);
-    el.dataset.value = String(total);
+export const attributable = defineImplementation("attributable", {
+  verbs: {
+    setAttr:    { name: "string", value: "string" },        // object literal argument
+    toggleAttr: "string",
+    removeAttr: "string",
   },
+}, (el) => ({
+  setAttr:    (_e, { name, value }) => el.setAttribute(name, value),
+  toggleAttr: (_e, name) => el.toggleAttribute(name),
+  removeAttr: (_e, name) => el.removeAttribute(name),
 }));
 ```
 
@@ -249,7 +249,7 @@ export const summable = defineImplementation("summable", {
 
 **Declare only what you invent.** An implementation never declares an attribute the platform already owns. `min`, `max`, `step`, `type`, `open`, `value`, `checked`, `popover` exist on the elements they belong to, typed and validated by the browser, reachable as properties: `modifiable` on an `<input type="range">` reads `el.min`, and on a `<textarea>` there is no `min` and inventing one would put an attribute on the element that has no meaning there. The narrowing is done by `tags` and, where a tag is not enough, by a connect-time check (`el.type === "range"`), not by a schema entry. What is left to declare is exactly the information the implementation brings to the element, in two tiers (§6):
 
-- **`config`**: authored input, read on the way in and never written by a verb. Stored as `<name>-<key>` (`modifiable-step`, `summable-precision`, `requestable-url`). Unique by construction, so two implementations on one element cannot collide.
+- **`config`**: authored input, read on the way in and never written by a verb. Stored as `<name>-<key>` (`modifiable-step`, `modifiable-formula`, `requestable-url`). Unique by construction, so two implementations on one element cannot collide.
 - **`state`**: live information the implementation has to hold because the platform holds nothing for it. Stored as `data-<key>` (`data-open` on a panel, `data-value` on a computed total). Read/write through `attrs`.
 
 Most implementations declare no `state` at all: `dirtyable` compares `el.value` with a baseline it captured at connect, `revealable` on a `<dialog>` reads `el.open`, `modifiable` writes `el.value`. A `state` entry is the exception, and the smell to check is whether the platform already has the thing under another name (§11.25, §11.26).
@@ -281,7 +281,7 @@ declare function defineImplementation<
 ): ImplementationDef<T, C, S, V>;
 ```
 
-**Verbs are data.** Because scalar signatures are strings and element signatures are classes with names, the `verbs` record serialises for editor tooling with nothing executed, `JSON.stringify` with a replacer that emits `ctor.name`, and it types the generated TypeScript DSL (`on.click(qty).inc(5)` / `on.input(total).sum({ root: list, select: ".amount" })`). The registry's type is the union of registered definitions, so `VerbName` and `ArgFor<"inc">` are derivable project-wide.
+**Verbs are data.** Because scalar signatures are strings and element signatures are classes with names, the `verbs` record serialises for editor tooling with nothing executed, `JSON.stringify` with a replacer that emits `ctor.name`, and it types the generated TypeScript DSL (`on.click(qty).inc(5)` / `on.click(toggle).setAttr({ name: "aria-expanded", value: "true" })`). The registry's type is the union of registered definitions, so `VerbName` and `ArgFor<"inc">` are derivable project-wide.
 
 **No-argument verbs.** `"undefined"` is the honest type of a missing argument and keeps every scalar slot a tsyntax string. If it reads badly in practice, `null` as an alias is a one-line change in `Slot`; decide when writing `_implementation-definition.ts`.
 
@@ -459,8 +459,8 @@ Four cases, one of which needs a selector.
 | --- | --- |
 | **Dynamic triggers** (rows cloned from a template) | Put `is="interactable-<tag>"` in the template. On Chrome and Firefox the clone upgrades synchronously on insertion and binds its listeners in `connectedCallback`; `on-click="this.remove()"` / `#list.removeRow(this)` works on every clone with no generated ids. On Safari, and on any engine when the auto-loader adds `is=` for you, the upgrade is deferred (§8.5); see the note below. |
 | **Dynamic receivers** (a row's own subtotal) | Receivers stay ids or `this`. Either address a stable ancestor and let the implementation find the relative element from `e.source` (`closest("li")`), or stamp ids in the template. |
-| **Dynamic data sources** (sum whatever inputs exist) | Scoped selector argument: `#total.sum({root: #list, select: '.amount'})`. The implementation runs `container.querySelectorAll(selector)` at fire time. Default when omitted: `':scope > *'`. |
-| **Change without interaction** (server swap, external mutation) | The implementation that performed the change runs the follow-up via its own continuation phrase (`requestable-after="#count.count({root: this, select: ':scope > li'})"`), a new synchronous chain with `this` bound to that element. Chains never span the change themselves. Otherwise out of scope for v1. |
+| **Dynamic data sources** (sum whatever inputs exist) | Formula function with a selector: `#total implements="modifiable" modifiable-formula="sum('#list .amount')"`, recomputed by `#total.compute()`. `sum(selector)`/`count(selector)` run `document.querySelectorAll(selector)` at fire time. |
+| **Change without interaction** (server swap, external mutation) | The implementation that performed the change runs the follow-up via its own continuation phrase (`requestable-after="#count.compute()"`, the count output carrying `modifiable-formula="count('#results > li')"`), a new synchronous chain with `this` bound to that element. Chains never span the change themselves. Otherwise out of scope for v1. |
 
 **Upgrade timing is not uniform, and the document owes the author the exact shape of it.** `is=` written in the markup (server-rendered or in a `<template>`) upgrades synchronously on insertion in Chrome and Firefox: the element is a host before the next line of script runs. Two paths are asynchronous:
 
@@ -544,8 +544,10 @@ Two things the polyfill does not give back. **Timing:** it upgrades via `Mutatio
 
 <ul is="interactable-ul" id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
-    requestable-after="#count.count({root: this, select: ':scope > li'}); #status.hide()"
+    requestable-after="#count.compute(); #status.hide()"
     requestable-error="#status.show()"></ul>
+<output is="interactable-output" id="count" implements="modifiable"
+        modifiable-formula="count('#results > li')"></output>
 ```
 
 The trigger's chain is one synchronous link: `send()` aborts the previous in-flight request for `#results`, starts a new one, and returns. When the response lands, `requestable` swaps its children and calls `runPhrases(el, attrs.after, e.originalEvent)` (`this` is `#results` because `#results` is the element the phrase was read from, the same rule that makes `this` the trigger in an `on-*` attribute: a second synchronous chain, in which `this` is an ordinary element reference) here passed as an argument, since rule 11 allows no property access on it. The network gap sits between two chains and has a name and a place in the markup, instead of hiding inside a dot that looks like every other dot.
@@ -651,13 +653,13 @@ onInteraction(e: InteractionEvent) {                                // NOT insid
 | `set-attribute` | `onCommand` ×4, `e.value`, `set-attribute-name` | → `attributable`; `setAttr({name, value})`, `toggleAttr(name)`, `removeAttr(name)`; the attribute name becomes an argument |
 | `request` | `onCommand` ×3, `request-trigger` | → `requestable`; delete `request-trigger` (and its delay/throttle config); `request-url`, `request-method` → `config: { url, method }` (DOM names become `requestable-url` etc.); verbs `send()` and `abort()`, both synchronous; `send` starts the fetch and consumes it in the closure; config `url`, `method`, `target`, `swap`, `include`, `concurrency`, plus the two continuation phrases `after` and `error`; state `status` (`data-status`); `aria-busy` set while loading; policy derived from method (§8.6) |
 | `dirty-input` | none | → `dirtyable`; add `markClean()` verb; **delete `dirty-state`**: dirty is `el.value` against a baseline held in the closure, no attribute written (§6) |
-| `compute`, `format`, `element-counter` | none | keep pull config; add on-demand verbs `compute()`, `format(kind)`, `count({root: #root, select: 'selector'})` |
+| `compute`, `format`, `element-counter` | none | deleted; folded into `modifiable` and the formula engine: the `compute()` verb plus `modifiable-formula` (`sum(selector)`/`count(selector)`/`format(value, options)` inside the formula) replace all three |
 | `logger` | `logger-trigger` | delete the trigger attribute; `log(e, arg)` verb with `log: "string | number | boolean | undefined"`: `on-click="#log.log(this.value)"`; the triggering element is context, read from `e.source` (§11.24) |
 | `no-propagate` | none | keep; `no-propagate-events` → `config: { events }` (same DOM name); listener helper moves to `bindEvents` in `behavior-utils.ts` (§5.5) |
 | **new** `prevent-default/` | none | twin of `no-propagate` with `preventDefault()`, `passive: false`, default events derived from the element's `on-submit` / `on-click` / keyed `on-keydown` (tag fallback), and `event:key` entries filtered through `matchesKey` (§5.5); replaces the executor-side cancellation |
 | `auto-grow`, `json-template`, `storable`, `paste-transform`, `condition` | none | rename only |
 
-Every migrated test changes one line: `dispatchCommand(el, command["show"])` → `dispatchInteraction(el, "show")`; verbs with arguments pass one: `dispatchInteraction(el, "inc", 5)`, `dispatchInteraction(el, "sum", { root, select: ".amount" })`. Each directory's `schema.ts` converts from `Type.Object({...})` to `config` (and rarely `state`) records of tsyntax strings in the same step; hand-prefixed names (`reveal-anchor`, `logger-level`) drop the prefix and move to `config`, which restores it under the new name; any entry duplicating a platform attribute is deleted outright.
+Every migrated test changes one line: `dispatchCommand(el, command["show"])` → `dispatchInteraction(el, "show")`; verbs with arguments pass one: `dispatchInteraction(el, "inc", 5)`, `dispatchInteraction(el, "setAttr", { name: "aria-expanded", value: "true" })`. Each directory's `schema.ts` converts from `Type.Object({...})` to `config` (and rarely `state`) records of tsyntax strings in the same step; hand-prefixed names (`reveal-anchor`, `logger-level`) drop the prefix and move to `config`, which restores it under the new name; any entry duplicating a platform attribute is deleted outright.
 
 ### 9.5 Order that keeps the suite green
 
@@ -677,9 +679,9 @@ Every migrated test changes one line: `dispatchCommand(el, command["show"])` →
 <script type="module">
   import "behavior-fn/dist/cdn/modifiable.js";
   import "behavior-fn/dist/cdn/dirtyable.js";
-  import "behavior-fn/dist/cdn/summable.js";
+  import "behavior-fn/dist/cdn/listable.js";
   import { defineInteractableHost } from "behavior-fn/dist/cdn/behavior-fn-core.js";
-  for (const tag of ["input", "output", "button", "ul"]) defineInteractableHost(tag);   // idempotent: modifiable/listable/summable already ensured theirs
+  for (const tag of ["input", "output", "button", "ul"]) defineInteractableHost(tag);   // idempotent: modifiable/listable already ensured theirs
 </script>
 
 <label>Qty
@@ -697,20 +699,21 @@ Every migrated test changes one line: `dispatchCommand(el, command["show"])` →
 
 <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
   <li>
-    <input is="interactable-input" class="amount" type="number" on-input="#total.sum({root: #list, select: '.amount'})">
-    <button is="interactable-button" on-click="#list.removeRow(this); #total.sum({root: #list, select: '.amount'})">×</button>
+    <input is="interactable-input" class="amount" type="number" on-input="#total.compute()">
+    <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()">×</button>
   </li>
 </ul>
 <button is="interactable-button" on-click="#list.adopt(#row-tpl)">Add row</button>
 <template id="row-tpl"><li>…</li></template>
-<output is="interactable-output" id="total" implements="summable" summable-precision="2">0</output>
+<output is="interactable-output" id="total" implements="modifiable"
+        modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })">0</output>
 ```
 
 Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the buttons address it); the six buttons are trigger-only; `#preview`, `#list` and `#total` are receivers; the `<li>` is a plain element; the row is reached through `#list.removeRow(this)`, so it needs no implementation, no host and no id, and cloning it from `#row-tpl` produces nothing that has to be unique. With the auto-loader in the page, every `is=` above can be omitted.
 
 Trace of `+5`: the button's host bound `click` in `connectedCallback` → `parse("#qty.inc(5)")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → host `onInteraction` validates `5` against `"number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → synthetic `input` → `dirtyable.onInput` sets `data-dirty` → `attributeChangedCallback` adds `is-dirty` → the same `input` reaches `#qty`'s own `on-input` listener → `#preview.set($value)` → `modifiable.set("6")` on the output.
 
-Trace of `×`: the row button's `on-click` → phrase 1 resolves `#list`, arg `this` resolves to the button → `listable.removeRow(e, button)` uses `button.closest("li")` → phrase 2 (independent) resolves `#total` → `summable.sum(e, { root: listEl, select: ".amount" })` re-reads the remaining inputs.
+Trace of `×`: the row button's `on-click` → phrase 1 resolves `#list`, arg `this` resolves to the button → `listable.removeRow(e, button)` uses `button.closest("li")` → phrase 2 (independent) resolves `#total` → `modifiable.compute(e)` re-evaluates `sum('#list .amount')` over the remaining inputs and formats the total.
 
 Trace of `Add row`: `#row-tpl` is a bare ref → resolved to the `<template>` → host checks `tpl instanceof HTMLTemplateElement` (the `adopt` slot) → `listable.adopt(e, tpl)`. Point it at a `<div>` and the host logs `expected HTMLTemplateElement, got HTMLDivElement` and aborts the chain; write `'#row-tpl'` in quotes and it is a string, rejected the same way.
 
@@ -843,7 +846,7 @@ Traces:
 
 **11.20 Tags type the element and gate `implements`.** An implementation declares the tags it attaches to as strings (`["textarea", "input"]`), and `HTMLElementTagNameMap` turns that into the factory's `el` type: a union when there are several, `HTMLElement` when the list is omitted. The same list serves three consumers with no second declaration: the factory body (members common to the union are reachable without casts), the host at connect (a tag not in the list makes that `implements` entry a no-op with a warning), and the registry (it ensures an `interactable-<tag>` host exists for every listed tag, idempotently, so two implementations sharing a tag share one host class). The inversion is deliberate: the union *widens* what the factory may use and *narrows* where the implementation may sit. Generic implementations (logging, `no-propagate`) omit `tags` because a specific element type would be a lie about what they need. Cost: a tag-less implementation cannot rely on the registry to define its hosts; those come from the page or the auto-loader, as today.
 
-**11.21 One argument per verb: a scalar or an object literal.** Positional argument lists were rejected because the binding between position and meaning lives in schema insertion order, which TypeScript cannot see in HTML: inserting an argument in the middle of a tuple silently re-binds every call site in every page. A verb therefore takes exactly one argument. When the signature is a string, the argument is a scalar written positionally (`set(5)`, `transform('upper')`, `removeRow(this)`) because a single argument has no order to get wrong and naming it would be noise (`set(value: 5)`). When the signature is a record, the argument is an object literal with those keys (`sum({root: #list, select: '.amount'})`) which is what every JavaScript author already writes for named arguments, so it is not a second calling convention; and the handler's `{ root, select }` destructure mirrors the markup character for character. The two forms are not a choice the author makes per call: the schema's shape *is* the rule. A verb that grows from one argument to two changes its signature from string to record, and every existing `transform('upper')` becomes a reported parse error rather than a misbinding: a loud, mechanical migration. Objects are one level deep with scalar values, matching tsyntax's scalars-only line. Cost: the tokenizer tracks brace depth alongside quote and paren depth when splitting on commas; a few more characters in the multi-argument case.
+**11.21 One argument per verb: a scalar or an object literal.** Positional argument lists were rejected because the binding between position and meaning lives in schema insertion order, which TypeScript cannot see in HTML: inserting an argument in the middle of a tuple silently re-binds every call site in every page. A verb therefore takes exactly one argument. When the signature is a string, the argument is a scalar written positionally (`set(5)`, `transform('upper')`, `removeRow(this)`) because a single argument has no order to get wrong and naming it would be noise (`set(value: 5)`). When the signature is a record, the argument is an object literal with those keys (`setAttr({name: 'aria-expanded', value: 'true'})`) which is what every JavaScript author already writes for named arguments, so it is not a second calling convention; and the handler's `{ name, value }` destructure mirrors the markup character for character. The two forms are not a choice the author makes per call: the schema's shape *is* the rule. A verb that grows from one argument to two changes its signature from string to record, and every existing `transform('upper')` becomes a reported parse error rather than a misbinding: a loud, mechanical migration. Objects are one level deep with scalar values, matching tsyntax's scalars-only line. Cost: the tokenizer tracks brace depth alongside quote and paren depth when splitting on commas; a few more characters in the multi-argument case.
 
 **11.22 One declaration site: a static signature table plus a factory of bodies.** behavior-fn's `command: { show: "show" }` map names a verb in one place and implements it as a method in another, with a key===value check standing in for a type. Two ways of collapsing that to one site were considered. (a) Signatures inside the factory (`set: verb("string", fn)`): one site, but the host must run the factory against a detached element at registration to learn the verbs, and factories legitimately touch `el`. (b) A static `verbs` table above the factory, the factory supplying bodies only. With signatures as tsyntax strings, (b) wins outright: the table is pure data, so it serialises for editor tooling with nothing executed, and TypeScript checks the factory against it in both directions: missing verb, undeclared verb, wrong parameter type. The two places are the `.d.ts` and the implementation, not a duplication of meaning. `uniqueBehaviorDef` becomes `defineImplementation`: "unique" described a registry-level name collision, which is the registry's concern, not the definition's.
 

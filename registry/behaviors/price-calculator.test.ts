@@ -11,7 +11,6 @@ before(async () => {
   await import("@behaviors/modifiable/modifiable.ts");
   await import("@behaviors/dirtyable/dirtyable.ts");
   await import("@behaviors/listable/listable.ts");
-  await import("@behaviors/summable/summable.ts");
   ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("button");
 });
@@ -39,13 +38,14 @@ const MARKUP = `
 
 <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
   <li>
-    <input is="interactable-input" class="amount" type="number" value="2.5" on-input="#total.sum({root: #list, select: '.amount'})">
-    <button is="interactable-button" on-click="#list.removeRow(this); #total.sum({root: #list, select: '.amount'})">×</button>
+    <input is="interactable-input" class="amount" type="number" value="2.5" on-input="#total.compute()">
+    <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()">×</button>
   </li>
 </ul>
 <button id="add-row" is="interactable-button" on-click="#list.adopt(#row-tpl)">Add row</button>
-<template id="row-tpl"><li><input is="interactable-input" class="amount" type="number" value="3.25" on-input="#total.sum({root: #list, select: '.amount'})"><button is="interactable-button" on-click="#list.removeRow(this); #total.sum({root: #list, select: '.amount'})">×</button></li></template>
-<output is="interactable-output" id="total" implements="summable" summable-precision="2">0</output>
+<template id="row-tpl"><li><input is="interactable-input" class="amount" type="number" value="3.25" on-input="#total.compute()"><button is="interactable-button" on-click="#list.removeRow(this); #total.compute()">×</button></li></template>
+<output is="interactable-output" id="total" implements="modifiable"
+        modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })">0</output>
 `;
 
 function mount(): void {
@@ -145,7 +145,7 @@ test("Escape on #qty runs the keyed this.reset().markClean()", async () => {
   assert.equal(qty.classList.contains("is-dirty"), false);
 });
 
-test("the × trace: removeRow finds the row from the button, then sum re-reads the remaining inputs", async () => {
+test("the × trace: removeRow finds the row from the button, then compute re-reads the remaining amounts", async () => {
   mount();
   await flush();
 
@@ -159,16 +159,16 @@ test("the × trace: removeRow finds the row from the button, then sum re-reads t
   const firstRowRemove = rows[0]!.querySelector("button")!;
   click(firstRowRemove);
   assert.equal(list.children.length, 1);
-  assert.equal(total.textContent, "3.25");
+  assert.equal(total.textContent, "$3.25");
   assert.equal(total.dataset["value"], "3.25");
 
   const lastRowRemove = (list.children[0] as HTMLElement).querySelector("button")!;
   click(lastRowRemove);
   assert.equal(list.children.length, 1);
-  assert.equal(total.textContent, "3.25");
+  assert.equal(total.textContent, "$3.25");
 });
 
-test("the Add row trace: adopt clones the template; typing in an amount re-sums", async () => {
+test("the Add row trace: adopt clones the template; typing in an amount recomputes", async () => {
   mount();
   await flush();
 
@@ -176,7 +176,7 @@ test("the Add row trace: adopt clones the template; typing in an amount re-sums"
   const total = byId("total") as HTMLOutputElement;
 
   assert.equal(list.children.length, 1);
-  assert.equal(total.textContent, "0");
+  assert.equal(total.textContent, "$2.50");
 
   click(byId("add-row"));
   assert.equal(list.children.length, 2);
@@ -185,6 +185,6 @@ test("the Add row trace: adopt clones the template; typing in an amount re-sums"
   assert.equal(clonedAmount.value, "3.25");
   clonedAmount.value = "10";
   clonedAmount.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.equal(total.textContent, "12.50");
+  assert.equal(total.textContent, "$12.50");
   assert.equal(total.dataset["value"], "12.5");
 });
