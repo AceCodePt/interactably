@@ -1,15 +1,6 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 
-export const attributable = defineImplementation<
-  undefined,
-  {},
-  {},
-  {
-    setAttr: { name: "string"; value: "string" };
-    toggleAttr: "string";
-    removeAttr: "string";
-  }
->(
+export const attributable = defineImplementation(
   "attributable",
   {
     verbs: {

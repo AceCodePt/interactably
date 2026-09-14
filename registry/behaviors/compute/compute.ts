@@ -1,16 +1,7 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { valueOf, writeValue } from "@behaviors/implementation-utils.ts";
 
-export const compute = defineImplementation<
-  undefined,
-  {
-    formula: "string";
-    precision: "number | undefined";
-    "invalid-value": "string | undefined";
-  },
-  {},
-  { compute: "undefined" }
->(
+export const compute = defineImplementation(
   "compute",
   {
     config: {

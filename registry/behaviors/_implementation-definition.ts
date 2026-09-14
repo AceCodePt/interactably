@@ -65,7 +65,7 @@ export function defineImplementation<
     tags?: T;
     config?: Validated<C>;
     state?: Validated<S>;
-    verbs: ValidatedSigs<V>;
+    verbs: V & ValidatedSigs<V>;
   },
   factory: (el: El<T>, attrs: Attrs<C, S>) => Implementation<V>,
 ): ImplementationDef<T, C, S, V> {

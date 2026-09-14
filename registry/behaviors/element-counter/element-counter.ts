@@ -1,15 +1,7 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { writeValue } from "@behaviors/implementation-utils.ts";
 
-export const elementCounter = defineImplementation<
-  undefined,
-  {
-    root: "string | undefined";
-    selector: "string | undefined";
-  },
-  {},
-  { count: { root: typeof HTMLElement; select: "string" } }
->(
+export const elementCounter = defineImplementation(
   "element-counter",
   {
     config: { root: "string | undefined", selector: "string | undefined" },

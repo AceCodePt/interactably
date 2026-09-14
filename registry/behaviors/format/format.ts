@@ -3,21 +3,7 @@ import { valueOf, writeValue } from "@behaviors/implementation-utils.ts";
 
 type Kind = "currency" | "number" | "percent" | "date";
 
-export const format = defineImplementation<
-  undefined,
-  {
-    type: "'currency' | 'number' | 'percent' | 'date'";
-    strategy: "'blur' | 'live' | undefined";
-    locale: "string | undefined";
-    currency: "string | undefined";
-    "date-style": "'full' | 'long' | 'medium' | 'short' | undefined";
-    "min-fraction-digits": "number | undefined";
-    "max-fraction-digits": "number | undefined";
-    notation: "'standard' | 'compact' | 'scientific' | 'engineering' | undefined";
-  },
-  {},
-  { format: "'currency' | 'number' | 'percent' | 'date'" }
->(
+export const format = defineImplementation(
   "format",
   {
     config: {

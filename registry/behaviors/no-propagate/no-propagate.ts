@@ -1,7 +1,7 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { bindEvents } from "@behaviors/implementation-utils.ts";
 
-export const noPropagate = defineImplementation<undefined, { events: "string | undefined" }, {}, {}>(
+export const noPropagate = defineImplementation(
   "no-propagate",
   {
     config: { events: "string | undefined" },
