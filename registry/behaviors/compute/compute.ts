@@ -1,5 +1,5 @@
-import { defineImplementation } from "../_implementation-definition.ts";
-import { valueOf, writeValue } from "../implementation-utils.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { valueOf, writeValue } from "@behaviors/implementation-utils.ts";
 
 export const compute = defineImplementation<
   undefined,

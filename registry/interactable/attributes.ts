@@ -1,4 +1,4 @@
-import type { CompiledSignature } from "./signature.ts";
+import type { CompiledSignature } from "@interactable/signature.ts";
 
 export interface AttributeSlot {
   raw: string;

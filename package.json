@@ -6,10 +6,10 @@
   "type": "module",
   "main": "./dist/interactably.js",
   "module": "./dist/interactably.js",
-  "types": "./src/index.ts",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/interactably.js"
     },
     "./dist/cdn/*.js": "./dist/cdn/*.js",
@@ -20,8 +20,8 @@
   ],
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "node --import tsx --test",
-    "build": "rolldown -c"
+    "test": "node --import tsx --test \"**/*.test.ts\"",
+    "build": "rolldown -c && tsc -p tsconfig.build.json && node scripts/rewrite-dts-imports.mjs"
   },
   "keywords": [
     "web-components",

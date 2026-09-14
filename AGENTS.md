@@ -6,7 +6,7 @@ README.md is the single source of truth for the design of Interactably. Referenc
 
 ## Working constraints
 
-- ESM with Node native type stripping (`erasableSyntaxOnly`): relative imports use explicit `.ts` extensions.
+- ESM: imports use the tsconfig `paths` aliases (`@/*`, `@interactable/*`, `@behaviors/*`, `@utils/*`, `@tests/*`) with explicit `.ts` extensions, resolved at runtime by tsx (tests) and rolldown (build); Node-native type stripping no longer runs the source directly.
 - `pnpm` is the package manager.
 - `node:test` is the only test runner.
 - `jsdom` is a dev-only dependency, for tests.

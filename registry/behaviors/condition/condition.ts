@@ -1,5 +1,5 @@
-import { defineImplementation } from "../_implementation-definition.ts";
-import { InteractionEvent } from "../../interactable/interaction-event.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { InteractionEvent } from "@interactable/interaction-event.ts";
 
 type Op = "==" | "!=" | ">" | "<" | ">=" | "<=";
 

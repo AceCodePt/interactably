@@ -1,6 +1,6 @@
-import { defineImplementation } from "../_implementation-definition.ts";
-import { bindEvents } from "../implementation-utils.ts";
-import { parse } from "../../interactable/parser.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { bindEvents } from "@behaviors/implementation-utils.ts";
+import { parse } from "@interactable/parser.ts";
 
 const DERIVABLE = new Set(["submit", "click", "keydown"]);
 

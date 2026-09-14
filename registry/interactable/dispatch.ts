@@ -1,4 +1,4 @@
-import { InteractionEvent } from "./interaction-event.ts";
+import { InteractionEvent } from "@interactable/interaction-event.ts";
 
 export interface DispatchInteractionOptions {
   source?: Element;

@@ -1,11 +1,11 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
-let InteractionEventClass: typeof import("../../interactable/interaction-event.ts").InteractionEvent;
-let defineInteractableHost: typeof import("../interactable-host.ts").defineInteractableHost;
+let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
+let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 const dialogCalls: string[] = [];
 
@@ -47,9 +47,9 @@ function installPlatformPolyfills(): void {
 before(async () => {
   dom = setupJsdom();
   installPlatformPolyfills();
-  await import("./revealable.ts");
-  ({ InteractionEvent: InteractionEventClass } = await import("../../interactable/interaction-event.ts"));
-  ({ defineInteractableHost } = await import("../interactable-host.ts"));
+  await import("@behaviors/revealable/revealable.ts");
+  ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
+  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("details");
   defineInteractableHost("dialog");
   defineInteractableHost("div");

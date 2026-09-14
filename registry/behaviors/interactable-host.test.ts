@@ -1,21 +1,21 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
-let defineImplementation: typeof import("./_implementation-definition.ts").defineImplementation;
-let defineInteractableHost: typeof import("./interactable-host.ts").defineInteractableHost;
-let InteractionEvent: typeof import("../interactable/interaction-event.ts").InteractionEvent;
-let NotReadyError: typeof import("./implementation-utils.ts").NotReadyError;
+let defineImplementation: typeof import("@behaviors/_implementation-definition.ts").defineImplementation;
+let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
+let InteractionEvent: typeof import("@interactable/interaction-event.ts").InteractionEvent;
+let NotReadyError: typeof import("@behaviors/implementation-utils.ts").NotReadyError;
 const calls: string[] = [];
 
 before(async () => {
   dom = setupJsdom();
-  ({ defineImplementation } = await import("./_implementation-definition.ts"));
-  ({ defineInteractableHost } = await import("./interactable-host.ts"));
-  ({ InteractionEvent } = await import("../interactable/interaction-event.ts"));
-  ({ NotReadyError } = await import("./implementation-utils.ts"));
+  ({ defineImplementation } = await import("@behaviors/_implementation-definition.ts"));
+  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
+  ({ InteractionEvent } = await import("@interactable/interaction-event.ts"));
+  ({ NotReadyError } = await import("@behaviors/implementation-utils.ts"));
 
   defineImplementation(
     "stateful",

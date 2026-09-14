@@ -1,5 +1,5 @@
-import { defineImplementation } from "../_implementation-definition.ts";
-import { runPhrases } from "../../interactable/executor.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { runPhrases } from "@interactable/executor.ts";
 
 type Policy = "latest" | "first" | "all";
 

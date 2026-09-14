@@ -1,13 +1,13 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
 
 before(async () => {
   dom = setupJsdom();
-  await import("./paste-transform.ts");
+  await import("@behaviors/paste-transform/paste-transform.ts");
 });
 
 after(() => {

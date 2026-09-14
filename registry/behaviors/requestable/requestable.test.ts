@@ -1,8 +1,8 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../../tests/jsdom.ts";
-import type { InteractionEvent } from "../../interactable/interaction-event.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 interface FakeResponse {
   ok: boolean;
@@ -19,18 +19,18 @@ interface FetchCall {
 }
 
 let dom: JSDOM;
-let InteractionEventClass: typeof import("../../interactable/interaction-event.ts").InteractionEvent;
-let defineInteractableHost: typeof import("../interactable-host.ts").defineInteractableHost;
+let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
+let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 const fetchCalls: FetchCall[] = [];
 
 before(async () => {
   dom = setupJsdom();
   installFetch();
-  await import("./requestable.ts");
-  await import("../revealable/revealable.ts");
-  ({ InteractionEvent: InteractionEventClass } = await import("../../interactable/interaction-event.ts"));
-  ({ defineInteractableHost } = await import("../interactable-host.ts"));
+  await import("@behaviors/requestable/requestable.ts");
+  await import("@behaviors/revealable/revealable.ts");
+  ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
+  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("div");
   defineInteractableHost("section");
 });

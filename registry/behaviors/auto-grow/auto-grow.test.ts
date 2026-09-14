@@ -1,14 +1,14 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
 
 before(async () => {
   dom = setupJsdom();
-  await import("../no-propagate/no-propagate.ts");
-  await import("./auto-grow.ts");
+  await import("@behaviors/no-propagate/no-propagate.ts");
+  await import("@behaviors/auto-grow/auto-grow.ts");
 });
 
 after(() => {

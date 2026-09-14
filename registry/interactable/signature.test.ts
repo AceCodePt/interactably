@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compileSignature } from "./signature.ts";
-import type { Ctor } from "./signature.ts";
+import { compileSignature } from "@interactable/signature.ts";
+import type { Ctor } from "@interactable/signature.ts";
 
 class Widget {
   name = "widget";

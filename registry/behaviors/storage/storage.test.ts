@@ -1,8 +1,8 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
-import { flush } from "../../../tests/jsdom.ts";
-import type { InteractionEvent } from "../../interactable/interaction-event.ts";
+import { flush } from "@tests/jsdom.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 const GLOBAL_KEYS = [
   "window",
@@ -28,13 +28,13 @@ before(async () => {
   for (const key of GLOBAL_KEYS) {
     if (key in win) (globalThis as unknown as Record<string, unknown>)[key] = win[key];
   }
-  await import("../no-propagate/no-propagate.ts");
-  await import("./storage.ts");
-  await import("../interactable-host.ts");
-  const host = await import("../interactable-host.ts");
+  await import("@behaviors/no-propagate/no-propagate.ts");
+  await import("@behaviors/storage/storage.ts");
+  await import("@behaviors/interactable-host.ts");
+  const host = await import("@behaviors/interactable-host.ts");
   host.defineInteractableHost("input");
   host.defineInteractableHost("div");
-  ({ InteractionEvent: InteractionEventClass } = await import("../../interactable/interaction-event.ts"));
+  ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
 });
 
 after(() => {
