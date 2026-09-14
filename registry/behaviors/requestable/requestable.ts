@@ -21,31 +21,39 @@ export const requestable = defineImplementation(
     verbs: { send: "undefined", abort: "undefined" },
   },
   (el, attrs) => {
-    let inflight: AbortController | undefined;
+    const inflight = new Set<AbortController>();
+    let latest: AbortController | undefined;
 
     const policy = (method: string): Policy =>
       attrs.concurrency ?? (method === "get" ? "latest" : "first");
 
-    const settle = (status?: "error"): void => {
-      inflight = undefined;
-      attrs.status = status;
+    const finish = (controller: AbortController, failed: boolean): void => {
+      if (!inflight.delete(controller)) return;
+      if (inflight.size > 0) return;
+      attrs.status = failed ? "error" : undefined;
       el.removeAttribute("aria-busy");
     };
 
     return {
       abort: () => {
-        inflight?.abort();
-        settle();
+        if (inflight.size === 0) return;
+        for (const controller of inflight) controller.abort();
+        inflight.clear();
+        attrs.status = undefined;
+        el.removeAttribute("aria-busy");
       },
       send: (e) => {
         const method = (attrs.method ?? "get").toLowerCase();
         const current = policy(method);
-        if (inflight !== undefined) {
+        if (inflight.size > 0) {
           if (current === "first") return;
-          if (current === "latest") inflight.abort();
+          if (current === "latest") {
+            for (const controller of inflight) controller.abort();
+          }
         }
         const controller = new AbortController();
-        inflight = controller;
+        inflight.add(controller);
+        if (current === "latest") latest = controller;
         attrs.status = "loading";
         el.setAttribute("aria-busy", "true");
 
@@ -54,17 +62,26 @@ export const requestable = defineImplementation(
           .then(async (response) => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const html = await response.text();
-            if (controller !== inflight) return;
+            if (current === "latest" && controller !== latest) {
+              finish(controller, false);
+              return;
+            }
             applySwap(el, attrs.swap, attrs.target, html);
-            settle();
+            finish(controller, false);
             if (attrs.after !== undefined && el.isConnected) {
               runPhrases(el, attrs.after, e.originalEvent);
             }
           })
           .catch((err: unknown) => {
-            if (isAbort(err)) return;
-            if (controller !== inflight) return;
-            settle("error");
+            if (isAbort(err)) {
+              finish(controller, false);
+              return;
+            }
+            if (current === "latest" && controller !== latest) {
+              finish(controller, false);
+              return;
+            }
+            finish(controller, true);
             if (attrs.error !== undefined && el.isConnected) {
               runPhrases(el, attrs.error, e.originalEvent);
             }

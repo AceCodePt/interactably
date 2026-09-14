@@ -146,7 +146,6 @@ export function defineInteractableHost(tag: Tag): void {
       private ensureImplementations(): void {
         this.didEnsure = false;
         const names = (this.getAttribute("implements") ?? "").split(/\s+/).filter((name) => name !== "");
-        const pending: Array<Promise<unknown>> = [];
         for (const name of names) {
           const def = getImplementationDef(name);
           if (def === undefined) {
@@ -158,22 +157,17 @@ export function defineInteractableHost(tag: Tag): void {
             console.error(`[Interactable] ${name} attaches to ${tags}; skipped on ${describeElement(this)}`);
             continue;
           }
-          pending.push(
-            ensureImplementation(this, name, def).then((implementation) => {
-              this._implementations.set(name, implementation);
-              implementation.connectedCallback?.();
-              this.wireImplementationHandlers(implementation);
-            }),
-          );
+          try {
+            const implementation = ensureImplementation(this, name, def);
+            this._implementations.set(name, implementation);
+            implementation.connectedCallback?.();
+            this.wireImplementationHandlers(implementation);
+          } catch (err) {
+            console.error(`[Interactable] ${name} failed to attach on ${describeElement(this)}`, err);
+          }
         }
-        if (pending.length === 0) {
-          this.didEnsure = true;
-          return;
-        }
-        void Promise.all(pending).then(() => {
-          this.didEnsure = true;
-          this.refreshAttributeObserver();
-        });
+        this.didEnsure = true;
+        this.refreshAttributeObserver();
       }
 
       private wireImplementationHandlers(implementation: ImplementationInstance): void {

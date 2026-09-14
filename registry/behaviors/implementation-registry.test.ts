@@ -96,11 +96,11 @@ test("ensureImplementation returns one instance per element and name", async () 
   el.setAttribute("registry-ensure-level", "3");
   const def = getImplementationDef("registry-ensure");
   assert.ok(def !== undefined);
-  const first = await ensureImplementation(el, "registry-ensure", def);
-  const second = await ensureImplementation(el, "registry-ensure", def);
+  const first = ensureImplementation(el, "registry-ensure", def);
+  const second = ensureImplementation(el, "registry-ensure", def);
   assert.strictEqual(first, second);
   const other = document.createElement("div");
-  const third = await ensureImplementation(other, "registry-ensure", def);
+  const third = ensureImplementation(other, "registry-ensure", def);
   assert.notStrictEqual(first, third);
 });
 

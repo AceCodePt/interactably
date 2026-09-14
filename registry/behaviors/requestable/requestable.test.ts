@@ -154,6 +154,44 @@ test("requestable-concurrency=all lets both run without aborting", async () => {
   assert.equal(fetchCalls[0]!.signal?.aborted, false);
 });
 
+test("requestable-concurrency=all applies every response, not just the last", async () => {
+  const el = await mount({
+    "requestable-url": "/api",
+    "requestable-concurrency": "all",
+  });
+  interact(el, "send");
+  interact(el, "send");
+  assert.equal(fetchCalls.length, 2);
+  assert.equal(fetchCalls[0]!.signal?.aborted, false);
+  assert.equal(fetchCalls[1]!.signal?.aborted, false);
+
+  fetchCalls[0]!.resolve(response(true, 200, "<b>first</b>"));
+  await flush();
+  assert.equal(el.innerHTML, "<b>first</b>");
+  assert.equal(el.hasAttribute("aria-busy"), true);
+
+  fetchCalls[1]!.resolve(response(true, 200, "<i>second</i>"));
+  await flush();
+  assert.equal(el.innerHTML, "<i>second</i>");
+  assert.equal(el.hasAttribute("aria-busy"), false);
+  assert.equal(el.hasAttribute("data-status"), false);
+});
+
+test("abort() under requestable-concurrency=all aborts every in-flight request", async () => {
+  const el = await mount({
+    "requestable-url": "/api",
+    "requestable-concurrency": "all",
+  });
+  interact(el, "send");
+  interact(el, "send");
+  interact(el, "abort");
+  assert.equal(fetchCalls[0]!.signal?.aborted, true);
+  assert.equal(fetchCalls[1]!.signal?.aborted, true);
+  assert.equal(el.hasAttribute("data-status"), false);
+  assert.equal(el.hasAttribute("aria-busy"), false);
+  await flush();
+});
+
 test("an out-of-set requestable-method is rejected before anything is sent", async () => {
   const el = await mount({ "requestable-url": "/api", "requestable-method": "nonsense" });
   const event = interact(el, "send");

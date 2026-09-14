@@ -7,7 +7,6 @@ let dom: JSDOM;
 let defineImplementation: typeof import("@behaviors/_implementation-definition.ts").defineImplementation;
 let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 let InteractionEvent: typeof import("@interactable/interaction-event.ts").InteractionEvent;
-let NotReadyError: typeof import("@behaviors/implementation-utils.ts").NotReadyError;
 const calls: string[] = [];
 
 before(async () => {
@@ -15,7 +14,6 @@ before(async () => {
   ({ defineImplementation } = await import("@behaviors/_implementation-definition.ts"));
   ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   ({ InteractionEvent } = await import("@interactable/interaction-event.ts"));
-  ({ NotReadyError } = await import("@behaviors/implementation-utils.ts"));
 
   defineImplementation(
     "stateful",
@@ -257,20 +255,19 @@ test("a tag mismatch is reported and that implements name is skipped", async (t)
   assert.equal(event.handled, false);
 });
 
-test("an interaction before didEnsure is reported as NotReadyError, never queued", async () => {
+test("an interaction right after insertion is handled synchronously, never queued", async () => {
   const receiver = hostElement("div", { id: "late", implements: "alpha" });
   document.body.appendChild(receiver);
 
   const early = dispatchInteraction(receiver, "go");
   assert.equal(early.handled, true);
-  assert.ok(early.error instanceof NotReadyError);
-  assert.deepEqual(calls, []);
+  assert.equal(early.error, undefined);
+  assert.deepEqual(calls, ["alpha.go"]);
 
-  await flush();
   const later = dispatchInteraction(receiver, "go");
   assert.equal(later.handled, true);
   assert.equal(later.error, undefined);
-  assert.deepEqual(calls, ["alpha.go"]);
+  assert.deepEqual(calls, ["alpha.go", "alpha.go"]);
 });
 
 test("handled, result and error channels", async () => {
@@ -364,4 +361,17 @@ test("a config attribute registered after the host was defined still reaches att
   host.setAttribute("late-config-events", "b");
   await flush();
   assert.deepEqual(lateCalls, ["late-config-events"]);
+});
+
+test("an implementation that throws at attach is logged and the host still becomes ready", async () => {
+  defineImplementation("boom-attach", { verbs: { go: "undefined" } }, () => {
+    throw new Error("boom");
+  });
+  const receiver = hostElement("div", { id: "boom", implements: "boom-attach alpha" });
+  document.body.appendChild(receiver);
+
+  const event = dispatchInteraction(receiver, "go");
+  assert.equal(event.handled, true);
+  assert.equal(event.error, undefined);
+  assert.deepEqual(calls, ["alpha.go"]);
 });

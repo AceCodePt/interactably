@@ -69,19 +69,17 @@ export function ensureImplementation(
   el: Element,
   name: string,
   def: NormalizedImplementationDef,
-): Promise<ImplementationInstance> {
-  return Promise.resolve().then(() => {
-    let map = instancesByElement.get(el);
-    if (map === undefined) {
-      map = new Map();
-      instancesByElement.set(el, map);
-    }
-    let implementation = map.get(name);
-    if (implementation === undefined) {
-      const attrs = bindAttributes(el, name, def) as Record<string, unknown>;
-      implementation = def.factory(el, attrs);
-      map.set(name, implementation);
-    }
-    return implementation;
-  });
+): ImplementationInstance {
+  let map = instancesByElement.get(el);
+  if (map === undefined) {
+    map = new Map();
+    instancesByElement.set(el, map);
+  }
+  let implementation = map.get(name);
+  if (implementation === undefined) {
+    const attrs = bindAttributes(el, name, def) as Record<string, unknown>;
+    implementation = def.factory(el, attrs);
+    map.set(name, implementation);
+  }
+  return implementation;
 }
