@@ -27,6 +27,13 @@ function hostElement(tag: string, attributes: Record<string, string>): HTMLEleme
   return el;
 }
 
+function dep(id: string, value: string): HTMLInputElement {
+  const input = document.createElement("input");
+  input.id = id;
+  input.value = value;
+  return input;
+}
+
 function interact(el: Element, verb: string, arg?: unknown): InteractionEvent {
   const event = new InteractionEventClass({
     verb,
@@ -180,4 +187,131 @@ test("inc reads the current value back off the element", async () => {
   input.value = "3";
   interact(input, "inc");
   assert.equal(input.value, "4");
+});
+
+test("modifiable-formula evaluates against #id references at fire time", async () => {
+  const price = dep("price", "2");
+  const qty = dep("qty", "3");
+  const total = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "#price * #qty + 1",
+  }) as HTMLOutputElement;
+  document.body.append(price, qty, total);
+  await flush();
+
+  assert.equal(total.textContent, "7");
+  assert.equal(total.dataset["value"], "7");
+
+  price.value = "4";
+  interact(total, "compute");
+  assert.equal(total.textContent, "13");
+  assert.equal(total.dataset["value"], "13");
+});
+
+test("compute writes the derived value without dispatching a synthetic input event", async () => {
+  const total = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "1 + 1",
+  }) as HTMLOutputElement;
+  document.body.appendChild(total);
+  await flush();
+
+  let inputs = 0;
+  total.addEventListener("input", () => inputs++);
+  interact(total, "compute");
+  assert.equal(total.textContent, "2");
+  assert.equal(inputs, 0);
+});
+
+test("a malformed formula writes the modifiable-invalid-value fallback", async () => {
+  const fallback = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "1 +",
+    "modifiable-invalid-value": "0",
+  }) as HTMLOutputElement;
+  const defaulted = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "1 +",
+  }) as HTMLOutputElement;
+  document.body.append(fallback, defaulted);
+  await flush();
+
+  assert.equal(fallback.textContent, "0");
+  assert.equal(defaulted.textContent, "Error");
+});
+
+test("sum(selector) adds matched elements and count(selector) counts them", async () => {
+  const root = document.createElement("div");
+  root.innerHTML = '<input class="amount" value="2.5"><input class="amount" value="3.25">';
+  const total = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "sum('.amount')",
+  }) as HTMLOutputElement;
+  const tally = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "count('.amount')",
+  }) as HTMLOutputElement;
+  document.body.append(root, total, tally);
+  await flush();
+
+  assert.equal(total.textContent, "5.75");
+  assert.equal(total.dataset["value"], "5.75");
+  assert.equal(tally.textContent, "2");
+});
+
+test("format(value, options) renders through Intl and keeps the raw number in data-value", async () => {
+  const root = document.createElement("div");
+  root.innerHTML = '<input class="amount" value="2.5"><input class="amount" value="3.25">';
+  const total = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "format(sum('.amount'), { style: 'currency', currency: 'USD' })",
+  }) as HTMLOutputElement;
+  document.body.append(root, total);
+  await flush();
+
+  assert.equal(total.textContent, "$5.75");
+  assert.equal(total.dataset["value"], "5.75");
+});
+
+test("format(value, { type: 'date' }) parses the reference as a date", async () => {
+  const joined = dep("joined", "2024-01-02");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "format(#joined, { type: 'date', dateStyle: 'medium' })",
+  }) as HTMLOutputElement;
+  document.body.append(joined, out);
+  await flush();
+
+  assert.equal(out.textContent, "Jan 2, 2024");
+});
+
+test("the formula supports parentheses, unary minus and min/max/floor/ceil/round", async () => {
+  const a = dep("a", "1");
+  const b = dep("b", "5");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "min(#a, #b) + round(2.6) * floor(2.7) - (1 + 1)",
+  }) as HTMLOutputElement;
+  document.body.append(a, b, out);
+  await flush();
+
+  assert.equal(out.textContent, "5");
+
+  const neg = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "-#a + 10",
+  }) as HTMLOutputElement;
+  document.body.appendChild(neg);
+  await flush();
+  assert.equal(neg.textContent, "9");
+});
+
+test("a missing #id dependency counts as zero", async () => {
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "#ghost + 5",
+  }) as HTMLOutputElement;
+  document.body.appendChild(out);
+  await flush();
+  assert.equal(out.textContent, "5");
 });

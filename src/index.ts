@@ -6,7 +6,6 @@ export { summable } from "@behaviors/summable/summable.ts";
 export { requestable } from "@behaviors/requestable/requestable.ts";
 export { attributable } from "@behaviors/attributable/attributable.ts";
 export { logger } from "@behaviors/logger/logger.ts";
-export { compute } from "@behaviors/compute/compute.ts";
 export { format } from "@behaviors/format/format.ts";
 export { elementCounter } from "@behaviors/element-counter/element-counter.ts";
 export { validatable } from "@behaviors/validatable/validatable.ts";
