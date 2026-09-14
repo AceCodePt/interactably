@@ -1,7 +1,7 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 interface FakeResponse {
   ok: boolean;
@@ -18,7 +18,7 @@ interface FetchCall {
 }
 
 let dom: JSDOM;
-let defineInteractableHost: typeof import("./interactable-host.ts").defineInteractableHost;
+let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 const fetchCalls: FetchCall[] = [];
 
@@ -62,11 +62,11 @@ const OUTER = `${FORM_OPEN}
 before(async () => {
   dom = setupJsdom();
   installFetch();
-  await import("./requestable/requestable.ts");
-  await import("./validatable/validatable.ts");
-  await import("./revealable/revealable.ts");
-  await import("./prevent-default/prevent-default.ts");
-  ({ defineInteractableHost } = await import("./interactable-host.ts"));
+  await import("@behaviors/requestable/requestable.ts");
+  await import("@behaviors/validatable/validatable.ts");
+  await import("@behaviors/revealable/revealable.ts");
+  await import("@behaviors/prevent-default/prevent-default.ts");
+  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("section");
   defineInteractableHost("div");
 });

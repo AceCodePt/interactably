@@ -1,10 +1,10 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom } from "../../tests/jsdom.ts";
-import { defineImplementation } from "./_implementation-definition.ts";
-import { defineInteractableHost } from "./interactable-host.ts";
-import { getImplementationDef } from "./implementation-registry.ts";
+import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { defineInteractableHost } from "@behaviors/interactable-host.ts";
+import { getImplementationDef } from "@behaviors/implementation-registry.ts";
 
 let dom: JSDOM;
 

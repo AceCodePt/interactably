@@ -1,18 +1,18 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
-let defineInteractableHost: typeof import("./interactable-host.ts").defineInteractableHost;
+let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 before(async () => {
   dom = setupJsdom();
-  await import("./modifiable/modifiable.ts");
-  await import("./dirtyable/dirtyable.ts");
-  await import("./listable/listable.ts");
-  await import("./summable/summable.ts");
-  ({ defineInteractableHost } = await import("./interactable-host.ts"));
+  await import("@behaviors/modifiable/modifiable.ts");
+  await import("@behaviors/dirtyable/dirtyable.ts");
+  await import("@behaviors/listable/listable.ts");
+  await import("@behaviors/summable/summable.ts");
+  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("button");
 });
 

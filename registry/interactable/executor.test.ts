@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
-import { clearPhraseState, runPhrases } from "./executor.ts";
-import { InteractionEvent } from "./interaction-event.ts";
+import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
+import { InteractionEvent } from "@interactable/interaction-event.ts";
 
 class FakeElement extends EventTarget {
   id: string;

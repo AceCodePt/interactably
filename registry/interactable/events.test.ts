@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { LEGACY_EVENTS_WITHOUT_IDL } from "./events.ts";
+import { LEGACY_EVENTS_WITHOUT_IDL } from "@interactable/events.ts";
 
 test("the legacy set is exported and is a Set", () => {
   assert.ok(LEGACY_EVENTS_WITHOUT_IDL instanceof Set);

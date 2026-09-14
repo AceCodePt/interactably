@@ -1,13 +1,13 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
 let dispose: (() => void) | undefined;
 let infoCount = 0;
-let defineImplementation: typeof import("../behaviors/_implementation-definition.ts").defineImplementation;
-let installAutoLoader: typeof import("./auto-loader.ts").installAutoLoader;
+let defineImplementation: typeof import("@behaviors/_implementation-definition.ts").defineImplementation;
+let installAutoLoader: typeof import("@utils/auto-loader.ts").installAutoLoader;
 
 before(async () => {
   dom = setupJsdom(
@@ -21,8 +21,8 @@ before(async () => {
     if (typeof args[0] === "string" && args[0].includes("auto-loader")) infoCount++;
     originalInfo(...args);
   };
-  ({ defineImplementation } = await import("../behaviors/_implementation-definition.ts"));
-  ({ installAutoLoader } = await import("./auto-loader.ts"));
+  ({ defineImplementation } = await import("@behaviors/_implementation-definition.ts"));
+  ({ installAutoLoader } = await import("@utils/auto-loader.ts"));
   defineImplementation(
     "demo",
     { tags: ["div"], config: { flag: "boolean | undefined" }, verbs: { go: "undefined" } },

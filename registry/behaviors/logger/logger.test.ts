@@ -1,21 +1,21 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../../tests/jsdom.ts";
-import type { InteractionEvent } from "../../interactable/interaction-event.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 let dom: JSDOM;
-let InteractionEventClass: typeof import("../../interactable/interaction-event.ts").InteractionEvent;
-let defineInteractableHost: typeof import("../interactable-host.ts").defineInteractableHost;
+let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
+let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 before(async () => {
   dom = setupJsdom();
-  await import("./logger.ts");
-  await import("../no-propagate/no-propagate.ts");
-  ({ defineInteractableHost } = await import("../interactable-host.ts"));
+  await import("@behaviors/logger/logger.ts");
+  await import("@behaviors/no-propagate/no-propagate.ts");
+  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("div");
   defineInteractableHost("button");
-  ({ InteractionEvent: InteractionEventClass } = await import("../../interactable/interaction-event.ts"));
+  ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
 });
 
 after(() => {

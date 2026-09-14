@@ -1,7 +1,7 @@
-import { parse } from "./parser.ts";
-import { matchesKey } from "./keys.ts";
-import { InteractionEvent } from "./interaction-event.ts";
-import type { Arg, Modifier, Phrase, Ref } from "./parser.ts";
+import { parse } from "@interactable/parser.ts";
+import { matchesKey } from "@interactable/keys.ts";
+import { InteractionEvent } from "@interactable/interaction-event.ts";
+import type { Arg, Modifier, Phrase, Ref } from "@interactable/parser.ts";
 
 const KEYBOARD_EVENT_TYPES = new Set(["keydown", "keyup"]);
 

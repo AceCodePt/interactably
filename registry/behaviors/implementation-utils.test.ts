@@ -1,8 +1,8 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom } from "../../tests/jsdom.ts";
-import { bindEvents, NotReadyError, valueOf } from "./implementation-utils.ts";
+import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
+import { bindEvents, NotReadyError, valueOf } from "@behaviors/implementation-utils.ts";
 
 let dom: JSDOM;
 

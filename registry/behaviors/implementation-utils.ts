@@ -1,4 +1,4 @@
-import { matchesKey } from "../interactable/keys.ts";
+import { matchesKey } from "@interactable/keys.ts";
 
 export interface ImplementationInstance {
   connectedCallback?(): void;

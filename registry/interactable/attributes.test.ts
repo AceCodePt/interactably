@@ -1,10 +1,10 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom } from "../../tests/jsdom.ts";
-import { bindAttributes } from "./attributes.ts";
-import type { AttributeBindings } from "./attributes.ts";
-import { compileSignature } from "./signature.ts";
+import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
+import { bindAttributes } from "@interactable/attributes.ts";
+import type { AttributeBindings } from "@interactable/attributes.ts";
+import { compileSignature } from "@interactable/signature.ts";
 
 let dom: JSDOM;
 

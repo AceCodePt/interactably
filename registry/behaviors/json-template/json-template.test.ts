@@ -1,14 +1,14 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
 
 before(async () => {
   dom = setupJsdom();
-  await import("./json-template.ts");
-  const host = await import("../interactable-host.ts");
+  await import("@behaviors/json-template/json-template.ts");
+  const host = await import("@behaviors/interactable-host.ts");
   host.defineInteractableHost("div");
   host.defineInteractableHost("button");
   host.defineInteractableHost("ul");

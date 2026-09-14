@@ -1,8 +1,8 @@
-import { defineInteractableHost } from "./interactable-host.ts";
-import { bindAttributes } from "../interactable/attributes.ts";
-import type { CompiledSignature } from "../interactable/signature.ts";
-import type { ImplementationInstance } from "./implementation-utils.ts";
-import type { Tag } from "./_implementation-definition.ts";
+import { defineInteractableHost } from "@behaviors/interactable-host.ts";
+import { bindAttributes } from "@interactable/attributes.ts";
+import type { CompiledSignature } from "@interactable/signature.ts";
+import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
+import type { Tag } from "@behaviors/_implementation-definition.ts";
 
 export interface AttributeSlot {
   raw: string;

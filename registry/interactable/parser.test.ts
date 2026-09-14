@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import type { TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { parse } from "./parser.ts";
+import { parse } from "@interactable/parser.ts";
 
 function errorsOf(t: TestContext) {
   return t.mock.method(console, "error");

@@ -25,7 +25,14 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@interactable/*": ["./registry/interactable/*"],
+      "@behaviors/*": ["./registry/behaviors/*"],
+      "@utils/*": ["./registry/utils/*"],
+      "@tests/*": ["./tests/*"]
+    }
   },
   "include": ["src", "registry", "scripts", "tests"]
 }

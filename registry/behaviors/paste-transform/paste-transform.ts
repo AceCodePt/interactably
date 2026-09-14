@@ -1,4 +1,4 @@
-import { defineImplementation } from "../_implementation-definition.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 
 export const pasteTransform = defineImplementation("paste-transform", {
   tags: ["input", "textarea"],

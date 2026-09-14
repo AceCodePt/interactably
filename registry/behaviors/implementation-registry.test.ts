@@ -1,15 +1,15 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom } from "../../tests/jsdom.ts";
-import { defineImplementation } from "./_implementation-definition.ts";
+import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import {
   allObservedAttributes,
   ensureImplementation,
   getImplementationDef,
   getObservedAttributes,
   registerImplementation,
-} from "./implementation-registry.ts";
+} from "@behaviors/implementation-registry.ts";
 
 let dom: JSDOM;
 

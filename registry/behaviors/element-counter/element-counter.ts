@@ -1,5 +1,5 @@
-import { defineImplementation } from "../_implementation-definition.ts";
-import { writeValue } from "../implementation-utils.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { writeValue } from "@behaviors/implementation-utils.ts";
 
 export const elementCounter = defineImplementation<
   undefined,

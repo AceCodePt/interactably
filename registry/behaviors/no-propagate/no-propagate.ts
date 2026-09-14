@@ -1,5 +1,5 @@
-import { defineImplementation } from "../_implementation-definition.ts";
-import { bindEvents } from "../implementation-utils.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { bindEvents } from "@behaviors/implementation-utils.ts";
 
 export const noPropagate = defineImplementation<undefined, { events: "string | undefined" }, {}, {}>(
   "no-propagate",

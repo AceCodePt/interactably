@@ -1,9 +1,9 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../../tests/jsdom.ts";
-import { derivedDefaults } from "./prevent-default.ts";
-import { defineInteractableHost } from "../interactable-host.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
+import { derivedDefaults } from "@behaviors/prevent-default/prevent-default.ts";
+import { defineInteractableHost } from "@behaviors/interactable-host.ts";
 
 let dom: JSDOM;
 

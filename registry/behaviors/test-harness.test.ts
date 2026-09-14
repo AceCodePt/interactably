@@ -1,20 +1,20 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../tests/jsdom.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
-let dispatchInteraction: typeof import("./test-harness.ts").dispatchInteraction;
-let fire: typeof import("./test-harness.ts").fire;
-let defineImplementation: typeof import("./_implementation-definition.ts").defineImplementation;
-let defineInteractableHost: typeof import("./interactable-host.ts").defineInteractableHost;
+let dispatchInteraction: typeof import("@behaviors/test-harness.ts").dispatchInteraction;
+let fire: typeof import("@behaviors/test-harness.ts").fire;
+let defineImplementation: typeof import("@behaviors/_implementation-definition.ts").defineImplementation;
+let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 const received: string[] = [];
 
 before(async () => {
   dom = setupJsdom();
-  ({ dispatchInteraction, fire } = await import("./test-harness.ts"));
-  ({ defineImplementation } = await import("./_implementation-definition.ts"));
-  ({ defineInteractableHost } = await import("./interactable-host.ts"));
+  ({ dispatchInteraction, fire } = await import("@behaviors/test-harness.ts"));
+  ({ defineImplementation } = await import("@behaviors/_implementation-definition.ts"));
+  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
 
   defineImplementation(
     "echoer",

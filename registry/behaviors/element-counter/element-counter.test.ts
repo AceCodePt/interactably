@@ -1,17 +1,17 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
-import { setupJsdom, teardownJsdom, flush } from "../../../tests/jsdom.ts";
-import type { InteractionEvent } from "../../interactable/interaction-event.ts";
+import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 let dom: JSDOM;
-let InteractionEventClass: typeof import("../../interactable/interaction-event.ts").InteractionEvent;
+let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
 
 before(async () => {
   dom = setupJsdom();
-  await import("../summable/summable.ts");
-  await import("./element-counter.ts");
-  ({ InteractionEvent: InteractionEventClass } = await import("../../interactable/interaction-event.ts"));
+  await import("@behaviors/summable/summable.ts");
+  await import("@behaviors/element-counter/element-counter.ts");
+  ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
 });
 
 after(() => {

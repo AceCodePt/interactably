@@ -47,12 +47,36 @@ const coreFiles = [
 const coreModuleIds = new Set(coreFiles.map((file) => path.join(root, file)));
 const coreSpecifier = "./behavior-fn-core.js";
 
+const aliasTargets = {
+  "@/*": "./src/*",
+  "@interactable/*": "./registry/interactable/*",
+  "@behaviors/*": "./registry/behaviors/*",
+  "@utils/*": "./registry/utils/*",
+  "@tests/*": "./tests/*",
+};
+
+function resolveAlias(source) {
+  for (const [alias, target] of Object.entries(aliasTargets)) {
+    const prefix = alias.slice(0, -1);
+    if (source.startsWith(prefix)) {
+      return path.join(root, target.slice(0, -1), source.slice(prefix.length));
+    }
+  }
+  return null;
+}
+
 function externalizeCore() {
   return {
     name: "externalize-core",
     resolveId(source, importer) {
-      if (importer === undefined || !source.startsWith(".")) return null;
-      const resolved = path.resolve(path.dirname(importer), source);
+      if (importer === undefined) return null;
+      let resolved;
+      if (source.startsWith(".")) {
+        resolved = path.resolve(path.dirname(importer), source);
+      } else {
+        resolved = resolveAlias(source);
+        if (resolved === null) return null;
+      }
       if (coreModuleIds.has(resolved)) return { id: coreSpecifier, external: true };
       return null;
     },
@@ -68,6 +92,7 @@ for (const name of implementations) {
 
 export default defineConfig([
   {
+    tsconfig: "./tsconfig.json",
     input: path.join(root, "src", "index.ts"),
     external: externals,
     output: {
@@ -76,6 +101,7 @@ export default defineConfig([
     },
   },
   {
+    tsconfig: "./tsconfig.json",
     input: path.join(root, "src", "core.ts"),
     external: externals,
     output: {
@@ -84,6 +110,7 @@ export default defineConfig([
     },
   },
   {
+    tsconfig: "./tsconfig.json",
     input: implementationInputs,
     external: externals,
     plugins: [externalizeCore()],

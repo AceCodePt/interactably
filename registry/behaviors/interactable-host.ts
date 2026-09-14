@@ -1,16 +1,16 @@
 import { defineAutoWebComponent } from "auto-wc";
 import type { Constructor } from "auto-wc";
-import { LEGACY_EVENTS_WITHOUT_IDL } from "../interactable/events.ts";
-import { clearPhraseState, runPhrases } from "../interactable/executor.ts";
-import type { InteractionEvent } from "../interactable/interaction-event.ts";
-import { NotReadyError } from "./implementation-utils.ts";
-import type { ImplementationInstance } from "./implementation-utils.ts";
-import type { Tag } from "./_implementation-definition.ts";
+import { LEGACY_EVENTS_WITHOUT_IDL } from "@interactable/events.ts";
+import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
+import { NotReadyError } from "@behaviors/implementation-utils.ts";
+import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
+import type { Tag } from "@behaviors/_implementation-definition.ts";
 import {
   allObservedAttributes,
   ensureImplementation,
   getImplementationDef,
-} from "./implementation-registry.ts";
+} from "@behaviors/implementation-registry.ts";
 
 export interface InteractableHost extends HTMLElement {
   didEnsure: boolean;

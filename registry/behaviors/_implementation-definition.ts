@@ -1,13 +1,13 @@
 import { SUPPORTED_KEYWORDS, dslString } from "tsyntax";
 import type { DSLInfer, DSLValidate } from "tsyntax";
-import { compileSignature } from "../interactable/signature.ts";
-import type { CompiledSignature, Ctor, Sig } from "../interactable/signature.ts";
-import type { InteractionEvent } from "../interactable/interaction-event.ts";
-import type { ImplementationInstance } from "./implementation-utils.ts";
-import { registerImplementation } from "./implementation-registry.ts";
-import type { NormalizedImplementationDef } from "./implementation-registry.ts";
+import { compileSignature } from "@interactable/signature.ts";
+import type { CompiledSignature, Ctor, Sig } from "@interactable/signature.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
+import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
+import { registerImplementation } from "@behaviors/implementation-registry.ts";
+import type { NormalizedImplementationDef } from "@behaviors/implementation-registry.ts";
 
-export type { Ctor, Sig } from "../interactable/signature.ts";
+export type { Ctor, Sig } from "@interactable/signature.ts";
 
 export type Tag = keyof HTMLElementTagNameMap;
 

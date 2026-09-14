@@ -1,5 +1,5 @@
-import { defineInteractableHost } from "../behaviors/interactable-host.ts";
-import type { Tag } from "../behaviors/_implementation-definition.ts";
+import { defineInteractableHost } from "@behaviors/interactable-host.ts";
+import type { Tag } from "@behaviors/_implementation-definition.ts";
 
 // The auto-loader is a prototyping convenience, not a production dependency.
 // It watches for elements carrying `implements` or any `on-*` attribute and

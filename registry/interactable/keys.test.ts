@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { matchesKey } from "./keys.ts";
+import { matchesKey } from "@interactable/keys.ts";
 
 function keyEvent(key: string): KeyboardEvent {
   return { key } as KeyboardEvent;
