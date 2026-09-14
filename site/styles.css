@@ -62,6 +62,8 @@
 
 * {
   box-sizing: border-box;
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
 }
 
 html {
@@ -596,9 +598,7 @@ code, pre, kbd {
 }
 
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
+  display: inline-block;
   font: inherit;
   font-weight: 600;
   font-size: 0.98rem;
