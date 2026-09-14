@@ -1,7 +1,7 @@
 import { parse } from "@interactable/parser.ts";
 import { matchesKey } from "@interactable/keys.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
-import type { Arg, Modifier, Phrase, Ref } from "@interactable/parser.ts";
+import type { Arg, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
 
 const KEYBOARD_EVENT_TYPES = new Set(["keydown", "keyup"]);
 
@@ -63,8 +63,8 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
 
   const execute = (): void => {
     try {
-      const completed = runChain(source, phrase, ev);
-      if (completed && phrase.modifiers.some((m) => m.kind === "once")) {
+      const result = runChain(source, phrase, ev);
+      if (result.outcome === "completed" && !result.aborted && phrase.modifiers.some((m) => m.kind === "once")) {
         state.spentOnce.add(key);
       }
     } catch (err) {
@@ -86,20 +86,55 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
   }
 }
 
-function runChain(source: Element, phrase: Phrase, ev: Event): boolean {
-  const receiver = resolveRef(phrase.ref, source);
-  if (receiver === null) {
-    logOnce(source, `receiver ${describeRef(phrase.ref)} not found; phrase skipped`);
-    return false;
+type Outcome = "completed" | "guard" | "failed";
+
+interface ChainResult {
+  outcome: Outcome;
+  aborted: boolean;
+}
+
+function runChain(source: Element, phrase: Phrase, ev: Event): ChainResult {
+  const first: Unit = { ref: phrase.ref, calls: phrase.calls };
+  if (phrase.operator === undefined) return runUnit(source, first, ev);
+
+  const units: Unit[] = [first, ...(phrase.rest ?? [])];
+  let aborted = false;
+
+  if (phrase.operator === "&&") {
+    for (const unit of units) {
+      const result = runUnit(source, unit, ev);
+      if (result.outcome === "guard") aborted = true;
+      if (result.outcome !== "completed") return { outcome: result.outcome, aborted };
+    }
+    return { outcome: "completed", aborted };
   }
 
-  for (const call of phrase.calls) {
+  for (const unit of units) {
+    const result = runUnit(source, unit, ev);
+    if (result.outcome === "completed") return { outcome: "completed", aborted };
+    if (result.outcome === "guard") {
+      aborted = true;
+      continue;
+    }
+    return { outcome: "failed", aborted };
+  }
+  return { outcome: "guard", aborted: true };
+}
+
+function runUnit(source: Element, unit: Unit, ev: Event): ChainResult {
+  const receiver = resolveRef(unit.ref, source);
+  if (receiver === null) {
+    logOnce(source, `receiver ${describeRef(unit.ref)} not found; phrase skipped`);
+    return { outcome: "failed", aborted: false };
+  }
+
+  for (const call of unit.calls) {
     let arg: unknown;
     try {
       arg = resolveArg(call.arg, source);
     } catch (err) {
       logOnce(source, `argument for ${call.verb}(): ${(err as Error).message}; phrase skipped`);
-      return false;
+      return { outcome: "failed", aborted: false };
     }
 
     const event = new InteractionEvent({ verb: call.verb, arg, source, originalEvent: ev });
@@ -107,15 +142,15 @@ function runChain(source: Element, phrase: Phrase, ev: Event): boolean {
 
     if (!event.handled) {
       logOnce(source, `no implementation on ${describeElement(receiver)} handles ${call.verb}()`);
-      return false;
+      return { outcome: "failed", aborted: false };
     }
     if (event.error !== undefined) {
       logOnce(source, `${call.verb}() on ${describeElement(receiver)} threw: ${describeError(event.error)}`);
-      return false;
+      return { outcome: "failed", aborted: false };
     }
-    if (event.defaultPrevented) return false;
+    if (event.defaultPrevented) return { outcome: "guard", aborted: true };
   }
-  return true;
+  return { outcome: "completed", aborted: false };
 }
 
 function resolveRef(ref: Ref, source: Element): Element | null {

@@ -201,3 +201,64 @@ test("parse results are cached by attribute string", () => {
   const other = parse("#pop.show().focus()");
   assert.notStrictEqual(other, first);
 });
+
+test("&& and || separate top-level units", () => {
+  const [and] = parse("#a.show() && #b.hide()");
+  assert.ok(and);
+  assert.equal(and.operator, "&&");
+  assert.deepEqual(and.ref, { kind: "id", id: "a" });
+  assert.deepEqual(and.calls, [{ verb: "show" }]);
+  assert.deepEqual(and.rest, [{ ref: { kind: "id", id: "b" }, calls: [{ verb: "hide" }] }]);
+
+  const [or] = parse("#f.validate().send() || #alert.show()");
+  assert.ok(or);
+  assert.equal(or.operator, "||");
+  assert.deepEqual(or.ref, { kind: "id", id: "f" });
+  assert.deepEqual(or.calls.map((c) => c.verb), ["validate", "send"]);
+  assert.deepEqual(or.rest, [{ ref: { kind: "id", id: "alert" }, calls: [{ verb: "show" }] }]);
+
+  const [single] = parse("#a.show()");
+  assert.ok(single);
+  assert.equal(single.operator, undefined);
+  assert.equal(single.rest, undefined);
+});
+
+test("operators may switch receivers and accept this", () => {
+  const [phrase] = parse("this.validate().send() || #alert.show()");
+  assert.ok(phrase);
+  assert.equal(phrase.operator, "||");
+  assert.deepEqual(phrase.ref, { kind: "this" });
+  assert.deepEqual(phrase.rest, [{ ref: { kind: "id", id: "alert" }, calls: [{ verb: "show" }] }]);
+});
+
+test("operators are not recognized inside strings or argument parens/braces", () => {
+  const [stringy] = parse("#x.set('a && b')");
+  assert.ok(stringy);
+  assert.equal(stringy.operator, undefined);
+  assert.deepEqual(stringy.calls[0]!.arg, { kind: "string", value: "a && b" });
+
+  const [objecty] = parse("#total.sum({root: #list, select: '.amount || qty'})");
+  assert.ok(objecty);
+  assert.equal(objecty.operator, undefined);
+  assert.deepEqual(objecty.calls[0]!.arg, {
+    kind: "object",
+    fields: [
+      { name: "root", value: { kind: "ref", ref: { kind: "id", id: "list" } } },
+      { name: "select", value: { kind: "string", value: ".amount || qty" } },
+    ],
+  });
+});
+
+test("mixing && and || in one phrase is a parse error", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("#a.show() && #b.hide() || #c.show()"), []);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("cannot mix && and ||"));
+});
+
+test("modifiers stay phrase-wide across units", () => {
+  const [phrase] = parse("#a.validate().send() || #alert.show().once()");
+  assert.ok(phrase);
+  assert.deepEqual(phrase.modifiers, [{ kind: "once" }]);
+  assert.deepEqual(phrase.rest, [{ ref: { kind: "id", id: "alert" }, calls: [{ verb: "show" }] }]);
+});

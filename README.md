@@ -91,13 +91,16 @@ One attribute per interaction; the value is the phrase language.
 <button on-click="#pb.hide(); #pc.hide(); #pa.show()">
 <button on-click="#note.transform({mode: 'upper', shift: 2})">
 <button on-click="#list.removeRow(this)">
+<form   on-submit="#order.validate().send() || #alert.show()">
+<input  on-change="#form.validate() && #hint.show()">
 ```
 
 ### Grammar
 
 ```
 value     := phrase (';' phrase)*
-phrase    := [key ':'] ref ('.' call)+ ('.' modifier)*
+phrase    := [key ':'] unit (('&&' | '||') unit)*
+unit      := ref ('.' call)+ ('.' modifier)*
 ref       := '#'id | this
 call      := verb '(' [arg | object] ')'
 arg       := number | 'string' | true | false | ref | read
@@ -115,6 +118,8 @@ modifier  := debounce(ms) | throttle(ms) | once()
 | Self | `this.reset()` | The element the phrase was read from (the trigger for `on-*`) |
 | Chain | `#pop.show().focus()` | `.show()` then `.focus()` on the same receiver, in order |
 | Independent | `#pb.hide(); #pa.show()` | Two phrases that run regardless of each other |
+| And | `#form.validate() && #hint.show()` | `.validate()` then, only if it completed, `#hint.show()` — possibly on another receiver |
+| Or | `#form.validate().send() \|\| #alert.show()` | `#alert.show()` only if a guard aborted the first unit |
 | Scalar arg | `#qty.inc(5)` | Numbers, `'strings'`, `true` / `false` |
 | Element arg | `#list.removeRow(this)` | A ref resolves to the element at fire time |
 | Property read | `#preview.set(this.value)` | `value` / `checked` / `valueAsNumber`, the platform's own types |
@@ -131,11 +136,11 @@ modifier  := debounce(ms) | throttle(ms) | once()
 
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`. Class or attribute selectors are never receivers.
-3. **One receiver per phrase.** Two elements is two phrases: `#a.hide(); #b.hide()`. There is no group form.
+3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form: `#a.hide(); #b.hide()` is still two phrases.
 4. **Keys are legal only under `on-keydown` / `on-keyup`**, one per phrase. Two keys is two phrases: `enter: #f.send(); numpadenter: #f.send()`. Names match `KeyboardEvent.key` case-insensitively; `space` means `" "`.
 5. **Modifiers trail and apply to the whole phrase.** Order is normalized to: key filter → throttle/debounce → chain → once.
-6. **`;` is independent, `.` is sequential and abortable.** A chain stops if a verb's event is `preventDefault()`-ed, if the verb threw, or if no implementation owns the verb.
-7. **`once()` is spent on completion**, not on start — a chain stopped by a guard, an error or an unowned verb leaves the phrase live. Chains are synchronous, so "completion" is unambiguous.
+6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops if a verb's event is `preventDefault()`-ed, if the verb threw, or if no implementation owns the verb. `&&` runs the next unit only if the previous one completed; `||` runs it only if the previous one was stopped by a guard's `preventDefault()`. An error or unowned verb stops both — `||` fires only on a guard abort. One phrase is all `&&` or all `||`; mixing is a parse error.
+7. **`once()` is spent on completion**, not on start — a chain stopped by a guard, an error or an unowned verb leaves the phrase live, and so does a guard-aborted phrase whose `||` fallback ran. Chains are synchronous, so "completion" is unambiguous.
 8. **References are late-bound.** `#id`, `this` and reads resolve at fire time (after any debounce), never at parse time.
 9. **One argument per verb.** A string signature takes one scalar (`set(5)`); a record signature takes one object literal (`setAttr({name: 'aria-expanded', value: 'true'})`); `"undefined"` takes none. Two bare arguments is a grammar error.
 10. **Exactly three properties may be read off a ref** — `value`, `checked`, `valueAsNumber` — with the platform's own types, no coercion. `this.parentElement` and friends are not legal; relative navigation lives in implementation code.
@@ -474,14 +479,16 @@ DOM event on the trigger (passive listener bound in connectedCallback)
   → runPhrases(this, phrases, ev)
       → key filter; drop phrases whose once() is spent
       → throttle/debounce (timer keyed by element + attribute + phrase index)
-      → resolve the receiver (#id → getElementById, this → the source); missing → console.error, skip phrase
+      → run the units in order (one unit, or all `&&` / all `||`)
+          resolve the unit's receiver (#id → getElementById, this → the source); missing → console.error, stop the phrase
           for each link: resolve arg (scalar, or object literal field by field) → dispatch InteractionEvent
             · host: find the implementation owning the verb → e.handled = true
             · host: validate arg against the signature, call the verb — both inside try/catch → e.error on throw
             · executor, after dispatch:  !e.handled → console.error "no implementation on <receiver> handles verb()", stop
                                           e.error    → console.error once with receiver and verb, stop
-                                          e.defaultPrevented → stop, quiet
-      → once() spent when every link ran and none stopped the chain
+                                          e.defaultPrevented → stop the unit, quiet
+          `&&`: next unit only if this one completed; `||`: next unit only if this one was guard-aborted
+      → once() spent when the phrase completed without any guard abort
 ```
 
 - **Nested triggers behave like nested `onclick`.** A click on a button inside a `<div on-click>` fires the button's phrase, then bubbles and fires the div's. No implicit innermost-wins; suppression is explicit via `no-propagate` on the inner element.
@@ -600,16 +607,17 @@ Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the 
       requestable-target="#receipt"
       requestable-after="#receipt.show(); #alert.hide()"
       requestable-error="#alert.show()"
-      on-submit="this.validate().send()">
+      on-submit="this.validate().send() || #validate-alert.show()">
   <input name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
 
 <section is="interactable-section" id="receipt" implements="revealable" hidden></section>
 <div     is="interactable-div"     id="alert"   implements="revealable" hidden role="alert">Couldn't place the order.</div>
+<div     is="interactable-div"     id="validate-alert" implements="revealable" hidden role="alert">Please check the quantity.</div>
 ```
 
-The form is the receiver of both verbs because a phrase has one receiver, and it is the right one: the form validates, sends, and knows how to serialise itself (`new FormData(el)`). The trigger is `on-submit`, not a click on the button, so Enter in the field and the button produce the same one event. `prevent-default` with no config derives `submit` from `<form>`.
+The form is the receiver of both `validate()` and `send()` in the first unit; `||` switches to `#validate-alert` only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (`new FormData(el)`). The trigger is `on-submit`, not a click on the button, so Enter in the field and the button produce the same one event. `prevent-default` with no config derives `submit` from `<form>`.
 
 `novalidate` is load-bearing: without it the browser's interactive validation runs first and, for an invalid form, never fires `submit` at all. `novalidate` disables only that interactive step; the constraint API stays, so `reportValidity()` still shows the native bubble. The phrase decides *when* validation happens; the platform still decides *what* valid means.
 
@@ -663,7 +671,7 @@ The core of `requestable` (config and swap details elided):
 **What each failure path does:**
 
 - **Happy path.** `submit` → `validate` passes → `send` starts the POST (`data-status="loading"`, `aria-busy="true"`), returns. Chain complete, two dispatches, well under a frame. On 200, the response swaps into `#receipt`, then `#receipt.show(); #alert.hide()` runs.
-- **Validation fails.** Because of `novalidate` the `submit` event fires anyway; `reportValidity()` shows the browser's bubble and returns false, the verb calls `e.preventDefault()`, the executor stops before `send`. Nothing logged, no request.
+- **Validation fails.** Because of `novalidate` the `submit` event fires anyway; `reportValidity()` shows the browser's bubble and returns false, the verb calls `e.preventDefault()`, the executor stops before `send` and runs the `||` branch instead: `#validate-alert.show()`. Nothing logged, no request.
 - **Double submit.** The second `submit` sees `inflight` and the POST policy is `first`, so `send` returns. The button was already inert from `form[aria-busy="true"] button { pointer-events: none }`.
 - **Server 500.** `settle("error")`, `data-status="error"`, `#alert.show()` runs. Values kept, button re-enabled, the user retries.
 - **A verb throws.** The host catches, sets `e.error`, the executor logs once and stops that chain. `#alert.hide()` is a separate `;` phrase and still runs — that is what `;` promises.
@@ -705,6 +713,7 @@ The short versions of the decisions behind the design. The full argument for eac
 - **`#id.verb(arg)` is member access** and semantically honest: the element has `show` because it implements `revealable`. It completes from the left and is a shape models produce reliably.
 - **One argument per verb**: a scalar or one object literal. Positional lists were rejected because schema order is invisible in HTML — inserting an argument in the middle would silently re-bind every call site. A signature change is a loud parse error instead.
 - **`;` independent, `.` sequential and abortable** — two separators, two meanings, which is what justifies keeping both.
+- **`&&` / `||` continue across receivers, and `||` is guard-only.** A guard's `preventDefault()` is the one stop the phrase can observe synchronously, so it is the only stop `||` reacts to; errors and unowned verbs are bugs and stay loud. `&&` is the success branch. They exist because validation failure was otherwise a dead end — sibling `;` phrases run regardless and no verb can observe another's abort. One operator per phrase keeps precedence and associativity out of the grammar.
 - **`once()` spent on completion** so `validate().send().once()` means "send once, after validation passes", not "after the first attempt".
 - **No class or selector receivers.** Classes are global; scoping is a selector language; a selector language is jQuery. Containers + scoped selector *arguments* cover the dynamic-set case with a 1:1 receiver graph.
 - **Triggers are hosts, not delegated.** One place decides anything about an element. Cost: `is=` on every trigger (or the auto-loader), and the Safari polyfill covers more elements.
@@ -733,7 +742,8 @@ Shadow DOM (events are non-composed; receivers are document ids) · modifier key
 ```
 attribute := 'on-' event-type
 value     := phrase (';' phrase)*
-phrase    := [key ':'] ref ('.' call)+ ('.' modifier)*
+phrase    := [key ':'] unit (('&&' | '||') unit)*
+unit      := ref ('.' call)+ ('.' modifier)*
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
 arg       := number | "'" string "'" | 'true' | 'false' | ref | read
@@ -743,7 +753,7 @@ field     := name ':' arg
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'
 ```
 
-Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`. `name` is an identifier. `this` is a keyword; an element with `id="this"` is addressed as `#this`. Which of `arg` / `object` / nothing a call accepts is decided by the verb's signature, not by the grammar.
+Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`. `name` is an identifier. `this` is a keyword; an element with `id="this"` is addressed as `#this`. `&&` and `||` are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of `arg` / `object` / nothing a call accepts is decided by the verb's signature, not by the grammar.
 
 **Signature language** (values in `config`, `state` and `verbs`): a **slot** is either a tsyntax scalar DSL string (`string`, `number`, `bigint`, `boolean`, `undefined`, numeric and quoted literals, template literals, `|` unions) or an element constructor (`HTMLElement`, `HTMLTemplateElement`, …). A verb signature is one slot or a flat record of slots; an attribute signature is one string slot. A record key whose slot admits `undefined` may be omitted from the object literal; any other key is required.
 
