@@ -1,7 +1,6 @@
 {
   "name": "interactably",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "A trigger grammar and host for customized built-in web components.",
   "type": "module",
   "main": "./dist/interactably.js",
@@ -12,8 +11,30 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/interactably.js"
     },
-    "./dist/cdn/*.js": "./dist/cdn/*.js",
-    "./dist/cdn/*": "./dist/cdn/*.js"
+    "./cdn/*": {
+      "types": "./dist/cdn/*.d.ts",
+      "import": "./dist/cdn/*.js"
+    },
+    "./dist/cdn/*": {
+      "types": "./dist/cdn/*.d.ts",
+      "import": "./dist/cdn/*.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "dist/cdn/*.js",
+    "dist/interactably.js"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AceCodePt/interactably.git"
+  },
+  "homepage": "https://acecodept.github.io/interactably/",
+  "bugs": {
+    "url": "https://github.com/AceCodePt/interactably/issues"
   },
   "files": [
     "dist"
