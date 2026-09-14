@@ -21,6 +21,8 @@ const GLOBAL_KEYS = [
   "Node",
   "FormData",
   "MutationObserver",
+  "localStorage",
+  "sessionStorage",
   "Event",
   "CustomEvent",
   "KeyboardEvent",
@@ -28,7 +30,7 @@ const GLOBAL_KEYS = [
 ] as const;
 
 export function setupJsdom(html = "<!doctype html><html><body></body></html>"): JSDOM {
-  const dom = new JSDOM(html, { runScripts: "outside-only" });
+  const dom = new JSDOM(html, { runScripts: "outside-only", url: "http://localhost/" });
   const win = dom.window as unknown as Record<string, unknown>;
   for (const key of GLOBAL_KEYS) {
     if (key in win) (globalThis as unknown as Record<string, unknown>)[key] = win[key];

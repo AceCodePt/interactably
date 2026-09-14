@@ -173,6 +173,102 @@ button:hover {
   border: 1px solid #f5c6c6;
 }
 
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  resize: none;
+}
+
+#note {
+  margin-bottom: 0.75rem;
+}
+
+.swatch {
+  display: inline-block;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: #f1f0ec;
+  color: var(--fg);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.swatch[data-theme="dark"] {
+  background: #1c1c1e;
+  color: #f7f7f5;
+}
+
+.swatch[data-theme="light"] {
+  background: #f1f0ec;
+  color: var(--fg);
+}
+
+.swatch[data-bordered] {
+  border-color: var(--accent);
+}
+
+#signup .success {
+  display: none;
+  margin: 0.5rem 0 0;
+  color: #15803d;
+}
+
+#signup[data-signed="true"] .success {
+  display: block;
+}
+
+.member {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.member:last-child {
+  border-bottom: 0;
+}
+
+.member h3 {
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+}
+
+.member p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+details {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  background: #faf8ff;
+}
+
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  max-width: 26rem;
+}
+
+dialog::backdrop {
+  background: rgba(28, 28, 30, 0.35);
+}
+
+[popover] {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  max-width: 22rem;
+}
+
 .is-dirty {
   outline: 2px solid #d97706;
   outline-offset: 2px;

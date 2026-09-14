@@ -201,6 +201,94 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   click(toggle);
   assert.equal(panel.hidden, true);
 
+  const consoleLogs: string[] = [];
+  const originalLog = console.log;
+  console.log = (...args: unknown[]) => {
+    consoleLogs.push(args.map(String).join(" "));
+  };
+  t.after(() => {
+    console.log = originalLog;
+  });
+
+  const mirror = byId("mirror") as HTMLOutputElement;
+  const typer = byId("typer") as HTMLInputElement;
+  typer.value = "hello";
+  typer.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(mirror.textContent, "…", "on-input is debounced: the mirror lags the keystroke");
+  await new Promise((resolve) => setTimeout(resolve, 350));
+  assert.equal(mirror.textContent, "hello", "the debounced phrase ran after the quiet period");
+  typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  assert.equal(typer.value, "", "escape: this.clear() empties the field");
+  typer.value = "echo";
+  typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+  assert.equal(mirror.textContent, "echo", "enter: #mirror.set(this.value) fires without debounce");
+
+  const tip = byId("tip");
+  const tipButton = byId("tip-button");
+  assert.equal(tip.hidden, true);
+  click(tipButton);
+  assert.equal(tip.hidden, false, "first click toggles the tip open");
+  click(tipButton);
+  assert.equal(tip.hidden, false, "once() is spent: the second click is a no-op");
+
+  const swatch = byId("swatch") as HTMLElement;
+  click(byId("swatch-dark"));
+  assert.equal(swatch.dataset["theme"], "dark", "setAttr({name, value}) writes the attribute");
+  click(byId("swatch-border"));
+  assert.equal(swatch.hasAttribute("data-bordered"), true, "toggleAttr flips the attribute on");
+  click(byId("swatch-border"));
+  assert.equal(swatch.hasAttribute("data-bordered"), false, "toggleAttr flips the attribute off");
+  click(byId("swatch-clear"));
+  assert.equal(swatch.hasAttribute("data-theme"), false, "removeAttr removes the attribute");
+  click(byId("swatch-log"));
+  assert.ok(consoleLogs.some((line) => line.includes("button clicked")), "logger prints from a phrase");
+
+  const note = byId("note") as HTMLTextAreaElement;
+  assert.equal(note.style.overflowY, "hidden", "auto-grow manages the overflow");
+  note.value = "typed note";
+  note.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(note.classList.contains("is-dirty"), true, "dirtyable marks the edited field");
+  assert.equal(localStorage.getItem("interactably-demo-note"), "typed note", "storable persists on input");
+  note.value = "clean";
+  click(byId("note-clean"));
+  assert.equal(note.classList.contains("is-dirty"), false, "markClean() re-baselines the dirty state");
+  click(byId("note-forget"));
+  assert.equal(localStorage.getItem("interactably-demo-note"), null, "storable.clear() drops the saved value");
+
+  const consent = byId("consent");
+  assert.equal(consent.hidden, true, "the age gate starts closed");
+  const age = byId("age") as HTMLInputElement;
+  age.value = "18";
+  age.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(consent.hidden, false, "condition fires show() when the watched value crosses the threshold");
+
+  const faq = byId("faq") as HTMLDetailsElement;
+  assert.equal(faq.open, false);
+  click(byId("faq-toggle"));
+  assert.equal(faq.open, true, "revealable drives <details>.open");
+  assert.equal(byId("faq-toggle").getAttribute("aria-expanded"), "true");
+
+  const signed = byId("signup");
+  assert.equal(signed.hasAttribute("data-signed"), false);
+  const signup = byId("signup") as HTMLFormElement;
+  signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  assert.equal(signup.hasAttribute("data-signed"), false, "validate() stops the chain when the form is invalid");
+  const email = signup.querySelector("input") as HTMLInputElement;
+  email.value = "you@example.com";
+  signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  assert.equal(signup.getAttribute("data-signed"), "true", "validate() passes and setAttr() runs");
+
+  const members = document.querySelectorAll(".member");
+  assert.equal(members.length, 3, "json-template renders one article per item");
+  assert.equal(members[0]!.querySelector("h3")!.textContent, "Ada");
+
+  consoleLogs.length = 0;
+  click(byId("bubbles-btn"));
+  assert.equal(consoleLogs.length, 2, "a plain inner click bubbles to the outer trigger");
+  consoleLogs.length = 0;
+  click(byId("no-propagate-btn"));
+  assert.equal(consoleLogs.length, 1, "no-propagate stops the inner click from reaching the outer trigger");
+
   const form = byId("order") as HTMLFormElement;
   form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   assert.equal(fetchCalls.length, 1);

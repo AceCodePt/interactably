@@ -74,6 +74,170 @@
       </section>
     </section>
 
+    <section class="card" aria-labelledby="grammar-title">
+      <h2 id="grammar-title">Grammar playground</h2>
+      <p class="note">
+        One <code>on-*</code> value can carry several phrases (<code>;</code>), a key filter, and a
+        trailing modifier. Here <code>on-input</code> debounces <code>#mirror</code>,
+        <code>on-keydown</code> filters <code>enter</code> and <code>escape</code>, and
+        <code>once()</code> spends the tip after the chain completes.
+      </p>
+      <div class="row">
+        <label>Type
+          <input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
+                 on-input="#mirror.set(this.value).debounce(300)"
+                 on-keydown="enter: #mirror.set(this.value); escape: this.clear()">
+        </label>
+        <output is="interactable-output" id="mirror" implements="modifiable">&hellip;</output>
+      </div>
+      <button is="interactable-button" id="tip-button" type="button" on-click="#tip.toggle().once()">Toggle tip (once)</button>
+      <section is="interactable-section" id="tip" implements="revealable" hidden>
+        This sentence appears only the first time the button completes its chain.
+      </section>
+    </section>
+
+    <section class="card" aria-labelledby="attr-title">
+      <h2 id="attr-title">Attribute playground</h2>
+      <p class="note">
+        <code>attributable</code> writes attributes: <code>setAttr({name, value})</code> takes an object
+        literal, while <code>toggleAttr</code> and <code>removeAttr</code> take a scalar. The last button
+        uses <code>logger</code> to print from a phrase &mdash; open the console.
+      </p>
+      <div class="row">
+        <button is="interactable-button" id="swatch-dark" type="button"
+                on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})">Dark</button>
+        <button is="interactable-button" id="swatch-light" type="button"
+                on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})">Light</button>
+        <button is="interactable-button" id="swatch-border" type="button"
+                on-click="#swatch.toggleAttr('data-bordered')">Toggle border</button>
+        <button is="interactable-button" id="swatch-clear" type="button"
+                on-click="#swatch.removeAttr('data-theme')">Clear theme</button>
+        <button is="interactable-button" id="swatch-log" type="button"
+                on-click="#swatch.log('button clicked')">Log</button>
+      </div>
+      <div is="interactable-div" id="swatch" implements="attributable logger" data-theme="light">Swatch</div>
+    </section>
+
+    <section class="card" aria-labelledby="note-title">
+      <h2 id="note-title">Auto-growing note</h2>
+      <p class="note">
+        <code>auto-grow</code> tracks the content height, <code>dirtyable</code> outlines the field while it
+        differs from the value it connected with, <code>storable</code> persists it to
+        <code>localStorage</code>, and <code>paste-transform</code> collapses runs of whitespace on paste.
+      </p>
+      <textarea is="interactable-textarea" id="note"
+                implements="auto-grow dirtyable storable paste-transform"
+                storable-key="interactably-demo-note" rows="2"
+                paste-transform-patterns="\s+" paste-transform-replaces=" "
+                placeholder="Type or paste some text&hellip;"></textarea>
+      <div class="row">
+        <button is="interactable-button" id="note-clean" type="button" on-click="#note.markClean()">Mark clean</button>
+        <button is="interactable-button" id="note-forget" type="button" on-click="#note.clear()">Forget saved value</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="cond-title">
+      <h2 id="cond-title">Conditional reveal</h2>
+      <p class="note">
+        <code>condition</code> watches another element and fires a verb when the comparison holds:
+        <code>condition-watch</code> / <code>condition-on</code> / <code>condition-op</code> /
+        <code>condition-value</code> &rarr; <code>condition-verb</code> on <code>condition-target</code>.
+      </p>
+      <label>Age
+        <input id="age" type="number" value="17" min="0">
+      </label>
+      <div is="interactable-div" implements="condition"
+           condition-watch="age" condition-on="value" condition-op=">=" condition-value="18"
+           condition-verb="show" condition-target="consent"></div>
+      <section is="interactable-section" id="consent" implements="revealable" hidden>
+        Thanks &mdash; you&rsquo;re old enough to continue.
+      </section>
+    </section>
+
+    <section class="card" aria-labelledby="strat-title">
+      <h2 id="strat-title">Revealable strategies</h2>
+      <p class="note">
+        <code>revealable</code> reads the element: <code>open</code> on <code>&lt;details&gt;</code> and
+        <code>&lt;dialog&gt;</code>, popover state on <code>[popover]</code>, and <code>data-open</code>
+        on anything else. It also keeps the triggering button&rsquo;s <code>aria-expanded</code> in sync.
+      </p>
+      <div class="row">
+        <button is="interactable-button" id="faq-toggle" type="button" on-click="#faq.toggle()"
+                aria-expanded="false" aria-controls="faq">Toggle details</button>
+        <button is="interactable-button" type="button" on-click="#dlg.show()">Open dialog</button>
+        <button is="interactable-button" type="button" on-click="#pop.toggle()"
+                aria-expanded="false" aria-controls="pop">Toggle popover</button>
+      </div>
+      <details is="interactable-details" id="faq" implements="revealable">
+        <summary>Why not just use <code>hidden</code>?</summary>
+        <p>Because each platform element already exposes its own open state.</p>
+      </details>
+      <dialog is="interactable-dialog" id="dlg" implements="revealable">
+        <p>A native <code>&lt;dialog&gt;</code>, opened with <code>showModal()</code>.</p>
+        <button is="interactable-button" type="button" on-click="#dlg.hide()">Close</button>
+      </dialog>
+      <div is="interactable-div" id="pop" implements="revealable" popover>
+        A popover in the top layer, toggled through <code>showPopover()</code>.
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="valid-title">
+      <h2 id="valid-title">Validation guard</h2>
+      <p class="note">
+        <code>validate()</code> calls <code>reportValidity()</code> and <code>preventDefault()</code> on
+        failure, which stops the rest of the chain: <code>setAttr</code> runs only when the form is valid.
+      </p>
+      <form is="interactable-form" id="signup" novalidate implements="prevent-default validatable attributable"
+            on-submit="this.validate().setAttr({name: 'data-signed', value: 'true'})">
+        <label>Email
+          <input name="email" type="email" required placeholder="you@example.com">
+        </label>
+        <button is="interactable-button" type="submit">Sign up</button>
+        <p class="success" hidden>Thanks &mdash; that address looks valid.</p>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="json-title">
+      <h2 id="json-title">JSON template</h2>
+      <p class="note">
+        <code>json-template</code> renders a JSON data source through a child
+        <code>&lt;template&gt;</code>, re-rendering when the source changes. <code>{field}</code>
+        interpolates; a nested template carrying <code>data-array</code> repeats per item.
+      </p>
+      <script type="application/json" id="team-data">
+      [
+        { "name": "Ada", "role": "Engineer", "location": "London" },
+        { "name": "Grace", "role": "Admiral", "location": "Arlington" },
+        { "name": "Alan", "role": "Cryptanalyst", "location": "Bletchley" }
+      ]
+      </script>
+      <div is="interactable-div" implements="json-template" json-template-for="team-data">
+        <template>
+          <article class="member">
+            <h3>{name}</h3>
+            <p>{role} &middot; {location}</p>
+          </article>
+        </template>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="prop-title">
+      <h2 id="prop-title">Nested triggers &amp; no-propagate</h2>
+      <p class="note">
+        A click on a button inside a trigger fires both phrases as it bubbles, like nested
+        <code>onclick</code>. <code>no-propagate</code> stops the bubble on the inner element. Open the
+        console to watch <code>logger</code>.
+      </p>
+      <div is="interactable-div" id="outer" implements="logger"
+           on-click="#outer.log('outer card')">
+        <p>Clicking the plain area logs the outer line.</p>
+        <button is="interactable-button" id="bubbles-btn" type="button"
+                on-click="#outer.log('plain inner button')">Inner button (bubbles)</button>
+        <button is="interactable-button" id="no-propagate-btn" implements="no-propagate" type="button"
+                on-click="#outer.log('stopped inner button')">Inner button (no-propagate)</button>
+      </div>
+    </section>
+
     <section class="card" aria-labelledby="order-title">
       <h2 id="order-title">Order form &mdash; the asynchronous seam</h2>
       <p class="note">
