@@ -7,18 +7,11 @@ import "./vendor/requestable.js";
 import "./vendor/prevent-default.js";
 import { defineInteractableHost } from "./vendor/interactably-core.js";
 
-// modifiable/dirtyable/listable register their own tags (input, output, select,
-// textarea, ul, ol, tbody) as interactable-<tag> hosts. The remaining hosts are
-// trigger-only tags and the tags of the tag-less implementations (revealable,
-// requestable, prevent-default), which the page defines:
+// The demo markup is already in the document. Importing the bundles registers
+// the implementations and defines the hosts for their tags, so the elements
+// upgrade in place; a name that registers after an element connected attaches
+// through the registry-changed re-check.
 defineInteractableHost("button");
 defineInteractableHost("form");
 defineInteractableHost("section");
 defineInteractableHost("div");
-
-// Mount the demo only once every implementation and host is registered, so each
-// element is created already upgraded with its full implements list.
-const demo = document.getElementById("demo");
-if (demo instanceof HTMLTemplateElement) {
-  document.body.append(demo.content);
-}

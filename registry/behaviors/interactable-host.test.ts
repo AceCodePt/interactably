@@ -375,3 +375,29 @@ test("an implementation that throws at attach is logged and the host still becom
   assert.equal(event.error, undefined);
   assert.deepEqual(calls, ["alpha.go"]);
 });
+
+test("an implementation registered after the element connected attaches without a reconnect", async () => {
+  const gammaCalls: string[] = [];
+  const host = hostElement("div", { id: "live", implements: "gamma alpha" });
+  document.body.appendChild(host);
+  await flush();
+
+  const missing = dispatchInteraction(host, "ping");
+  assert.equal(missing.handled, false);
+
+  defineImplementation("gamma", { verbs: { ping: "undefined" } }, () => ({
+    ping: () => {
+      gammaCalls.push("gamma.ping");
+    },
+  }));
+
+  const attached = dispatchInteraction(host, "ping");
+  assert.equal(attached.handled, true);
+  assert.equal(attached.error, undefined);
+  assert.deepEqual(gammaCalls, ["gamma.ping"]);
+
+  const alphaStill = dispatchInteraction(host, "go");
+  assert.equal(alphaStill.handled, true);
+  assert.deepEqual(calls, ["alpha.go"]);
+  assert.equal((host as HTMLElement & { didEnsure: boolean }).didEnsure, true);
+});

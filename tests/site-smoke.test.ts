@@ -130,10 +130,11 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
     globalThis.fetch = originalFetch;
   });
 
-  // Mirror the deployed page: index.html is parsed first, then demo.js imports
-  // the bundles (which register the implementations and their hosts), defines the
-  // remaining hosts, and only then mounts the demo template, so every element is
-  // created already upgraded with its full implements list.
+  // Mirror the deployed page: index.html is parsed with the demo markup already
+  // in the document, then demo.js imports the bundles (which register the
+  // implementations and define their hosts) and defines the remaining hosts, so
+  // each element upgrades in place and any name registered afterwards attaches
+  // through the registry-changed re-check.
   const holder = document.createElement("div");
   holder.innerHTML = bodyMarkup(html);
   document.body.appendChild(holder);
@@ -146,10 +147,6 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   const extraTags = [...demo.matchAll(EXTRA_HOST)].map((match) => match[1]!);
   assert.ok(extraTags.length > 0, "demo.js defines the extra hosts");
   for (const tag of extraTags) core.defineInteractableHost(tag);
-
-  const demoTemplate = document.getElementById("demo");
-  assert.ok(demoTemplate instanceof HTMLTemplateElement, "index.html carries the demo template");
-  document.body.append(demoTemplate.content);
 
   await flush();
 
@@ -177,6 +174,7 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
 
   click(byId("add-row"));
   assert.equal(list.children.length, 2);
+  assert.equal(total.textContent, "$13.25");
   const cloned = list.querySelectorAll(".amount")[1] as HTMLInputElement;
   cloned.value = "3";
   cloned.dispatchEvent(new Event("input", { bubbles: true }));

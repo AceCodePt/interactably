@@ -21,6 +21,8 @@ export interface NormalizedImplementationDef {
 const definitions = new Map<string, NormalizedImplementationDef>();
 const instancesByElement = new WeakMap<Element, Map<string, ImplementationInstance>>();
 
+export const REGISTRY_CHANGED_EVENT = "interactably:register";
+
 export function registerImplementation(def: NormalizedImplementationDef): NormalizedImplementationDef {
   if (definitions.has(def.name)) {
     throw new Error(`[Interactable] implementation "${def.name}" is already registered`);
@@ -42,6 +44,9 @@ export function registerImplementation(def: NormalizedImplementationDef): Normal
   } catch (err) {
     definitions.delete(def.name);
     throw err;
+  }
+  if (typeof document !== "undefined") {
+    document.dispatchEvent(new Event(REGISTRY_CHANGED_EVENT));
   }
   return def;
 }

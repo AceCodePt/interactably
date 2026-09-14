@@ -7,6 +7,7 @@ import { NotReadyError } from "@behaviors/implementation-utils.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
 import type { Tag } from "@behaviors/_implementation-definition.ts";
 import {
+  REGISTRY_CHANGED_EVENT,
   allObservedAttributes,
   ensureImplementation,
   getImplementationDef,
@@ -38,9 +39,11 @@ export function defineInteractableHost(tag: Tag): void {
         this.wireTriggers();
         this.wireAttributeObserver();
         this.ensureImplementations();
+        this.ownerDocument.addEventListener(REGISTRY_CHANGED_EVENT, this.onRegistryChanged);
       }
 
       override disconnectedCallback(): void {
+        this.ownerDocument.removeEventListener(REGISTRY_CHANGED_EVENT, this.onRegistryChanged);
         this._attributeObserver?.disconnect();
         this._attributeObserver = null;
         for (const cleanup of this._interactionCleanup) cleanup();
@@ -143,10 +146,14 @@ export function defineInteractableHost(tag: Tag): void {
         }
       }
 
+      private onRegistryChanged = (): void => {
+        this.ensureImplementations();
+      };
+
       private ensureImplementations(): void {
-        this.didEnsure = false;
         const names = (this.getAttribute("implements") ?? "").split(/\s+/).filter((name) => name !== "");
         for (const name of names) {
+          if (this._implementations.has(name)) continue;
           const def = getImplementationDef(name);
           if (def === undefined) {
             console.error(`[Interactable] implements "${name}": no such implementation is registered`);

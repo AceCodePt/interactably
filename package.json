@@ -25,7 +25,6 @@
     "dist/cdn/*.js",
     "dist/interactably.js"
   ],
-  "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=26"
   },
