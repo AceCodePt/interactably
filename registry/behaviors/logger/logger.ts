@@ -1,11 +1,6 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 
-export const logger = defineImplementation<
-  undefined,
-  {},
-  {},
-  { log: "string | number | boolean | undefined" }
->(
+export const logger = defineImplementation(
   "logger",
   { verbs: { log: "string | number | boolean | undefined" } },
   (el) => ({

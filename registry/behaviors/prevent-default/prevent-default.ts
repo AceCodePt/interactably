@@ -24,7 +24,7 @@ export function derivedDefaults(el: HTMLElement): string {
   return "";
 }
 
-export const preventDefault = defineImplementation<undefined, { events: "string | undefined" }, {}, {}>(
+export const preventDefault = defineImplementation(
   "prevent-default",
   {
     config: { events: "string | undefined" },
