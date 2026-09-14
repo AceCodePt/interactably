@@ -140,7 +140,7 @@ modifier  := debounce(ms) | throttle(ms) | once()
 4. **Keys are legal only under `on-keydown` / `on-keyup`**, one per phrase. Two keys is two phrases: `enter: #f.send(); numpadenter: #f.send()`. Names match `KeyboardEvent.key` case-insensitively; `space` means `" "`.
 5. **Modifiers trail and apply to the whole phrase.** Order is normalized to: key filter → throttle/debounce → chain → once.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops if a verb's event is `preventDefault()`-ed, if the verb threw, or if no implementation owns the verb. `&&` runs the next unit only if the previous one completed; `||` runs it only if the previous one was stopped by a guard's `preventDefault()`. An error or unowned verb stops both — `||` fires only on a guard abort. One phrase is all `&&` or all `||`; mixing is a parse error.
-7. **`once()` is spent on completion**, not on start — a chain stopped by a guard, an error or an unowned verb leaves the phrase live, and so does a guard-aborted phrase whose `||` fallback ran. Chains are synchronous, so "completion" is unambiguous.
+7. **`once()` is spent on completion**, not on start — a chain stopped by a guard, an error or an unowned verb leaves the phrase live, and so does a guard-aborted phrase whose `||` fallback ran. Chains are synchronous, so "completion" is unambiguous — a `delay()` pause only defers the moment the last link runs, and `once()` is spent then.
 8. **References are late-bound.** `#id`, `this` and reads resolve at fire time (after any debounce), never at parse time.
 9. **One argument per verb.** A string signature takes one scalar (`set(5)`); a record signature takes one object literal (`setAttr({name: 'aria-expanded', value: 'true'})`); `"undefined"` takes none. Two bare arguments is a grammar error.
 10. **Exactly three properties may be read off a ref** — `value`, `checked`, `valueAsNumber` — with the platform's own types, no coercion. `this.parentElement` and friends are not legal; relative navigation lives in implementation code.
@@ -166,12 +166,14 @@ class InteractionEvent extends Event {
   handled = false;                // true when an implementation owned the verb
   error?: unknown;                // set when validation or the verb threw
   result?: unknown;               // the verb's return value
+  pauseMs?: number;               // a verb like delay() sets this to defer the rest of the chain
 }
 ```
 
 - **Non-bubbling.** A host receives interactions aimed at itself and nothing else — no `if (e.target !== el)` guards.
 - **`preventDefault()` aborts the rest of the chain.** This is the guard-verb mechanism: `validate().send()`, with `||` as the failure branch.
-- **Three return channels, because a DOM event has none.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened". So the host writes `handled` (an implementation owned the verb), `error` (validation or the verb body threw), `result` (the return value) onto the event, and the executor reads them after dispatch.
+- **Four return channels, because a DOM event has none.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened". So the host writes `handled` (an implementation owned the verb), `error` (validation or the verb body threw), `result` (the return value) and `pauseMs` (a verb paused the chain) onto the event, and the executor reads them after dispatch.
+- **`pauseMs` defers the chain, it does not abort it.** A verb such as `delay()` sets `e.pauseMs = N`; the executor stops the chain where it is, schedules the remainder to run N ms later, and returns. A re-fire of the same phrase cancels the pending remainder (latest wins), and disconnecting the element drops it — the timer lives in the same per-element state as `debounce`.
 - **No `isTrusted` gate.** Tests dispatch real DOM events on triggers.
 - **The browser's `command` event plays no part.** A page can also use native invokers; an implementation may listen to `command` like any other DOM event.
 
@@ -240,8 +242,20 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `storable` | any | `save`, `load`, `clear` | `key`, `type` (`local`/`session`), `attr` | persist a field's value to storage |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
 | `condition` | any | — | `watch`, `on`, `op`, `value`, `verb`, `target` | fire a verb on another element when a condition holds |
-| `copyable` | button | `copy` | `copied` state | copies a target element's text to the clipboard; sets `data-copied` on success |
+| `copyable` | button | `copy` | `copied` state; `after`, `error` config | copies a target element's text to the clipboard; sets `data-copied` and runs a continuation phrase on success or failure |
+| `delay` | any | `delay` | — | pauses the chain: the links after `delay(ms)` run `ms` later ([below](#the-pause-mechanism)) |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
+
+### The pause mechanism
+
+`delay` is a verb, not a phrase modifier — it reads forward and can sit mid-chain, which no trailing modifier can:
+
+```html
+<button is="interactable-button" implements="delay attributable"
+        on-click="this.delay(300).setAttr({name: 'aria-busy', value: 'true'})">…</button>
+```
+
+`delay(ms)` sets `e.pauseMs = ms` on the interaction event; the executor stops the chain, schedules the remainder to run `ms` later, and the verb returns synchronously. A re-fire of the same phrase cancels the pending remainder (latest wins), the timer is keyed per element and dropped on disconnect, and `once()` is spent only when the delayed tail completes. A pause is a scheduling decision the executor owns — never an awaited interaction.
 
 ### `prevent-default` and `no-propagate`
 
@@ -521,6 +535,18 @@ The executor does neither. Every `on-*` listener is passive; a phrase describes 
 
 **Verbs are synchronous and chains never await.** This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A `.` chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints. Work that finishes later belongs to an implementation that owns it — today `requestable` — and continues by running a new synchronous chain the author wrote into the implementation's own config.
 
+A chain can still be *paused* without awaiting: `delay()` sets `e.pauseMs`, and the executor runs the remainder of the chain `ms` later as its own scheduled step. That is the mechanism behind a "temporarily set attribute" — `copyable` marks `data-copied` on success and never clears it, so the *developer* decides whether the flash persists or disappears:
+
+```html
+<button is="interactable-button" implements="copyable delay attributable"
+        on-click="this.copy(#snippet)"
+        copyable-after="this.delay(1500).removeAttr('data-copied')">
+  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+</button>
+```
+
+`copy` runs its continuation on success (`this` is the button); `delay(1500)` pauses; `removeAttr('data-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
+
 ```html
 <input is="interactable-input" id="q" on-input="#results.send().debounce(300)">
 
@@ -701,7 +727,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`value` → `data-value` → textContent) and write helpers |
 | `NotReadyError` | Error set on `e.error` when a verb reaches a host that has never connected |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `condition`, `copyable`, `jsonTemplate` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `condition`, `copyable`, `delay`, `jsonTemplate` |
 
 ---
 
@@ -726,6 +752,7 @@ The short versions of the decisions behind the design. The full argument for eac
 - **Strategies are derived, not declared.** `revealable` picks its behavior from the element at connect instead of an author-written `strategy=` attribute.
 - **Default actions and propagation are implementations**, not executor rules or phrase modifiers — they are event-scoped facts and live on the element where a reader finds them. Only the *which* is derived, never the *whether*.
 - **Verbs are synchronous.** Every async question (second fire, removed receiver, `once` while pending, latest vs first) is a question only the implementation doing the work can answer. The network gap is a named attribute, not a disguised dot.
+- **Pauses are verbs, not modifiers.** `debounce`/`throttle`/`once` shape when a phrase runs; a pause shapes where a chain stops and resumes — `this.delay(300).setAttr(...)` reads forward and can sit mid-chain, which no trailing modifier can. The executor owns the pause timer exactly like the debounce timer, so a pause never becomes an awaited interaction.
 - **Three return channels on the event.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened"; the host is the last frame that can catch, so it reports `handled` / `error` / `result` on the event.
 - **Readiness is reported, never awaited.** A late-registered implementation re-runs every connected host's attach pass; markup may precede the imports.
 - **Report with `console.error`/`warn`, throw only at definition time.** Host code runs on the browser's stack, which owns its exceptions.

@@ -13,6 +13,7 @@ export class InteractionEvent extends Event {
   handled = false;
   error?: unknown;
   result?: unknown;
+  pauseMs?: number;
 
   constructor(init: InteractionEventInit) {
     super("interaction", { bubbles: false, cancelable: true });

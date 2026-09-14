@@ -241,7 +241,7 @@
     <div class="codeblock">
       <div class="codeblock-bar">
         <span class="codeblock-lang">Text</span>
-        <button is="interactable-button" class="copy-btn" implements="copyable"
+        <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                 on-click="this.copy(#code-reference-grammar)" type="button">
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>

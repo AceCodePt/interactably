@@ -11,8 +11,11 @@ let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").def
 before(async () => {
   dom = setupJsdom();
   await import("@behaviors/copyable/copyable.ts");
+  await import("@behaviors/attributable/attributable.ts");
+  await import("@behaviors/revealable/revealable.ts");
   ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("button");
+  defineInteractableHost("section");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
 });
 
@@ -104,4 +107,60 @@ test("an empty target warns without flashing", async (t) => {
   interact(button, "copy", code);
   assert.equal(warn.mock.callCount(), 1);
   assert.equal(button.hasAttribute("data-copied"), false);
+});
+
+test("a successful copy runs copyable-after", async () => {
+  installClipboard(async () => {});
+  const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
+  const button = hostElement("button", {
+    implements: "copyable",
+    id: "copy-btn",
+    "copyable-after": "#receipt.show()",
+  });
+  const code = hostElement("pre", { id: "code" });
+  code.textContent = "copy me";
+  document.body.append(button, code, receipt);
+  await flush();
+
+  interact(button, "copy", code);
+  await flush();
+  assert.equal(receipt.getAttribute("data-open"), "true");
+});
+
+test("a failed copy runs copyable-error and never marks copied", async () => {
+  installClipboard(async () => {
+    throw new Error("denied");
+  });
+  const alert = hostElement("section", { implements: "revealable", id: "alert", hidden: "" });
+  const button = hostElement("button", {
+    implements: "copyable",
+    id: "copy-btn",
+    "copyable-error": "#alert.show()",
+  });
+  const code = hostElement("pre", { id: "code" });
+  code.textContent = "copy me";
+  document.body.append(button, code, alert);
+  await flush();
+
+  interact(button, "copy", code);
+  await flush();
+  assert.equal(alert.getAttribute("data-open"), "true");
+  assert.equal(button.hasAttribute("data-copied"), false);
+});
+
+test("copyable-after runs with this bound to the button", async () => {
+  installClipboard(async () => {});
+  const button = hostElement("button", {
+    implements: "copyable attributable",
+    id: "copy-btn",
+    "copyable-after": "this.setAttr({name: 'data-done', value: 'yes'})",
+  });
+  const code = hostElement("pre", { id: "code" });
+  code.textContent = "copy me";
+  document.body.append(button, code);
+  await flush();
+
+  interact(button, "copy", code);
+  await flush();
+  assert.equal(button.getAttribute("data-done"), "yes");
 });

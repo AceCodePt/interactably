@@ -396,6 +396,146 @@ test("clearPhraseState drops pending timers and once state", async () => {
   assert.equal(showCalls, 2);
 });
 
+test("a paused verb defers the rest of the chain", async () => {
+  const receiver = el("m");
+  const order: string[] = [];
+  wireHost(receiver, {
+    wait: (e, ms) => {
+      order.push("wait");
+      e.pauseMs = Number(ms);
+    },
+    after: () => {
+      order.push("after");
+    },
+  });
+
+  const trigger = el();
+  run(trigger, "#m.wait(20).after()", new Event("click"));
+  assert.deepEqual(order, ["wait"]);
+  await delay(60);
+  assert.deepEqual(order, ["wait", "after"]);
+});
+
+test("a pause is mid-chain: links before it run now, links after resume", async () => {
+  const receiver = el("m");
+  const order: string[] = [];
+  wireHost(receiver, {
+    first: () => {
+      order.push("first");
+    },
+    wait: (e, ms) => {
+      order.push("wait");
+      e.pauseMs = Number(ms);
+    },
+    last: () => {
+      order.push("last");
+    },
+  });
+
+  const click = new Event("click");
+  run(el(), "#m.first().wait(20).last()", click);
+  assert.deepEqual(order, ["first", "wait"]);
+  await delay(60);
+  assert.deepEqual(order, ["first", "wait", "last"]);
+});
+
+test("a resumed verb sees the original event", async () => {
+  const receiver = el("m");
+  let seenOriginal: Event | undefined;
+  wireHost(receiver, {
+    wait: (e, ms) => {
+      e.pauseMs = Number(ms);
+    },
+    show: (e) => {
+      seenOriginal = e.originalEvent;
+    },
+  });
+
+  const click = new Event("click");
+  run(el(), "#m.wait(20).show()", click);
+  await delay(60);
+  assert.strictEqual(seenOriginal, click);
+});
+
+test("once() with a pause is spent on the delayed completion", async () => {
+  const receiver = el("m");
+  let showCalls = 0;
+  wireHost(receiver, {
+    wait: (e, ms) => {
+      e.pauseMs = Number(ms);
+    },
+    show: () => void showCalls++,
+  });
+
+  const trigger = el();
+  run(trigger, "#m.wait(20).show().once()", new Event("click"));
+  run(trigger, "#m.wait(20).show().once()", new Event("click"));
+  await delay(60);
+  assert.equal(showCalls, 1);
+  run(trigger, "#m.wait(20).show().once()", new Event("click"));
+  await delay(60);
+  assert.equal(showCalls, 1);
+});
+
+test("clearPhraseState cancels a pending pause resume", async () => {
+  const receiver = el("m");
+  let showCalls = 0;
+  wireHost(receiver, {
+    wait: (e, ms) => {
+      e.pauseMs = Number(ms);
+    },
+    show: () => void showCalls++,
+  });
+
+  const trigger = el();
+  run(trigger, "#m.wait(20).show()", new Event("click"));
+  clearPhraseState(trigger as unknown as Element);
+  await delay(60);
+  assert.equal(showCalls, 0);
+});
+
+test("a re-fire while a pause is pending cancels the earlier resume", async () => {
+  const receiver = el("m");
+  let showCalls = 0;
+  wireHost(receiver, {
+    wait: (e, ms) => {
+      e.pauseMs = Number(ms);
+    },
+    show: () => void showCalls++,
+  });
+
+  const trigger = el();
+  run(trigger, "#m.wait(30).show()", new Event("click"));
+  await delay(10);
+  run(trigger, "#m.wait(30).show()", new Event("click"));
+  await delay(25);
+  assert.equal(showCalls, 0);
+  await delay(40);
+  assert.equal(showCalls, 1);
+});
+
+test("a guard after a pause still stops the chain", async () => {
+  const receiver = el("m");
+  const order: string[] = [];
+  wireHost(receiver, {
+    wait: (e, ms) => {
+      order.push("wait");
+      e.pauseMs = Number(ms);
+    },
+    validate: (e) => {
+      order.push("validate");
+      e.preventDefault();
+    },
+    send: () => {
+      order.push("send");
+    },
+  });
+
+  run(el(), "#m.wait(20).validate().send()", new Event("submit"));
+  await delay(60);
+  assert.deepEqual(order, ["wait", "validate"]);
+});
+
 test("the DSL never touches the original DOM event", () => {
   const receiver = el("m");
   wireHost(receiver, { show: () => undefined });

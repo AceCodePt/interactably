@@ -10,6 +10,7 @@ import "./vendor/logger.js";
 import "./vendor/validatable.js";
 import "./vendor/condition.js";
 import "./vendor/copyable.js";
+import "./vendor/delay.js";
 import "./vendor/no-propagate.js";
 import "./vendor/storable.js";
 import "./vendor/auto-grow.js";

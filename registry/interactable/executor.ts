@@ -61,12 +61,17 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
   const state = stateOf(source);
   if (state.spentOnce.has(key)) return;
 
+  const units: Unit[] = [{ ref: phrase.ref, calls: phrase.calls }, ...(phrase.rest ?? [])];
+
   const execute = (): void => {
+    const pending = state.timers.get(pauseTimerKey(key));
+    if (pending !== undefined) {
+      clearTimeout(pending);
+      state.timers.delete(pauseTimerKey(key));
+    }
+    const walkState: WalkState = { source, phrase, units, ev, key, unitIndex: 0, callIndex: 0, aborted: false };
     try {
-      const result = runChain(source, phrase, ev);
-      if (result.outcome === "completed" && !result.aborted && phrase.modifiers.some((m) => m.kind === "once")) {
-        state.spentOnce.add(key);
-      }
+      spendOnce(state, phrase, key, walk(walkState));
     } catch (err) {
       console.error("[Interactable]", err);
     }
@@ -86,49 +91,64 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
   }
 }
 
-type Outcome = "completed" | "guard" | "failed";
+type Outcome = "completed" | "guard" | "failed" | "paused";
 
 interface ChainResult {
   outcome: Outcome;
   aborted: boolean;
 }
 
-function runChain(source: Element, phrase: Phrase, ev: Event): ChainResult {
-  const first: Unit = { ref: phrase.ref, calls: phrase.calls };
-  if (phrase.operator === undefined) return runUnit(source, first, ev);
-
-  const units: Unit[] = [first, ...(phrase.rest ?? [])];
-  let aborted = false;
-
-  if (phrase.operator === "&&") {
-    for (const unit of units) {
-      const result = runUnit(source, unit, ev);
-      if (result.outcome === "guard") aborted = true;
-      if (result.outcome !== "completed") return { outcome: result.outcome, aborted };
-    }
-    return { outcome: "completed", aborted };
-  }
-
-  for (const unit of units) {
-    const result = runUnit(source, unit, ev);
-    if (result.outcome === "completed") return { outcome: "completed", aborted };
-    if (result.outcome === "guard") {
-      aborted = true;
-      continue;
-    }
-    return { outcome: "failed", aborted };
-  }
-  return { outcome: "guard", aborted: true };
+interface WalkState {
+  source: Element;
+  phrase: Phrase;
+  units: Unit[];
+  ev: Event;
+  key: string;
+  unitIndex: number;
+  callIndex: number;
+  aborted: boolean;
 }
 
-function runUnit(source: Element, unit: Unit, ev: Event): ChainResult {
+function walk(state: WalkState): ChainResult {
+  const operator = state.phrase.operator;
+  while (state.unitIndex < state.units.length) {
+    const unit = state.units[state.unitIndex]!;
+    const result = walkUnit(state, unit);
+    if (result.outcome === "paused") return result;
+    if (operator === undefined) return result;
+    if (operator === "&&") {
+      if (result.outcome === "guard") {
+        state.aborted = true;
+        return result;
+      }
+      if (result.outcome !== "completed") return result;
+      state.unitIndex += 1;
+      state.callIndex = 0;
+      continue;
+    }
+    if (result.outcome === "completed") return { outcome: "completed", aborted: state.aborted };
+    if (result.outcome === "guard") {
+      state.aborted = true;
+      state.unitIndex += 1;
+      state.callIndex = 0;
+      continue;
+    }
+    return { outcome: "failed", aborted: state.aborted };
+  }
+  return operator === "||" ? { outcome: "guard", aborted: true } : { outcome: "completed", aborted: state.aborted };
+}
+
+function walkUnit(state: WalkState, unit: Unit): ChainResult {
+  const source = state.source;
   const receiver = resolveRef(unit.ref, source);
   if (receiver === null) {
     logOnce(source, `receiver ${describeRef(unit.ref)} not found; phrase skipped`);
     return { outcome: "failed", aborted: false };
   }
 
-  for (const call of unit.calls) {
+  while (state.callIndex < unit.calls.length) {
+    const call = unit.calls[state.callIndex]!;
+    state.callIndex += 1;
     let arg: unknown;
     try {
       arg = resolveArg(call.arg, source);
@@ -137,7 +157,7 @@ function runUnit(source: Element, unit: Unit, ev: Event): ChainResult {
       return { outcome: "failed", aborted: false };
     }
 
-    const event = new InteractionEvent({ verb: call.verb, arg, source, originalEvent: ev });
+    const event = new InteractionEvent({ verb: call.verb, arg, source, originalEvent: state.ev });
     receiver.dispatchEvent(event);
 
     if (!event.handled) {
@@ -148,9 +168,39 @@ function runUnit(source: Element, unit: Unit, ev: Event): ChainResult {
       logOnce(source, `${call.verb}() on ${describeElement(receiver)} threw: ${describeError(event.error)}`);
       return { outcome: "failed", aborted: false };
     }
+    if (event.pauseMs !== undefined) {
+      scheduleResume(state, event.pauseMs);
+      return { outcome: "paused", aborted: false };
+    }
     if (event.defaultPrevented) return { outcome: "guard", aborted: true };
   }
   return { outcome: "completed", aborted: false };
+}
+
+function scheduleResume(state: WalkState, ms: number): void {
+  const timers = stateOf(state.source).timers;
+  const pauseKey = pauseTimerKey(state.key);
+  const existing = timers.get(pauseKey);
+  if (existing !== undefined) clearTimeout(existing);
+  const timer = setTimeout(() => {
+    timers.delete(pauseKey);
+    try {
+      spendOnce(stateOf(state.source), state.phrase, state.key, walk(state));
+    } catch (err) {
+      console.error("[Interactable]", err);
+    }
+  }, ms);
+  timers.set(pauseKey, timer);
+}
+
+function pauseTimerKey(key: string): string {
+  return `${key}\u0000pause`;
+}
+
+function spendOnce(state: ElementPhraseState, phrase: Phrase, key: string, result: ChainResult): void {
+  if (result.outcome === "completed" && !result.aborted && phrase.modifiers.some((m) => m.kind === "once")) {
+    state.spentOnce.add(key);
+  }
 }
 
 function resolveRef(ref: Ref, source: Element): Element | null {
