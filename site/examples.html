@@ -83,7 +83,15 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;div class="demo"&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-calc)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-calc" data-lang="html"><code>&lt;div class="demo"&gt;
   &lt;div class="row"&gt;
     &lt;label&gt;Qty
       &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
@@ -116,6 +124,7 @@
             modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })"&gt;0&lt;/output&gt;
   &lt;/p&gt;
 &lt;/div&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -150,11 +159,20 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;button is="interactable-button" on-click="#panel.toggle()"
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-reveal)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-reveal" data-lang="html"><code>&lt;button is="interactable-button" on-click="#panel.toggle()"
         aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
 &lt;section is="interactable-section" id="panel" implements="revealable" hidden&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -185,7 +203,15 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-grammar)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-grammar" data-lang="html"><code>&lt;input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
        on-input="#mirror.set(this.value).debounce(300)"
        on-keydown="enter: #mirror.set(this.value); escape: this.clear()"&gt;
 &lt;output is="interactable-output" id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
@@ -194,6 +220,7 @@
 &lt;section is="interactable-section" id="tip" implements="revealable" hidden&gt;
   This sentence appears only the first time the button completes its chain.
 &lt;/section&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -226,13 +253,22 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;button is="interactable-button" on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-attr)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-attr" data-lang="html"><code>&lt;button is="interactable-button" on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
 &lt;button is="interactable-button" on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
 &lt;button is="interactable-button" on-click="#swatch.toggleAttr('data-bordered')"&gt;Toggle border&lt;/button&gt;
 &lt;button is="interactable-button" on-click="#swatch.removeAttr('data-theme')"&gt;Clear theme&lt;/button&gt;
 &lt;button is="interactable-button" on-click="#swatch.log('button clicked')"&gt;Log&lt;/button&gt;
 
 &lt;div is="interactable-div" id="swatch" class="swatch" implements="attributable logger" data-theme="light"&gt;Swatch&lt;/div&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -261,13 +297,22 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;textarea is="interactable-textarea" id="note"
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-note)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-note" data-lang="html"><code>&lt;textarea is="interactable-textarea" id="note"
           implements="auto-grow dirtyable storable paste-transform"
           storable-key="interactably-demo-note" rows="2"
           paste-transform-patterns="\s+" paste-transform-replaces=" "
           placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;
 &lt;button is="interactable-button" on-click="#note.markClean()"&gt;Mark clean&lt;/button&gt;
 &lt;button is="interactable-button" on-click="#note.clear()"&gt;Forget saved value&lt;/button&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -297,13 +342,22 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;input id="age" type="number" value="17" min="0"&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-cond)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-cond" data-lang="html"><code>&lt;input id="age" type="number" value="17" min="0"&gt;
 &lt;div is="interactable-div" implements="condition"
      condition-watch="age" condition-on="value" condition-op="&gt;=" condition-value="18"
      condition-verb="show" condition-target="consent"&gt;&lt;/div&gt;
 &lt;section is="interactable-section" id="consent" implements="revealable" hidden&gt;
   Thanks &mdash; you&rsquo;re old enough to continue.
 &lt;/section&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -341,7 +395,15 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;button is="interactable-button" on-click="#faq.toggle()" aria-expanded="false" aria-controls="faq"&gt;Toggle details&lt;/button&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-strat)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-strat" data-lang="html"><code>&lt;button is="interactable-button" on-click="#faq.toggle()" aria-expanded="false" aria-controls="faq"&gt;Toggle details&lt;/button&gt;
 &lt;button is="interactable-button" on-click="#dlg.show()"&gt;Open dialog&lt;/button&gt;
 &lt;button is="interactable-button" on-click="#pop.toggle()" aria-expanded="false" aria-controls="pop"&gt;Toggle popover&lt;/button&gt;
 
@@ -358,6 +420,7 @@
 &lt;div is="interactable-div" id="pop" implements="revealable" popover&gt;
   A popover in the top layer, toggled through &lt;code&gt;showPopover()&lt;/code&gt;.
 &lt;/div&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -395,7 +458,15 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;div class="tabbar"&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-tabs)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-tabs" data-lang="html"><code>&lt;div class="tabbar"&gt;
   &lt;button is="interactable-button"
           on-click="#tab-overview.show(); #tab-specs.hide(); #tab-notes.hide()"&gt;Overview&lt;/button&gt;
   &lt;button is="interactable-button"
@@ -413,6 +484,7 @@
 &lt;section is="interactable-section" id="tab-notes" implements="revealable" class="tabpanel" hidden&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -444,7 +516,15 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" id="signup" novalidate
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-valid)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-valid" data-lang="html"><code>&lt;form is="interactable-form" id="signup" novalidate
       implements="prevent-default validatable attributable"
       on-submit="#signup-alert.hide(); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()"&gt;
   &lt;label&gt;Email
@@ -454,6 +534,7 @@
   &lt;p class="success" hidden&gt;Thanks &mdash; that address looks valid.&lt;/p&gt;
   &lt;div is="interactable-div" id="signup-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
 &lt;/form&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -487,7 +568,15 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;script type="application/json" id="team-data"&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-json)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-json" data-lang="html"><code>&lt;script type="application/json" id="team-data"&gt;
 [
   { "name": "Ada",   "role": "Engineer",      "location": "London" },
   { "name": "Grace", "role": "Admiral",       "location": "Arlington" },
@@ -502,6 +591,7 @@
     &lt;/article&gt;
   &lt;/template&gt;
 &lt;/div&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -530,13 +620,22 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;div is="interactable-div" id="outer" implements="logger"
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-bubble)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-bubble" data-lang="html"><code>&lt;div is="interactable-div" id="outer" implements="logger"
      on-click="#outer.log('outer card')"&gt;
   &lt;p&gt;Clicking the plain area logs the outer line.&lt;/p&gt;
   &lt;button is="interactable-button" on-click="#outer.log('plain inner button')"&gt;Inner button (bubbles)&lt;/button&gt;
   &lt;button is="interactable-button" implements="no-propagate"
           on-click="#outer.log('stopped inner button')"&gt;Inner button (no-propagate)&lt;/button&gt;
 &lt;/div&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -570,7 +669,15 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" id="order" novalidate
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-order)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-order" data-lang="html"><code>&lt;form is="interactable-form" id="order" novalidate
       implements="prevent-default requestable"
       requestable-url="/api/orders" requestable-method="post"
       requestable-target="#receipt"
@@ -584,6 +691,7 @@
 &lt;/form&gt;
 &lt;section is="interactable-section" id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
 &lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
+        </div>
       </details>
     </section>
 
@@ -609,11 +717,20 @@
       </div>
       <details class="example-code">
         <summary>Show the markup</summary>
-        <pre class="code" data-lang="html"><code>&lt;button is="interactable-button" on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-ex-quote)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-quote" data-lang="html"><code>&lt;button is="interactable-button" on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
 &lt;div is="interactable-div" id="quote" implements="requestable"
      requestable-url="./fragments/quote.html" requestable-method="get"&gt;
   Nothing loaded yet &mdash; click the button above.
 &lt;/div&gt;</code></pre>
+        </div>
       </details>
     </section>
   </main>

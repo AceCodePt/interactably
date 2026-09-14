@@ -350,30 +350,69 @@ code, pre, kbd {
 
 /* ---------- code blocks ---------- */
 
-.code {
-  position: relative;
+.codeblock {
   margin: 1rem 0 1.25rem;
-  padding: 2.3rem 1.1rem 1rem;
-  overflow-x: auto;
   border: 1px solid var(--code-border);
   border-radius: 12px;
   background: var(--code-bg);
   box-shadow: var(--shadow);
-  font-size: 0.84rem;
-  line-height: 1.6;
-  color: var(--code-fg);
+  overflow: hidden;
 }
 
-.code::before {
-  content: attr(data-lang);
-  position: absolute;
-  top: 0.6rem;
-  right: 0.9rem;
+.codeblock-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  border-bottom: 1px solid var(--code-border);
+}
+
+.codeblock-lang {
   font-family: var(--mono);
   font-size: 0.68rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--code-label);
+}
+
+.copy-btn {
+  margin-left: auto;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 600 0.72rem/1 var(--mono);
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.7rem;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.copy-btn .copied-label {
+  display: none;
+}
+
+.copy-btn[data-copied] .copy-label {
+  display: none;
+}
+
+.copy-btn[data-copied] .copied-label {
+  display: inline;
+  color: var(--ok);
+}
+
+.code {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--code-fg);
+  background: var(--code-bg);
 }
 
 .code code {
@@ -766,7 +805,7 @@ code, pre, kbd {
   content: "\25BE";
 }
 
-.example-code .code {
+.example-code .codeblock {
   margin: 0;
   border: 0;
   border-radius: 0;

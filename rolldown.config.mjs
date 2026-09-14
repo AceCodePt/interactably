@@ -11,6 +11,7 @@ const implementations = [
   "attributable",
   "auto-grow",
   "condition",
+  "copyable",
   "dirtyable",
   "json-template",
   "listable",

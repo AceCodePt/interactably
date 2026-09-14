@@ -240,6 +240,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `storable` | any | `save`, `load`, `clear` | `key`, `type` (`local`/`session`), `attr` | persist a field's value to storage |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
 | `condition` | any | — | `watch`, `on`, `op`, `value`, `verb`, `target` | fire a verb on another element when a condition holds |
+| `copyable` | button | `copy` | `copied` state | copies a target element's text to the clipboard; sets `data-copied` on success |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
 
 ### `prevent-default` and `no-propagate`
@@ -700,7 +701,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`value` → `data-value` → textContent) and write helpers |
 | `NotReadyError` | Error set on `e.error` when a verb reaches a host that has never connected |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `condition`, `jsonTemplate` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `condition`, `copyable`, `jsonTemplate` |
 
 ---
 

@@ -188,6 +188,16 @@
         <div><span class="verb-tag">for</span><span class="verb-tag">slice</span></div>
       </article>
 
+      <article class="ref-card">
+        <h3><code class="inline-code">copyable</code></h3>
+        <p class="ref-tags">button</p>
+        <p class="ref-desc">Copies a target element&rsquo;s text to the clipboard: <code class="inline-code">on-click="this.copy(#id)"</code>. Sets <code class="inline-code">data-copied</code> on the button on success.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">copy</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">copied (state)</span></div>
+      </article>
+
     </div>
 
     <h2 id="api">The public API</h2>
@@ -228,7 +238,15 @@
     </div>
 
     <h2 id="grammar">Reference grammar</h2>
-    <pre class="code" data-lang="text"><code>attribute := 'on-' event-type
+    <div class="codeblock">
+      <div class="codeblock-bar">
+        <span class="codeblock-lang">Text</span>
+        <button is="interactable-button" class="copy-btn" implements="copyable"
+                on-click="this.copy(#code-reference-grammar)" type="button">
+          <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+        </button>
+      </div>
+      <pre class="code" id="code-reference-grammar" data-lang="text"><code>attribute := 'on-' event-type
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' call)+ ('.' modifier)*
@@ -239,6 +257,7 @@ read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'</code></pre>
+    </div>
     <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
 
     <h2 id="signatures">Signature slots</h2>

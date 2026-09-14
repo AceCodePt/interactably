@@ -76,12 +76,29 @@
       <div class="content">
 
         <h2 id="quick-start">Quick start <a class="anchor" href="#quick-start">#</a></h2>
-        <pre class="code" data-lang="sh"><code>npm install interactably</code></pre>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">Shell</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-install)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-install" data-lang="sh"><code>npm install interactably</code></pre>
+        </div>
         <p>
           Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the
           core&rsquo;s registry on import, and defines the hosts for its declared tags:
         </p>
-        <pre class="code" data-lang="html"><code>&lt;script type="module"&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-load)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-load" data-lang="html"><code>&lt;script type="module"&gt;
   import "interactably/dist/cdn/modifiable.js";
   import "interactably/dist/cdn/revealable.js";
   import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
@@ -97,6 +114,7 @@
 &lt;/label&gt;
 
 &lt;output is="interactable-output" id="preview" implements="modifiable"&gt;1&lt;/output&gt;</code></pre>
+        </div>
         <p>Every click on <code class="inline-code">+</code> calls <code class="inline-code">#qty.inc()</code>: the input clamps to
           <code class="inline-code">max</code>, dispatches a synthetic <code class="inline-code">input</code>, and the preview follows.</p>
 
@@ -136,7 +154,15 @@
 
         <h2 id="trigger-grammar">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
         <p>One attribute per interaction; the value is the phrase language.</p>
-        <pre class="code" data-lang="html"><code>&lt;button on-click="#pop.show().focus()"&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-grammar-examples)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-grammar-examples" data-lang="html"><code>&lt;button on-click="#pop.show().focus()"&gt;
 &lt;input  on-input="#echo.set(this.value); #results.filter(this.value).debounce(300)"&gt;
 &lt;input  on-keydown="escape: this.reset(); enter: #form.validate().send()"&gt;
 &lt;button on-click="#tour.show().once()"&gt;
@@ -145,9 +171,18 @@
 &lt;button on-click="#list.removeRow(this)"&gt;
 &lt;form   on-submit="#order.validate().send() || #alert.show()"&gt;
 &lt;input  on-change="#form.validate() &amp;&amp; #hint.show()"&gt;</code></pre>
+        </div>
 
         <h3 id="grammar">Grammar <a class="anchor" href="#grammar">#</a></h3>
-        <pre class="code" data-lang="text"><code>value     := phrase (';' phrase)*
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">Text</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-grammar)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-grammar" data-lang="text"><code>value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' call)+ ('.' modifier)*
 ref       := '#'id | this
@@ -156,6 +191,7 @@ arg       := number | 'string' | true | false | ref | read
 read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
 object    := '{' name ':' arg (',' name ':' arg)* '}'
 modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
+        </div>
 
         <h3 id="constructs">Constructs <a class="anchor" href="#constructs">#</a></h3>
         <div class="tbl-wrap">
@@ -210,7 +246,15 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
 
         <h2 id="interaction-event">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
         <p>The host wraps every verb call in its own event, dispatched at the receiver:</p>
-        <pre class="code" data-lang="ts"><code>class InteractionEvent extends Event {
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">TS</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-event)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-event" data-lang="ts"><code>class InteractionEvent extends Event {
   readonly verb: string;          // "show"
   readonly arg: unknown;          // resolved: 5 | "currency" | HTMLElement | { name, value } | undefined
   readonly source: Element;       // the element whose attribute the phrase came from (what `this` resolved to)
@@ -219,6 +263,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
   error?: unknown;                // set when validation or the verb threw
   result?: unknown;               // the verb's return value
 }</code></pre>
+        </div>
         <ul>
           <li><strong>Non-bubbling.</strong> A host receives interactions aimed at itself and nothing else — no <code class="inline-code">if (e.target !== el)</code> guards.</li>
           <li><strong><code class="inline-code">preventDefault()</code> aborts the rest of the chain.</strong> This is the guard-verb mechanism: <code class="inline-code">validate().send()</code>, with <code class="inline-code">||</code> as the failure branch.</li>
@@ -233,7 +278,15 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
           <code class="inline-code">defineInteractableHost("input")</code> &rarr; <code class="inline-code">interactable-input</code>. The host does two independent jobs.
         </p>
         <p><strong>Trigger side.</strong> In <code class="inline-code">connectedCallback</code> it scans its <code class="inline-code">on-*</code> attributes and binds one listener per attribute on itself:</p>
-        <pre class="code" data-lang="ts"><code>for (const name of this.getAttributeNames()) {
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">TS</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-host-trigger)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-host-trigger" data-lang="ts"><code>for (const name of this.getAttributeNames()) {
   if (!name.startsWith("on-")) continue;
   const type = name.slice(3);
   const handler = (ev: Event) => runPhrases(this, this.getAttribute(name)!, ev);   // value read at event time
@@ -243,6 +296,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
   warnIfNativeActionLikelyUnwanted(this, type);                                     // &lt;form on-submit&gt;, &lt;a href on-click&gt; without prevent-default
   this._interactionCleanup.push(() =&gt; this.removeEventListener(type, handler));
 }</code></pre>
+        </div>
         <p>
           A trigger is live the moment it connects. <code class="inline-code">disconnectedCallback</code> runs the cleanup list. The
           <code class="inline-code">on-*</code> <strong>value</strong> is read at event time, so editing <code class="inline-code">on-click="#a.show()"</code> to
@@ -304,6 +358,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
               <tr><td><code class="inline-code">storable</code></td><td>any</td><td><code class="inline-code">save</code>, <code class="inline-code">load</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">key</code>, <code class="inline-code">type</code> (<code class="inline-code">local</code>/<code class="inline-code">session</code>), <code class="inline-code">attr</code></td><td>persist a field&rsquo;s value to storage</td></tr>
               <tr><td><code class="inline-code">paste-transform</code></td><td>input, textarea</td><td>&mdash;</td><td><code class="inline-code">patterns</code>, <code class="inline-code">replaces</code></td><td>rewrite pasted text with regexes</td></tr>
               <tr><td><code class="inline-code">condition</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">watch</code>, <code class="inline-code">on</code>, <code class="inline-code">op</code>, <code class="inline-code">value</code>, <code class="inline-code">verb</code>, <code class="inline-code">target</code></td><td>fire a verb on another element when a condition holds</td></tr>
+              <tr><td><code class="inline-code">copyable</code></td><td>button</td><td><code class="inline-code">copy</code></td><td><code class="inline-code">copied</code> (state)</td><td>copies a target element&rsquo;s text to the clipboard; the button shows <code class="inline-code">data-copied</code> on success</td></tr>
               <tr><td><code class="inline-code">json-template</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">for</code>, <code class="inline-code">slice</code></td><td>render a JSON data source through a child <code class="inline-code">&lt;template&gt;</code></td></tr>
             </tbody>
           </table>
@@ -315,7 +370,15 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
           (every <code class="inline-code">on-*</code> listener is passive). Both facts are said on the element, by name — they are
           implementations, not grammar.
         </p>
-        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" implements="prevent-default no-propagate" no-propagate-events="submit"
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-prevent-default)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-prevent-default" data-lang="html"><code>&lt;form is="interactable-form" implements="prevent-default no-propagate" no-propagate-events="submit"
       on-submit="#api.send(); #status.set('Saving&hellip;')"&gt;                                  &lt;!-- derived from on-submit: submit --&gt;
 
 &lt;div is="interactable-div" implements="prevent-default" prevent-default-events="contextmenu"
@@ -330,6 +393,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
 
 &lt;canvas is="interactable-canvas" implements="prevent-default" prevent-default-events="wheel"
         on-wheel="#viewport.zoom(this).throttle(16)"&gt;                                    &lt;!-- never derived: blocks scrolling, always stated --&gt;</code></pre>
+        </div>
         <p>
           With <code class="inline-code">prevent-default-events</code> omitted, <code class="inline-code">prevent-default</code> derives
           <em>which</em> events to cancel from the element&rsquo;s own <code class="inline-code">on-*</code> attributes, restricted to
@@ -364,7 +428,15 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
 
         <h2 id="writing-an-implementation">Writing an implementation <a class="anchor" href="#writing-an-implementation">#</a></h2>
         <p>One call declares the name, the tags it may attach to, the config and state it brings, its verb signatures, and the factory — and the factory is type-checked against the signatures.</p>
-        <pre class="code" data-lang="ts"><code>import { defineImplementation, valueOf } from "interactably";
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">TS</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-implementation)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-implementation" data-lang="ts"><code>import { defineImplementation, valueOf } from "interactably";
 
 export const modifiable = defineImplementation("modifiable", {
   tags: ["input", "textarea", "output", "select"],
@@ -396,6 +468,7 @@ export const modifiable = defineImplementation("modifiable", {
     reset: ()                         =&gt; write(el.getAttribute("value") ?? ""),   // back to what the author wrote
   };
 });</code></pre>
+        </div>
 
         <p><code class="inline-code">defineImplementation(name, { tags?, config?, state?, verbs }, factory)</code>:</p>
         <div class="tbl-wrap">
@@ -423,7 +496,15 @@ export const modifiable = defineImplementation("modifiable", {
           <li><strong>Element slot:</strong> a constructor — <code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, <code class="inline-code">HTMLButtonElement</code>. The grammar already knows a bare ref is an element and the executor has resolved it, so what remains is <code class="inline-code">instanceof</code>.</li>
           <li><strong>One argument per verb:</strong> a slot (scalar or constructor) or a <strong>record of slots</strong> (one object literal). <code class="inline-code">"undefined"</code> declares no argument. Positional lists do not exist, so changing <code class="inline-code">transform('upper')</code> to take a second argument forces every call site to become <code class="inline-code">transform({mode: 'upper', &hellip;})</code> — a loud parse error, never a silent re-bind.</li>
         </ul>
-        <pre class="code" data-lang="ts"><code>export const listable = defineImplementation("listable", {
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">TS</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-signatures)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-signatures" data-lang="ts"><code>export const listable = defineImplementation("listable", {
   tags: ["ul", "ol", "tbody"],
   config: { "min-rows": "number | undefined" },
   verbs: {
@@ -448,6 +529,7 @@ export const attributable = defineImplementation("attributable", {
   toggleAttr: (_e, name) =&gt; el.toggleAttribute(name),
   removeAttr: (_e, name) =&gt; el.removeAttribute(name),
 }));</code></pre>
+        </div>
 
         <h3 id="declare-only">Declare only what you invent <a class="anchor" href="#declare-only">#</a></h3>
         <p>
@@ -497,7 +579,15 @@ export const attributable = defineImplementation("attributable", {
           </table>
         </div>
         <p>The <code class="inline-code">value</code> attribute / <code class="inline-code">value</code> property pair is the canonical case: <code class="inline-code">el.value = "x"</code> does not touch the attribute, and that is not an inconsistency — the attribute is what the author wrote, the property is the current value. This is what makes SSR trivial: the server writes <code class="inline-code">value="42"</code>, the browser parses it into both tiers, hydration adds nothing.</p>
-        <pre class="code" data-lang="ts"><code>// dirtyable — no attributes written; the baseline lives in the closure
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">TS</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-dirtyable)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-dirtyable" data-lang="ts"><code>// dirtyable — no attributes written; the baseline lives in the closure
 (el) =&gt; {
   let baseline = el.value;                                 // what the field held when it connected (SSR'd value included)
   const render = () =&gt; el.classList.toggle("is-dirty", el.value !== baseline);
@@ -507,7 +597,16 @@ export const attributable = defineImplementation("attributable", {
     markClean: () =&gt; { baseline = el.value; render(); },
   };
 }</code></pre>
-        <pre class="code" data-lang="ts"><code>// revealable on a plain panel — the one case with invented state
+        </div>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">TS</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-revealable)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-revealable" data-lang="ts"><code>// revealable on a plain panel — the one case with invented state
 // state: { open: "boolean | undefined" } → data-open
 (el, attrs) =&gt; ({
   show:   () =&gt; { attrs.open = true; },
@@ -515,6 +614,7 @@ export const attributable = defineImplementation("attributable", {
   toggle: () =&gt; { attrs.open = attrs.open ? undefined : true; },
   attributeChangedCallback(name) { if (name === "data-open") el.hidden = !attrs.open; },   // renders
 })</code></pre>
+        </div>
         <ul>
           <li><strong>Read the platform before inventing.</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">open</code> on <code class="inline-code">&lt;details&gt;</code>/<code class="inline-code">&lt;dialog&gt;</code>, popover state, <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">step</code>. A <code class="inline-code">state</code> entry exists only when none of these hold the thing.</li>
           <li><strong><code class="inline-code">config</code> is read-only.</strong> A verb that needs its own baseline keeps one in the closure, as <code class="inline-code">dirtyable</code>&rsquo;s <code class="inline-code">markClean</code> does.</li>
@@ -548,7 +648,15 @@ export const attributable = defineImplementation("attributable", {
         <p>There is no engine. Two pure functions, both called from the host.</p>
 
         <h3 id="pipeline">Pipeline <a class="anchor" href="#pipeline">#</a></h3>
-        <pre class="code" data-lang="text"><code>DOM event on the trigger (passive listener bound in connectedCallback)
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">Text</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-pipeline)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-pipeline" data-lang="text"><code>DOM event on the trigger (passive listener bound in connectedCallback)
   → parse(attributeValue)          cached by string → Phrase[] with unresolved refs
   → runPhrases(this, phrases, ev)
       → key filter; drop phrases whose once() is spent
@@ -563,6 +671,7 @@ export const attributable = defineImplementation("attributable", {
                                         e.defaultPrevented → stop the unit, quiet
           &amp;&amp;: next unit only if this one completed; ||: next unit only if this one was guard-aborted
       → once() spent when the phrase completed without any guard abort</code></pre>
+        </div>
         <ul>
           <li><strong>Nested triggers behave like nested <code class="inline-code">onclick</code>.</strong> A click on a button inside a <code class="inline-code">&lt;div on-click&gt;</code> fires the button&rsquo;s phrase, then bubbles and fires the div&rsquo;s. No implicit innermost-wins; suppression is explicit via <code class="inline-code">no-propagate</code> on the inner element.</li>
           <li><strong>Timers and <code class="inline-code">once</code> state are keyed per element</strong> (in a <code class="inline-code">WeakMap</code>) and cleared on disconnect via <code class="inline-code">clearPhraseState</code>.</li>
@@ -575,15 +684,32 @@ export const attributable = defineImplementation("attributable", {
 
         <h3 id="native-defaults">Native default actions and propagation <a class="anchor" href="#native-defaults">#</a></h3>
         <p>The executor does neither. Every <code class="inline-code">on-*</code> listener is passive; a phrase describes what happens, not what the browser is allowed to do.</p>
-        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" implements="prevent-default" on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-native-defaults)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-native-defaults" data-lang="html"><code>&lt;form is="interactable-form" implements="prevent-default" on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
 &lt;a    is="interactable-a"    href="/docs"                  on-click="#log.track('docs')"&gt;Docs&lt;/a&gt;   &lt;!-- navigates and tracks --&gt;
 &lt;a    is="interactable-a"    href="#p" implements="prevent-default" on-click="#p.show()"&gt;&hellip;&lt;/a&gt;   &lt;!-- in-page action --&gt;
 &lt;button is="interactable-button" implements="no-propagate" on-click="#list.removeRow(this)"&gt;&times;&lt;/button&gt;  &lt;!-- row's on-click untouched --&gt;</code></pre>
+        </div>
         <p><code class="inline-code">prevent-default</code> binds its own listeners with <code class="inline-code">passive: false</code>, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying <code class="inline-code">on-submit</code> on a <code class="inline-code">&lt;form&gt;</code> (or <code class="inline-code">on-click</code> on an <code class="inline-code">&lt;a href&gt;</code>, or <code class="inline-code">on-keydown</code> on a <code class="inline-code">&lt;button&gt;</code>) without <code class="inline-code">prevent-default</code> logs one <code class="inline-code">console.warn</code>. A pre-existing <code class="inline-code">defaultPrevented</code> does <strong>not</strong> suppress dispatch.</p>
 
         <h2 id="asynchrony">Asynchrony <a class="anchor" href="#asynchrony">#</a></h2>
         <p><strong>Verbs are synchronous and chains never await.</strong> This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A <code class="inline-code">.</code> chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints. Work that finishes later belongs to an implementation that owns it — today <code class="inline-code">requestable</code> — and continues by running a new synchronous chain the author wrote into the implementation&rsquo;s own config.</p>
-        <pre class="code" data-lang="html"><code>&lt;input is="interactable-input" id="q" on-input="#results.send().debounce(300)"&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-async)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-async" data-lang="html"><code>&lt;input is="interactable-input" id="q" on-input="#results.send().debounce(300)"&gt;
 
 &lt;ul is="interactable-ul" id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
@@ -591,6 +717,7 @@ export const attributable = defineImplementation("attributable", {
     requestable-error="#status.show()"&gt;&lt;/ul&gt;
 &lt;output is="interactable-output" id="count" implements="modifiable"
         modifiable-formula="count('#results &gt; li')"&gt;&lt;/output&gt;</code></pre>
+        </div>
         <p>The trigger&rsquo;s chain is one synchronous link: <code class="inline-code">send()</code> aborts the previous in-flight request for <code class="inline-code">#results</code>, starts a new one, and returns. When the response lands, <code class="inline-code">requestable</code> swaps its children and calls <code class="inline-code">runPhrases(el, attrs.after, e.originalEvent)</code> — a second synchronous chain in which <code class="inline-code">this</code> is <code class="inline-code">#results</code>. The network gap sits between two chains and has a name and a place in the markup.</p>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -611,7 +738,15 @@ export const attributable = defineImplementation("attributable", {
         <p>Both examples are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
 
         <h3>Price calculator</h3>
-        <pre class="code" data-lang="html"><code>&lt;label&gt;Qty
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-full-calc)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-full-calc" data-lang="html"><code>&lt;label&gt;Qty
   &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
@@ -632,10 +767,19 @@ export const attributable = defineImplementation("attributable", {
 &lt;template id="row-tpl"&gt;&lt;li&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
 &lt;output is="interactable-output" id="total" implements="modifiable"
         modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })"&gt;0&lt;/output&gt;</code></pre>
+        </div>
         <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers; the <code class="inline-code">&lt;li&gt;</code> is a plain element — the row is reached through <code class="inline-code">#list.removeRow(this)</code>, so it needs no implementation, no host and no id, and cloning it produces nothing that has to be unique.</p>
 
         <h3>Order form — the asynchronous seam</h3>
-        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" id="order" novalidate
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-full-order)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-full-order" data-lang="html"><code>&lt;form is="interactable-form" id="order" novalidate
       implements="prevent-default validatable requestable"
       requestable-url="/api/orders" requestable-method="post"
       requestable-target="#receipt"
@@ -648,6 +792,7 @@ export const attributable = defineImplementation("attributable", {
 &lt;section is="interactable-section" id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
 &lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
 &lt;div is="interactable-div" id="validate-alert" implements="revealable" hidden role="alert"&gt;Please check the quantity.&lt;/div&gt;</code></pre>
+        </div>
         <p>The form is the receiver of both <code class="inline-code">validate()</code> and <code class="inline-code">send()</code> in the first unit; <code class="inline-code">||</code> switches to <code class="inline-code">#validate-alert</code> only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event.</p>
         <p><code class="inline-code">novalidate</code> is load-bearing: without it the browser&rsquo;s interactive validation runs first and, for an invalid form, never fires <code class="inline-code">submit</code> at all. The phrase decides <em>when</em> validation happens; the platform still decides <em>what</em> valid means.</p>
 
@@ -671,7 +816,7 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
               <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">value</code> &rarr; <code class="inline-code">data-value</code> &rarr; textContent) and write helpers</td></tr>
               <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
-              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">condition</code>, <code class="inline-code">jsonTemplate</code></td></tr>
+              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">condition</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code></td></tr>
             </tbody>
           </table>
         </div>
@@ -706,7 +851,15 @@ export const attributable = defineImplementation("attributable", {
 
         <h2 id="appendices">Appendices <a class="anchor" href="#appendices">#</a></h2>
         <h3>Reference grammar</h3>
-        <pre class="code" data-lang="text"><code>attribute := 'on-' event-type
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">Text</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-docs-reference-grammar)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-reference-grammar" data-lang="text"><code>attribute := 'on-' event-type
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' call)+ ('.' modifier)*
@@ -717,6 +870,7 @@ read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'</code></pre>
+        </div>
         <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">this</code> is a keyword; an element with <code class="inline-code">id="this"</code> is addressed as <code class="inline-code">#this</code>. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
         <h3>Signature language</h3>
         <p>Values in <code class="inline-code">config</code>, <code class="inline-code">state</code> and <code class="inline-code">verbs</code>: a <strong>slot</strong> is either a tsyntax scalar DSL string (<code class="inline-code">string</code>, <code class="inline-code">number</code>, <code class="inline-code">bigint</code>, <code class="inline-code">boolean</code>, <code class="inline-code">undefined</code>, numeric and quoted literals, template literals, <code class="inline-code">|</code> unions) or an element constructor (<code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, &hellip;). A verb signature is one slot or a flat record of slots; an attribute signature is one string slot. A record key whose slot admits <code class="inline-code">undefined</code> may be omitted from the object literal; any other key is required.</p>

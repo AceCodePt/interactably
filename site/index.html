@@ -46,7 +46,15 @@
     <div class="hero-grid">
       <div>
         <p class="section-label">Quick start</p>
-        <pre class="code" data-lang="html"><code>&lt;script type="module"&gt;
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable"
+                    on-click="this.copy(#code-quickstart)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-quickstart" data-lang="html"><code>&lt;script type="module"&gt;
   import "interactably/dist/cdn/revealable.js";
   import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
   defineInteractableHost("button");   // idempotent
@@ -54,6 +62,7 @@
 
 &lt;button is="interactable-button" on-click="#modal.show()"&gt;Open&lt;/button&gt;
 &lt;dialog is="interactable-dialog" id="modal" implements="revealable"&gt;&hellip;&lt;/dialog&gt;</code></pre>
+        </div>
         <p class="note">Clicking the button sends the verb <code class="inline-code">show()</code> to
           <code class="inline-code">#modal</code>, which implements <code class="inline-code">revealable</code>. That&rsquo;s the whole idea.</p>
       </div>
@@ -185,7 +194,7 @@
 
     <section>
       <p class="section-label" style="margin-top:3rem">Shipped implementations</p>
-      <p style="color:var(--muted); margin:0.4rem 0 0">Fifteen ready-made capabilities, one per file. Import the ones you use; each registers itself and defines the hosts for its tags.</p>
+      <p style="color:var(--muted); margin:0.4rem 0 0">Sixteen ready-made capabilities, one per file. Import the ones you use; each registers itself and defines the hosts for its tags.</p>
       <div class="chip-row">
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>modifiable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>dirtyable</a>
@@ -201,6 +210,7 @@
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>storable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>paste-transform</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>condition</a>
+        <a class="chip" href="./reference.html"><span class="chip-dot"></span>copyable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>json-template</a>
       </div>
       <p class="callout" style="margin-top:2rem">
