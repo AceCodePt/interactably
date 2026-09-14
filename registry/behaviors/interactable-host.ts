@@ -33,6 +33,8 @@ export function defineInteractableHost(tag: Tag): void {
       _implementations = new Map<string, ImplementationInstance>();
       _interactionCleanup: Array<() => void> = [];
       _attributeObserver: MutationObserver | null = null;
+      _pendingMissing = new Set<string>();
+      _reportedMissing = new Set<string>();
 
       override connectedCallback(): void {
         super.connectedCallback?.();
@@ -156,7 +158,7 @@ export function defineInteractableHost(tag: Tag): void {
           if (this._implementations.has(name)) continue;
           const def = getImplementationDef(name);
           if (def === undefined) {
-            console.error(`[Interactable] implements "${name}": no such implementation is registered`);
+            this.deferMissingReport(name);
             continue;
           }
           if (def.tags !== undefined && !def.tags.includes(this.localName as Tag)) {
@@ -175,6 +177,20 @@ export function defineInteractableHost(tag: Tag): void {
         }
         this.didEnsure = true;
         this.refreshAttributeObserver();
+      }
+
+      private deferMissingReport(name: string): void {
+        if (this._reportedMissing.has(name) || this._pendingMissing.has(name)) return;
+        this._pendingMissing.add(name);
+        setTimeout(() => {
+          this._pendingMissing.delete(name);
+          if (!this.isConnected) return;
+          if (getImplementationDef(name) !== undefined) return;
+          const names = (this.getAttribute("implements") ?? "").split(/\s+/);
+          if (!names.includes(name)) return;
+          this._reportedMissing.add(name);
+          console.error(`[Interactable] implements "${name}": no such implementation is registered`);
+        }, 0);
       }
 
       private wireImplementationHandlers(implementation: ImplementationInstance): void {

@@ -401,3 +401,46 @@ test("an implementation registered after the element connected attaches without 
   assert.deepEqual(calls, ["alpha.go"]);
   assert.equal((host as HTMLElement & { didEnsure: boolean }).didEnsure, true);
 });
+
+test("a name that registers before the turn settles is not reported as missing", async () => {
+  const errors: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+    original(...args);
+  };
+  try {
+    const host = hostElement("div", { id: "quiet", implements: "quiet-late" });
+    document.body.appendChild(host);
+    defineImplementation("quiet-late", { verbs: { ping: "undefined" } }, () => ({
+      ping: () => undefined,
+    }));
+    assert.equal((host as HTMLElement & { didEnsure: boolean }).didEnsure, true);
+  } finally {
+    console.error = original;
+  }
+  await flush();
+  assert.deepEqual(
+    errors.filter((message) => message.includes("quiet-late")),
+    [],
+    "no missing-name report for an implementation that registered before the turn settles",
+  );
+});
+
+test("a name still missing when the turn settles is reported once", async () => {
+  const errors: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+    original(...args);
+  };
+  try {
+    document.body.appendChild(hostElement("div", { id: "loud", implements: "never-registers" }));
+    document.body.appendChild(hostElement("div", { id: "loud2", implements: "never-registers" }));
+    await flush();
+  } finally {
+    console.error = original;
+  }
+  const reports = errors.filter((message) => message.includes("never-registers"));
+  assert.equal(reports.length, 2, "one report per element with the missing name");
+});
