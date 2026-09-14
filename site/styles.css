@@ -932,6 +932,56 @@ html[data-theme="dark"] .inline-code {
   width: 6rem;
 }
 
+.demo [hidden] {
+  display: none;
+}
+
+.demo .tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.demo .tabpanel {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.demo .tabpanel p:first-child {
+  margin-top: 0;
+}
+
+.demo .tabpanel p:last-child {
+  margin-bottom: 0;
+}
+
+.demo #quote {
+  padding: 1rem 1.1rem;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  background: var(--surface-2);
+}
+
+.demo #quote[aria-busy="true"] {
+  opacity: 0.6;
+}
+
+.demo .quote {
+  margin: 0 0 0.75rem;
+}
+
+.demo .quote blockquote {
+  margin: 0 0 0.25rem;
+}
+
+.demo .quote figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .demo #panel[hidden] {
   display: none;
 }

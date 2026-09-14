@@ -14,21 +14,18 @@
   <main class="wrap">
     <h1 class="doc-title">Examples</h1>
     <p class="doc-lede">
-      Everything below is live, plain HTML: <code class="inline-code">is="interactable-&hellip;"</code> hosts,
-      <code class="inline-code">implements</code>, <code class="inline-code">on-*</code> triggers and verbs.
-      Open the console while you click — <code class="inline-code">logger</code> prints from phrases.
-      Each card shows the exact markup it is running.
+      Every card below is a real, working UI built entirely from the HTML you see &mdash; tabs, a price calculator,
+      an age gate, a form that submits over the network. Click things, open the console (a few examples log), and hit
+      <em>Show the markup</em> to copy any example straight into your own page.
     </p>
 
     <section class="example">
       <div class="example-head">
         <h2 id="ex-calc">Price calculator</h2>
         <p class="ex-note">
-          The total is computed from a formula,
-          <code class="inline-code">format(sum('#list .amount'), { style: 'currency', currency: 'USD' })</code>,
-          re-evaluated by <code class="inline-code">#total.compute()</code> after every change. Press Escape in the field to
-          <code class="inline-code">reset().markClean()</code> — <code class="inline-code">prevent-default</code> derives
-          <code class="inline-code">keydown:escape</code> and cancels the browser&rsquo;s native revert.
+          Add rows, adjust quantities, and watch the total recompute from a formula —
+          <code class="inline-code">sum('#list .amount')</code> — after every change. Press Escape in a field to reset it;
+          <code class="inline-code">prevent-default</code> cancels the browser&rsquo;s own revert first.
         </p>
       </div>
       <div class="example-body">
@@ -107,12 +104,13 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-reveal">Revealable panel</h2>
+        <h2 id="ex-reveal">A collapsible help panel</h2>
         <p class="ex-note">
-          <code class="inline-code">revealable</code> derives its strategy from the element: <code class="inline-code">data-open</code> here,
-          <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
-          popover state on a <code class="inline-code">[popover]</code>. The implementation keeps the trigger&rsquo;s
-          <code class="inline-code">aria-expanded</code> in sync.
+          One button, one phrase: <code class="inline-code">on-click="#panel.toggle()"</code>.
+          <code class="inline-code">revealable</code> figures out the element on its own — it toggles a
+          <code class="inline-code">data-open</code> attribute here, <code class="inline-code">el.open</code> on a
+          <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>, popover state on a
+          <code class="inline-code">[popover]</code>. The button&rsquo;s <code class="inline-code">aria-expanded</code> stays in sync automatically.
         </p>
       </div>
       <div class="example-body">
@@ -145,12 +143,11 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-grammar">Grammar playground</h2>
+        <h2 id="ex-grammar">Live preview: debounce, keys &amp; once</h2>
         <p class="ex-note">
-          One <code class="inline-code">on-*</code> value can carry several phrases (<code class="inline-code">;</code>), a key filter, and a
-          trailing modifier. Here <code class="inline-code">on-input</code> debounces <code class="inline-code">#mirror</code>,
-          <code class="inline-code">on-keydown</code> filters <code class="inline-code">enter</code> and <code class="inline-code">escape</code>, and
-          <code class="inline-code">once()</code> spends the tip after the chain completes.
+          Type into the field and the preview follows — but only 300ms after you stop. Enter echoes instantly,
+          Escape clears, and the &ldquo;Toggle tip&rdquo; button spends its <code class="inline-code">once()</code> after the
+          first successful toggle.
         </p>
       </div>
       <div class="example-body">
@@ -185,11 +182,12 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-attr">Attribute playground</h2>
+        <h2 id="ex-attr">Theme &amp; attribute switcher</h2>
         <p class="ex-note">
-          <code class="inline-code">attributable</code> writes attributes: <code class="inline-code">setAttr({name, value})</code> takes an
-          object literal, while <code class="inline-code">toggleAttr</code> and <code class="inline-code">removeAttr</code> take a scalar.
-          The last button uses <code class="inline-code">logger</code> to print from a phrase — open the console.
+          <code class="inline-code">attributable</code> writes attributes from a phrase: <code class="inline-code">setAttr({name, value})</code>
+          for one thing, <code class="inline-code">toggleAttr</code> / <code class="inline-code">removeAttr</code> for simpler ones.
+          Try <em>Dark</em>, then <em>Toggle border</em> — the card below reacts. The last button uses
+          <code class="inline-code">logger</code>, so open the console.
         </p>
       </div>
       <div class="example-body">
@@ -206,7 +204,7 @@
             <button is="interactable-button" id="swatch-log" type="button"
                     on-click="#swatch.log('button clicked')">Log</button>
           </div>
-          <div is="interactable-div" id="swatch" implements="attributable logger" data-theme="light">Swatch</div>
+          <div is="interactable-div" id="swatch" class="swatch" implements="attributable logger" data-theme="light">Swatch</div>
         </div>
       </div>
       <details class="example-code">
@@ -217,17 +215,18 @@
 &lt;button is="interactable-button" on-click="#swatch.removeAttr('data-theme')"&gt;Clear theme&lt;/button&gt;
 &lt;button is="interactable-button" on-click="#swatch.log('button clicked')"&gt;Log&lt;/button&gt;
 
-&lt;div is="interactable-div" id="swatch" implements="attributable logger" data-theme="light"&gt;Swatch&lt;/div&gt;</code></pre>
+&lt;div is="interactable-div" id="swatch" class="swatch" implements="attributable logger" data-theme="light"&gt;Swatch&lt;/div&gt;</code></pre>
       </details>
     </section>
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-note">Auto-growing note</h2>
+        <h2 id="ex-note">A sticky note that remembers</h2>
         <p class="ex-note">
-          <code class="inline-code">auto-grow</code> tracks the content height, <code class="inline-code">dirtyable</code> outlines the field
-          while it differs from the value it connected with, <code class="inline-code">storable</code> persists it to
-          <code class="inline-code">localStorage</code>, and <code class="inline-code">paste-transform</code> collapses runs of whitespace on paste.
+          Type something and it grows with your text (<code class="inline-code">auto-grow</code>), gains an amber outline until you save
+          (<code class="inline-code">dirtyable</code>), and is restored from <code class="inline-code">localStorage</code> when you come back
+          (<code class="inline-code">storable</code>). Paste a paragraph and runs of whitespace are collapsed
+          (<code class="inline-code">paste-transform</code>).
         </p>
       </div>
       <div class="example-body">
@@ -257,12 +256,11 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-cond">Conditional reveal</h2>
+        <h2 id="ex-cond">An age gate</h2>
         <p class="ex-note">
-          <code class="inline-code">condition</code> watches another element and fires a verb when the comparison holds:
-          <code class="inline-code">condition-watch</code> / <code class="inline-code">condition-on</code> /
-          <code class="inline-code">condition-op</code> / <code class="inline-code">condition-value</code> &rarr;
-          <code class="inline-code">condition-verb</code> on <code class="inline-code">condition-target</code>.
+          Raise the age to 18 and the message appears — no button, no script.
+          <code class="inline-code">condition</code> watches <code class="inline-code">#age</code> and fires
+          <code class="inline-code">show()</code> on the consent panel the moment the comparison holds.
         </p>
       </div>
       <div class="example-body">
@@ -294,12 +292,12 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-strat">Revealable strategies</h2>
+        <h2 id="ex-strat">Details, dialog &amp; popover</h2>
         <p class="ex-note">
-          <code class="inline-code">revealable</code> reads the element: <code class="inline-code">open</code> on
-          <code class="inline-code">&lt;details&gt;</code> and <code class="inline-code">&lt;dialog&gt;</code>, popover state on
-          <code class="inline-code">[popover]</code>, and <code class="inline-code">data-open</code> on anything else. Focus trapping,
-          the top layer, light dismiss and Escape handling come with the platform elements for free.
+          Three <code class="inline-code">revealable</code> strategies in one row: a <code class="inline-code">&lt;details&gt;</code>,
+          a modal <code class="inline-code">&lt;dialog&gt;</code> and a <code class="inline-code">[popover]</code>. Each is detected at connect
+          and driven through the platform&rsquo;s own open state — so focus trapping, the top layer, light dismiss and
+          Escape come for free.
         </p>
       </div>
       <div class="example-body">
@@ -348,11 +346,65 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-valid">Validation guard</h2>
+        <h2 id="ex-tabs">Tabs</h2>
         <p class="ex-note">
-          <code class="inline-code">validate()</code> calls <code class="inline-code">reportValidity()</code> and
-          <code class="inline-code">preventDefault()</code> on failure, which stops the rest of the chain:
-          <code class="inline-code">setAttr</code> runs only when the form is valid. The field uses <code class="inline-code">pattern</code>
+          Three buttons, three panels, no JavaScript. Each button shows one panel and hides the other two — a phrase is
+          just <code class="inline-code">;</code>-separated verbs. <code class="inline-code">revealable</code> toggles each
+          panel&rsquo;s <code class="inline-code">hidden</code> state.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="tabbar">
+            <button is="interactable-button" type="button"
+                    on-click="#tab-overview.show(); #tab-specs.hide(); #tab-notes.hide()">Overview</button>
+            <button is="interactable-button" type="button"
+                    on-click="#tab-overview.hide(); #tab-specs.show(); #tab-notes.hide()">Specs</button>
+            <button is="interactable-button" type="button"
+                    on-click="#tab-overview.hide(); #tab-specs.hide(); #tab-notes.show()">Notes</button>
+          </div>
+          <section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" data-open="true">
+            <p><strong>Overview.</strong> A plain <code class="inline-code">&lt;section&gt;</code> whose visibility is driven by
+            <code class="inline-code">revealable</code>. The other two panels stay <code class="inline-code">hidden</code> until you pick them.</p>
+          </section>
+          <section is="interactable-section" id="tab-specs" implements="revealable" class="tabpanel" hidden>
+            <p><strong>Specs.</strong> One phrase, three verbs: <code class="inline-code">#tab-specs.show(); #tab-overview.hide(); #tab-notes.hide()</code>.</p>
+          </section>
+          <section is="interactable-section" id="tab-notes" implements="revealable" class="tabpanel" hidden>
+            <p><strong>Notes.</strong> The verbs can be anything — <code class="inline-code">set()</code>, <code class="inline-code">setAttr()</code>,
+            even a <code class="inline-code">send()</code> to fetch a tab&rsquo;s content over the network.</p>
+          </section>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;div class="tabbar"&gt;
+  &lt;button is="interactable-button"
+          on-click="#tab-overview.show(); #tab-specs.hide(); #tab-notes.hide()"&gt;Overview&lt;/button&gt;
+  &lt;button is="interactable-button"
+          on-click="#tab-overview.hide(); #tab-specs.show(); #tab-notes.hide()"&gt;Specs&lt;/button&gt;
+  &lt;button is="interactable-button"
+          on-click="#tab-overview.hide(); #tab-specs.hide(); #tab-notes.show()"&gt;Notes&lt;/button&gt;
+&lt;/div&gt;
+
+&lt;section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" data-open="true"&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/section&gt;
+&lt;section is="interactable-section" id="tab-specs" implements="revealable" class="tabpanel" hidden&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/section&gt;
+&lt;section is="interactable-section" id="tab-notes" implements="revealable" class="tabpanel" hidden&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-valid">Sign-up form with a guard</h2>
+        <p class="ex-note">
+          <code class="inline-code">validate()</code> checks the form and, if it&rsquo;s invalid, stops the chain —
+          <code class="inline-code">setAttr</code> only runs when everything passes. The field uses <code class="inline-code">pattern</code>
           rather than <code class="inline-code">type="email"</code>, so the browser only complains when you submit, not while you type.
         </p>
       </div>
@@ -386,10 +438,10 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-json">JSON template</h2>
+        <h2 id="ex-json">A team roster from JSON</h2>
         <p class="ex-note">
           <code class="inline-code">json-template</code> renders a JSON data source through a child
-          <code class="inline-code">&lt;template&gt;</code>, re-rendering when the source changes. <code class="inline-code">{field}</code>
+          <code class="inline-code">&lt;template&gt;</code> and re-renders when the source changes. <code class="inline-code">{field}</code>
           interpolates; a nested template carrying <code class="inline-code">data-array</code> repeats per item.
         </p>
       </div>
@@ -434,11 +486,11 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-bubble">Nested triggers &amp; no-propagate</h2>
+        <h2 id="ex-bubble">Click bubbling, made explicit</h2>
         <p class="ex-note">
-          A click on a button inside a trigger fires both phrases as it bubbles, like nested
-          <code class="inline-code">onclick</code>. <code class="inline-code">no-propagate</code> stops the bubble on the inner element.
-          Open the console to watch <code class="inline-code">logger</code>.
+          A click on the inner button fires its own phrase and bubbles up to the card&rsquo;s — like nested
+          <code class="inline-code">onclick</code>. <code class="inline-code">no-propagate</code> on the second button stops the bubble.
+          Watch the console to see each line.
         </p>
       </div>
       <div class="example-body">
@@ -472,8 +524,9 @@
         <h2 id="ex-order">Order form — the asynchronous seam</h2>
         <p class="ex-note">
           <code class="inline-code">on-submit="this.send()"</code> POSTs the form; the response swaps into the receipt and
-          <code class="inline-code">requestable-after</code> reveals it. Failures run <code class="inline-code">requestable-error</code>.
-          Point <code class="inline-code">requestable-url</code> at a real endpoint and the button disables itself via
+          <code class="inline-code">requestable-after</code> reveals it. This site has no backend, so you&rsquo;ll see the failure path —
+          the alert — which is the honest behavior. Point <code class="inline-code">requestable-url</code> at a real endpoint and the same
+          markup works; the button disables itself via
           <code class="inline-code">form[aria-busy="true"] button { pointer-events: none }</code>.
         </p>
       </div>
@@ -510,6 +563,36 @@
 &lt;/form&gt;
 &lt;section is="interactable-section" id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
 &lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-quote">Load a quote over the network</h2>
+        <p class="ex-note">
+          The asynchronous seam, working end to end on this static site: <code class="inline-code">send()</code> GETs a
+          fragment and swaps it in. The fragment even carries its own <code class="inline-code">on-click="#quote.send()"</code>
+          button, so the trigger arrives with the response — no extra wiring.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <button is="interactable-button" id="load-quote" type="button" on-click="#quote.send()">Load a quote</button>
+          </div>
+          <div is="interactable-div" id="quote" implements="requestable"
+               requestable-url="./fragments/quote.html" requestable-method="get">
+            Nothing loaded yet &mdash; click the button above.
+          </div>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;button is="interactable-button" on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
+&lt;div is="interactable-div" id="quote" implements="requestable"
+     requestable-url="./fragments/quote.html" requestable-method="get"&gt;
+  Nothing loaded yet &mdash; click the button above.
+&lt;/div&gt;</code></pre>
       </details>
     </section>
   </main>

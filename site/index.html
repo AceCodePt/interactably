@@ -14,11 +14,11 @@
   <main class="wrap">
     <section class="hero">
       <span class="hero-badge"><span class="dot"></span>v0.1.0 &middot; no engine, no signals, no magic</span>
-      <h1>Declarative interactions for <span class="hl">customized built-in web components</span>, and the host that runs them.</h1>
+      <h1>Make your HTML <span class="hl">interactive</span> &mdash; without writing JavaScript.</h1>
       <p class="hero-sub">
-        You write plain HTML. <code class="inline-code">is="interactable-&lt;tag&gt;"</code> turns an element into a
-        <strong>host</strong>; an <code class="inline-code">on-*</code> attribute makes it a <strong>trigger</strong>;
-        <code class="inline-code">implements="&hellip;"</code> makes it a <strong>receiver</strong>. No page JavaScript.
+        You write plain HTML and Interactably wires it up. <code class="inline-code">is="interactable-&lt;tag&gt;"</code> turns any
+        element into a <strong>host</strong>, an <code class="inline-code">on-*</code> attribute is a <strong>trigger</strong>, and
+        <code class="inline-code">implements="&hellip;"</code> makes it a <strong>receiver</strong>. No page JavaScript, no framework, no build step.
       </p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="./docs.html">Read the docs</a>
@@ -38,13 +38,13 @@
 &lt;button is="interactable-button" on-click="#modal.show()"&gt;Open&lt;/button&gt;
 &lt;dialog is="interactable-dialog" id="modal" implements="revealable"&gt;&hellip;&lt;/dialog&gt;</code></pre>
         <p class="note">Clicking the button sends the verb <code class="inline-code">show()</code> to
-          <code class="inline-code">#modal</code>, which implements <code class="inline-code">revealable</code>.</p>
+          <code class="inline-code">#modal</code>, which implements <code class="inline-code">revealable</code>. That&rsquo;s the whole idea.</p>
       </div>
 
       <div class="card">
-        <h3>Try it — a price calculator</h3>
-        <p class="ex-note">The total is a formula, <code class="inline-code">sum('#list .amount')</code>, re-evaluated by
-          <code class="inline-code">#total.compute()</code> after every change. No JavaScript was written for this card.</p>
+        <h3>Try it — a working price calculator</h3>
+        <p class="ex-note">The total is a formula, <code class="inline-code">sum('#list .amount')</code>, recomputed by
+          <code class="inline-code">#total.compute()</code> after every change. Nothing on this card was written in JavaScript.</p>
         <div class="demo">
           <div class="row">
             <label>Qty
@@ -88,36 +88,36 @@
         <li>
           <span class="why-n">1</span>
           <div>
-            <span class="why-q">Why should an interaction live in a <code class="inline-code">.js</code> file when the trigger is right here in the markup?</span>
-            <span class="why-a">The phrase that fires on <code class="inline-code">click</code> belongs on the button. One attribute, one phrase language: <code class="inline-code">on-click="#pop.show().focus()"</code>.</span>
+            <span class="why-q">Why should an interaction hide in a <code class="inline-code">.js</code> file when the trigger is right here in the markup?</span>
+            <span class="why-a">Put the phrase where the action happens: <code class="inline-code">on-click="#pop.show().focus()"</code>. The button says what it does &mdash; no hunting through handlers.</span>
           </div>
         </li>
         <li>
           <span class="why-n">2</span>
           <div>
             <span class="why-q">Why should a receiver be a reference a script holds, when the DOM already has addresses?</span>
-            <span class="why-a">Ids are the addresses; <code class="inline-code">implements</code> is the capability. <code class="inline-code">#id.verb()</code> is member access — the element has <code class="inline-code">show</code> because it implements <code class="inline-code">revealable</code>.</span>
+            <span class="why-a">Ids are the addresses and <code class="inline-code">implements</code> is the capability. <code class="inline-code">#pop.show()</code> reads like English: the element can <code class="inline-code">show</code> because it implements <code class="inline-code">revealable</code>.</span>
           </div>
         </li>
         <li>
           <span class="why-n">3</span>
           <div>
-            <span class="why-q">Why should debounce, throttle and once mean a dependency on an event library?</span>
-            <span class="why-a">They are phrase modifiers: <code class="inline-code">#echo.set(this.value).debounce(300)</code>, <code class="inline-code">#tour.show().once()</code>. No imports.</span>
+            <span class="why-q">Why should debounce, throttle or &ldquo;only once&rdquo; mean reaching for an event library?</span>
+            <span class="why-a">They&rsquo;re just phrase modifiers: <code class="inline-code">#echo.set(this.value).debounce(300)</code>, <code class="inline-code">#tour.show().once()</code>. No imports, no options objects.</span>
           </div>
         </li>
         <li>
           <span class="why-n">4</span>
           <div>
-            <span class="why-q">Why should "when the request finishes" hide in a callback?</span>
-            <span class="why-a">Work that takes time belongs to the implementation that owns it. The continuation is a phrase in the markup: <code class="inline-code">requestable-after="#receipt.show()"</code>.</span>
+            <span class="why-q">Why should &ldquo;when the request finishes&rdquo; hide in a callback?</span>
+            <span class="why-a">The work that takes time owns its moment. The follow-up is a phrase in the markup: <code class="inline-code">requestable-after="#receipt.show()"</code>.</span>
           </div>
         </li>
         <li>
           <span class="why-n">5</span>
           <div>
-            <span class="why-q">Why should every interaction be a bespoke listener you wire and clean up?</span>
-            <span class="why-a">Triggers bind their own listeners in <code class="inline-code">connectedCallback</code> and clean up on disconnect. An element carries <code class="inline-code">on-*</code>, <code class="inline-code">implements</code>, both, or neither.</span>
+            <span class="why-q">Why should every interaction be a listener you wire, manage and clean up?</span>
+            <span class="why-a">The host does it for you &mdash; it binds <code class="inline-code">on-*</code> in <code class="inline-code">connectedCallback</code> and cleans up on disconnect. Elements declare what they do: <code class="inline-code">on-*</code>, <code class="inline-code">implements</code>, both, or neither.</span>
           </div>
         </li>
       </ul>
@@ -129,39 +129,39 @@
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
           <h3>A trigger grammar</h3>
-          <p>One attribute per event; the value is a tiny phrase language — receivers, chains, keys, object literals and modifiers.</p>
+          <p>One attribute per event, and the value is a tiny phrase language. <code class="inline-code">on-click="#pop.show().focus()"</code> reads like a sentence.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg></span>
           <h3>Customized built-ins</h3>
-          <p>Every participating element is a host: <code class="inline-code">is="interactable-&lt;tag&gt;"</code>. Forms, dialogs and details keep their native semantics.</p>
+          <p><code class="inline-code">is="interactable-&lt;tag&gt;"</code> keeps every native behavior &mdash; forms submit, dialogs trap focus, details toggle &mdash; and adds the verbs you want.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg></span>
           <h3>No engine</h3>
-          <p>A pure parser turns attribute strings into phrases; an executor runs them. Both are functions the host calls. No store, no signals.</p>
+          <p>A pure parser and a pure executor &mdash; two functions the host calls. No store, no signals, nothing to learn.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 7l-5-5-5 5M17 17l-5 5-5-5"/></svg></span>
           <h3>State: three tiers</h3>
-          <p>Authored, live and derived state, each in its place. The DOM is the store; ids are the addresses; whoever changes B fires A.</p>
+          <p>Authored, live and derived state each live where they belong. The DOM is the store; ids are the addresses; whoever changes B fires A.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg></span>
           <h3>An asynchronous seam</h3>
-          <p>Verbs are synchronous; chains never await. The network gap has a name and a place in the markup.</p>
+          <p>Verbs are synchronous and chains never await. When a request lands, the markup says what happens next.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M9 18h11"/></svg></span>
           <h3>Signatures as strings</h3>
-          <p>Every verb, config and state signature is a tsyntax string — the same string is the TypeScript type and the runtime check.</p>
+          <p>Every verb signature is a tsyntax string &mdash; the same string type-checks at build time and validates at runtime.</p>
         </div>
       </div>
     </section>
 
     <section>
       <p class="section-label" style="margin-top:3rem">Shipped implementations</p>
-      <p style="color:var(--muted); margin:0.4rem 0 0">Fifteen capabilities register themselves on import. Each is one file, one <code class="inline-code">defineImplementation</code> call, tagged with the elements it may attach to.</p>
+      <p style="color:var(--muted); margin:0.4rem 0 0">Fifteen ready-made capabilities, one per file. Import the ones you use; each registers itself and defines the hosts for its tags.</p>
       <div class="chip-row">
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>modifiable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>dirtyable</a>
@@ -180,8 +180,8 @@
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>json-template</a>
       </div>
       <p class="callout" style="margin-top:2rem">
-        <strong>Next:</strong> read the <a href="./docs.html">docs</a> to learn the trigger grammar, hosts and state tiers —
-        or jump straight to the <a href="./examples.html">examples</a> and click things.
+        <strong>Next:</strong> skim the <a href="./docs.html">docs</a> to learn the grammar and the state model &mdash;
+        or jump straight to the <a href="./examples.html">examples</a> and click things. Everything here is live.
       </p>
     </section>
   </main>
