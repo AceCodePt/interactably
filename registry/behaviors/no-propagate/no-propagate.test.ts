@@ -41,8 +41,8 @@ test("no-propagate stops a click from reaching the parent by default", async () 
   child.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   assert.equal(parentClicks, 0);
 
-  child.remove();
-  document.body.appendChild(child);
+  parent.remove();
+  document.body.appendChild(parent);
   await flush();
   child.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   assert.equal(parentClicks, 0);

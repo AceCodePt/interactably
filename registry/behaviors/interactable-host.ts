@@ -40,6 +40,10 @@ export function defineInteractableHost(tag: Tag): void {
         super.connectedCallback?.();
         this.wireTriggers();
         this.wireAttributeObserver();
+        for (const implementation of this._implementations.values()) {
+          implementation.connectedCallback?.();
+          this.wireImplementationHandlers(implementation);
+        }
         this.ensureImplementations();
         this.ownerDocument.addEventListener(REGISTRY_CHANGED_EVENT, this.onRegistryChanged);
       }

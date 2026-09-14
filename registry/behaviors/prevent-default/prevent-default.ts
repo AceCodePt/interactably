@@ -41,6 +41,7 @@ export const preventDefault = defineImplementation(
     }
     const bound = bindEvents(el, events, (e) => e.preventDefault(), { passive: false });
     return {
+      connectedCallback: () => bound.update(),
       attributeChangedCallback: (name: string): void => {
         if (name === "prevent-default-events") bound.update();
       },

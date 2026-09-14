@@ -346,6 +346,30 @@ test("lifecycle callbacks are forwarded and state writes render through attribut
   assert.ok(calls.includes("stateful.disconnected"));
 });
 
+test("a DOM move re-runs connectedCallback and re-wires on* handlers for kept implementations", async () => {
+  const receiver = hostElement("div", { id: "moved", implements: "stateful alpha" });
+  document.body.appendChild(receiver);
+  await flush();
+
+  calls.length = 0;
+  receiver.dispatchEvent(new Event("input"));
+  assert.deepEqual(calls, ["alpha.oninput"]);
+
+  receiver.remove();
+  assert.ok(calls.includes("stateful.disconnected"));
+  calls.length = 0;
+  receiver.dispatchEvent(new Event("input"));
+  assert.equal(calls.length, 0);
+
+  document.body.appendChild(receiver);
+  await flush();
+  assert.ok(calls.includes("stateful.connected"));
+
+  calls.length = 0;
+  receiver.dispatchEvent(new Event("input"));
+  assert.deepEqual(calls, ["alpha.oninput"]);
+});
+
 test("a config attribute registered after the host was defined still reaches attributeChangedCallback", async () => {
   const lateCalls: string[] = [];
   defineImplementation("late-config", { config: { events: "string | undefined" }, verbs: {} }, () => ({

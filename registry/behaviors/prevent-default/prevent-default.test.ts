@@ -145,6 +145,21 @@ test("prevent-default falls back to the tag: form→submit, <a href>→click, bu
   assert.equal(cancelableEvent(button, "click").defaultPrevented, true);
 });
 
+test("a DOM move re-binds the cancel listeners", async () => {
+  const form = hostElement("form", { implements: "prevent-default" });
+  document.body.appendChild(form);
+  await flush();
+
+  assert.equal(cancelableEvent(form, "submit").defaultPrevented, true);
+
+  form.remove();
+  assert.equal(cancelableEvent(form, "submit").defaultPrevented, false);
+
+  document.body.appendChild(form);
+  await flush();
+  assert.equal(cancelableEvent(form, "submit").defaultPrevented, true);
+});
+
 test("prevent-default-events overrides the derivation", async () => {
   const form = hostElement("form", { implements: "prevent-default", "prevent-default-events": "click" });
   document.body.appendChild(form);

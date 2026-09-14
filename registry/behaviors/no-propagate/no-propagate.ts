@@ -10,6 +10,7 @@ export const noPropagate = defineImplementation(
   (el, attrs) => {
     const bound = bindEvents(el, () => attrs.events ?? "click", (e) => e.stopPropagation());
     return {
+      connectedCallback: () => bound.update(),
       attributeChangedCallback: (name: string): void => {
         if (name === "no-propagate-events") bound.update();
       },
