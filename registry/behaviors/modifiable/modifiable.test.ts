@@ -181,3 +181,185 @@ test("inc reads the current value back off the element", async () => {
   interact(input, "inc");
   assert.equal(input.value, "4");
 });
+
+function dep(id: string, value: string): HTMLInputElement {
+  const input = document.createElement("input");
+  input.id = id;
+  input.value = value;
+  return input;
+}
+
+test("compute evaluates the formula against #id references at fire time", async () => {
+  const price = dep("price", "2");
+  const qty = dep("qty", "3");
+  const total = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "#price * #qty + 1",
+  }) as HTMLOutputElement;
+  document.body.append(price, qty, total);
+  await flush();
+
+  assert.equal(total.textContent, "7");
+  assert.equal(total.dataset["value"], "7");
+
+  price.value = "4";
+  interact(total, "compute");
+  assert.equal(total.textContent, "13");
+  assert.equal(total.dataset["value"], "13");
+});
+
+test("supports parentheses, unary minus and min/max/floor/ceil/round", async () => {
+  const a = dep("a", "1");
+  const b = dep("b", "5");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "min(#a, #b) + round(2.6) * floor(2.7) - (1 + 1)",
+  }) as HTMLOutputElement;
+  document.body.append(a, b, out);
+  await flush();
+
+  assert.equal(out.textContent, "5");
+  assert.equal(out.dataset["value"], "5");
+
+  const neg = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "-#a + 10",
+  }) as HTMLOutputElement;
+  document.body.appendChild(neg);
+  await flush();
+  assert.equal(neg.textContent, "9");
+});
+
+test("a missing #id reference counts as zero in arithmetic", async () => {
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "#ghost + 5",
+  }) as HTMLOutputElement;
+  document.body.appendChild(out);
+  await flush();
+  assert.equal(out.textContent, "5");
+});
+
+test("sum(selector) totals the matched elements at fire time", async () => {
+  const amounts = [dep("amt1", "2.5"), dep("amt2", "3.25")];
+  for (const amount of amounts) amount.className = "amount";
+  const total = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "sum('input.amount')",
+  }) as HTMLOutputElement;
+  document.body.append(...amounts, total);
+  await flush();
+
+  assert.equal(total.textContent, "5.75");
+  assert.equal(total.dataset["value"], "5.75");
+
+  amounts[1]!.value = "10";
+  interact(total, "compute");
+  assert.equal(total.textContent, "12.5");
+});
+
+test("count(selector) returns the number of matched elements", async () => {
+  const list = document.createElement("ul");
+  list.id = "rows";
+  for (let i = 0; i < 3; i++) {
+    const li = document.createElement("li");
+    list.appendChild(li);
+  }
+  const counter = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "count('#rows > li')",
+  }) as HTMLOutputElement;
+  document.body.append(list, counter);
+  await flush();
+
+  assert.equal(counter.textContent, "3");
+  assert.equal(counter.dataset["value"], "3");
+
+  const li = document.createElement("li");
+  list.appendChild(li);
+  interact(counter, "compute");
+  assert.equal(counter.textContent, "4");
+});
+
+test("format(value, { style: 'currency', currency: 'USD' }) formats and keeps data-value numeric", async () => {
+  const amount = dep("amount", "2.5");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "format(#amount, { style: 'currency', currency: 'USD' })",
+  }) as HTMLOutputElement;
+  document.body.append(amount, out);
+  await flush();
+
+  assert.equal(out.textContent, "$2.50");
+  assert.equal(out.dataset["value"], "2.5");
+
+  amount.value = "12.5";
+  interact(out, "compute");
+  assert.equal(out.textContent, "$12.50");
+  assert.equal(out.dataset["value"], "12.5");
+});
+
+test("format passes Intl options through, e.g. maximumFractionDigits", async () => {
+  const amount = dep("amount", "1.006");
+  const rounded = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "format(#amount, { maximumFractionDigits: 2 })",
+  }) as HTMLOutputElement;
+  document.body.append(amount, rounded);
+  await flush();
+  assert.equal(rounded.textContent, "1.01");
+});
+
+test("format(value, { type: 'date', dateStyle: 'medium' }) formats a date", async () => {
+  const date = dep("date", "2024-01-15");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "format(#date, { type: 'date', dateStyle: 'medium' })",
+  }) as HTMLOutputElement;
+  document.body.append(date, out);
+  await flush();
+
+  assert.equal(out.textContent, "Jan 15, 2024");
+  assert.equal(out.dataset["value"], undefined);
+});
+
+test("a malformed formula writes the modifiable-invalid-value fallback", async () => {
+  const fallback = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "1 +",
+    "modifiable-invalid-value": "0",
+  }) as HTMLOutputElement;
+  const defaulted = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "1 +",
+  }) as HTMLOutputElement;
+  document.body.append(fallback, defaulted);
+  await flush();
+
+  assert.equal(fallback.textContent, "0");
+  assert.equal(defaulted.textContent, "Error");
+});
+
+test("compute writes the result and data-value without dispatching a synthetic input event", async () => {
+  const a = dep("a", "2");
+  const b = dep("b", "3");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "#a * #b",
+  }) as HTMLOutputElement;
+  document.body.append(a, b, out);
+  await flush();
+
+  let inputs = 0;
+  out.addEventListener("input", () => inputs++);
+
+  assert.equal(out.textContent, "6");
+  assert.equal(out.dataset["value"], "6");
+  assert.equal(inputs, 0);
+
+  a.value = "4";
+  interact(out, "compute");
+  assert.equal(out.textContent, "12");
+  assert.equal(out.dataset["value"], "12");
+  assert.equal(inputs, 0);
+});

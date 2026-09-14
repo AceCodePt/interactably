@@ -10,11 +10,8 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const implementations = [
   "attributable",
   "auto-grow",
-  "compute",
   "condition",
   "dirtyable",
-  "element-counter",
-  "format",
   "json-template",
   "listable",
   "logger",
@@ -25,7 +22,6 @@ const implementations = [
   "requestable",
   "revealable",
   "storable",
-  "summable",
   "validatable",
 ];
 
