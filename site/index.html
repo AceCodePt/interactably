@@ -186,11 +186,13 @@
       <p class="note">
         <code>validate()</code> calls <code>reportValidity()</code> and <code>preventDefault()</code> on
         failure, which stops the rest of the chain: <code>setAttr</code> runs only when the form is valid.
+        The field uses <code>pattern</code> rather than <code>type="email"</code>, so the browser only
+        complains when you submit, not while you type.
       </p>
       <form is="interactable-form" id="signup" novalidate implements="prevent-default validatable attributable"
             on-submit="this.validate().setAttr({name: 'data-signed', value: 'true'})">
         <label>Email
-          <input name="email" type="email" required placeholder="you@example.com">
+          <input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com">
         </label>
         <button is="interactable-button" type="submit">Sign up</button>
         <p class="success" hidden>Thanks &mdash; that address looks valid.</p>

@@ -274,6 +274,9 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   assert.equal(signup.hasAttribute("data-signed"), false, "validate() stops the chain when the form is invalid");
   const email = signup.querySelector("input") as HTMLInputElement;
+  email.value = "not-an-email";
+  signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  assert.equal(signup.hasAttribute("data-signed"), false, "a value that fails the pattern also stops the chain");
   email.value = "you@example.com";
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   assert.equal(signup.getAttribute("data-signed"), "true", "validate() passes and setAttr() runs");
