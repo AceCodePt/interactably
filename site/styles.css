@@ -20,10 +20,10 @@
   --shadow: 0 1px 2px rgba(26, 26, 31, 0.06), 0 8px 24px rgba(26, 26, 31, 0.06);
   --shadow-lg: 0 2px 4px rgba(26, 26, 31, 0.06), 0 16px 48px rgba(26, 26, 31, 0.1);
 
-  --code-bg: #16161c;
-  --code-fg: #e9e7e3;
-  --code-border: #2a2a34;
-  --code-label: #8b8796;
+  --code-bg: #ffffff;
+  --code-fg: #24292e;
+  --code-border: #d8dee4;
+  --code-label: #57606a;
 
   color-scheme: light;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -52,6 +52,7 @@
     --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 48px rgba(0, 0, 0, 0.5);
 
     --code-bg: #0f0f14;
+    --code-fg: #e1e4e8;
     --code-border: #262630;
     --code-label: #6f6b7a;
 
@@ -421,6 +422,23 @@ code, pre, kbd {
   background: none;
   padding: 0;
   border: 0;
+}
+
+/* ---------- syntax highlighting (Shiki dual themes) ---------- */
+
+.code.shiki,
+.code.shiki span {
+  font-family: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .code.shiki,
+  .code.shiki span {
+    color: var(--shiki-dark) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
 }
 
 /* ---------- callouts ---------- */

@@ -147,3 +147,6 @@ scratch/
 
 # Vendored CDN bundles for the GitHub Pages site (build output of build-site)
 site/vendor/
+
+# Built GitHub Pages site (output of build-site)
+site-dist/
