@@ -60,7 +60,7 @@ if (raw.has(srcIndex)) {
 
 const srcCore = path.join(distTypes, "src", "core.d.ts");
 if (raw.has(srcCore)) {
-  outputs.set(path.join(distCdn, "behavior-fn-core.d.ts"), rewrite(raw.get(srcCore), distCdn));
+  outputs.set(path.join(distCdn, "interactably-core.d.ts"), rewrite(raw.get(srcCore), distCdn));
 }
 
 const behaviorsDir = path.join(distTypes, "registry", "behaviors");

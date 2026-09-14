@@ -41,7 +41,7 @@ const coreFiles = [
 ];
 
 const coreModuleIds = new Set(coreFiles.map((file) => path.join(root, file)));
-const coreSpecifier = "./behavior-fn-core.js";
+const coreSpecifier = "./interactably-core.js";
 
 const aliasTargets = {
   "@/*": "./src/*",
@@ -102,7 +102,7 @@ export default defineConfig([
     external: externals,
     output: {
       format: "esm",
-      file: "dist/cdn/behavior-fn-core.js",
+      file: "dist/cdn/interactably-core.js",
     },
   },
   {

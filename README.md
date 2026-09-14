@@ -630,7 +630,7 @@ onInteraction(e: InteractionEvent) {                                // NOT insid
 
 **`registry/utils/auto-loader.ts`**: adds `is="interactable-<tag>"` to any element that has `implements` **or** an attribute name starting with `on-`. The `on-*` check is `getAttributeNames().some(n => n.startsWith("on-"))` on added nodes (there is no wildcard `attributeFilter`). Defines the host for a tag on first sight, as it already does. Triggers are now its concern again, by the same mechanism as receivers. Keep the existing node-replacement strategy (there is no other way to upgrade a customized built-in after creation) and keep it **opt-in**: the file's header already documents that it invalidates JS references; add that the upgrade is a microtask late and drops focus, and log one `console.info` per page when it upgrades anything, so a production page that leans on it finds out. The recommended path is explicit `is=` in templates and server output (§7).
 
-**`scripts/build-cdn.ts`**: bundle `registry/interactable/*` into `behavior-fn-core.js` alongside the host (the host imports it; it is not separable); drop `command.js`.
+**`scripts/build-cdn.ts`**: bundle `registry/interactable/*` into `interactably-core.js` alongside the host (the host imports it; it is not separable); drop `command.js`.
 
 **`src/commands/init.ts`, `add.ts`, `install-behavior.ts`, `src/schemas/config`**: remove the validator choice (`--validator` flag, the "Which schema validator" prompt, the `validator` field in the config schema, the per-behavior validator prompt in `add`). Installed implementation files are copied as-is; there is no schema transform step.
 
@@ -673,14 +673,22 @@ Every migrated test changes one line: `dispatchCommand(el, command["show"])` →
 
 ## 10. Full examples
 
+Install and consume the published package:
+
+```sh
+npm install interactably
+```
+
+Each example below imports the CDN bundles from the package (`interactably/dist/cdn/...`); the core bundle ships inside `interactably-core.js`, and the per-implementation bundles (`modifiable.js`, `dirtyable.js`, `listable.js`, …) register their implementation into the core's registry on import, so importing them is the whole setup.
+
 ### 10.1 Price calculator
 
 ```html
 <script type="module">
-  import "behavior-fn/dist/cdn/modifiable.js";
-  import "behavior-fn/dist/cdn/dirtyable.js";
-  import "behavior-fn/dist/cdn/listable.js";
-  import { defineInteractableHost } from "behavior-fn/dist/cdn/behavior-fn-core.js";
+  import "interactably/dist/cdn/modifiable.js";
+  import "interactably/dist/cdn/dirtyable.js";
+  import "interactably/dist/cdn/listable.js";
+  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
   for (const tag of ["input", "output", "button", "ul"]) defineInteractableHost(tag);   // idempotent: modifiable/listable already ensured theirs
 </script>
 
@@ -830,7 +838,7 @@ Traces:
 
 **11.12 No `isTrusted` gate.** Untestable from JS and makes `element.click()` inert. The event type does the separation now.
 
-**11.13 Single repo, no separate engine bundle.** Parser, executor, event, host, implementations and CLI share one package. The parser and executor are imported by the host and ship inside `behavior-fn-core.js`; there is nothing to load "before" anything else. A two-repo split is examined in Appendix C.
+**11.13 Single repo, no separate engine bundle.** Parser, executor, event, host, implementations and CLI share one package. The parser and executor are imported by the host and ship inside `interactably-core.js`; there is nothing to load "before" anything else. A two-repo split is examined in Appendix C.
 
 **11.14 The baseline this has to beat.** For a single consumer, `onclick="$('#pop').show()"` with a three-line `$` is a legitimate alternative. The DSL earns its parser on four things: key/timing modifiers without branching in handlers; a receiver that can intercept and abort; static tooling (verb completion per receiver, missing-id and unknown-verb errors before the page loads); and CSP compatibility. If none of those matter, the shim is the correct design.
 

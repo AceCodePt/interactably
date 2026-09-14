@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
 
-const coreUrl = new URL("../dist/cdn/behavior-fn-core.js", import.meta.url);
+const coreUrl = new URL("../dist/cdn/interactably-core.js", import.meta.url);
 const implUrl = new URL("../dist/cdn/modifiable.js", import.meta.url);
 const mainUrl = new URL("../dist/interactably.js", import.meta.url);
 
