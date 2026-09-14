@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably documentation — the trigger grammar, hosts, implementations, state tiers, the parser and executor, and the asynchronous seam.">
+  <title>Docs — Interactably</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-page="docs">
+  <div id="nav"></div>
+  <script src="./site.js"></script>
+
+  <main class="wrap">
+    <h1 class="doc-title">Documentation</h1>
+    <p class="doc-lede">
+      A declarative interaction language for customized built-in web components, and the host that runs it.
+      You write plain HTML; the host binds trigger listeners, instantiates implementations and routes interactions.
+    </p>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h2>Contents</h2>
+        <nav aria-label="Documentation sections">
+          <a href="#quick-start">Quick start</a>
+          <a href="#trigger-grammar">The trigger grammar</a>
+          <a href="#grammar" class="sub">Grammar</a>
+          <a href="#constructs" class="sub">Constructs</a>
+          <a href="#rules" class="sub">Rules</a>
+          <a href="#reserved-names" class="sub">Reserved names</a>
+          <a href="#interaction-event">The interaction event</a>
+          <a href="#hosts">Hosts</a>
+          <a href="#four-kinds" class="sub">Four kinds of element</a>
+          <a href="#reporting" class="sub">Reporting</a>
+          <a href="#implementations">Shipped implementations</a>
+          <a href="#prevent-default" class="sub">prevent-default &amp; no-propagate</a>
+          <a href="#revealable" class="sub">Revealable</a>
+          <a href="#writing-an-implementation">Writing an implementation</a>
+          <a href="#signatures" class="sub">Signatures</a>
+          <a href="#declare-only" class="sub">Declare only what you invent</a>
+          <a href="#attrs" class="sub">attrs is a typed proxy</a>
+          <a href="#conventions" class="sub">Conventions</a>
+          <a href="#state">State: three tiers</a>
+          <a href="#dynamics">Dynamics</a>
+          <a href="#parser-and-executor">Parser and executor</a>
+          <a href="#pipeline" class="sub">Pipeline</a>
+          <a href="#parse-cache" class="sub">Parse cache and resolution</a>
+          <a href="#native-defaults" class="sub">Native default actions</a>
+          <a href="#asynchrony">Asynchrony</a>
+          <a href="#full-examples">Full examples</a>
+          <a href="#api-reference">API reference</a>
+          <a href="#why-built">Why it is built this way</a>
+          <a href="#not-supported">Not supported</a>
+          <a href="#appendices">Appendices</a>
+        </nav>
+      </aside>
+
+      <div class="content">
+
+        <h2 id="quick-start">Quick start <a class="anchor" href="#quick-start">#</a></h2>
+        <pre class="code" data-lang="sh"><code>npm install interactably</code></pre>
+        <p>
+          Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the
+          core&rsquo;s registry on import, and defines the hosts for its declared tags:
+        </p>
+        <pre class="code" data-lang="html"><code>&lt;script type="module"&gt;
+  import "interactably/dist/cdn/modifiable.js";
+  import "interactably/dist/cdn/revealable.js";
+  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
+  defineInteractableHost("button");   // idempotent; a &lt;button&gt; trigger has no implementation declaring it
+&lt;/script&gt;
+
+&lt;button is="interactable-button" id="inc" on-click="#qty.inc()"&gt;+&lt;/button&gt;
+
+&lt;label&gt;Qty
+  &lt;input is="interactable-input" id="qty" implements="modifiable"
+         type="number" value="1" min="0" max="10"
+         on-input="#preview.set(this.value)"&gt;
+&lt;/label&gt;
+
+&lt;output is="interactable-output" id="preview" implements="modifiable"&gt;1&lt;/output&gt;</code></pre>
+        <p>Every click on <code class="inline-code">+</code> calls <code class="inline-code">#qty.inc()</code>: the input clamps to
+          <code class="inline-code">max</code>, dispatches a synthetic <code class="inline-code">input</code>, and the preview follows.</p>
+
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Bundle</th><th>Contents</th></tr></thead>
+            <tbody>
+              <tr><td><code class="inline-code">interactably-core.js</code></td><td>parser, executor, event, host, registry. No implementations.</td></tr>
+              <tr><td><code class="inline-code">modifiable.js</code>, <code class="inline-code">dirtyable.js</code>, <code class="inline-code">listable.js</code>, &hellip;</td><td>one implementation per file, registering into the core&rsquo;s registry on import</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <h4>The <code class="inline-code">is=</code> rule</h4>
+          <p>An element carries <code class="inline-code">is="interactable-&lt;tag&gt;"</code> when it has <code class="inline-code">implements</code>, any <code class="inline-code">on-*</code> attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an <code class="inline-code">id</code>.</p>
+        </div>
+
+        <h2 id="trigger-grammar">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
+        <p>One attribute per interaction; the value is the phrase language.</p>
+        <pre class="code" data-lang="html"><code>&lt;button on-click="#pop.show().focus()"&gt;
+&lt;input  on-input="#echo.set(this.value); #results.filter(this.value).debounce(300)"&gt;
+&lt;input  on-keydown="escape: this.reset(); enter: #form.validate().send()"&gt;
+&lt;button on-click="#tour.show().once()"&gt;
+&lt;button on-click="#pb.hide(); #pc.hide(); #pa.show()"&gt;
+&lt;button on-click="#note.transform({mode: 'upper', shift: 2})"&gt;
+&lt;button on-click="#list.removeRow(this)"&gt;</code></pre>
+
+        <h3 id="grammar">Grammar <a class="anchor" href="#grammar">#</a></h3>
+        <pre class="code" data-lang="text"><code>value     := phrase (';' phrase)*
+phrase    := [key ':'] ref ('.' call)+ ('.' modifier)*
+ref       := '#'id | this
+call      := verb '(' [arg | object] ')'
+arg       := number | 'string' | true | false | ref | read
+read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
+object    := '{' name ':' arg (',' name ':' arg)* '}'
+modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
+
+        <h3 id="constructs">Constructs <a class="anchor" href="#constructs">#</a></h3>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td>Trigger</td><td><code class="inline-code">on-click="#pop.show()"</code></td><td>On <code class="inline-code">click</code>, run the phrase</td></tr>
+              <tr><td>Receiver</td><td><code class="inline-code">#pop.show()</code></td><td>Send verb <code class="inline-code">show()</code> to the element with <code class="inline-code">id="pop"</code></td></tr>
+              <tr><td>Self</td><td><code class="inline-code">this.reset()</code></td><td>The element the phrase was read from (the trigger for <code class="inline-code">on-*</code>)</td></tr>
+              <tr><td>Chain</td><td><code class="inline-code">#pop.show().focus()</code></td><td><code class="inline-code">.show()</code> then <code class="inline-code">.focus()</code> on the same receiver, in order</td></tr>
+              <tr><td>Independent</td><td><code class="inline-code">#pb.hide(); #pa.show()</code></td><td>Two phrases that run regardless of each other</td></tr>
+              <tr><td>Scalar arg</td><td><code class="inline-code">#qty.inc(5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
+              <tr><td>Element arg</td><td><code class="inline-code">#list.removeRow(this)</code></td><td>A ref resolves to the element at fire time</td></tr>
+              <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code>, the platform&rsquo;s own types</td></tr>
+              <tr><td>Key</td><td><code class="inline-code">on-keydown="enter: #f.send()"</code></td><td>Filter <em>which</em> events reach the phrase</td></tr>
+              <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
+              <tr><td>Debounce</td><td><code class="inline-code">#echo.set(this.value).debounce(300)</code></td><td>Trails the phrase, applies to all of it</td></tr>
+              <tr><td>Throttle</td><td><code class="inline-code">#viewport.zoom(this).throttle(16)</code></td><td>Leading-edge throttle, per element</td></tr>
+              <tr><td>Once</td><td><code class="inline-code">#tour.show().once()</code></td><td>Fire once, spent on chain <em>completion</em></td></tr>
+              <tr><td>Selector</td><td><code class="inline-code">modifiable-formula="sum('#list .amount')"</code></td><td>Selectors appear only inside string arguments</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          <code class="inline-code">&lt;event-type&gt;</code> is any DOM event type — <code class="inline-code">on-click</code>,
+          <code class="inline-code">on-input</code>, <code class="inline-code">on-keydown</code>, <code class="inline-code">on-mouseenter</code>,
+          <code class="inline-code">on-toggle</code>, <code class="inline-code">on-cart-updated</code>, &hellip; The listener is bound on the element
+          itself, so there is no supported-events list. Every trigger names its event; there are no default interactions.
+        </p>
+
+        <h3 id="rules">Rules <a class="anchor" href="#rules">#</a></h3>
+        <ol>
+          <li><strong>Parens are mandatory.</strong> <code class="inline-code">#pop.show</code> is a CSS selector; <code class="inline-code">#pop.show()</code> is a call.</li>
+          <li><strong>Receivers are <code class="inline-code">#id</code> or <code class="inline-code">this</code>.</strong> Ids may not contain <code class="inline-code">.</code>. Class or attribute selectors are never receivers.</li>
+          <li><strong>One receiver per phrase.</strong> Two elements is two phrases: <code class="inline-code">#a.hide(); #b.hide()</code>. There is no group form.</li>
+          <li><strong>Keys are legal only under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code></strong>, one per phrase. Two keys is two phrases: <code class="inline-code">enter: #f.send(); numpadenter: #f.send()</code>. Names match <code class="inline-code">KeyboardEvent.key</code> case-insensitively; <code class="inline-code">space</code> means <code class="inline-code">" "</code>.</li>
+          <li><strong>Modifiers trail and apply to the whole phrase.</strong> Order is normalized to: key filter &rarr; throttle/debounce &rarr; chain &rarr; once.</li>
+          <li><strong><code class="inline-code">;</code> is independent, <code class="inline-code">.</code> is sequential and abortable.</strong> A chain stops if a verb&rsquo;s event is <code class="inline-code">preventDefault()</code>-ed, if the verb threw, or if no implementation owns the verb.</li>
+          <li><strong><code class="inline-code">once()</code> is spent on completion</strong>, not on start — a chain stopped by a guard, an error or an unowned verb leaves the phrase live. Chains are synchronous, so &ldquo;completion&rdquo; is unambiguous.</li>
+          <li><strong>References are late-bound.</strong> <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads resolve at fire time (after any debounce), never at parse time.</li>
+          <li><strong>One argument per verb.</strong> A string signature takes one scalar (<code class="inline-code">set(5)</code>); a record signature takes one object literal (<code class="inline-code">setAttr({name: 'aria-expanded', value: 'true'})</code>); <code class="inline-code">"undefined"</code> takes none. Two bare arguments is a grammar error.</li>
+          <li><strong>Exactly three properties may be read off a ref</strong> — <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> — with the platform&rsquo;s own types, no coercion. <code class="inline-code">this.parentElement</code> and friends are not legal; relative navigation lives in implementation code.</li>
+          <li><strong>Selectors appear only inside string arguments</strong> (<code class="inline-code">'.amount'</code>, <code class="inline-code">':scope &gt; li'</code>). The grammar sees a string; the implementation&rsquo;s schema types it as a selector.</li>
+          <li><strong>Errors are local.</strong> A missing <code class="inline-code">#id</code>, a grammar error, or an argument that fails the signature logs once and skips that phrase/link; the rest of the value runs.</li>
+        </ol>
+
+        <h3 id="reserved-names">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
+        <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
+
+        <h2 id="interaction-event">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
+        <p>The host wraps every verb call in its own event, dispatched at the receiver:</p>
+        <pre class="code" data-lang="ts"><code>class InteractionEvent extends Event {
+  readonly verb: string;          // "show"
+  readonly arg: unknown;          // resolved: 5 | "currency" | HTMLElement | { name, value } | undefined
+  readonly source: Element;       // the element whose attribute the phrase came from (what `this` resolved to)
+  readonly originalEvent: Event;  // click / input / keydown …
+  handled = false;                // true when an implementation owned the verb
+  error?: unknown;                // set when validation or the verb threw
+  result?: unknown;               // the verb's return value
+}</code></pre>
+        <ul>
+          <li><strong>Non-bubbling.</strong> A host receives interactions aimed at itself and nothing else — no <code class="inline-code">if (e.target !== el)</code> guards.</li>
+          <li><strong><code class="inline-code">preventDefault()</code> aborts the rest of the chain.</strong> This is the guard-verb mechanism: <code class="inline-code">validate().send()</code>.</li>
+          <li><strong>Three return channels, because a DOM event has none.</strong> <code class="inline-code">dispatchEvent</code> swallows listener exceptions and cannot tell &ldquo;handled&rdquo; from &ldquo;nobody listened&rdquo;. So the host writes <code class="inline-code">handled</code>, <code class="inline-code">error</code>, <code class="inline-code">result</code> onto the event, and the executor reads them after dispatch.</li>
+          <li><strong>No <code class="inline-code">isTrusted</code> gate.</strong> Tests dispatch real DOM events on triggers.</li>
+          <li><strong>The browser&rsquo;s <code class="inline-code">command</code> event plays no part.</strong> A page can also use native invokers; an implementation may listen to <code class="inline-code">command</code> like any other DOM event.</li>
+        </ul>
+
+        <h2 id="hosts">Hosts <a class="anchor" href="#hosts">#</a></h2>
+        <p>
+          One customized built-in per tag, defined with <a href="https://github.com/AceCodePt/auto-wc">auto-wc</a> via
+          <code class="inline-code">defineInteractableHost("input")</code> &rarr; <code class="inline-code">interactable-input</code>. The host does two independent jobs.
+        </p>
+        <p><strong>Trigger side.</strong> In <code class="inline-code">connectedCallback</code> it scans its <code class="inline-code">on-*</code> attributes and binds one listener per attribute on itself:</p>
+        <pre class="code" data-lang="ts"><code>for (const name of this.getAttributeNames()) {
+  if (!name.startsWith("on-")) continue;
+  const type = name.slice(3);
+  const handler = (ev: Event) => runPhrases(this, this.getAttribute(name)!, ev);   // value read at event time
+  this.addEventListener(type, handler, { passive: true });                          // the DSL never cancels
+  if (!(("on" + type) in this) &amp;&amp; !LEGACY_EVENTS_WITHOUT_IDL.has(type))
+    console.warn(`[Interactable] on-${type} on ${describe(this)}: &lt;${this.localName}&gt; has no "${type}" event; custom events are fine, but check the spelling and case`);
+  warnIfNativeActionLikelyUnwanted(this, type);                                     // &lt;form on-submit&gt;, &lt;a href on-click&gt; without prevent-default
+  this._interactionCleanup.push(() =&gt; this.removeEventListener(type, handler));
+}</code></pre>
+        <p>
+          A trigger is live the moment it connects. <code class="inline-code">disconnectedCallback</code> runs the cleanup list. The
+          <code class="inline-code">on-*</code> <strong>value</strong> is read at event time, so editing <code class="inline-code">on-click="#a.show()"</code> to
+          <code class="inline-code">"#b.show()"</code> takes effect on the next click. Adding a brand-new <code class="inline-code">on-*</code> attribute after connect requires re-inserting the element.
+        </p>
+        <p>
+          <strong>Receiver side.</strong> Read <code class="inline-code">implements</code>; for each name, check the implementation&rsquo;s
+          <code class="inline-code">tags</code> admits <code class="inline-code">this.localName</code>, instantiate the factory with
+          <code class="inline-code">(this, attrs)</code>, wire the implementation&rsquo;s <code class="inline-code">on*</code> methods as listeners on itself,
+          forward lifecycle callbacks, and route <code class="inline-code">onInteraction(e)</code> to the <strong>first implementation in
+          <code class="inline-code">implements</code> order</strong> that declares <code class="inline-code">e.verb</code> — after validating <code class="inline-code">e.arg</code> against the verb&rsquo;s signature.
+        </p>
+        <p>
+          <strong>Readiness.</strong> Implementations attach synchronously in <code class="inline-code">connectedCallback</code>, so an interaction dispatched
+          immediately after insertion is answered in the same task. An <code class="inline-code">implements</code> name the registry does not know yet is skipped,
+          and the report is deferred one turn so the imports that follow can register it first; only a name still missing when the current script settles is
+          reported with <code class="inline-code">console.error</code>. When it registers later, the registry dispatches <code class="inline-code">interactably:register</code>
+          and every connected host re-runs its attach pass. Markup may therefore precede the imports. Config and state attributes are delivered through the
+          class&rsquo;s <code class="inline-code">observedAttributes</code> snapshot plus one <code class="inline-code">MutationObserver</code> per element, never for <code class="inline-code">on-*</code>.
+        </p>
+
+        <h3 id="four-kinds">Four kinds of element <a class="anchor" href="#four-kinds">#</a></h3>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Kind</th><th>Has</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Self-contained</strong></td><td><code class="inline-code">implements</code></td><td><code class="inline-code">&lt;textarea implements="autogrowable"&gt;</code> — everything inside via the implementation&rsquo;s own <code class="inline-code">on*</code> handlers</td></tr>
+              <tr><td><strong>Trigger-only</strong></td><td><code class="inline-code">on-*</code></td><td><code class="inline-code">&lt;button on-click="#modal.show()"&gt;</code> — causes things elsewhere, never a receiver</td></tr>
+              <tr><td><strong>Receiver</strong></td><td><code class="inline-code">implements</code> + <code class="inline-code">id</code></td><td><code class="inline-code">&lt;dialog id="modal" implements="revealable"&gt;</code> — the id exists so others can address it</td></tr>
+              <tr><td><strong>Self-acting</strong></td><td><code class="inline-code">implements</code> + <code class="inline-code">on-*</code></td><td><code class="inline-code">&lt;input implements="modifiable" on-keydown="escape: this.reset()"&gt;</code> — triggers on itself</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The fourth kind is why <code class="inline-code">this</code> exists: <code class="inline-code">on-click="this.remove()"</code> works on every row cloned from a template, with no generated ids.</p>
+
+        <h3 id="reporting">Reporting <a class="anchor" href="#reporting">#</a></h3>
+        <p>The host and executor report through <code class="inline-code">console.error</code> / <code class="inline-code">console.warn</code>; they do not throw (host methods run on the browser&rsquo;s stack, which owns their exceptions). <code class="inline-code">throw</code> is reserved for <code class="inline-code">defineImplementation</code> and the registry, where the exception reaches the developer who wrote the call.</p>
+        <ul>
+          <li><code class="inline-code">console.error</code> when there is no legitimate reading: unknown <code class="inline-code">implements</code> name, tag outside the implementation&rsquo;s <code class="inline-code">tags</code>, receiver <code class="inline-code">#id</code> not in the document, verb no implementation owns, verb that threw, implementation that failed to attach.</li>
+          <li><code class="inline-code">console.warn</code> when the code may well be right but the author should look: <code class="inline-code">on-&lt;type&gt;</code> the element has no event for, <code class="inline-code">&lt;form on-submit&gt;</code> without <code class="inline-code">prevent-default</code>, a verb that returned a promise, <code class="inline-code">prevent-default</code> with nothing derived.</li>
+        </ul>
+
+        <h2 id="implementations">The shipped implementations <a class="anchor" href="#implementations">#</a></h2>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Implementation</th><th>Tags</th><th>Verbs</th><th>Config / state</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">inc</code>, <code class="inline-code">dec</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code>, <code class="inline-code">compute</code></td><td><code class="inline-code">step</code>, <code class="inline-code">formula</code>, <code class="inline-code">invalid-value</code></td><td>typed writes with clamping; evaluates a formula on <code class="inline-code">compute()</code> and on connect</td></tr>
+              <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td><code class="inline-code">markClean</code></td><td>&mdash;</td><td>toggles <code class="inline-code">.is-dirty</code> while <code class="inline-code">el.value</code> differs from the connect-time baseline</td></tr>
+              <tr><td><code class="inline-code">listable</code></td><td>ul, ol, tbody</td><td><code class="inline-code">removeRow</code>, <code class="inline-code">adopt</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">min-rows</code></td><td>row removal / template adoption / clear, keeping <code class="inline-code">min-rows</code></td></tr>
+              <tr><td><code class="inline-code">requestable</code></td><td>any</td><td><code class="inline-code">send</code>, <code class="inline-code">abort</code></td><td><code class="inline-code">url</code>, <code class="inline-code">method</code>, <code class="inline-code">target</code>, <code class="inline-code">swap</code>, <code class="inline-code">include</code>, <code class="inline-code">concurrency</code>, <code class="inline-code">after</code>, <code class="inline-code">error</code> + <code class="inline-code">status</code> state</td><td>fetch, swap the response into the DOM, run continuation phrases</td></tr>
+              <tr><td><code class="inline-code">attributable</code></td><td>any</td><td><code class="inline-code">setAttr</code>, <code class="inline-code">toggleAttr</code>, <code class="inline-code">removeAttr</code></td><td>&mdash;</td><td>attribute writes (<code class="inline-code">setAttr({name, value})</code>)</td></tr>
+              <tr><td><code class="inline-code">logger</code></td><td>any</td><td><code class="inline-code">log</code></td><td>&mdash;</td><td><code class="inline-code">console.log</code> from a phrase</td></tr>
+              <tr><td><code class="inline-code">validatable</code></td><td>form, input, select, textarea</td><td><code class="inline-code">validate</code></td><td>&mdash;</td><td>guard verb: <code class="inline-code">reportValidity()</code>, <code class="inline-code">preventDefault()</code> on failure</td></tr>
+              <tr><td><code class="inline-code">no-propagate</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">events</code> (default <code class="inline-code">"click"</code>)</td><td><code class="inline-code">stopPropagation</code> on listed events</td></tr>
+              <tr><td><code class="inline-code">prevent-default</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">events</code> (derived, see below)</td><td><code class="inline-code">preventDefault</code> on listed events</td></tr>
+              <tr><td><code class="inline-code">revealable</code></td><td>any</td><td><code class="inline-code">show</code>, <code class="inline-code">hide</code>, <code class="inline-code">toggle</code></td><td><code class="inline-code">modal</code> + <code class="inline-code">open</code> state</td><td>strategies per element (<a href="#revealable">below</a>)</td></tr>
+              <tr><td><code class="inline-code">auto-grow</code></td><td>textarea</td><td>&mdash;</td><td>&mdash;</td><td>auto-height textarea</td></tr>
+              <tr><td><code class="inline-code">storable</code></td><td>any</td><td><code class="inline-code">save</code>, <code class="inline-code">load</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">key</code>, <code class="inline-code">type</code> (<code class="inline-code">local</code>/<code class="inline-code">session</code>), <code class="inline-code">attr</code></td><td>persist a field&rsquo;s value to storage</td></tr>
+              <tr><td><code class="inline-code">paste-transform</code></td><td>input, textarea</td><td>&mdash;</td><td><code class="inline-code">patterns</code>, <code class="inline-code">replaces</code></td><td>rewrite pasted text with regexes</td></tr>
+              <tr><td><code class="inline-code">condition</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">watch</code>, <code class="inline-code">on</code>, <code class="inline-code">op</code>, <code class="inline-code">value</code>, <code class="inline-code">verb</code>, <code class="inline-code">target</code></td><td>fire a verb on another element when a condition holds</td></tr>
+              <tr><td><code class="inline-code">json-template</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">for</code>, <code class="inline-code">slice</code></td><td>render a JSON data source through a child <code class="inline-code">&lt;template&gt;</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="prevent-default">prevent-default and no-propagate <a class="anchor" href="#prevent-default">#</a></h3>
+        <p>
+          The executor never calls <code class="inline-code">preventDefault()</code> or <code class="inline-code">stopPropagation()</code>
+          (every <code class="inline-code">on-*</code> listener is passive). Both facts are said on the element, by name — they are
+          implementations, not grammar.
+        </p>
+        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" implements="prevent-default no-propagate" no-propagate-events="submit"
+      on-submit="#api.send(); #status.set('Saving&hellip;')"&gt;                                  &lt;!-- derived from on-submit: submit --&gt;
+
+&lt;div is="interactable-div" implements="prevent-default" prevent-default-events="contextmenu"
+     on-contextmenu="#menu.showAt(this)"&gt;                                                &lt;!-- not derivable: stated --&gt;
+
+&lt;input is="interactable-input" implements="prevent-default"
+       on-keydown="enter: #search.run(this.value)"&gt;                                      &lt;!-- derived from the keyed phrase: keydown:enter --&gt;
+
+&lt;section is="interactable-section" implements="prevent-default no-propagate"
+         prevent-default-events="dragover,drop" no-propagate-events="drop"
+         on-drop="#uploads.accept(this)"&gt;                                                &lt;!-- not derivable; dragover must be cancelled or drop never fires --&gt;
+
+&lt;canvas is="interactable-canvas" implements="prevent-default" prevent-default-events="wheel"
+        on-wheel="#viewport.zoom(this).throttle(16)"&gt;                                    &lt;!-- never derived: blocks scrolling, always stated --&gt;</code></pre>
+        <p>
+          With <code class="inline-code">prevent-default-events</code> omitted, <code class="inline-code">prevent-default</code> derives
+          <em>which</em> events to cancel from the element&rsquo;s own <code class="inline-code">on-*</code> attributes, restricted to
+          <code class="inline-code">submit</code>, <code class="inline-code">click</code> and <code class="inline-code">keydown</code>. A keyed
+          <code class="inline-code">on-keydown</code> phrase (<code class="inline-code">enter: &hellip;</code>) contributes
+          <code class="inline-code">keydown:enter</code>; an unkeyed one contributes nothing (a bare <code class="inline-code">keydown</code> cancels typing and Tab).
+          Only when the element claims none of the three does the tag decide: <code class="inline-code">&lt;form&gt;</code> cancels <code class="inline-code">submit</code>,
+          <code class="inline-code">&lt;a href&gt;</code> and <code class="inline-code">&lt;button&gt;</code> cancel <code class="inline-code">click</code>; anything else derives nothing and warns.
+        </p>
+        <p>
+          A keyed <code class="inline-code">on-keydown</code> phrase that <em>replaces</em> a browser default should always carry
+          <code class="inline-code">implements="prevent-default"</code>. Escape is the case that bites: the browser cancels an in-progress edit as the keydown
+          <strong>default action</strong>, which runs <em>after</em> the page&rsquo;s listeners. So <code class="inline-code">on-keydown="escape: this.reset()"</code>
+          on its own sets the value first and the browser then overwrites it. Deriving <code class="inline-code">keydown:escape</code> cancels that default.
+        </p>
+        <p><code class="inline-code">no-propagate</code> is its twin: <code class="inline-code">no-propagate-events</code>, default <code class="inline-code">"click"</code>, handler is <code class="inline-code">stopPropagation</code>. Both listen on the element, so both also receive events bubbling up from descendants — put them on the element whose keys or actions are meant, not an ancestor.</p>
+
+        <h3 id="revealable">Revealable <a class="anchor" href="#revealable">#</a></h3>
+        <p><code class="inline-code">revealable</code> is the model generic implementation: it declares nothing the platform already holds, derives its strategy from the element at connect, and invents state only where nothing exists.</p>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Element</th><th>Detected by</th><th><code class="inline-code">show()</code></th><th>Live state read from</th></tr></thead>
+            <tbody>
+              <tr><td><code class="inline-code">&lt;details&gt;</code></td><td>tag</td><td><code class="inline-code">el.open = true</code></td><td><code class="inline-code">el.open</code></td></tr>
+              <tr><td><code class="inline-code">&lt;dialog&gt;</code></td><td>tag</td><td><code class="inline-code">el.showModal()</code> (or <code class="inline-code">el.show()</code> with <code class="inline-code">revealable-modal="false"</code>)</td><td><code class="inline-code">el.open</code></td></tr>
+              <tr><td>popover</td><td><code class="inline-code">el.hasAttribute("popover")</code></td><td><code class="inline-code">el.showPopover()</code></td><td><code class="inline-code">el.matches(":popover-open")</code></td></tr>
+              <tr><td>anything else</td><td>fallback</td><td><code class="inline-code">data-open</code></td><td><code class="inline-code">data-open</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Focus trapping, the top layer, light dismiss, <code class="inline-code">::backdrop</code> and Escape handling come with the first three for free; the fourth row is the only one that invents anything. <code class="inline-code">show</code>/<code class="inline-code">hide</code>/<code class="inline-code">toggle</code> also keep the triggering element&rsquo;s <code class="inline-code">aria-expanded</code> / <code class="inline-code">aria-controls</code> in sync.</p>
+
+        <h2 id="writing-an-implementation">Writing an implementation <a class="anchor" href="#writing-an-implementation">#</a></h2>
+        <p>One call declares the name, the tags it may attach to, the config and state it brings, its verb signatures, and the factory — and the factory is type-checked against the signatures.</p>
+        <pre class="code" data-lang="ts"><code>import { defineImplementation, valueOf } from "interactably";
+
+export const modifiable = defineImplementation("modifiable", {
+  tags: ["input", "textarea", "output", "select"],
+  config: { step: "number | undefined" },                // authored: modifiable-step, read-only
+  // no min/max here: &lt;input&gt; already has them as el.min / el.max
+  verbs: {
+    set:   "string",
+    inc:   "number | undefined",
+    dec:   "number | undefined",
+    clear: "undefined",
+    reset: "undefined",
+  },
+}, (el, attrs) =&gt; {
+  const write = (v: string | number) =&gt; {
+    const text = String(v);
+    if ("value" in el) { if (el.value === text) return; el.value = text; }
+    else               { if (el.textContent === text) return; el.textContent = text; }
+    el.dispatchEvent(new Event("input", { bubbles: true }));   // so the element's own on-input fires
+  };
+  const bound = (k: "min" | "max") =&gt;
+    el instanceof HTMLInputElement &amp;&amp; el[k] !== "" ? Number(el[k]) : undefined;
+  const clamp = (n: number) =&gt;
+    Math.min(bound("max") ?? Infinity, Math.max(bound("min") ?? -Infinity, n));
+  return {
+    set:   (_e, v)                    =&gt; write(v),
+    inc:   (_e, n = attrs.step ?? 1)  =&gt; write(clamp(valueOf(el) + n)),
+    dec:   (_e, n = attrs.step ?? 1)  =&gt; write(clamp(valueOf(el) - n)),
+    clear: ()                         =&gt; write(""),
+    reset: ()                         =&gt; write(el.getAttribute("value") ?? ""),   // back to what the author wrote
+  };
+});</code></pre>
+
+        <p><code class="inline-code">defineImplementation(name, { tags?, config?, state?, verbs }, factory)</code>:</p>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td><code class="inline-code">name</code></td><td><code class="inline-code">string</code></td><td>The <code class="inline-code">implements="&hellip;"</code> word</td></tr>
+              <tr><td><code class="inline-code">tags</code></td><td><code class="inline-code">string[]</code> (optional)</td><td>Tags the implementation attaches to; types <code class="inline-code">el</code> via <code class="inline-code">HTMLElementTagNameMap</code>. Omitted = any tag (<code class="inline-code">el</code> is <code class="inline-code">HTMLElement</code>)</td></tr>
+              <tr><td><code class="inline-code">config</code></td><td><code class="inline-code">Record&lt;string, tsyntax-string&gt;</code></td><td>Authored input, read-only, stored as <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code> (<code class="inline-code">modifiable-step</code>)</td></tr>
+              <tr><td><code class="inline-code">state</code></td><td><code class="inline-code">Record&lt;string, tsyntax-string&gt;</code></td><td>Invented live state, read/write, stored as <code class="inline-code">data-&lt;key&gt;</code> (<code class="inline-code">data-open</code>)</td></tr>
+              <tr><td><code class="inline-code">verbs</code></td><td><code class="inline-code">Record&lt;verb, Sig&gt;</code></td><td>Public surface. <code class="inline-code">Sig</code> is a tsyntax string, an element constructor, or a record of those</td></tr>
+              <tr><td><code class="inline-code">factory</code></td><td><code class="inline-code">(el, attrs) =&gt; Implementation</code></td><td>Returns the verb bodies and lifecycle/<code class="inline-code">on*</code> handlers</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="signatures">Signatures <a class="anchor" href="#signatures">#</a></h3>
+        <p>
+          Every <code class="inline-code">config</code>, <code class="inline-code">state</code> and verb scalar signature is a
+          <a href="https://github.com/AceCodePt/tsyntax">tsyntax</a> string — the same string is the TypeScript type (<code class="inline-code">tsc</code> checks
+          it at the call site) and the runtime check.
+        </p>
+        <ul>
+          <li><strong>Scalar slot:</strong> <code class="inline-code">"string"</code>, <code class="inline-code">"number | undefined"</code>, <code class="inline-code">"'upper' | 'lower'"</code>, <code class="inline-code">"`${number}px`"</code>. When a field has a finite set of legal values, spell the union out.</li>
+          <li><strong>Element slot:</strong> a constructor — <code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, <code class="inline-code">HTMLButtonElement</code>. The grammar already knows a bare ref is an element and the executor has resolved it, so what remains is <code class="inline-code">instanceof</code>.</li>
+          <li><strong>One argument per verb:</strong> a slot (scalar or constructor) or a <strong>record of slots</strong> (one object literal). <code class="inline-code">"undefined"</code> declares no argument. Positional lists do not exist, so changing <code class="inline-code">transform('upper')</code> to take a second argument forces every call site to become <code class="inline-code">transform({mode: 'upper', &hellip;})</code> — a loud parse error, never a silent re-bind.</li>
+        </ul>
+        <pre class="code" data-lang="ts"><code>export const listable = defineImplementation("listable", {
+  tags: ["ul", "ol", "tbody"],
+  config: { "min-rows": "number | undefined" },
+  verbs: {
+    removeRow: HTMLElement,                  // any element inside a row
+    adopt:     HTMLTemplateElement,
+    clear:     "undefined",
+  },
+}, (el, attrs) =&gt; ({
+  removeRow: (_e, from) =&gt; { const row = from.closest(":scope &gt; *"); if (row &amp;&amp; el.children.length &gt; (attrs["min-rows"] ?? 0)) row.remove(); },
+  adopt:     (_e, tpl)  =&gt; el.append(tpl.content.cloneNode(true)),
+  clear:     ()         =&gt; { while (el.children.length &gt; (attrs["min-rows"] ?? 0)) el.lastElementChild!.remove(); },
+}));
+
+export const attributable = defineImplementation("attributable", {
+  verbs: {
+    setAttr:    { name: "string", value: "string" },     // object literal argument
+    toggleAttr: "string",
+    removeAttr: "string",
+  },
+}, (el) =&gt; ({
+  setAttr:    (_e, { name, value }) =&gt; el.setAttribute(name, value),
+  toggleAttr: (_e, name) =&gt; el.toggleAttribute(name),
+  removeAttr: (_e, name) =&gt; el.removeAttribute(name),
+}));</code></pre>
+
+        <h3 id="declare-only">Declare only what you invent <a class="anchor" href="#declare-only">#</a></h3>
+        <p>
+          An implementation never declares an attribute the platform already owns. <code class="inline-code">min</code>, <code class="inline-code">max</code>,
+          <code class="inline-code">step</code>, <code class="inline-code">type</code>, <code class="inline-code">open</code>, <code class="inline-code">value</code>,
+          <code class="inline-code">checked</code>, <code class="inline-code">popover</code> exist on the elements they belong to, typed and validated by the browser,
+          reachable as properties: <code class="inline-code">modifiable</code> on <code class="inline-code">&lt;input type="range"&gt;</code> reads
+          <code class="inline-code">el.min</code>; <code class="inline-code">&lt;textarea&gt;</code> has no <code class="inline-code">min</code>, and inventing one would
+          put a meaningless attribute on it. The narrowing is done by <code class="inline-code">tags</code> (and, where a tag is not enough, a connect-time
+          <code class="inline-code">el.type === "range"</code> check), not by a schema entry. What is left to declare is exactly the information the implementation
+          brings, in two tiers:
+        </p>
+        <ul>
+          <li><strong><code class="inline-code">config</code></strong> — authored input, read on the way in, never written by a verb. Unique by construction (<code class="inline-code">&lt;name&gt;-&lt;key&gt;</code>), so two implementations on one element cannot collide.</li>
+          <li><strong><code class="inline-code">state</code></strong> — live information the implementation holds because the platform holds nothing for it. Stored as <code class="inline-code">data-&lt;key&gt;</code>, read/write.</li>
+        </ul>
+        <p>Most implementations declare no <code class="inline-code">state</code>: <code class="inline-code">dirtyable</code> compares <code class="inline-code">el.value</code> with a baseline in its closure, <code class="inline-code">revealable</code> on a <code class="inline-code">&lt;dialog&gt;</code> reads <code class="inline-code">el.open</code>, <code class="inline-code">modifiable</code> writes <code class="inline-code">el.value</code>. A <code class="inline-code">state</code> entry is the exception, and the smell to check is whether the platform already has the thing under another name.</p>
+
+        <h3 id="attrs">attrs is a typed proxy <a class="anchor" href="#attrs">#</a></h3>
+        <p>Built once per instance by <code class="inline-code">bindAttributes(el, name, def)</code>. Each getter reads the attribute live and validates it through the same compiled signature verbs use:</p>
+        <ul>
+          <li><code class="inline-code">config</code> keys are <strong>getters only</strong> — TypeScript rejects <code class="inline-code">attrs.step = 2</code> and the runtime proxy throws.</li>
+          <li><code class="inline-code">state</code> keys also have <strong>setters</strong> that write the <code class="inline-code">data-*</code> attribute (<code class="inline-code">undefined</code> removes it); that is the sanctioned way for a verb to mutate invented state. The attribute change then reaches <code class="inline-code">attributeChangedCallback</code>, which renders.</li>
+          <li><code class="inline-code">attrs.step</code> maps to <code class="inline-code">modifiable-step</code>, <code class="inline-code">attrs.open</code> maps to <code class="inline-code">data-open</code>; the body spells neither.</li>
+        </ul>
+
+        <h3 id="conventions">Conventions <a class="anchor" href="#conventions">#</a></h3>
+        <ul>
+          <li><strong><code class="inline-code">on*</code> methods are event handlers</strong> on the host element (auto-wc semantics; <code class="inline-code">auto-grow</code>&rsquo;s <code class="inline-code">onInput</code> still works). <strong>Every other method is a verb</strong> and must appear in <code class="inline-code">verbs</code>.</li>
+          <li><strong>Verbs receive <code class="inline-code">(e, arg)</code>.</strong> <code class="inline-code">arg</code> is already validated against the signature. Inputs come from <code class="inline-code">arg</code>; <code class="inline-code">e.source</code> and <code class="inline-code">e.originalEvent</code> are <em>context</em>, not input.</li>
+          <li><strong>Verbs are synchronous.</strong> Do the work, return; the host stores the return value on <code class="inline-code">e.result</code>. A verb that returns a promise gets a console warning.</li>
+          <li><strong>Lifecycle:</strong> <code class="inline-code">connectedCallback</code>, <code class="inline-code">disconnectedCallback</code>, <code class="inline-code">attributeChangedCallback(name, old, new)</code> may be returned from the factory alongside the verbs.</li>
+          <li><strong>Implementations never call verbs on other elements.</strong> Work that completes later declares <strong>its own continuation phrases</strong> as config (<code class="inline-code">requestable-after</code>, <code class="inline-code">requestable-error</code>) and hands the string to <code class="inline-code">runPhrases(el, str, e.originalEvent)</code> when the moment arrives. <code class="inline-code">this</code> in a continuation is the element the phrase was read from — passing <code class="inline-code">el</code> first is what binds it.</li>
+          <li><strong>Registering an implementation ensures its hosts.</strong> The registry calls <code class="inline-code">defineInteractableHost(tag)</code> for every tag in <code class="inline-code">tags</code>; tag-less implementations ensure nothing. <code class="inline-code">defineInteractableHost</code> is idempotent, so two implementations sharing a tag share one host class.</li>
+        </ul>
+
+        <h2 id="state">State: three tiers <a class="anchor" href="#state">#</a></h2>
+        <p>A verb&rsquo;s job is to <strong>mutate state</strong>; the reaction (text, classes, ARIA, <code class="inline-code">hidden</code>) happens in <code class="inline-code">attributeChangedCallback</code> or in response to the platform&rsquo;s own events. Verbs do not render.</p>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Tier</th><th>What it is</th><th>Where it lives</th><th>Who writes it</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Authored</strong></td><td>What arrived in the markup: the server&rsquo;s answer, the reset baseline</td><td>Attributes: <code class="inline-code">value</code>, <code class="inline-code">min</code>, <code class="inline-code">checked</code>, and our <code class="inline-code">config</code> (<code class="inline-code">modifiable-step</code>)</td><td>The author / the server; implementations only read</td></tr>
+              <tr><td><strong>Live</strong></td><td>Current state, which may have diverged from authored</td><td>Properties where the platform has them (<code class="inline-code">el.value</code>, <code class="inline-code">el.checked</code>, <code class="inline-code">el.open</code>, popover state); <code class="inline-code">data-*</code> from our <code class="inline-code">state</code> where it does not</td><td>Verbs, the user, the platform</td></tr>
+              <tr><td><strong>Derived</strong></td><td>Presentation</td><td>Classes, ARIA, <code class="inline-code">textContent</code>, <code class="inline-code">hidden</code></td><td>The render callback only</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The <code class="inline-code">value</code> attribute / <code class="inline-code">value</code> property pair is the canonical case: <code class="inline-code">el.value = "x"</code> does not touch the attribute, and that is not an inconsistency — the attribute is what the author wrote, the property is the current value. This is what makes SSR trivial: the server writes <code class="inline-code">value="42"</code>, the browser parses it into both tiers, hydration adds nothing.</p>
+        <pre class="code" data-lang="ts"><code>// dirtyable — no attributes written; the baseline lives in the closure
+(el) =&gt; {
+  let baseline = el.value;                                 // what the field held when it connected (SSR'd value included)
+  const render = () =&gt; el.classList.toggle("is-dirty", el.value !== baseline);
+  render();
+  return {
+    onInput:   render,
+    markClean: () =&gt; { baseline = el.value; render(); },
+  };
+}</code></pre>
+        <pre class="code" data-lang="ts"><code>// revealable on a plain panel — the one case with invented state
+// state: { open: "boolean | undefined" } → data-open
+(el, attrs) =&gt; ({
+  show:   () =&gt; { attrs.open = true; },
+  hide:   () =&gt; { attrs.open = undefined; },
+  toggle: () =&gt; { attrs.open = attrs.open ? undefined : true; },
+  attributeChangedCallback(name) { if (name === "data-open") el.hidden = !attrs.open; },   // renders
+})</code></pre>
+        <ul>
+          <li><strong>Read the platform before inventing.</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">open</code> on <code class="inline-code">&lt;details&gt;</code>/<code class="inline-code">&lt;dialog&gt;</code>, popover state, <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">step</code>. A <code class="inline-code">state</code> entry exists only when none of these hold the thing.</li>
+          <li><strong><code class="inline-code">config</code> is read-only.</strong> A verb that needs its own baseline keeps one in the closure, as <code class="inline-code">dirtyable</code>&rsquo;s <code class="inline-code">markClean</code> does.</li>
+          <li><strong>Invented live state is <code class="inline-code">data-*</code></strong> — one namespace, reflected as <code class="inline-code">el.dataset</code>, visible in the inspector. Writes go through <code class="inline-code">attrs</code>, reads in <code class="inline-code">attributeChangedCallback</code>.</li>
+          <li><strong>Closure state</strong> for transient internals (in-flight request, timers).</li>
+          <li><strong>Numbers written into text also go to <code class="inline-code">data-value</code>.</strong> Every implementation reads a number through the <code class="inline-code">valueOf(el)</code> helper: <code class="inline-code">.value</code> &rarr; <code class="inline-code">data-value</code> &rarr; parsed <code class="inline-code">textContent</code> as a last resort.</li>
+        </ul>
+        <p>There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.</p>
+
+        <h2 id="dynamics">Dynamics <a class="anchor" href="#dynamics">#</a></h2>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Case</th><th>Answer</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Dynamic triggers</strong> (rows cloned from a template)</td><td>Put <code class="inline-code">is="interactable-&lt;tag&gt;"</code> in the template. On Chrome and Firefox the clone upgrades synchronously on insertion; <code class="inline-code">on-click="this.remove()"</code> / <code class="inline-code">#list.removeRow(this)</code> works on every clone with no generated ids. On Safari, and when the auto-loader adds <code class="inline-code">is=</code> for you, the upgrade is deferred (<a href="#upgrade-timing">below</a>)</td></tr>
+              <tr><td><strong>Dynamic receivers</strong> (a row&rsquo;s own subtotal)</td><td>Receivers stay ids or <code class="inline-code">this</code>. Either address a stable ancestor and let the implementation find the relative element from <code class="inline-code">e.source</code> (<code class="inline-code">closest("li")</code>), or stamp ids in the template</td></tr>
+              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>Formula with a selector: <code class="inline-code">#total implements="modifiable" modifiable-formula="sum('#list .amount')"</code>, recomputed by <code class="inline-code">#total.compute()</code>. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time</td></tr>
+              <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change runs the follow-up via its own continuation phrase (<code class="inline-code">requestable-after="#count.compute()"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="upgrade-timing" style="scroll-margin-top:5rem"><strong>Upgrade timing is not uniform.</strong> <code class="inline-code">is=</code> written in the markup (server-rendered or in a <code class="inline-code">&lt;template&gt;</code>) upgrades synchronously on insertion in Chrome and Firefox. Two paths are asynchronous:</p>
+        <ul>
+          <li><strong>The auto-loader</strong> (a prototyping helper in this repo, not a public API). Customized built-ins only upgrade when <code class="inline-code">is</code> is present at <em>creation</em>, so the loader watches with a <code class="inline-code">MutationObserver</code>, then <strong>replaces the node</strong>. Prefer explicit <code class="inline-code">is=</code> in templates and server output.</li>
+          <li><strong>Safari.</strong> Needs the <a href="https://github.com/ungap/custom-elements">@ungap/custom-elements</a> polyfill; even explicit <code class="inline-code">is=</code> upgrades a tick late there.</li>
+        </ul>
+        <p>Consequence: write <code class="inline-code">is=</code> explicitly, treat the auto-loader as a prototyping convenience, and if code inserts a trigger and drives it immediately, await <code class="inline-code">customElements.whenDefined()</code> plus a microtask — or drive the receiver directly with <code class="inline-code">dispatchInteraction</code>.</p>
+        <p>Selector rule: <strong>selectors may appear in arguments, never as receivers.</strong> The dispatch graph stays 1:1 — every interaction goes to one element with one <code class="inline-code">implements</code>, so completion, grep (<code class="inline-code">#pop.</code> finds every writer) and error rules stay exact.</p>
+
+        <h2 id="parser-and-executor">Parser and executor <a class="anchor" href="#parser-and-executor">#</a></h2>
+        <p>There is no engine. Two pure functions, both called from the host.</p>
+
+        <h3 id="pipeline">Pipeline <a class="anchor" href="#pipeline">#</a></h3>
+        <pre class="code" data-lang="text"><code>DOM event on the trigger (passive listener bound in connectedCallback)
+  → parse(attributeValue)          cached by string → Phrase[] with unresolved refs
+  → runPhrases(this, phrases, ev)
+      → key filter; drop phrases whose once() is spent
+      → throttle/debounce (timer keyed by element + attribute + phrase index)
+      → resolve the receiver (#id → getElementById, this → the source); missing → console.error, skip phrase
+          for each link: resolve arg (scalar, or object literal field by field) → dispatch InteractionEvent
+            · host: find the implementation owning the verb → e.handled = true
+            · host: validate arg against the signature, call the verb — both inside try/catch → e.error on throw
+            · executor, after dispatch:  !e.handled → console.error "no implementation on &lt;receiver&gt; handles verb()", stop
+                                        e.error    → console.error once with receiver and verb, stop
+                                        e.defaultPrevented → stop, quiet
+      → once() spent when every link ran and none stopped the chain</code></pre>
+        <ul>
+          <li><strong>Nested triggers behave like nested <code class="inline-code">onclick</code>.</strong> A click on a button inside a <code class="inline-code">&lt;div on-click&gt;</code> fires the button&rsquo;s phrase, then bubbles and fires the div&rsquo;s. No implicit innermost-wins; suppression is explicit via <code class="inline-code">no-propagate</code> on the inner element.</li>
+          <li><strong>Timers and <code class="inline-code">once</code> state are keyed per element</strong> (in a <code class="inline-code">WeakMap</code>) and cleared on disconnect via <code class="inline-code">clearPhraseState</code>.</li>
+          <li><strong>Imperative path:</strong> <code class="inline-code">runPhrases(el, "#pop.show()", someEvent)</code> is the one entry point, and its first argument is what <code class="inline-code">this</code> means — the trigger listener and every implementation&rsquo;s continuation phrase call the same function.</li>
+        </ul>
+
+        <h3 id="parse-cache">Parse cache and resolution <a class="anchor" href="#parse-cache">#</a></h3>
+        <p><code class="inline-code">parse</code> caches by attribute string; the cached value is an AST in which <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads are <strong>tokens</strong>, not elements or values. Resolution happens per fire, inside <code class="inline-code">runPhrases</code>; two identical rows share one parse and resolve to two different elements. <code class="inline-code">this</code> is resolved as <code class="inline-code">token === "this" ? source : document.getElementById(id)</code> — never rewritten into the attribute, never stamped into an id, never consulted from <code class="inline-code">event.currentTarget</code>.</p>
+        <p><strong>Argument validation is the receiver&rsquo;s job, not the parser&rsquo;s.</strong> The parser knows every literal&rsquo;s kind from syntax (bare <code class="inline-code">5</code> is a number, <code class="inline-code">'5'</code> is a string, <code class="inline-code">#id</code> / <code class="inline-code">this</code> are elements). Scalars go through <code class="inline-code">parseValueAgainstDSL</code> against the slot&rsquo;s tsyntax string; resolved elements go through <code class="inline-code">instanceof</code> against the slot&rsquo;s constructor. The only runtime-typed values are reads, and they carry the platform&rsquo;s type: <code class="inline-code">this.value</code> is a string, <code class="inline-code">#qty.valueAsNumber</code> is a number, <code class="inline-code">#agree.checked</code> is a boolean. There is no coercion — <code class="inline-code">#total.add(this.value)</code> with <code class="inline-code">add: "number"</code> fails and the message says so.</p>
+
+        <h3 id="native-defaults">Native default actions and propagation <a class="anchor" href="#native-defaults">#</a></h3>
+        <p>The executor does neither. Every <code class="inline-code">on-*</code> listener is passive; a phrase describes what happens, not what the browser is allowed to do.</p>
+        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" implements="prevent-default" on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
+&lt;a    is="interactable-a"    href="/docs"                  on-click="#log.track('docs')"&gt;Docs&lt;/a&gt;   &lt;!-- navigates and tracks --&gt;
+&lt;a    is="interactable-a"    href="#p" implements="prevent-default" on-click="#p.show()"&gt;&hellip;&lt;/a&gt;   &lt;!-- in-page action --&gt;
+&lt;button is="interactable-button" implements="no-propagate" on-click="#list.removeRow(this)"&gt;&times;&lt;/button&gt;  &lt;!-- row's on-click untouched --&gt;</code></pre>
+        <p><code class="inline-code">prevent-default</code> binds its own listeners with <code class="inline-code">passive: false</code>, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying <code class="inline-code">on-submit</code> on a <code class="inline-code">&lt;form&gt;</code> (or <code class="inline-code">on-click</code> on an <code class="inline-code">&lt;a href&gt;</code>, or <code class="inline-code">on-keydown</code> on a <code class="inline-code">&lt;button&gt;</code>) without <code class="inline-code">prevent-default</code> logs one <code class="inline-code">console.warn</code>. A pre-existing <code class="inline-code">defaultPrevented</code> does <strong>not</strong> suppress dispatch.</p>
+
+        <h2 id="asynchrony">Asynchrony <a class="anchor" href="#asynchrony">#</a></h2>
+        <p><strong>Verbs are synchronous and chains never await.</strong> This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A <code class="inline-code">.</code> chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints. Work that finishes later belongs to an implementation that owns it — today <code class="inline-code">requestable</code> — and continues by running a new synchronous chain the author wrote into the implementation&rsquo;s own config.</p>
+        <pre class="code" data-lang="html"><code>&lt;input is="interactable-input" id="q" on-input="#results.send().debounce(300)"&gt;
+
+&lt;ul is="interactable-ul" id="results" implements="requestable"
+    requestable-url="/api/search" requestable-include="#q"
+    requestable-after="#count.compute(); #status.hide()"
+    requestable-error="#status.show()"&gt;&lt;/ul&gt;
+&lt;output is="interactable-output" id="count" implements="modifiable"
+        modifiable-formula="count('#results &gt; li')"&gt;&lt;/output&gt;</code></pre>
+        <p>The trigger&rsquo;s chain is one synchronous link: <code class="inline-code">send()</code> aborts the previous in-flight request for <code class="inline-code">#results</code>, starts a new one, and returns. When the response lands, <code class="inline-code">requestable</code> swaps its children and calls <code class="inline-code">runPhrases(el, attrs.after, e.originalEvent)</code> — a second synchronous chain in which <code class="inline-code">this</code> is <code class="inline-code">#results</code>. The network gap sits between two chains and has a name and a place in the markup.</p>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Not possible</th><th>Because</th><th>Instead</th></tr></thead>
+            <tbody>
+              <tr><td><code class="inline-code">#results.send().highlight()</code> — a link after the response</td><td>The chain would have to await, and every question about what happens while it waits needs an executor answer</td><td><code class="inline-code">requestable-after="this.highlight()"</code></td></tr>
+              <tr><td>A verb returning a promise</td><td>The host ignores the value and warns; the chain has already moved on</td><td>Start the work in the verb; consume it in the closure; continue via a config phrase</td></tr>
+              <tr><td>A guard that asks the server</td><td>A guard is a synchronous yes/no; a round trip is a request</td><td><code class="inline-code">send()</code> with the check server-side, and <code class="inline-code">requestable-error</code> for the no</td></tr>
+              <tr><td><code class="inline-code">once()</code> as a double-submit guard for a request</td><td>It spends on first synchronous completion, so a failed request leaves a dead trigger</td><td><code class="inline-code">requestable</code>&rsquo;s concurrency policy</td></tr>
+              <tr><td>An interaction queued until an implementation arrives</td><td>A queued interaction is a chain that waits; the host would answer after <code class="inline-code">dispatchEvent</code> returned, to nobody</td><td>Implementations attach synchronously; a late registration re-runs the attach pass</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Concurrency policy belongs to the implementation that owns the I/O.</strong> <code class="inline-code">requestable</code> derives it from the method, the way <code class="inline-code">revealable</code> derives its strategy from the tag: a GET is idempotent, so a new send aborts the previous one (<strong>latest wins</strong>); anything else may already have happened on the server, so a new send while one is in flight is refused (<strong>first wins</strong>). <code class="inline-code">requestable-concurrency="latest | first | all"</code> overrides. Because <code class="inline-code">send()</code> sets <code class="inline-code">aria-busy="true"</code> synchronously and clears it when the last in-flight request settles, <code class="inline-code">form[aria-busy="true"] button { pointer-events: none }</code> disables the trigger with no JavaScript.</p>
+        <p><strong>Continuations run only if the element is still connected.</strong> A response that replaces the requestable element itself (<code class="inline-code">requestable-swap="outerHTML"</code>) disconnects its host; <code class="inline-code">requestable-after</code> is skipped. Cancellation is <code class="inline-code">AbortError</code>, which runs neither continuation and logs nothing.</p>
+
+        <h2 id="full-examples">Full examples <a class="anchor" href="#full-examples">#</a></h2>
+        <p>Both examples are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
+
+        <h3>Price calculator</h3>
+        <pre class="code" data-lang="html"><code>&lt;label&gt;Qty
+  &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
+         type="number" value="1" min="0" max="10"
+         on-input="#preview.set(this.value)"
+         on-keydown="escape: this.reset().markClean()"&gt;
+&lt;/label&gt;
+&lt;button is="interactable-button" on-click="#qty.dec()"&gt;&minus;&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#qty.inc()"&gt;+&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#qty.reset().markClean()"&gt;Reset&lt;/button&gt;
+&lt;output is="interactable-output" id="preview" implements="modifiable"&gt;1&lt;/output&gt;
+
+&lt;ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1"&gt;
+  &lt;li&gt;
+    &lt;input is="interactable-input" class="amount" type="number" on-input="#total.compute()"&gt;
+    &lt;button is="interactable-button" on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+&lt;button is="interactable-button" on-click="#list.adopt(#row-tpl)"&gt;Add row&lt;/button&gt;
+&lt;template id="row-tpl"&gt;&lt;li&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
+&lt;output is="interactable-output" id="total" implements="modifiable"
+        modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })"&gt;0&lt;/output&gt;</code></pre>
+        <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers; the <code class="inline-code">&lt;li&gt;</code> is a plain element — the row is reached through <code class="inline-code">#list.removeRow(this)</code>, so it needs no implementation, no host and no id, and cloning it produces nothing that has to be unique.</p>
+
+        <h3>Order form — the asynchronous seam</h3>
+        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" id="order" novalidate
+      implements="prevent-default validatable requestable"
+      requestable-url="/api/orders" requestable-method="post"
+      requestable-target="#receipt"
+      requestable-after="#receipt.show(); #alert.hide()"
+      requestable-error="#alert.show()"
+      on-submit="this.validate().send()"&gt;
+  &lt;input name="qty" type="number" min="1" required&gt;
+  &lt;button&gt;Place order&lt;/button&gt;
+&lt;/form&gt;
+&lt;section is="interactable-section" id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
+&lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
+        <p>The form is the receiver of both verbs because a phrase has one receiver, and it is the right one: the form validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event.</p>
+        <p><code class="inline-code">novalidate</code> is load-bearing: without it the browser&rsquo;s interactive validation runs first and, for an invalid form, never fires <code class="inline-code">submit</code> at all. The phrase decides <em>when</em> validation happens; the platform still decides <em>what</em> valid means.</p>
+
+        <h2 id="api-reference">API reference <a class="anchor" href="#api-reference">#</a></h2>
+        <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset).</p>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Export</th><th>What it is</th></tr></thead>
+            <tbody>
+              <tr><td><code class="inline-code">defineImplementation(name, decl, factory)</code></td><td>Declare an implementation (<a href="#writing-an-implementation">§ Writing an implementation</a>)</td></tr>
+              <tr><td><code class="inline-code">defineInteractableHost(tag)</code></td><td>Define <code class="inline-code">interactable-&lt;tag&gt;</code>; idempotent, returns nothing</td></tr>
+              <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition (used by <code class="inline-code">defineImplementation</code>)</td></tr>
+              <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
+              <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
+              <tr><td><code class="inline-code">parse(value)</code></td><td>Parse an attribute string into phrases (cached)</td></tr>
+              <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
+              <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class (<a href="#interaction-event">§ The interaction event</a>)</td></tr>
+              <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
+              <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive) used by keys and event lists</td></tr>
+              <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
+              <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
+              <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">value</code> &rarr; <code class="inline-code">data-value</code> &rarr; textContent) and write helpers</td></tr>
+              <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
+              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">condition</code>, <code class="inline-code">jsonTemplate</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="why-built">Why it is built this way <a class="anchor" href="#why-built">#</a></h2>
+        <p>The short versions of the decisions behind the design.</p>
+        <ul>
+          <li><strong>Our own attribute and event</strong> (<code class="inline-code">on-*</code>, <code class="inline-code">interaction</code>), not the browser&rsquo;s <code class="inline-code">command</code>/<code class="inline-code">commandfor</code>. No negotiation with native verb names, no deferral table, no double dispatch; native invokers coexist on the same button.</li>
+          <li><strong>One attribute per event</strong> — no default-interaction table, a busy element reads like any multi-attribute element.</li>
+          <li><strong><code class="inline-code">#id.verb(arg)</code> is member access</strong> and semantically honest: the element has <code class="inline-code">show</code> because it implements <code class="inline-code">revealable</code>. It completes from the left and is a shape models produce reliably.</li>
+          <li><strong>One argument per verb</strong>: a scalar or one object literal. Positional lists were rejected because schema order is invisible in HTML — inserting an argument in the middle would silently re-bind every call site. A signature change is a loud parse error instead.</li>
+          <li><strong><code class="inline-code">;</code> independent, <code class="inline-code">.</code> sequential and abortable</strong> — two separators, two meanings, which is what justifies keeping both.</li>
+          <li><strong><code class="inline-code">once()</code> spent on completion</strong> so <code class="inline-code">validate().send().once()</code> means &ldquo;send once, after validation passes&rdquo;, not &ldquo;after the first attempt&rdquo;.</li>
+          <li><strong>No class or selector receivers.</strong> Classes are global; scoping is a selector language; a selector language is jQuery. Containers + scoped selector <em>arguments</em> cover the dynamic-set case with a 1:1 receiver graph.</li>
+          <li><strong>Triggers are hosts, not delegated.</strong> One place decides anything about an element. Cost: <code class="inline-code">is=</code> on every trigger (or the auto-loader), and the Safari polyfill covers more elements.</li>
+          <li><strong><code class="inline-code">this</code> for the trigger</strong> — the word inline handlers have bound to the element for thirty years.</li>
+          <li><strong>Parse once, resolve per fire.</strong> <code class="inline-code">#id</code> / <code class="inline-code">this</code> stay tokens in the cached AST; two identical rows share a parse and bind to different elements. Nothing is rewritten into the DOM.</li>
+          <li><strong>Nested triggers bubble</strong> like inline handlers; <code class="inline-code">no-propagate</code> on the inner element is the explicit opt-out, not an implicit rule the executor enforces with a <code class="inline-code">closest()</code> walk per event.</li>
+          <li><strong>Signatures are tsyntax strings</strong> — the same string is the TypeScript type and the runtime check, with no second schema vocabulary. Elements are constructors because tsyntax&rsquo;s check is <code class="inline-code">typeof</code> and cannot tell a button from a template.</li>
+          <li><strong>Declare only what you invent.</strong> Platform attributes are read off the element, never declared; <code class="inline-code">config</code> is read-only authored input; invented live state is <code class="inline-code">data-*</code>.</li>
+          <li><strong>Strategies are derived, not declared.</strong> <code class="inline-code">revealable</code> picks its behavior from the element at connect instead of an author-written <code class="inline-code">strategy=</code> attribute.</li>
+          <li><strong>Default actions and propagation are implementations</strong>, not executor rules or phrase modifiers — they are event-scoped facts and live on the element where a reader finds them. Only the <em>which</em> is derived, never the <em>whether</em>.</li>
+          <li><strong>Verbs are synchronous.</strong> Every async question is a question only the implementation doing the work can answer. The network gap is a named attribute, not a disguised dot.</li>
+          <li><strong>Three return channels on the event.</strong> <code class="inline-code">dispatchEvent</code> swallows listener exceptions and cannot tell &ldquo;handled&rdquo; from &ldquo;nobody listened&rdquo;; the host reports <code class="inline-code">handled</code> / <code class="inline-code">error</code> / <code class="inline-code">result</code> on the event.</li>
+          <li><strong>Readiness is reported, never awaited.</strong> A late-registered implementation re-runs every connected host&rsquo;s attach pass; markup may precede the imports.</li>
+          <li><strong>Report with <code class="inline-code">console.error</code>/<code class="inline-code">warn</code>, throw only at definition time.</strong> Host code runs on the browser&rsquo;s stack, which owns its exceptions.</li>
+        </ul>
+
+        <h2 id="not-supported">Not supported <a class="anchor" href="#not-supported">#</a></h2>
+        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; dynamic <code class="inline-code">on-*</code> attribute <em>names</em> after connect &middot; cross-element watching &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
+
+        <h2 id="appendices">Appendices <a class="anchor" href="#appendices">#</a></h2>
+        <h3>Reference grammar</h3>
+        <pre class="code" data-lang="text"><code>attribute := 'on-' event-type
+value     := phrase (';' phrase)*
+phrase    := [key ':'] ref ('.' call)+ ('.' modifier)*
+ref       := '#' id | 'this'
+call      := verb '(' [arg | object] ')'
+arg       := number | "'" string "'" | 'true' | 'false' | ref | read
+read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
+object    := '{' field (',' field)* '}'
+field     := name ':' arg
+modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'</code></pre>
+        <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">this</code> is a keyword; an element with <code class="inline-code">id="this"</code> is addressed as <code class="inline-code">#this</code>. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
+        <h3>Signature language</h3>
+        <p>Values in <code class="inline-code">config</code>, <code class="inline-code">state</code> and <code class="inline-code">verbs</code>: a <strong>slot</strong> is either a tsyntax scalar DSL string (<code class="inline-code">string</code>, <code class="inline-code">number</code>, <code class="inline-code">bigint</code>, <code class="inline-code">boolean</code>, <code class="inline-code">undefined</code>, numeric and quoted literals, template literals, <code class="inline-code">|</code> unions) or an element constructor (<code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, &hellip;). A verb signature is one slot or a flat record of slots; an attribute signature is one string slot. A record key whose slot admits <code class="inline-code">undefined</code> may be omitted from the object literal; any other key is required.</p>
+        <p class="note" style="margin-top:2rem">The README — this site&rsquo;s <em>source of truth</em> — carries the full appendices, including every &ldquo;alternatives considered&rdquo; answer, and the <code class="inline-code">$</code> baseline the DSL is measured against.</p>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer" id="footer"></footer>
+</body>
+</html>

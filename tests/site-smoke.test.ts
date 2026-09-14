@@ -6,7 +6,7 @@ import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 const siteDir = new URL("../site/", import.meta.url);
-const indexUrl = new URL("index.html", siteDir);
+const examplesUrl = new URL("examples.html", siteDir);
 const demoUrl = new URL("demo.js", siteDir);
 const cdnDir = new URL("../dist/cdn/", import.meta.url);
 
@@ -54,7 +54,7 @@ function bareSpecifiers(source: string): string[] {
 
 function bodyMarkup(html: string): string {
   const match = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html);
-  assert.ok(match !== null, "site/index.html has a <body>");
+  assert.ok(match !== null, "the site HTML has a <body>");
   return match[1] ?? "";
 }
 
@@ -85,7 +85,7 @@ function fakeResponse(ok: boolean, status: number, body: string): FakeResponse {
 }
 
 test("site: referenced vendor bundles are built and the demo interacts under jsdom", async (t) => {
-  const html = readFileSync(fileURLToPath(indexUrl), "utf8");
+  const html = readFileSync(fileURLToPath(examplesUrl), "utf8");
   const demo = readFileSync(fileURLToPath(demoUrl), "utf8");
   const names = vendorRefs(html, demo);
 
@@ -130,11 +130,11 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
     globalThis.fetch = originalFetch;
   });
 
-  // Mirror the deployed page: index.html is parsed with the demo markup already
-  // in the document, then demo.js imports the bundles (which register the
-  // implementations and define their hosts) and defines the remaining hosts, so
-  // each element upgrades in place and any name registered afterwards attaches
-  // through the registry-changed re-check.
+  // Mirror the deployed page: examples.html is parsed with the demo markup
+  // already in the document, then demo.js imports the bundles (which register
+  // the implementations and define their hosts) and defines the remaining
+  // hosts, so each element upgrades in place and any name registered afterwards
+  // attaches through the registry-changed re-check.
   const holder = document.createElement("div");
   holder.innerHTML = bodyMarkup(html);
   document.body.appendChild(holder);

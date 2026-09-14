@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably examples — every card below is plain HTML: is= hosts, implements, on-* triggers and verbs.">
+  <title>Examples — Interactably</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-page="examples">
+  <div id="nav"></div>
+  <script src="./site.js"></script>
+
+  <main class="wrap">
+    <h1 class="doc-title">Examples</h1>
+    <p class="doc-lede">
+      Everything below is live, plain HTML: <code class="inline-code">is="interactable-&hellip;"</code> hosts,
+      <code class="inline-code">implements</code>, <code class="inline-code">on-*</code> triggers and verbs.
+      Open the console while you click — <code class="inline-code">logger</code> prints from phrases.
+      Each card shows the exact markup it is running.
+    </p>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-calc">Price calculator</h2>
+        <p class="ex-note">
+          The total is computed from a formula,
+          <code class="inline-code">format(sum('#list .amount'), { style: 'currency', currency: 'USD' })</code>,
+          re-evaluated by <code class="inline-code">#total.compute()</code> after every change. Press Escape in the field to
+          <code class="inline-code">reset().markClean()</code> — <code class="inline-code">prevent-default</code> derives
+          <code class="inline-code">keydown:escape</code> and cancels the browser&rsquo;s native revert.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <label>Qty
+              <input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
+                     type="number" value="1" min="1" max="10"
+                     on-input="#preview.set(this.value)"
+                     on-keydown="escape: this.reset().markClean()">
+            </label>
+            <button is="interactable-button" id="dec" on-click="#qty.dec()" type="button">&minus;</button>
+            <button is="interactable-button" id="inc" on-click="#qty.inc()" type="button">+</button>
+            <button is="interactable-button" id="inc5" on-click="#qty.inc(5)" type="button">+5</button>
+            <button is="interactable-button" id="reset" on-click="#qty.reset().markClean()" type="button">Reset</button>
+            <output is="interactable-output" id="preview" implements="modifiable">1</output>
+          </div>
+
+          <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
+            <li>
+              <input is="interactable-input" class="amount" type="number" value="2.5" on-input="#total.compute()">
+              <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+            </li>
+          </ul>
+          <button is="interactable-button" id="add-row" on-click="#list.adopt(#row-tpl); #total.compute()" type="button">Add row</button>
+          <template id="row-tpl">
+            <li>
+              <input is="interactable-input" class="amount" type="number" value="3.25" on-input="#total.compute()">
+              <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+            </li>
+          </template>
+          <p class="total">
+            Total:
+            <output is="interactable-output" id="total" implements="modifiable"
+                    modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })">0</output>
+          </p>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;div class="demo"&gt;
+  &lt;div class="row"&gt;
+    &lt;label&gt;Qty
+      &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
+             type="number" value="1" min="1" max="10"
+             on-input="#preview.set(this.value)"
+             on-keydown="escape: this.reset().markClean()"&gt;
+    &lt;/label&gt;
+    &lt;button is="interactable-button" on-click="#qty.dec()"&gt;&minus;&lt;/button&gt;
+    &lt;button is="interactable-button" on-click="#qty.inc()"&gt;+&lt;/button&gt;
+    &lt;button is="interactable-button" on-click="#qty.inc(5)"&gt;+5&lt;/button&gt;
+    &lt;button is="interactable-button" on-click="#qty.reset().markClean()"&gt;Reset&lt;/button&gt;
+    &lt;output is="interactable-output" id="preview" implements="modifiable"&gt;1&lt;/output&gt;
+  &lt;/div&gt;
+
+  &lt;ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1"&gt;
+    &lt;li&gt;
+      &lt;input is="interactable-input" class="amount" type="number" value="2.5" on-input="#total.compute()"&gt;
+      &lt;button is="interactable-button" on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;button is="interactable-button" on-click="#list.adopt(#row-tpl); #total.compute()"&gt;Add row&lt;/button&gt;
+  &lt;template id="row-tpl"&gt;
+    &lt;li&gt;
+      &lt;input is="interactable-input" class="amount" type="number" value="3.25" on-input="#total.compute()"&gt;
+      &lt;button is="interactable-button" on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
+    &lt;/li&gt;
+  &lt;/template&gt;
+  &lt;p class="total"&gt;Total:
+    &lt;output is="interactable-output" id="total" implements="modifiable"
+            modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })"&gt;0&lt;/output&gt;
+  &lt;/p&gt;
+&lt;/div&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-reveal">Revealable panel</h2>
+        <p class="ex-note">
+          <code class="inline-code">revealable</code> derives its strategy from the element: <code class="inline-code">data-open</code> here,
+          <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
+          popover state on a <code class="inline-code">[popover]</code>. The implementation keeps the trigger&rsquo;s
+          <code class="inline-code">aria-expanded</code> in sync.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <button is="interactable-button" id="panel-toggle" on-click="#panel.toggle()"
+                    aria-expanded="false" aria-controls="panel" type="button">Toggle panel</button>
+          </div>
+          <section is="interactable-section" id="panel" implements="revealable" hidden>
+            <p>
+              This panel is a <code class="inline-code">&lt;section is="interactable-section" implements="revealable"&gt;</code>.
+              <code class="inline-code">revealable</code> reads the element: <code class="inline-code">data-open</code> here,
+              <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
+              popover state on a <code class="inline-code">[popover]</code>. The trigger is
+              <code class="inline-code">on-click="#panel.toggle()"</code>, and the implementation keeps the button&rsquo;s
+              <code class="inline-code">aria-expanded</code> in sync.
+            </p>
+          </section>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;button is="interactable-button" on-click="#panel.toggle()"
+        aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
+&lt;section is="interactable-section" id="panel" implements="revealable" hidden&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-grammar">Grammar playground</h2>
+        <p class="ex-note">
+          One <code class="inline-code">on-*</code> value can carry several phrases (<code class="inline-code">;</code>), a key filter, and a
+          trailing modifier. Here <code class="inline-code">on-input</code> debounces <code class="inline-code">#mirror</code>,
+          <code class="inline-code">on-keydown</code> filters <code class="inline-code">enter</code> and <code class="inline-code">escape</code>, and
+          <code class="inline-code">once()</code> spends the tip after the chain completes.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <label>Type
+              <input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
+                     on-input="#mirror.set(this.value).debounce(300)"
+                     on-keydown="enter: #mirror.set(this.value); escape: this.clear()">
+            </label>
+            <output is="interactable-output" id="mirror" implements="modifiable">&hellip;</output>
+          </div>
+          <button is="interactable-button" id="tip-button" type="button" on-click="#tip.toggle().once()">Toggle tip (once)</button>
+          <section is="interactable-section" id="tip" implements="revealable" hidden>
+            This sentence appears only the first time the button completes its chain.
+          </section>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
+       on-input="#mirror.set(this.value).debounce(300)"
+       on-keydown="enter: #mirror.set(this.value); escape: this.clear()"&gt;
+&lt;output is="interactable-output" id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
+
+&lt;button is="interactable-button" on-click="#tip.toggle().once()"&gt;Toggle tip (once)&lt;/button&gt;
+&lt;section is="interactable-section" id="tip" implements="revealable" hidden&gt;
+  This sentence appears only the first time the button completes its chain.
+&lt;/section&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-attr">Attribute playground</h2>
+        <p class="ex-note">
+          <code class="inline-code">attributable</code> writes attributes: <code class="inline-code">setAttr({name, value})</code> takes an
+          object literal, while <code class="inline-code">toggleAttr</code> and <code class="inline-code">removeAttr</code> take a scalar.
+          The last button uses <code class="inline-code">logger</code> to print from a phrase — open the console.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <button is="interactable-button" id="swatch-dark" type="button"
+                    on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})">Dark</button>
+            <button is="interactable-button" id="swatch-light" type="button"
+                    on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})">Light</button>
+            <button is="interactable-button" id="swatch-border" type="button"
+                    on-click="#swatch.toggleAttr('data-bordered')">Toggle border</button>
+            <button is="interactable-button" id="swatch-clear" type="button"
+                    on-click="#swatch.removeAttr('data-theme')">Clear theme</button>
+            <button is="interactable-button" id="swatch-log" type="button"
+                    on-click="#swatch.log('button clicked')">Log</button>
+          </div>
+          <div is="interactable-div" id="swatch" implements="attributable logger" data-theme="light">Swatch</div>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;button is="interactable-button" on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#swatch.toggleAttr('data-bordered')"&gt;Toggle border&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#swatch.removeAttr('data-theme')"&gt;Clear theme&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#swatch.log('button clicked')"&gt;Log&lt;/button&gt;
+
+&lt;div is="interactable-div" id="swatch" implements="attributable logger" data-theme="light"&gt;Swatch&lt;/div&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-note">Auto-growing note</h2>
+        <p class="ex-note">
+          <code class="inline-code">auto-grow</code> tracks the content height, <code class="inline-code">dirtyable</code> outlines the field
+          while it differs from the value it connected with, <code class="inline-code">storable</code> persists it to
+          <code class="inline-code">localStorage</code>, and <code class="inline-code">paste-transform</code> collapses runs of whitespace on paste.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <textarea is="interactable-textarea" id="note"
+                    implements="auto-grow dirtyable storable paste-transform"
+                    storable-key="interactably-demo-note" rows="2"
+                    paste-transform-patterns="\s+" paste-transform-replaces=" "
+                    placeholder="Type or paste some text&hellip;"></textarea>
+          <div class="row">
+            <button is="interactable-button" id="note-clean" type="button" on-click="#note.markClean()">Mark clean</button>
+            <button is="interactable-button" id="note-forget" type="button" on-click="#note.clear()">Forget saved value</button>
+          </div>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;textarea is="interactable-textarea" id="note"
+          implements="auto-grow dirtyable storable paste-transform"
+          storable-key="interactably-demo-note" rows="2"
+          paste-transform-patterns="\s+" paste-transform-replaces=" "
+          placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;
+&lt;button is="interactable-button" on-click="#note.markClean()"&gt;Mark clean&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#note.clear()"&gt;Forget saved value&lt;/button&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-cond">Conditional reveal</h2>
+        <p class="ex-note">
+          <code class="inline-code">condition</code> watches another element and fires a verb when the comparison holds:
+          <code class="inline-code">condition-watch</code> / <code class="inline-code">condition-on</code> /
+          <code class="inline-code">condition-op</code> / <code class="inline-code">condition-value</code> &rarr;
+          <code class="inline-code">condition-verb</code> on <code class="inline-code">condition-target</code>.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <label>Age
+              <input id="age" type="number" value="17" min="0">
+            </label>
+          </div>
+          <div is="interactable-div" implements="condition"
+               condition-watch="age" condition-on="value" condition-op=">=" condition-value="18"
+               condition-verb="show" condition-target="consent"></div>
+          <section is="interactable-section" id="consent" implements="revealable" hidden>
+            Thanks &mdash; you&rsquo;re old enough to continue.
+          </section>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;input id="age" type="number" value="17" min="0"&gt;
+&lt;div is="interactable-div" implements="condition"
+     condition-watch="age" condition-on="value" condition-op="&gt;=" condition-value="18"
+     condition-verb="show" condition-target="consent"&gt;&lt;/div&gt;
+&lt;section is="interactable-section" id="consent" implements="revealable" hidden&gt;
+  Thanks &mdash; you&rsquo;re old enough to continue.
+&lt;/section&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-strat">Revealable strategies</h2>
+        <p class="ex-note">
+          <code class="inline-code">revealable</code> reads the element: <code class="inline-code">open</code> on
+          <code class="inline-code">&lt;details&gt;</code> and <code class="inline-code">&lt;dialog&gt;</code>, popover state on
+          <code class="inline-code">[popover]</code>, and <code class="inline-code">data-open</code> on anything else. Focus trapping,
+          the top layer, light dismiss and Escape handling come with the platform elements for free.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <button is="interactable-button" id="faq-toggle" type="button" on-click="#faq.toggle()"
+                    aria-expanded="false" aria-controls="faq">Toggle details</button>
+            <button is="interactable-button" type="button" on-click="#dlg.show()">Open dialog</button>
+            <button is="interactable-button" type="button" on-click="#pop.toggle()"
+                    aria-expanded="false" aria-controls="pop">Toggle popover</button>
+          </div>
+          <details is="interactable-details" id="faq" implements="revealable">
+            <summary>Why not just use <code>hidden</code>?</summary>
+            <p>Because each platform element already exposes its own open state.</p>
+          </details>
+          <dialog is="interactable-dialog" id="dlg" implements="revealable">
+            <p>A native <code class="inline-code">&lt;dialog&gt;</code>, opened with <code class="inline-code">showModal()</code>.</p>
+            <button is="interactable-button" type="button" on-click="#dlg.hide()">Close</button>
+          </dialog>
+          <div is="interactable-div" id="pop" implements="revealable" popover>
+            A popover in the top layer, toggled through <code class="inline-code">showPopover()</code>.
+          </div>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;button is="interactable-button" on-click="#faq.toggle()" aria-expanded="false" aria-controls="faq"&gt;Toggle details&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#dlg.show()"&gt;Open dialog&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#pop.toggle()" aria-expanded="false" aria-controls="pop"&gt;Toggle popover&lt;/button&gt;
+
+&lt;details is="interactable-details" id="faq" implements="revealable"&gt;
+  &lt;summary&gt;Why not just use &lt;code&gt;hidden&lt;/code&gt;?&lt;/summary&gt;
+  &lt;p&gt;Because each platform element already exposes its own open state.&lt;/p&gt;
+&lt;/details&gt;
+
+&lt;dialog is="interactable-dialog" id="dlg" implements="revealable"&gt;
+  &lt;p&gt;A native &lt;code&gt;&amp;lt;dialog&amp;gt;&lt;/code&gt;, opened with &lt;code&gt;showModal()&lt;/code&gt;.&lt;/p&gt;
+  &lt;button is="interactable-button" on-click="#dlg.hide()"&gt;Close&lt;/button&gt;
+&lt;/dialog&gt;
+
+&lt;div is="interactable-div" id="pop" implements="revealable" popover&gt;
+  A popover in the top layer, toggled through &lt;code&gt;showPopover()&lt;/code&gt;.
+&lt;/div&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-valid">Validation guard</h2>
+        <p class="ex-note">
+          <code class="inline-code">validate()</code> calls <code class="inline-code">reportValidity()</code> and
+          <code class="inline-code">preventDefault()</code> on failure, which stops the rest of the chain:
+          <code class="inline-code">setAttr</code> runs only when the form is valid. The field uses <code class="inline-code">pattern</code>
+          rather than <code class="inline-code">type="email"</code>, so the browser only complains when you submit, not while you type.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <form is="interactable-form" id="signup" novalidate implements="prevent-default validatable attributable"
+                on-submit="this.validate().setAttr({name: 'data-signed', value: 'true'})">
+            <div class="row">
+              <label>Email
+                <input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com">
+              </label>
+              <button is="interactable-button" type="submit">Sign up</button>
+            </div>
+            <p class="success" hidden>Thanks &mdash; that address looks valid.</p>
+          </form>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" id="signup" novalidate
+      implements="prevent-default validatable attributable"
+      on-submit="this.validate().setAttr({name: 'data-signed', value: 'true'})"&gt;
+  &lt;label&gt;Email
+    &lt;input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com"&gt;
+  &lt;/label&gt;
+  &lt;button is="interactable-button" type="submit"&gt;Sign up&lt;/button&gt;
+  &lt;p class="success" hidden&gt;Thanks &mdash; that address looks valid.&lt;/p&gt;
+&lt;/form&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-json">JSON template</h2>
+        <p class="ex-note">
+          <code class="inline-code">json-template</code> renders a JSON data source through a child
+          <code class="inline-code">&lt;template&gt;</code>, re-rendering when the source changes. <code class="inline-code">{field}</code>
+          interpolates; a nested template carrying <code class="inline-code">data-array</code> repeats per item.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <script type="application/json" id="team-data">
+          [
+            { "name": "Ada", "role": "Engineer", "location": "London" },
+            { "name": "Grace", "role": "Admiral", "location": "Arlington" },
+            { "name": "Alan", "role": "Cryptanalyst", "location": "Bletchley" }
+          ]
+          </script>
+          <div is="interactable-div" implements="json-template" json-template-for="team-data">
+            <template>
+              <article class="member">
+                <h3>{name}</h3>
+                <p>{role} &middot; {location}</p>
+              </article>
+            </template>
+          </div>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;script type="application/json" id="team-data"&gt;
+[
+  { "name": "Ada",   "role": "Engineer",      "location": "London" },
+  { "name": "Grace", "role": "Admiral",       "location": "Arlington" },
+  { "name": "Alan",  "role": "Cryptanalyst",  "location": "Bletchley" }
+]
+&lt;/script&gt;
+&lt;div is="interactable-div" implements="json-template" json-template-for="team-data"&gt;
+  &lt;template&gt;
+    &lt;article class="member"&gt;
+      &lt;h3&gt;{name}&lt;/h3&gt;
+      &lt;p&gt;{role} &amp;middot; {location}&lt;/p&gt;
+    &lt;/article&gt;
+  &lt;/template&gt;
+&lt;/div&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-bubble">Nested triggers &amp; no-propagate</h2>
+        <p class="ex-note">
+          A click on a button inside a trigger fires both phrases as it bubbles, like nested
+          <code class="inline-code">onclick</code>. <code class="inline-code">no-propagate</code> stops the bubble on the inner element.
+          Open the console to watch <code class="inline-code">logger</code>.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div is="interactable-div" id="outer" implements="logger"
+               on-click="#outer.log('outer card')">
+            <p class="lede-line">Clicking the plain area logs the outer line.</p>
+            <div class="row">
+              <button is="interactable-button" id="bubbles-btn" type="button"
+                      on-click="#outer.log('plain inner button')">Inner button (bubbles)</button>
+              <button is="interactable-button" id="no-propagate-btn" implements="no-propagate" type="button"
+                      on-click="#outer.log('stopped inner button')">Inner button (no-propagate)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;div is="interactable-div" id="outer" implements="logger"
+     on-click="#outer.log('outer card')"&gt;
+  &lt;p&gt;Clicking the plain area logs the outer line.&lt;/p&gt;
+  &lt;button is="interactable-button" on-click="#outer.log('plain inner button')"&gt;Inner button (bubbles)&lt;/button&gt;
+  &lt;button is="interactable-button" implements="no-propagate"
+          on-click="#outer.log('stopped inner button')"&gt;Inner button (no-propagate)&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-order">Order form — the asynchronous seam</h2>
+        <p class="ex-note">
+          <code class="inline-code">on-submit="this.send()"</code> POSTs the form; the response swaps into the receipt and
+          <code class="inline-code">requestable-after</code> reveals it. Failures run <code class="inline-code">requestable-error</code>.
+          Point <code class="inline-code">requestable-url</code> at a real endpoint and the button disables itself via
+          <code class="inline-code">form[aria-busy="true"] button { pointer-events: none }</code>.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <form is="interactable-form" id="order" novalidate implements="prevent-default requestable"
+                requestable-url="/api/orders" requestable-method="post"
+                requestable-target="#receipt"
+                requestable-after="#receipt.show(); #alert.hide()"
+                requestable-error="#alert.show()"
+                on-submit="this.send()">
+            <label>Qty
+              <input name="qty" type="number" min="1" required value="2">
+            </label>
+            <button is="interactable-button" type="submit">Place order</button>
+          </form>
+          <section is="interactable-section" id="receipt" implements="revealable" hidden></section>
+          <div is="interactable-div" id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" id="order" novalidate
+      implements="prevent-default requestable"
+      requestable-url="/api/orders" requestable-method="post"
+      requestable-target="#receipt"
+      requestable-after="#receipt.show(); #alert.hide()"
+      requestable-error="#alert.show()"
+      on-submit="this.send()"&gt;
+  &lt;label&gt;Qty
+    &lt;input name="qty" type="number" min="1" required value="2"&gt;
+  &lt;/label&gt;
+  &lt;button is="interactable-button" type="submit"&gt;Place order&lt;/button&gt;
+&lt;/form&gt;
+&lt;section is="interactable-section" id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
+&lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
+      </details>
+    </section>
+  </main>
+
+  <footer class="footer" id="footer"></footer>
+
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>

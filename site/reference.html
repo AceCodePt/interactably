@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably reference — the shipped implementations, their verbs and config, the public API, reserved names and the reference grammar.">
+  <title>Reference — Interactably</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-page="reference">
+  <div id="nav"></div>
+  <script src="./site.js"></script>
+
+  <main class="wrap">
+    <h1 class="doc-title">Reference</h1>
+    <p class="doc-lede">
+      The shipped implementations with their verbs and config, the public API, reserved names and the reference grammar.
+      For the reasoning behind any of it, see the <a href="./docs.html">docs</a>.
+    </p>
+
+    <h2 style="margin-top:2rem">Shipped implementations</h2>
+    <div class="ref-grid">
+
+      <article class="ref-card">
+        <h3><code class="inline-code">modifiable</code></h3>
+        <p class="ref-tags">input &middot; textarea &middot; output &middot; select</p>
+        <p class="ref-desc">Typed writes with clamping; evaluates a formula on <code class="inline-code">compute()</code> and on connect.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">set</span><span class="verb-tag">inc</span><span class="verb-tag">dec</span><span class="verb-tag">clear</span><span class="verb-tag">reset</span><span class="verb-tag">compute</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">step</span><span class="verb-tag">formula</span><span class="verb-tag">invalid-value</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">dirtyable</code></h3>
+        <p class="ref-tags">input &middot; textarea &middot; select &middot; output</p>
+        <p class="ref-desc">Toggles <code class="inline-code">.is-dirty</code> while <code class="inline-code">el.value</code> differs from the connect-time baseline.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">markClean</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">listable</code></h3>
+        <p class="ref-tags">ul &middot; ol &middot; tbody</p>
+        <p class="ref-desc">Row removal, template adoption and clear, keeping <code class="inline-code">min-rows</code>.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">removeRow</span><span class="verb-tag">adopt</span><span class="verb-tag">clear</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">min-rows</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">requestable</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc">Fetch, swap the response into the DOM, run continuation phrases. GET is latest-wins; anything else is first-wins.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">send</span><span class="verb-tag">abort</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">url</span><span class="verb-tag">method</span><span class="verb-tag">target</span><span class="verb-tag">swap</span><span class="verb-tag">include</span><span class="verb-tag">concurrency</span><span class="verb-tag">after</span><span class="verb-tag">error</span><span class="verb-tag">status (state)</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">attributable</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc">Attribute writes: <code class="inline-code">setAttr({name, value})</code> takes an object literal.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">setAttr</span><span class="verb-tag">toggleAttr</span><span class="verb-tag">removeAttr</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">logger</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc"><code class="inline-code">console.log</code> from a phrase.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">log</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">validatable</code></h3>
+        <p class="ref-tags">form &middot; input &middot; select &middot; textarea</p>
+        <p class="ref-desc">Guard verb: <code class="inline-code">reportValidity()</code>, <code class="inline-code">preventDefault()</code> on failure.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">validate</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">no-propagate</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc"><code class="inline-code">stopPropagation</code> on listed events.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">events</span><span class="verb-tag">(default "click")</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">prevent-default</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc"><code class="inline-code">preventDefault</code> on listed events; the <em>which</em> is derived from <code class="inline-code">on-*</code> or the tag.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">events</span><span class="verb-tag">(derived)</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">revealable</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc">Strategies per element: <code class="inline-code">open</code> on details/dialog, popover state on <code class="inline-code">[popover]</code>, <code class="inline-code">data-open</code> otherwise.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">show</span><span class="verb-tag">hide</span><span class="verb-tag">toggle</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">modal</span><span class="verb-tag">open (state)</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">auto-grow</code></h3>
+        <p class="ref-tags">textarea</p>
+        <p class="ref-desc">Auto-height textarea.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">storable</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc">Persist a field&rsquo;s value to <code class="inline-code">local</code> or <code class="inline-code">session</code> storage.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">save</span><span class="verb-tag">load</span><span class="verb-tag">clear</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">key</span><span class="verb-tag">type</span><span class="verb-tag">attr</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">paste-transform</code></h3>
+        <p class="ref-tags">input &middot; textarea</p>
+        <p class="ref-desc">Rewrite pasted text with regexes.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">patterns</span><span class="verb-tag">replaces</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">condition</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc">Fire a verb on another element when a condition holds.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">watch</span><span class="verb-tag">on</span><span class="verb-tag">op</span><span class="verb-tag">value</span><span class="verb-tag">verb</span><span class="verb-tag">target</span></div>
+      </article>
+
+      <article class="ref-card">
+        <h3><code class="inline-code">json-template</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc">Render a JSON data source through a child <code class="inline-code">&lt;template&gt;</code>.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">for</span><span class="verb-tag">slice</span></div>
+      </article>
+
+    </div>
+
+    <h2 id="api">The public API</h2>
+    <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset).</p>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Export</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline-code">defineImplementation(name, decl, factory)</code></td><td>Declare an implementation</td></tr>
+          <tr><td><code class="inline-code">defineInteractableHost(tag)</code></td><td>Define <code class="inline-code">interactable-&lt;tag&gt;</code>; idempotent</td></tr>
+          <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition</td></tr>
+          <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
+          <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
+          <tr><td><code class="inline-code">parse(value)</code></td><td>Parse an attribute string into phrases (cached)</td></tr>
+          <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
+          <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class</td></tr>
+          <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
+          <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive)</td></tr>
+          <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
+          <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
+          <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read and write helpers</td></tr>
+          <tr><td><code class="inline-code">NotReadyError</code></td><td>Set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="reserved">Reserved names</h2>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Name</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code></td><td>Modifiers — an implementation may not name a verb that way</td></tr>
+          <tr><td><code class="inline-code">this</code></td><td>The only keyword</td></tr>
+          <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
+          <tr><td><code class="inline-code">enter</code>, <code class="inline-code">escape</code>, <code class="inline-code">space</code>, &hellip;</td><td>Key names, matching <code class="inline-code">KeyboardEvent.key</code> case-insensitively, one per phrase, under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="grammar">Reference grammar</h2>
+    <pre class="code" data-lang="text"><code>attribute := 'on-' event-type
+value     := phrase (';' phrase)*
+phrase    := [key ':'] ref ('.' call)+ ('.' modifier)*
+ref       := '#' id | 'this'
+call      := verb '(' [arg | object] ')'
+arg       := number | "'" string "'" | 'true' | 'false' | ref | read
+read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
+object    := '{' field (',' field)* '}'
+field     := name ':' arg
+modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'</code></pre>
+    <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
+
+    <h2 id="signatures">Signature slots</h2>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Slot</th><th>Syntax</th><th>Examples</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Scalar</strong></td><td>a tsyntax DSL string</td><td><code class="inline-code">"string"</code>, <code class="inline-code">"number | undefined"</code>, <code class="inline-code">"'upper' | 'lower'"</code>, <code class="inline-code">"`${number}px`"</code></td></tr>
+          <tr><td><strong>Element</strong></td><td>an element constructor</td><td><code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, <code class="inline-code">HTMLButtonElement</code></td></tr>
+          <tr><td><strong>Record</strong></td><td>one flat object literal of slots</td><td><code class="inline-code">{ name: "string", value: "string" }</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">A record key whose slot admits <code class="inline-code">undefined</code> may be omitted from the object literal; any other key is required.</p>
+  </main>
+
+  <footer class="footer" id="footer"></footer>
+</body>
+</html>
