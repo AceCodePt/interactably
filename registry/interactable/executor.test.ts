@@ -414,3 +414,186 @@ test("errors are never thrown from the event path", (t) => {
   assert.doesNotThrow(() => run(el(), "#ghost.show()", new Event("click")));
   assert.ok(spy.mock.callCount() >= 1);
 });
+
+test("|| runs the fallback only when a guard aborts", () => {
+  const form = el("form");
+  const alert = el("alert");
+  const order: string[] = [];
+  let valid = false;
+  wireHost(form, {
+    validate: (e) => {
+      order.push("validate");
+      if (!valid) e.preventDefault();
+    },
+    send: () => {
+      order.push("send");
+    },
+  });
+  wireHost(alert, {
+    show: () => {
+      order.push("show");
+    },
+  });
+
+  const trigger = el();
+  run(trigger, "#form.validate().send() || #alert.show()", new Event("submit"));
+  assert.deepEqual(order, ["validate", "show"], "an invalid form runs the fallback and not send");
+
+  order.length = 0;
+  valid = true;
+  run(trigger, "#form.validate().send() || #alert.show()", new Event("submit"));
+  assert.deepEqual(order, ["validate", "send"], "a valid form runs send and not the fallback");
+});
+
+test("|| stops at the first unit that completes", () => {
+  const first = el("first");
+  const second = el("second");
+  const order: string[] = [];
+  wireHost(first, { show: () => void order.push("first") });
+  wireHost(second, { show: () => void order.push("second") });
+
+  run(el(), "#first.show() || #second.show()", new Event("click"));
+  assert.deepEqual(order, ["first"]);
+});
+
+test("&& runs the next unit only when the previous completed", () => {
+  const form = el("form");
+  const hint = el("hint");
+  const order: string[] = [];
+  let valid = false;
+  wireHost(form, {
+    validate: (e) => {
+      order.push("validate");
+      if (!valid) e.preventDefault();
+    },
+  });
+  wireHost(hint, {
+    show: () => {
+      order.push("show");
+    },
+  });
+
+  const trigger = el();
+  run(trigger, "#form.validate() && #hint.show()", new Event("submit"));
+  assert.deepEqual(order, ["validate"], "an aborted unit stops the remaining && units");
+
+  order.length = 0;
+  valid = true;
+  run(trigger, "#form.validate() && #hint.show()", new Event("submit"));
+  assert.deepEqual(order, ["validate", "show"]);
+});
+
+test("a thrown verb stops && and does not trigger ||", (t) => {
+  const spy = t.mock.method(console, "error");
+  const form = el("form");
+  const alert = el("alert");
+  const order: string[] = [];
+  wireHost(form, {
+    validate: () => {
+      order.push("validate");
+      throw new Error("kaboom");
+    },
+  });
+  wireHost(alert, { show: () => void order.push("show") });
+
+  run(el(), "#form.validate() && #alert.show()", new Event("click"));
+  run(el(), "#form.validate() || #alert.show()", new Event("click"));
+  assert.deepEqual(order, ["validate", "validate"]);
+  assert.equal(spy.mock.callCount(), 2);
+});
+
+test("an unowned verb stops && and does not trigger ||", (t) => {
+  const spy = t.mock.method(console, "error");
+  const form = el("form");
+  const alert = el("alert");
+  const order: string[] = [];
+  wireHost(form, { validate: () => void order.push("validate") });
+  wireHost(alert, { show: () => void order.push("show") });
+
+  const trigger = el();
+  run(trigger, "#form.validate().send() && #alert.show()", new Event("click"));
+  run(trigger, "#form.validate().send() || #alert.show()", new Event("click"));
+  assert.deepEqual(order, ["validate", "validate"]);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("no implementation"));
+});
+
+test("a missing receiver stops && and does not trigger ||", (t) => {
+  const spy = t.mock.method(console, "error");
+  const alert = el("alert");
+  const order: string[] = [];
+  wireHost(alert, { show: () => void order.push("show") });
+
+  const trigger = el();
+  run(trigger, "#ghost.show() && #alert.show()", new Event("click"));
+  run(trigger, "#ghost.show() || #alert.show()", new Event("click"));
+  assert.deepEqual(order, []);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("receiver #ghost not found"));
+});
+
+test("a failed argument resolution stops && and does not trigger ||", (t) => {
+  const spy = t.mock.method(console, "error");
+  const panel = el("panel");
+  Reflect.deleteProperty(panel, "checked");
+  const form = el("form");
+  const alert = el("alert");
+  const order: string[] = [];
+  wireHost(form, { set: () => void order.push("set") });
+  wireHost(alert, { show: () => void order.push("show") });
+
+  const trigger = el();
+  run(trigger, "#form.set(#panel.checked) && #alert.show()", new Event("click"));
+  run(trigger, "#form.set(#panel.checked) || #alert.show()", new Event("click"));
+  assert.deepEqual(order, []);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("argument for set()"));
+});
+
+test("once() is not spent when a guard aborts even though the || fallback ran", () => {
+  const form = el("form");
+  const alert = el("alert");
+  let validateCalls = 0;
+  let sendCalls = 0;
+  let showCalls = 0;
+  wireHost(form, {
+    validate: (e) => {
+      validateCalls++;
+      e.preventDefault();
+    },
+    send: () => void sendCalls++,
+  });
+  wireHost(alert, { show: () => void showCalls++ });
+
+  const trigger = el();
+  const value = "#form.validate().send() || #alert.show().once()";
+  run(trigger, value, new Event("submit"));
+  run(trigger, value, new Event("submit"));
+  assert.equal(validateCalls, 2);
+  assert.equal(sendCalls, 0);
+  assert.equal(showCalls, 2, "the fallback is not once()-limited because the phrase never completed cleanly");
+});
+
+test("a keyed phrase works with && and ||", () => {
+  const form = el("form");
+  const alert = el("alert");
+  const order: string[] = [];
+  wireHost(form, {
+    validate: (e) => {
+      order.push("validate");
+      e.preventDefault();
+    },
+  });
+  wireHost(alert, { show: () => void order.push("show") });
+
+  const trigger = el();
+  run(trigger, "enter: #form.validate() || #alert.show()", keyEvent("Enter"));
+  assert.deepEqual(order, ["validate", "show"]);
+
+  order.length = 0;
+  run(trigger, "enter: #form.validate() || #alert.show()", keyEvent("Tab"));
+  assert.deepEqual(order, [], "a non-matching key never reaches the phrase");
+
+  run(trigger, "enter: #form.validate() && #alert.show()", keyEvent("Enter"));
+  assert.deepEqual(order, ["validate"], "&& stops after the guard abort");
+});

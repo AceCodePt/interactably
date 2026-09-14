@@ -403,15 +403,17 @@
       <div class="example-head">
         <h2 id="ex-valid">Sign-up form with a guard</h2>
         <p class="ex-note">
-          <code class="inline-code">validate()</code> checks the form and, if it&rsquo;s invalid, stops the chain —
-          <code class="inline-code">setAttr</code> only runs when everything passes. The field uses <code class="inline-code">pattern</code>
+          <code class="inline-code">validate()</code> checks the form and stops the chain when it&rsquo;s invalid.
+          <code class="inline-code">&amp;&amp;</code> continues on completion, <code class="inline-code">||</code> continues
+          only on a guard abort: <code class="inline-code">setAttr</code> runs when the form is valid, the alert shows when
+          it is not. The field uses <code class="inline-code">pattern</code>
           rather than <code class="inline-code">type="email"</code>, so the browser only complains when you submit, not while you type.
         </p>
       </div>
       <div class="example-body">
         <div class="demo">
           <form is="interactable-form" id="signup" novalidate implements="prevent-default validatable attributable"
-                on-submit="this.validate().setAttr({name: 'data-signed', value: 'true'})">
+                on-submit="#signup-alert.hide(); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()">
             <div class="row">
               <label>Email
                 <input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com">
@@ -419,6 +421,7 @@
               <button is="interactable-button" type="submit">Sign up</button>
             </div>
             <p class="success" hidden>Thanks &mdash; that address looks valid.</p>
+            <div is="interactable-div" id="signup-alert" implements="revealable" hidden role="alert">Enter a valid email address.</div>
           </form>
         </div>
       </div>
@@ -426,12 +429,13 @@
         <summary>Show the markup</summary>
         <pre class="code" data-lang="html"><code>&lt;form is="interactable-form" id="signup" novalidate
       implements="prevent-default validatable attributable"
-      on-submit="this.validate().setAttr({name: 'data-signed', value: 'true'})"&gt;
+      on-submit="#signup-alert.hide(); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()"&gt;
   &lt;label&gt;Email
     &lt;input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com"&gt;
   &lt;/label&gt;
   &lt;button is="interactable-button" type="submit"&gt;Sign up&lt;/button&gt;
   &lt;p class="success" hidden&gt;Thanks &mdash; that address looks valid.&lt;/p&gt;
+  &lt;div is="interactable-div" id="signup-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
 &lt;/form&gt;</code></pre>
       </details>
     </section>

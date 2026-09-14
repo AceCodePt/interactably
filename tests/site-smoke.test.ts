@@ -271,15 +271,20 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   const signed = byId("signup");
   assert.equal(signed.hasAttribute("data-signed"), false);
   const signup = byId("signup") as HTMLFormElement;
+  const signupAlert = byId("signup-alert");
+  assert.equal(signupAlert.hidden, true, "the validation-failure alert starts hidden");
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   assert.equal(signup.hasAttribute("data-signed"), false, "validate() stops the chain when the form is invalid");
+  assert.equal(signupAlert.hidden, false, "the || branch shows the alert on an invalid submit");
   const email = signup.querySelector("input") as HTMLInputElement;
   email.value = "not-an-email";
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   assert.equal(signup.hasAttribute("data-signed"), false, "a value that fails the pattern also stops the chain");
+  assert.equal(signupAlert.hidden, false, "the || branch shows the alert for a pattern failure");
   email.value = "you@example.com";
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   assert.equal(signup.getAttribute("data-signed"), "true", "validate() passes and setAttr() runs");
+  assert.equal(signupAlert.hidden, true, "the || branch does not run on a valid submit");
 
   const members = document.querySelectorAll(".member");
   assert.equal(members.length, 3, "json-template renders one article per item");

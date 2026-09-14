@@ -18,11 +18,18 @@ export type Modifier =
   | { kind: "throttle"; ms: number }
   | { kind: "once" };
 
+export interface Unit {
+  ref: Ref;
+  calls: Call[];
+}
+
 export interface Phrase {
   key?: string;
   ref: Ref;
   calls: Call[];
   modifiers: Modifier[];
+  operator?: "&&" | "||";
+  rest?: Unit[];
 }
 
 const CALL = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*\(([\s\S]*)\)$/;
@@ -71,7 +78,32 @@ function parsePhrase(raw: string): Phrase {
     body = raw.slice(colon + 1);
   }
 
-  const segments = splitTopLevel(body, ".").map((s) => s.trim());
+  const split = splitUnits(body);
+  const operatorKinds = new Set(split.operators);
+  if (operatorKinds.size > 1) {
+    throw new Error("cannot mix && and || in one phrase");
+  }
+
+  const units = split.parts.map((part) => parseUnit(part));
+  const first = units[0]!;
+  const modifiers: Modifier[] = [];
+  for (const unit of units) modifiers.push(...unit.modifiers);
+
+  const phrase: Phrase = { ref: first.ref, calls: first.calls, modifiers };
+  if (key !== undefined) phrase.key = key;
+  if (split.operators.length > 0) {
+    phrase.operator = split.operators[0] as "&&" | "||";
+    phrase.rest = units.slice(1).map(({ ref, calls }) => ({ ref, calls }));
+  }
+  return phrase;
+}
+
+interface ParsedUnit extends Unit {
+  modifiers: Modifier[];
+}
+
+function parseUnit(raw: string): ParsedUnit {
+  const segments = splitTopLevel(raw, ".").map((s) => s.trim());
   if (segments.length === 0 || segments[0] === "") throw new Error("missing receiver");
   const ref = parseRef(segments[0]!);
 
@@ -90,10 +122,7 @@ function parsePhrase(raw: string): Phrase {
     calls.push(parseCall(segment));
   }
   if (calls.length === 0) throw new Error("a phrase needs at least one verb call with parens");
-
-  const phrase: Phrase = { ref, calls, modifiers };
-  if (key !== undefined) phrase.key = key;
-  return phrase;
+  return { ref, calls, modifiers };
 }
 
 function parseRef(segment: string): Ref {
@@ -215,6 +244,44 @@ function findKeyColon(raw: string): number {
     if (ch === ":" && paren === 0 && brace === 0) return i;
   }
   return -1;
+}
+
+function splitUnits(text: string): { parts: string[]; operators: string[] } {
+  const parts: string[] = [];
+  const operators: string[] = [];
+  let current = "";
+  let single = false;
+  let paren = 0;
+  let brace = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
+    if (ch === "'") {
+      single = !single;
+      current += ch;
+      continue;
+    }
+    if (single) {
+      current += ch;
+      continue;
+    }
+    if (ch === "(") paren++;
+    else if (ch === ")") paren--;
+    else if (ch === "{") brace++;
+    else if (ch === "}") brace--;
+    if (paren === 0 && brace === 0 && (ch === "&" || ch === "|")) {
+      const next = text[i + 1];
+      if (next === ch) {
+        parts.push(current);
+        operators.push(ch === "&" ? "&&" : "||");
+        current = "";
+        i++;
+        continue;
+      }
+    }
+    current += ch;
+  }
+  parts.push(current);
+  return { parts, operators };
 }
 
 function splitTopLevel(text: string, separator: string): string[] {
