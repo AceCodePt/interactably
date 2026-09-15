@@ -16,7 +16,6 @@ const KNOWN_BUNDLES = new Set([
   "attributable",
   "auto-grow",
   "copyable",
-  "delay",
   "dirtyable",
   "json-template",
   "listable",

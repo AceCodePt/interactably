@@ -14,22 +14,21 @@ export interface Call {
 }
 
 export type Modifier =
-  | { kind: "debounce"; ms: number }
-  | { kind: "throttle"; ms: number }
-  | { kind: "once" };
+  | { kind: "debounce"; ms: number; position: number }
+  | { kind: "throttle"; ms: number; position: number }
+  | { kind: "once"; position: number }
+  | { kind: "delay"; ms: number; position: number };
 
 export interface Unit {
   ref: Ref;
   calls: Call[];
+  modifiers: Modifier[];
 }
 
 export interface Phrase {
   key?: string;
-  ref: Ref;
-  calls: Call[];
-  modifiers: Modifier[];
+  units: Unit[];
   operator?: "&&" | "||";
-  rest?: Unit[];
 }
 
 const CALL = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*\(([\s\S]*)\)$/;
@@ -38,7 +37,7 @@ const STRING = /^'([^']*)'$/;
 const IDENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const ID = /^[^\s,;.()]+$/;
 const KEY = /^[^\s.,;()]+$/;
-const TIMING = /^(debounce|throttle)\(([^)]*)\)$/;
+const TIMING = /^(debounce|throttle|delay)\(([^)]*)\)$/;
 const READ = /^(this|#[^\s,;.()]+)\.([A-Za-z_$][A-Za-z0-9_$]*)$/;
 
 const READABLE_PROPERTIES = new Set(["value", "checked", "valueAsNumber"]);
@@ -85,40 +84,32 @@ function parsePhrase(raw: string): Phrase {
   }
 
   const units = split.parts.map((part) => parseUnit(part));
-  const first = units[0]!;
-  const modifiers: Modifier[] = [];
-  for (const unit of units) modifiers.push(...unit.modifiers);
 
-  const phrase: Phrase = { ref: first.ref, calls: first.calls, modifiers };
+  const phrase: Phrase = { units };
   if (key !== undefined) phrase.key = key;
   if (split.operators.length > 0) {
     phrase.operator = split.operators[0] as "&&" | "||";
-    phrase.rest = units.slice(1).map(({ ref, calls }) => ({ ref, calls }));
   }
   return phrase;
 }
 
-interface ParsedUnit extends Unit {
-  modifiers: Modifier[];
-}
-
-function parseUnit(raw: string): ParsedUnit {
+function parseUnit(raw: string): Unit {
   const segments = splitTopLevel(raw, ".").map((s) => s.trim());
   if (segments.length === 0 || segments[0] === "") throw new Error("missing receiver");
   const ref = parseRef(segments[0]!);
 
   const calls: Call[] = [];
   const modifiers: Modifier[] = [];
-  let sawModifier = false;
   for (const segment of segments.slice(1)) {
     if (segment === "") throw new Error("empty link between dots");
     const modifier = parseModifier(segment);
     if (modifier !== undefined) {
-      sawModifier = true;
-      modifiers.push(modifier);
+      if ((modifier.kind === "debounce" || modifier.kind === "throttle") && calls.length > 0) {
+        throw new Error(`modifier ${modifier.kind}() must come right after the receiver`);
+      }
+      modifiers.push({ ...modifier, position: calls.length });
       continue;
     }
-    if (sawModifier) throw new Error(`modifier before verb "${segment}"`);
     calls.push(parseCall(segment));
   }
   if (calls.length === 0) throw new Error("a phrase needs at least one verb call with parens");
@@ -140,13 +131,19 @@ function validateId(id: string): void {
   if (!ID.test(id)) throw new Error(`invalid id "#${id}"`);
 }
 
-function parseModifier(segment: string): Modifier | undefined {
+type ModifierSpec =
+  | { kind: "debounce"; ms: number }
+  | { kind: "throttle"; ms: number }
+  | { kind: "once" }
+  | { kind: "delay"; ms: number };
+
+function parseModifier(segment: string): ModifierSpec | undefined {
   const compact = segment.replace(/\s+/g, "");
   const timing = TIMING.exec(compact);
   if (timing !== null) {
     const msText = timing[2]!.trim();
     if (!NUMBER.test(msText)) throw new Error(`invalid ${timing[1]}() milliseconds "${msText}"`);
-    return { kind: timing[1] === "debounce" ? "debounce" : "throttle", ms: Number(msText) };
+    return { kind: timing[1] as "debounce" | "throttle" | "delay", ms: Number(msText) };
   }
   if (compact === "once()") return { kind: "once" };
   return undefined;

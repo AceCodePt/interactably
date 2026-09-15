@@ -180,7 +180,7 @@ test("semicolon phrases are independent", (t) => {
   assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("threw: kaboom"));
 });
 
-test("once() is consumed only when the whole chain completes", () => {
+test("once() gates the rest of its own chain", () => {
   const receiver = el("m");
   let showCalls = 0;
   let focusCalls = 0;
@@ -194,13 +194,83 @@ test("once() is consumed only when the whole chain completes", () => {
   });
 
   const trigger = el();
-  run(trigger, "#m.show().focus().once()", new Event("click"));
-  run(trigger, "#m.show().focus().once()", new Event("click"));
+  run(trigger, "#m.once().show().focus()", new Event("click"));
+  run(trigger, "#m.once().show().focus()", new Event("click"));
   assert.equal(showCalls, 1);
   assert.equal(focusCalls, 1);
 });
 
-test("once() is not consumed when the chain aborts", () => {
+test("once() governs from its position to the end of its chain", () => {
+  const receiver = el("m");
+  let xCalls = 0;
+  let yCalls = 0;
+  wireHost(receiver, {
+    x: () => {
+      xCalls++;
+    },
+    y: () => {
+      yCalls++;
+    },
+  });
+
+  const trigger = el();
+  run(trigger, "#m.x().once().y()", new Event("click"));
+  run(trigger, "#m.x().once().y()", new Event("click"));
+  assert.equal(xCalls, 2, "links before the once run every time");
+  assert.equal(yCalls, 1, "links after the once run once ever");
+});
+
+test("once() is not refunded when a verb after it throws", (t) => {
+  const spy = t.mock.method(console, "error");
+  const receiver = el("m");
+  let boomCalls = 0;
+  wireHost(receiver, {
+    boom: () => {
+      boomCalls++;
+      throw new Error("kaboom");
+    },
+  });
+
+  const trigger = el();
+  run(trigger, "#m.once().boom()", new Event("click"));
+  run(trigger, "#m.once().boom()", new Event("click"));
+  assert.equal(boomCalls, 1, "the second fire is gated at the once, so the throwing verb never runs again");
+  assert.equal(spy.mock.callCount(), 1);
+});
+
+test("once() does not cross &&", () => {
+  const a = el("a");
+  const b = el("b");
+  let xCalls = 0;
+  let yCalls = 0;
+  wireHost(a, { x: () => void xCalls++ });
+  wireHost(b, { y: () => void yCalls++ });
+
+  const trigger = el();
+  const value = "#a.once().x() && #b.y()";
+  run(trigger, value, new Event("click"));
+  run(trigger, value, new Event("click"));
+  assert.equal(xCalls, 1);
+  assert.equal(yCalls, 1, "#b.y() runs whenever the first chain runs; it is not independently once-gated");
+});
+
+test("each receiver carries its own debounce", async () => {
+  const a = el("a");
+  const b = el("b");
+  let xCalls = 0;
+  let yCalls = 0;
+  wireHost(a, { x: () => void xCalls++ });
+  wireHost(b, { y: () => void yCalls++ });
+
+  const trigger = el();
+  run(trigger, "#a.debounce(20).x() && #b.y()", new Event("click"));
+  assert.equal(yCalls, 0, "&& is sequential, so #b.y() waits behind #a's debounce");
+  await delay(60);
+  assert.equal(xCalls, 1);
+  assert.equal(yCalls, 1);
+});
+
+test("once() is spent even when the chain aborts after it", () => {
   const receiver = el("m");
   let guardCalls = 0;
   let sendCalls = 0;
@@ -215,9 +285,9 @@ test("once() is not consumed when the chain aborts", () => {
   });
 
   const trigger = el();
-  run(trigger, "#m.guard().send().once()", new Event("click"));
-  run(trigger, "#m.guard().send().once()", new Event("click"));
-  assert.equal(guardCalls, 2);
+  run(trigger, "#m.once().guard().send()", new Event("click"));
+  run(trigger, "#m.once().guard().send()", new Event("click"));
+  assert.equal(guardCalls, 1, "the second fire is gated at the once, so the guard never runs again");
   assert.equal(sendCalls, 0);
 });
 
@@ -325,14 +395,14 @@ test("the result channel carries the verb's return value", () => {
   assert.equal(seen[0]!.handled, true);
 });
 
-test("debounce defers the whole phrase and coalesces", async () => {
+test("debounce defers the whole chain and coalesces", async () => {
   const receiver = el("m");
   let showCalls = 0;
   wireHost(receiver, { show: () => void showCalls++ });
 
   const trigger = el();
-  run(trigger, "#m.show().debounce(20)", new Event("click"));
-  run(trigger, "#m.show().debounce(20)", new Event("click"));
+  run(trigger, "#m.debounce(20).show()", new Event("click"));
+  run(trigger, "#m.debounce(20).show()", new Event("click"));
   await delay(60);
   assert.equal(showCalls, 1);
 });
@@ -343,11 +413,11 @@ test("throttle runs on the leading edge and drops in-window fires", async () => 
   wireHost(receiver, { show: () => void showCalls++ });
 
   const trigger = el();
-  run(trigger, "#m.show().throttle(40)", new Event("click"));
-  run(trigger, "#m.show().throttle(40)", new Event("click"));
+  run(trigger, "#m.throttle(40).show()", new Event("click"));
+  run(trigger, "#m.throttle(40).show()", new Event("click"));
   assert.equal(showCalls, 1);
   await delay(70);
-  run(trigger, "#m.show().throttle(40)", new Event("click"));
+  run(trigger, "#m.throttle(40).show()", new Event("click"));
   assert.equal(showCalls, 2);
 });
 
@@ -355,7 +425,7 @@ test("references resolve at fire time, after the debounce", async () => {
   const trigger = el();
   let showCalls = 0;
 
-  run(trigger, "#late.show().debounce(20)", new Event("click"));
+  run(trigger, "#late.debounce(20).show()", new Event("click"));
   assert.equal(showCalls, 0);
 
   const late = el("late");
@@ -364,15 +434,15 @@ test("references resolve at fire time, after the debounce", async () => {
   assert.equal(showCalls, 1);
 });
 
-test("once() with a debounce is spent after the debounced completion", async () => {
+test("once() with a debounce is spent after the debounce fires", async () => {
   const receiver = el("m");
   let showCalls = 0;
   wireHost(receiver, { show: () => void showCalls++ });
 
   const trigger = el();
-  run(trigger, "#m.show().once().debounce(20)", new Event("click"));
+  run(trigger, "#m.debounce(20).once().show()", new Event("click"));
   await delay(60);
-  run(trigger, "#m.show().once().debounce(20)", new Event("click"));
+  run(trigger, "#m.debounce(20).once().show()", new Event("click"));
   await delay(60);
   assert.equal(showCalls, 1);
 });
@@ -383,20 +453,20 @@ test("clearPhraseState drops pending timers and once state", async () => {
   wireHost(receiver, { show: () => void showCalls++ });
 
   const trigger = el();
-  run(trigger, "#m.show().debounce(20)", new Event("click"));
+  run(trigger, "#m.debounce(20).show()", new Event("click"));
   clearPhraseState(trigger as unknown as Element);
   await delay(60);
   assert.equal(showCalls, 0);
 
-  run(trigger, "#m.show().once()", new Event("click"));
-  run(trigger, "#m.show().once()", new Event("click"));
+  run(trigger, "#m.once().show()", new Event("click"));
+  run(trigger, "#m.once().show()", new Event("click"));
   assert.equal(showCalls, 1);
   clearPhraseState(trigger as unknown as Element);
-  run(trigger, "#m.show().once()", new Event("click"));
+  run(trigger, "#m.once().show()", new Event("click"));
   assert.equal(showCalls, 2);
 });
 
-test("a paused verb defers the rest of the chain", async () => {
+test("an implementation may still set e.pauseMs to defer the rest of the chain", async () => {
   const receiver = el("m");
   const order: string[] = [];
   wireHost(receiver, {
@@ -416,16 +486,28 @@ test("a paused verb defers the rest of the chain", async () => {
   assert.deepEqual(order, ["wait", "after"]);
 });
 
-test("a pause is mid-chain: links before it run now, links after resume", async () => {
+test("delay() defers the rest of the chain", async () => {
+  const receiver = el("m");
+  const order: string[] = [];
+  wireHost(receiver, {
+    after: () => {
+      order.push("after");
+    },
+  });
+
+  const trigger = el();
+  run(trigger, "#m.delay(20).after()", new Event("click"));
+  assert.deepEqual(order, []);
+  await delay(60);
+  assert.deepEqual(order, ["after"]);
+});
+
+test("delay is mid-chain: links before it run now, links after resume", async () => {
   const receiver = el("m");
   const order: string[] = [];
   wireHost(receiver, {
     first: () => {
       order.push("first");
-    },
-    wait: (e, ms) => {
-      order.push("wait");
-      e.pauseMs = Number(ms);
     },
     last: () => {
       order.push("last");
@@ -433,95 +515,89 @@ test("a pause is mid-chain: links before it run now, links after resume", async 
   });
 
   const click = new Event("click");
-  run(el(), "#m.first().wait(20).last()", click);
-  assert.deepEqual(order, ["first", "wait"]);
+  run(el(), "#m.first().delay(20).last()", click);
+  assert.deepEqual(order, ["first"]);
   await delay(60);
-  assert.deepEqual(order, ["first", "wait", "last"]);
+  assert.deepEqual(order, ["first", "last"]);
+});
+
+test("delay pauses where it sits and && units after it wait", async () => {
+  const first = el("first");
+  const second = el("second");
+  const order: string[] = [];
+  wireHost(first, {
+    start: () => void order.push("start"),
+    end: () => void order.push("end"),
+  });
+  wireHost(second, { after: () => void order.push("after") });
+
+  run(el(), "#first.start().delay(20).end() && #second.after()", new Event("click"));
+  assert.deepEqual(order, ["start"]);
+  await delay(60);
+  assert.deepEqual(order, ["start", "end", "after"]);
 });
 
 test("a resumed verb sees the original event", async () => {
   const receiver = el("m");
   let seenOriginal: Event | undefined;
   wireHost(receiver, {
-    wait: (e, ms) => {
-      e.pauseMs = Number(ms);
-    },
     show: (e) => {
       seenOriginal = e.originalEvent;
     },
   });
 
   const click = new Event("click");
-  run(el(), "#m.wait(20).show()", click);
+  run(el(), "#m.delay(20).show()", click);
   await delay(60);
   assert.strictEqual(seenOriginal, click);
 });
 
-test("once() with a pause is spent on the delayed completion", async () => {
+test("once() with a delay is spent when the walk passes it", async () => {
   const receiver = el("m");
   let showCalls = 0;
-  wireHost(receiver, {
-    wait: (e, ms) => {
-      e.pauseMs = Number(ms);
-    },
-    show: () => void showCalls++,
-  });
+  wireHost(receiver, { show: () => void showCalls++ });
 
   const trigger = el();
-  run(trigger, "#m.wait(20).show().once()", new Event("click"));
-  run(trigger, "#m.wait(20).show().once()", new Event("click"));
+  run(trigger, "#m.delay(20).once().show()", new Event("click"));
+  run(trigger, "#m.delay(20).once().show()", new Event("click"));
   await delay(60);
   assert.equal(showCalls, 1);
-  run(trigger, "#m.wait(20).show().once()", new Event("click"));
+  run(trigger, "#m.delay(20).once().show()", new Event("click"));
   await delay(60);
   assert.equal(showCalls, 1);
 });
 
-test("clearPhraseState cancels a pending pause resume", async () => {
+test("clearPhraseState cancels a pending delay resume", async () => {
   const receiver = el("m");
   let showCalls = 0;
-  wireHost(receiver, {
-    wait: (e, ms) => {
-      e.pauseMs = Number(ms);
-    },
-    show: () => void showCalls++,
-  });
+  wireHost(receiver, { show: () => void showCalls++ });
 
   const trigger = el();
-  run(trigger, "#m.wait(20).show()", new Event("click"));
+  run(trigger, "#m.delay(20).show()", new Event("click"));
   clearPhraseState(trigger as unknown as Element);
   await delay(60);
   assert.equal(showCalls, 0);
 });
 
-test("a re-fire while a pause is pending cancels the earlier resume", async () => {
+test("a re-fire while a delay is pending cancels the earlier resume", async () => {
   const receiver = el("m");
   let showCalls = 0;
-  wireHost(receiver, {
-    wait: (e, ms) => {
-      e.pauseMs = Number(ms);
-    },
-    show: () => void showCalls++,
-  });
+  wireHost(receiver, { show: () => void showCalls++ });
 
   const trigger = el();
-  run(trigger, "#m.wait(30).show()", new Event("click"));
+  run(trigger, "#m.delay(30).show()", new Event("click"));
   await delay(10);
-  run(trigger, "#m.wait(30).show()", new Event("click"));
+  run(trigger, "#m.delay(30).show()", new Event("click"));
   await delay(25);
   assert.equal(showCalls, 0);
   await delay(40);
   assert.equal(showCalls, 1);
 });
 
-test("a guard after a pause still stops the chain", async () => {
+test("a guard after a delay still stops the chain", async () => {
   const receiver = el("m");
   const order: string[] = [];
   wireHost(receiver, {
-    wait: (e, ms) => {
-      order.push("wait");
-      e.pauseMs = Number(ms);
-    },
     validate: (e) => {
       order.push("validate");
       e.preventDefault();
@@ -531,9 +607,9 @@ test("a guard after a pause still stops the chain", async () => {
     },
   });
 
-  run(el(), "#m.wait(20).validate().send()", new Event("submit"));
+  run(el(), "#m.delay(20).validate().send()", new Event("submit"));
   await delay(60);
-  assert.deepEqual(order, ["wait", "validate"]);
+  assert.deepEqual(order, ["validate"]);
 });
 
 test("the DSL never touches the original DOM event", () => {
@@ -690,7 +766,7 @@ test("a failed argument resolution stops && and does not trigger ||", (t) => {
   assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("argument for set()"));
 });
 
-test("once() is not spent when a guard aborts even though the || fallback ran", () => {
+test("a fallback unit's own once() gates the fallback chain", () => {
   const form = el("form");
   const alert = el("alert");
   let validateCalls = 0;
@@ -706,12 +782,12 @@ test("once() is not spent when a guard aborts even though the || fallback ran", 
   wireHost(alert, { show: () => void showCalls++ });
 
   const trigger = el();
-  const value = "#form.validate().send() || #alert.show().once()";
+  const value = "#form.validate().send() || #alert.once().show()";
   run(trigger, value, new Event("submit"));
   run(trigger, value, new Event("submit"));
   assert.equal(validateCalls, 2);
   assert.equal(sendCalls, 0);
-  assert.equal(showCalls, 2, "the fallback is not once()-limited because the phrase never completed cleanly");
+  assert.equal(showCalls, 1, "the fallback's own once gates the fallback chain, not the first unit");
 });
 
 test("a keyed phrase works with && and ||", () => {

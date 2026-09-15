@@ -220,7 +220,7 @@
       <table class="tbl">
         <thead><tr><th>Name</th><th>Role</th></tr></thead>
         <tbody>
-          <tr><td><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code></td><td>Modifiers — an implementation may not name a verb that way</td></tr>
+          <tr><td><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code></td><td>Modifiers — an implementation may not name a verb that way</td></tr>
           <tr><td><code class="inline-code">this</code></td><td>The only keyword</td></tr>
           <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
           <tr><td><code class="inline-code">enter</code>, <code class="inline-code">escape</code>, <code class="inline-code">space</code>, &hellip;</td><td>Key names, matching <code class="inline-code">KeyboardEvent.key</code> case-insensitively, one per phrase, under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code></td></tr>
@@ -232,7 +232,7 @@
     <div class="codeblock">
       <div class="codeblock-bar">
         <span class="codeblock-lang">Text</span>
-        <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+        <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                 on-click="this.copy(#code-reference-grammar)" type="button">
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>
@@ -240,14 +240,14 @@
       <pre class="code" id="code-reference-grammar" data-lang="text"><code>attribute := 'on-' event-type
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
-unit      := ref ('.' call)+ ('.' modifier)*
+unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
 arg       := number | "'" string "'" | 'true' | 'false' | ref | read
 read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
-modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'</code></pre>
+modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'</code></pre>
     </div>
     <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
 

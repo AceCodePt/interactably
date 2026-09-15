@@ -69,7 +69,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                         on-click="this.copy(#code-ex-auto)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -101,7 +101,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                         on-click="this.copy(#code-ex-is)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -172,7 +172,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-calc)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -248,7 +248,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-reveal)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -267,8 +267,8 @@
         <h2 id="ex-grammar">Live preview: debounce, keys &amp; once</h2>
         <p class="ex-note">
           Type into the field and the preview follows — but only 300ms after you stop. Enter echoes instantly,
-          Escape clears, and the &ldquo;Toggle tip&rdquo; button spends its <code class="inline-code">once()</code> after the
-          first successful toggle.
+          Escape clears, and the &ldquo;Toggle tip&rdquo; button spends its <code class="inline-code">once()</code> as the
+          walk passes it: the second click is a no-op.
         </p>
       </div>
       <div class="example-body">
@@ -276,14 +276,14 @@
           <div class="row">
             <label>Type
               <input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
-                     on-input="#mirror.set(this.value).debounce(300)"
+                     on-input="#mirror.debounce(300).set(this.value)"
                      on-keydown="enter: #mirror.set(this.value); escape: this.clear()">
             </label>
             <output is="interactable-output" id="mirror" implements="modifiable">&hellip;</output>
           </div>
-          <button is="interactable-button" id="tip-button" type="button" on-click="#tip.toggle().once()">Toggle tip (once)</button>
+          <button is="interactable-button" id="tip-button" type="button" on-click="#tip.once().toggle()">Toggle tip (once)</button>
           <section is="interactable-section" id="tip" implements="revealable" hidden>
-            This sentence appears only the first time the button completes its chain.
+            This sentence appears the first time the chain runs; the second click is a no-op.
           </section>
         </div>
       </div>
@@ -292,19 +292,19 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-grammar)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
           <pre class="code" id="code-ex-grammar" data-lang="html"><code>&lt;input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
-       on-input="#mirror.set(this.value).debounce(300)"
+       on-input="#mirror.debounce(300).set(this.value)"
        on-keydown="enter: #mirror.set(this.value); escape: this.clear()"&gt;
 &lt;output is="interactable-output" id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
 
-&lt;button is="interactable-button" on-click="#tip.toggle().once()"&gt;Toggle tip (once)&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#tip.once().toggle()"&gt;Toggle tip (once)&lt;/button&gt;
 &lt;section is="interactable-section" id="tip" implements="revealable" hidden&gt;
-  This sentence appears only the first time the button completes its chain.
+  This sentence appears the first time the chain runs; the second click is a no-op.
 &lt;/section&gt;</code></pre>
         </div>
       </details>
@@ -342,7 +342,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-attr)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -386,7 +386,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-note)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -430,7 +430,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-age)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -481,7 +481,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-strat)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -544,7 +544,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-tabs)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -602,7 +602,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-valid)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -654,7 +654,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-json)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -706,7 +706,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-bubble)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -755,7 +755,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-order)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -803,7 +803,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-quote)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -832,7 +832,7 @@
           <div class="codeblock">
             <div class="codeblock-bar">
               <span class="codeblock-lang">text</span>
-              <button is="interactable-button" class="copy-btn" implements="copyable delay attributable"
+              <button is="interactable-button" class="copy-btn" implements="copyable attributable"
                       copyable-after="this.delay(1500).removeAttr('data-copied')"
                       on-click="this.copy(#demo-snippet)" type="button">
                 <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
@@ -847,12 +847,12 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-copy)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-copy" data-lang="html"><code>&lt;button is="interactable-button" class="copy-btn" implements="copyable delay attributable"
+          <pre class="code" id="code-ex-copy" data-lang="html"><code>&lt;button is="interactable-button" class="copy-btn" implements="copyable attributable"
         copyable-after="this.delay(1500).removeAttr('data-copied')"
         on-click="this.copy(#snippet)" type="button"&gt;
   &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;

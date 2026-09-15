@@ -13,6 +13,5 @@ export { autoGrow } from "@behaviors/auto-grow/auto-grow.ts";
 export { storable } from "@behaviors/storable/storable.ts";
 export { pasteTransform } from "@behaviors/paste-transform/paste-transform.ts";
 export { copyable } from "@behaviors/copyable/copyable.ts";
-export { delay } from "@behaviors/delay/delay.ts";
 export { jsonTemplate } from "@behaviors/json-template/json-template.ts";
 export { installAutoLoader } from "@utils/auto-loader.ts";

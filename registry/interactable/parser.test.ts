@@ -2,9 +2,14 @@ import { test } from "node:test";
 import type { TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { parse } from "@interactable/parser.ts";
+import type { Phrase, Unit } from "@interactable/parser.ts";
 
 function errorsOf(t: TestContext) {
   return t.mock.method(console, "error");
+}
+
+function first(phrase: Phrase): Unit {
+  return phrase.units[0]!;
 }
 
 test("empty and whitespace-only values parse to no phrases", () => {
@@ -15,8 +20,8 @@ test("empty and whitespace-only values parse to no phrases", () => {
 test("rule 1: parens are mandatory on every verb", () => {
   const [phrase] = parse("#pop.show()");
   assert.ok(phrase);
-  assert.equal(phrase.calls.length, 1);
-  assert.equal(phrase.calls[0]!.verb, "show");
+  assert.equal(first(phrase).calls.length, 1);
+  assert.equal(first(phrase).calls[0]!.verb, "show");
 
   assert.deepEqual(parse("#pop.show"), []);
   assert.deepEqual(parse("#pop.show"), []);
@@ -25,17 +30,17 @@ test("rule 1: parens are mandatory on every verb", () => {
 test("rule 2: receivers are #ids or this; ids may not contain dots", () => {
   const [byId] = parse("#modal.show()");
   assert.ok(byId);
-  assert.deepEqual(byId.ref, { kind: "id", id: "modal" });
+  assert.deepEqual(first(byId).ref, { kind: "id", id: "modal" });
 
   const [byThis] = parse("this.reset()");
   assert.ok(byThis);
-  assert.deepEqual(byThis.ref, { kind: "this" });
+  assert.deepEqual(first(byThis).ref, { kind: "this" });
 
   assert.deepEqual(parse("#a.b"), []);
   const [dotted] = parse("#a.b()");
   assert.ok(dotted);
-  assert.deepEqual(dotted.ref, { kind: "id", id: "a" });
-  assert.equal(dotted.calls[0]!.verb, "b");
+  assert.deepEqual(first(dotted).ref, { kind: "id", id: "a" });
+  assert.equal(first(dotted).calls[0]!.verb, "b");
 });
 
 test("rule 3: one receiver per phrase; groups and broadcasts are errors", () => {
@@ -49,7 +54,7 @@ test("rule 4: keys are one per phrase; comma lists are errors", () => {
   const [keyed] = parse("enter: #f.send()");
   assert.ok(keyed);
   assert.equal(keyed.key, "enter");
-  assert.deepEqual(keyed.ref, { kind: "id", id: "f" });
+  assert.deepEqual(first(keyed).ref, { kind: "id", id: "f" });
 
   const two = parse("enter: #f.send(); numpadenter: #f.send()");
   assert.equal(two.length, 2);
@@ -60,23 +65,54 @@ test("rule 4: keys are one per phrase; comma lists are errors", () => {
   assert.deepEqual(parse("enter: escape: #f.send()"), []);
 });
 
-test("rule 5: modifiers trail and apply to the whole phrase", () => {
-  const [once] = parse("#tour.show().once()");
+test("rule 5: modifiers sit in the chain with their position recorded", () => {
+  const [once] = parse("#tour.once().show()");
   assert.ok(once);
-  assert.deepEqual(once.modifiers, [{ kind: "once" }]);
+  assert.deepEqual(first(once).modifiers, [{ kind: "once", position: 0 }]);
 
-  const [filtered] = parse("#results.filter(this.value).debounce(300)");
+  const [filtered] = parse("#results.debounce(300).filter(this.value)");
   assert.ok(filtered);
-  assert.equal(filtered.calls.length, 1);
-  assert.equal(filtered.calls[0]!.verb, "filter");
-  assert.deepEqual(filtered.modifiers, [{ kind: "debounce", ms: 300 }]);
+  assert.equal(first(filtered).calls.length, 1);
+  assert.equal(first(filtered).calls[0]!.verb, "filter");
+  assert.deepEqual(first(filtered).modifiers, [{ kind: "debounce", ms: 300, position: 0 }]);
 
-  const [throttled] = parse("#pb.hide().throttle(16).once()");
+  const [throttled] = parse("#viewport.throttle(16).zoom(this)");
   assert.ok(throttled);
-  assert.deepEqual(throttled.modifiers, [{ kind: "throttle", ms: 16 }, { kind: "once" }]);
+  assert.deepEqual(first(throttled).modifiers, [{ kind: "throttle", ms: 16, position: 0 }]);
 
-  assert.deepEqual(parse("#a.debounce(300).show()"), []);
-  assert.deepEqual(parse("#a.debounce(abc).show()"), []);
+  const [mid] = parse("#a.x().once().y()");
+  assert.ok(mid);
+  assert.deepEqual(first(mid).modifiers, [{ kind: "once", position: 1 }]);
+});
+
+test("modifiers stack and repeat without error; the parser has no duplicate check", () => {
+  const [stacked] = parse("#a.debounce(300).once().x()");
+  assert.ok(stacked);
+  assert.deepEqual(first(stacked).modifiers, [
+    { kind: "debounce", ms: 300, position: 0 },
+    { kind: "once", position: 0 },
+  ]);
+
+  const [repeated] = parse("#a.debounce(1).debounce(2).x()");
+  assert.ok(repeated);
+  assert.deepEqual(first(repeated).modifiers, [
+    { kind: "debounce", ms: 1, position: 0 },
+    { kind: "debounce", ms: 2, position: 0 },
+  ]);
+
+  const [interleaved] = parse("#a.x().once().y().delay(50).z()");
+  assert.ok(interleaved);
+  assert.deepEqual(first(interleaved).modifiers, [
+    { kind: "once", position: 1 },
+    { kind: "delay", ms: 50, position: 2 },
+  ]);
+});
+
+test("debounce/throttle must come right after the receiver, before any call", () => {
+  assert.deepEqual(parse("#a.show().debounce(300)"), []);
+  assert.deepEqual(parse("#a.show().throttle(16)"), []);
+  assert.deepEqual(parse("#a.once().x().debounce(300)"), []);
+  assert.deepEqual(parse("#a.show().once().debounce(300)"), []);
 });
 
 test("rule 9: a verb takes one argument; two positional arguments are an error", () => {
@@ -84,8 +120,8 @@ test("rule 9: a verb takes one argument; two positional arguments are an error",
 
   const [obj] = parse("#total.sum({root: #list, select: '.amount'})");
   assert.ok(obj);
-  assert.equal(obj.calls[0]!.verb, "sum");
-  assert.deepEqual(obj.calls[0]!.arg, {
+  assert.equal(first(obj).calls[0]!.verb, "sum");
+  assert.deepEqual(first(obj).calls[0]!.arg, {
     kind: "object",
     fields: [
       { name: "root", value: { kind: "ref", ref: { kind: "id", id: "list" } } },
@@ -95,22 +131,22 @@ test("rule 9: a verb takes one argument; two positional arguments are an error",
 });
 
 test("rule 10: argument kinds - number, string, boolean, ref, this, read, object", () => {
-  assert.deepEqual(parse("#x.set(5)")[0]!.calls[0]!.arg, { kind: "number", value: 5 });
-  assert.deepEqual(parse("#x.set(-2.5)")[0]!.calls[0]!.arg, { kind: "number", value: -2.5 });
-  assert.deepEqual(parse("#x.transform('upper')")[0]!.calls[0]!.arg, { kind: "string", value: "upper" });
-  assert.deepEqual(parse("#x.set(true)")[0]!.calls[0]!.arg, { kind: "boolean", value: true });
-  assert.deepEqual(parse("#x.set(false)")[0]!.calls[0]!.arg, { kind: "boolean", value: false });
-  assert.deepEqual(parse("#list.removeRow(this)")[0]!.calls[0]!.arg, { kind: "ref", ref: { kind: "this" } });
-  assert.deepEqual(parse("#list.removeRow(#row3)")[0]!.calls[0]!.arg, {
+  assert.deepEqual(first(parse("#x.set(5)")[0]!).calls[0]!.arg, { kind: "number", value: 5 });
+  assert.deepEqual(first(parse("#x.set(-2.5)")[0]!).calls[0]!.arg, { kind: "number", value: -2.5 });
+  assert.deepEqual(first(parse("#x.transform('upper')")[0]!).calls[0]!.arg, { kind: "string", value: "upper" });
+  assert.deepEqual(first(parse("#x.set(true)")[0]!).calls[0]!.arg, { kind: "boolean", value: true });
+  assert.deepEqual(first(parse("#x.set(false)")[0]!).calls[0]!.arg, { kind: "boolean", value: false });
+  assert.deepEqual(first(parse("#list.removeRow(this)")[0]!).calls[0]!.arg, { kind: "ref", ref: { kind: "this" } });
+  assert.deepEqual(first(parse("#list.removeRow(#row3)")[0]!).calls[0]!.arg, {
     kind: "ref",
     ref: { kind: "id", id: "row3" },
   });
-  assert.deepEqual(parse("#x.set(this.value)")[0]!.calls[0]!.arg, {
+  assert.deepEqual(first(parse("#x.set(this.value)")[0]!).calls[0]!.arg, {
     kind: "read",
     ref: { kind: "this" },
     property: "value",
   });
-  assert.deepEqual(parse("#note.transform({mode: 'upper', shift: 2})")[0]!.calls[0]!.arg, {
+  assert.deepEqual(first(parse("#note.transform({mode: 'upper', shift: 2})")[0]!).calls[0]!.arg, {
     kind: "object",
     fields: [
       { name: "mode", value: { kind: "string", value: "upper" } },
@@ -121,12 +157,12 @@ test("rule 10: argument kinds - number, string, boolean, ref, this, read, object
 });
 
 test("rule 11: only value, checked, valueAsNumber may be read off a ref", () => {
-  assert.deepEqual(parse("#total.add(#qty.valueAsNumber)")[0]!.calls[0]!.arg, {
+  assert.deepEqual(first(parse("#total.add(#qty.valueAsNumber)")[0]!).calls[0]!.arg, {
     kind: "read",
     ref: { kind: "id", id: "qty" },
     property: "valueAsNumber",
   });
-  assert.deepEqual(parse("#x.set(#agree.checked)")[0]!.calls[0]!.arg, {
+  assert.deepEqual(first(parse("#x.set(#agree.checked)")[0]!).calls[0]!.arg, {
     kind: "read",
     ref: { kind: "id", id: "agree" },
     property: "checked",
@@ -140,14 +176,14 @@ test("rule 11: only value, checked, valueAsNumber may be read off a ref", () => 
 test("rule 12: selectors appear only inside string arguments", () => {
   const [phrase] = parse("#total.sum({root: #list, select: '.amount'})");
   assert.ok(phrase);
-  const arg = phrase.calls[0]!.arg;
+  const arg = first(phrase).calls[0]!.arg;
   assert.equal(arg!.kind, "object");
 });
 
 test("rule 13: errors are local - one bad phrase skips only that phrase", () => {
   const phrases = parse("#a, #b.hide(); #c.show()");
   assert.equal(phrases.length, 1);
-  assert.deepEqual(phrases[0]!.ref, { kind: "id", id: "c" });
+  assert.deepEqual(first(phrases[0]!).ref, { kind: "id", id: "c" });
 });
 
 test("rule 13: grammar errors are logged once per attribute string", (t) => {
@@ -160,7 +196,7 @@ test("rule 13: grammar errors are logged once per attribute string", (t) => {
 test("rule 14: one verb per call, one call per link", () => {
   const [phrase] = parse("#a.show().hide()");
   assert.ok(phrase);
-  assert.deepEqual(phrase.calls.map((c) => c.verb), ["show", "hide"]);
+  assert.deepEqual(first(phrase).calls.map((c) => c.verb), ["show", "hide"]);
 
   assert.deepEqual(parse("#a.show()hide()"), []);
 });
@@ -168,26 +204,26 @@ test("rule 14: one verb per call, one call per link", () => {
 test("chains link calls with dots", () => {
   const [phrase] = parse("#pop.show().focus()");
   assert.ok(phrase);
-  assert.deepEqual(phrase.calls.map((c) => c.verb), ["show", "focus"]);
+  assert.deepEqual(first(phrase).calls.map((c) => c.verb), ["show", "focus"]);
 });
 
 test("whitespace is insignificant outside string literals", () => {
   const [phrase] = parse("  #pop . show ( )  . once ( )  ");
   assert.ok(phrase);
-  assert.equal(phrase.calls[0]!.verb, "show");
-  assert.equal(phrase.calls[0]!.arg, undefined);
-  assert.deepEqual(phrase.modifiers, [{ kind: "once" }]);
+  assert.equal(first(phrase).calls[0]!.verb, "show");
+  assert.equal(first(phrase).calls[0]!.arg, undefined);
+  assert.deepEqual(first(phrase).modifiers, [{ kind: "once", position: 1 }]);
 
   const [stringy] = parse("#x.set( 'a b' )");
   assert.ok(stringy);
-  assert.deepEqual(stringy.calls[0]!.arg, { kind: "string", value: "a b" });
+  assert.deepEqual(first(stringy).calls[0]!.arg, { kind: "string", value: "a b" });
 });
 
 test("semicolons and commas inside string arguments do not split", () => {
   const phrases = parse("#a.set('x;y'); #b.set('p,q')");
   assert.equal(phrases.length, 2);
-  assert.deepEqual(phrases[0]!.calls[0]!.arg, { kind: "string", value: "x;y" });
-  assert.deepEqual(phrases[1]!.calls[0]!.arg, { kind: "string", value: "p,q" });
+  assert.deepEqual(first(phrases[0]!).calls[0]!.arg, { kind: "string", value: "x;y" });
+  assert.deepEqual(first(phrases[1]!).calls[0]!.arg, { kind: "string", value: "p,q" });
 });
 
 test("empty object literals are rejected", () => {
@@ -195,52 +231,60 @@ test("empty object literals are rejected", () => {
 });
 
 test("parse results are cached by attribute string", () => {
-  const first = parse("#pop.show()");
+  const firstParse = parse("#pop.show()");
   const second = parse("#pop.show()");
-  assert.strictEqual(first, second);
+  assert.strictEqual(firstParse, second);
   const other = parse("#pop.show().focus()");
-  assert.notStrictEqual(other, first);
+  assert.notStrictEqual(other, firstParse);
 });
 
 test("&& and || separate top-level units", () => {
   const [and] = parse("#a.show() && #b.hide()");
   assert.ok(and);
   assert.equal(and.operator, "&&");
-  assert.deepEqual(and.ref, { kind: "id", id: "a" });
-  assert.deepEqual(and.calls, [{ verb: "show" }]);
-  assert.deepEqual(and.rest, [{ ref: { kind: "id", id: "b" }, calls: [{ verb: "hide" }] }]);
+  assert.deepEqual(and.units, [
+    { ref: { kind: "id", id: "a" }, calls: [{ verb: "show" }], modifiers: [] },
+    { ref: { kind: "id", id: "b" }, calls: [{ verb: "hide" }], modifiers: [] },
+  ]);
 
   const [or] = parse("#f.validate().send() || #alert.show()");
   assert.ok(or);
   assert.equal(or.operator, "||");
-  assert.deepEqual(or.ref, { kind: "id", id: "f" });
-  assert.deepEqual(or.calls.map((c) => c.verb), ["validate", "send"]);
-  assert.deepEqual(or.rest, [{ ref: { kind: "id", id: "alert" }, calls: [{ verb: "show" }] }]);
+  assert.deepEqual(or.units[0]!.calls.map((c) => c.verb), ["validate", "send"]);
+  assert.deepEqual(or.units[1]!, {
+    ref: { kind: "id", id: "alert" },
+    calls: [{ verb: "show" }],
+    modifiers: [],
+  });
 
   const [single] = parse("#a.show()");
   assert.ok(single);
   assert.equal(single.operator, undefined);
-  assert.equal(single.rest, undefined);
+  assert.equal(single.units.length, 1);
 });
 
 test("operators may switch receivers and accept this", () => {
   const [phrase] = parse("this.validate().send() || #alert.show()");
   assert.ok(phrase);
   assert.equal(phrase.operator, "||");
-  assert.deepEqual(phrase.ref, { kind: "this" });
-  assert.deepEqual(phrase.rest, [{ ref: { kind: "id", id: "alert" }, calls: [{ verb: "show" }] }]);
+  assert.deepEqual(phrase.units[0]!.ref, { kind: "this" });
+  assert.deepEqual(phrase.units[1]!, {
+    ref: { kind: "id", id: "alert" },
+    calls: [{ verb: "show" }],
+    modifiers: [],
+  });
 });
 
 test("operators are not recognized inside strings or argument parens/braces", () => {
   const [stringy] = parse("#x.set('a && b')");
   assert.ok(stringy);
   assert.equal(stringy.operator, undefined);
-  assert.deepEqual(stringy.calls[0]!.arg, { kind: "string", value: "a && b" });
+  assert.deepEqual(first(stringy).calls[0]!.arg, { kind: "string", value: "a && b" });
 
   const [objecty] = parse("#total.sum({root: #list, select: '.amount || qty'})");
   assert.ok(objecty);
   assert.equal(objecty.operator, undefined);
-  assert.deepEqual(objecty.calls[0]!.arg, {
+  assert.deepEqual(first(objecty).calls[0]!.arg, {
     kind: "object",
     fields: [
       { name: "root", value: { kind: "ref", ref: { kind: "id", id: "list" } } },
@@ -256,9 +300,21 @@ test("mixing && and || in one phrase is a parse error", (t) => {
   assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("cannot mix && and ||"));
 });
 
-test("modifiers stay phrase-wide across units", () => {
-  const [phrase] = parse("#a.validate().send() || #alert.show().once()");
+test("each unit carries its own modifiers, and no modifier crosses &&", () => {
+  const [phrase] = parse("#a.once().validate().send() || #alert.show().once()");
   assert.ok(phrase);
-  assert.deepEqual(phrase.modifiers, [{ kind: "once" }]);
-  assert.deepEqual(phrase.rest, [{ ref: { kind: "id", id: "alert" }, calls: [{ verb: "show" }] }]);
+  assert.deepEqual(phrase.units[0]!.modifiers, [{ kind: "once", position: 0 }]);
+  assert.deepEqual(phrase.units[1]!.modifiers, [{ kind: "once", position: 1 }]);
+});
+
+test("delay is a modifier: it parses in any position, not just the end", () => {
+  const [leading] = parse("#a.delay(300).x()");
+  assert.ok(leading);
+  assert.deepEqual(first(leading).modifiers, [{ kind: "delay", ms: 300, position: 0 }]);
+
+  const [mid] = parse("#a.copy().delay(1500).reset()");
+  assert.ok(mid);
+  assert.deepEqual(first(mid).modifiers, [{ kind: "delay", ms: 1500, position: 1 }]);
+
+  assert.deepEqual(parse("#a.delay(abc).x()"), []);
 });

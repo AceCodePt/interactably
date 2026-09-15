@@ -79,7 +79,7 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Shell</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-install)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -103,7 +103,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                         on-click="this.copy(#code-docs-load-auto)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -134,7 +134,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                         on-click="this.copy(#code-docs-load-is)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -203,15 +203,15 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-grammar-examples)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
           <pre class="code" id="code-docs-grammar-examples" data-lang="html"><code>&lt;button on-click="#pop.show().focus()"&gt;
-&lt;input  on-input="#echo.set(this.value); #results.filter(this.value).debounce(300)"&gt;
+&lt;input  on-input="#echo.set(this.value); #results.debounce(300).filter(this.value)"&gt;
 &lt;input  on-keydown="escape: this.reset(); enter: #form.validate().send()"&gt;
-&lt;button on-click="#tour.show().once()"&gt;
+&lt;button on-click="#tour.once().show()"&gt;
 &lt;button on-click="#pb.hide(); #pc.hide(); #pa.show()"&gt;
 &lt;button on-click="#note.transform({mode: 'upper', shift: 2})"&gt;
 &lt;button on-click="#list.removeRow(this)"&gt;
@@ -223,20 +223,20 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-grammar)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
           <pre class="code" id="code-docs-grammar" data-lang="text"><code>value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
-unit      := ref ('.' call)+ ('.' modifier)*
+unit      := ref ('.' (call | modifier))+
 ref       := '#'id | this
 call      := verb '(' [arg | object] ')'
 arg       := number | 'string' | true | false | ref | read
 read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
 object    := '{' name ':' arg (',' name ':' arg)* '}'
-modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
+modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
 
         <h3 id="constructs">Constructs <a class="anchor" href="#constructs">#</a></h3>
@@ -256,9 +256,10 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
               <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code>, the platform&rsquo;s own types</td></tr>
               <tr><td>Key</td><td><code class="inline-code">on-keydown="enter: #f.send()"</code></td><td>Filter <em>which</em> events reach the phrase</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
-              <tr><td>Debounce</td><td><code class="inline-code">#echo.set(this.value).debounce(300)</code></td><td>Trails the phrase, applies to all of it</td></tr>
-              <tr><td>Throttle</td><td><code class="inline-code">#viewport.zoom(this).throttle(16)</code></td><td>Leading-edge throttle, per element</td></tr>
-              <tr><td>Once</td><td><code class="inline-code">#tour.show().once()</code></td><td>Fire once, spent on chain <em>completion</em></td></tr>
+              <tr><td>Debounce</td><td><code class="inline-code">#echo.debounce(300).set(this.value)</code></td><td>Defers this receiver&rsquo;s chain by 300ms; must sit right after the ref</td></tr>
+              <tr><td>Throttle</td><td><code class="inline-code">#viewport.throttle(16).zoom(this)</code></td><td>Leading-edge throttle of this receiver&rsquo;s chain; per element</td></tr>
+              <tr><td>Once</td><td><code class="inline-code">#tour.once().show()</code></td><td>Gates the rest of the chain; spent when the walk passes it</td></tr>
+              <tr><td>Delay</td><td><code class="inline-code">#note.delay(500).reset()</code></td><td>Pauses the chain where it sits; downstream links — even past <code class="inline-code">&amp;&amp;</code> — wait</td></tr>
               <tr><td>Selector</td><td><code class="inline-code">modifiable-formula="sum('#list .amount')"</code></td><td>Selectors appear only inside string arguments</td></tr>
             </tbody>
           </table>
@@ -277,9 +278,9 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
           <li><strong>Receivers are <code class="inline-code">#id</code> or <code class="inline-code">this</code>.</strong> Ids may not contain <code class="inline-code">.</code>. Class or attribute selectors are never receivers.</li>
           <li><strong>One receiver per unit.</strong> A <code class="inline-code">.</code> chain stays on one receiver; <code class="inline-code">&amp;&amp;</code>/<code class="inline-code">||</code> units may each name a different one. There is no group form: <code class="inline-code">#a.hide(); #b.hide()</code> is still two phrases.</li>
           <li><strong>Keys are legal only under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code>, one per phrase.</strong> Two keys is two phrases: <code class="inline-code">enter: #f.send(); numpadenter: #f.send()</code>. Names match <code class="inline-code">KeyboardEvent.key</code> case-insensitively; <code class="inline-code">space</code> means <code class="inline-code">" "</code>.</li>
-          <li><strong>Modifiers trail and apply to the whole phrase.</strong> Order is normalized to: key filter &rarr; throttle/debounce &rarr; chain &rarr; once.</li>
+          <li><strong>A modifier is a step in a receiver&rsquo;s chain and governs the rest of that chain from where it sits.</strong> <code class="inline-code">#a.once().x().y()</code> runs both once ever; <code class="inline-code">#a.x().once().y()</code> runs <code class="inline-code">x</code> every time and <code class="inline-code">y</code> once. It never crosses <code class="inline-code">&amp;&amp;</code>: each receiver carries its own modifiers, so <code class="inline-code">#a.once().x() &amp;&amp; #b.y()</code> runs <code class="inline-code">#b.y()</code> every time the first half runs. <code class="inline-code">debounce</code>/<code class="inline-code">throttle</code> are legal only right after the ref (a timer mid-chain is a parse error); <code class="inline-code">once</code> and <code class="inline-code">delay</code> may sit anywhere. Modifiers stack and repeat freely — the parser has no duplicate check.</li>
           <li><strong><code class="inline-code">;</code> is independent, <code class="inline-code">.</code> is sequential and abortable, <code class="inline-code">&amp;&amp;</code>/<code class="inline-code">||</code> continue across receivers.</strong> A <code class="inline-code">.</code> chain stops if a verb&rsquo;s event is <code class="inline-code">preventDefault()</code>-ed, if the verb threw, or if no implementation owns the verb. <code class="inline-code">&amp;&amp;</code> runs the next unit only if the previous one completed; <code class="inline-code">||</code> runs it only if the previous one was stopped by a guard&rsquo;s <code class="inline-code">preventDefault()</code>. An error or unowned verb stops both &mdash; <code class="inline-code">||</code> fires only on a guard abort. One phrase is all <code class="inline-code">&amp;&amp;</code> or all <code class="inline-code">||</code>; mixing is a parse error.</li>
-          <li><strong><code class="inline-code">once()</code> is spent on completion, not on start</strong> — a chain stopped by a guard, an error or an unowned verb leaves the phrase live, and so does a guard-aborted phrase whose <code class="inline-code">||</code> fallback ran. Chains are synchronous, so &ldquo;completion&rdquo; is unambiguous.</li>
+          <li><strong><code class="inline-code">once()</code> spends on passing through, not on completion.</strong> The gate is about entry: the moment the walk reaches the <code class="inline-code">once</code> it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.</li>
           <li><strong>References are late-bound.</strong> <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads resolve at fire time (after any debounce), never at parse time.</li>
           <li><strong>One argument per verb.</strong> A string signature takes one scalar (<code class="inline-code">set(5)</code>); a record signature takes one object literal (<code class="inline-code">setAttr({name: 'aria-expanded', value: 'true'})</code>); <code class="inline-code">"undefined"</code> takes none. Two bare arguments is a grammar error.</li>
           <li><strong>Exactly three properties may be read off a ref:</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> — with the platform&rsquo;s own types, no coercion. <code class="inline-code">this.parentElement</code> and friends are not legal; relative navigation lives in implementation code.</li>
@@ -288,14 +289,14 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
         </ol>
 
         <h3 id="reserved-names">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
-        <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
+        <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
 
         <h2 id="interaction-event">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
         <p>The host wraps every verb call in its own event, dispatched at the receiver:</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-event)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -327,7 +328,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-host-trigger)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -418,7 +419,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-prevent-default)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -437,7 +438,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
          on-drop="#uploads.accept(this)"&gt;                                                &lt;!-- not derivable; dragover must be cancelled or drop never fires --&gt;
 
 &lt;canvas is="interactable-canvas" implements="prevent-default" prevent-default-events="wheel"
-        on-wheel="#viewport.zoom(this).throttle(16)"&gt;                                    &lt;!-- never derived: blocks scrolling, always stated --&gt;</code></pre>
+        on-wheel="#viewport.throttle(16).zoom(this)"&gt;                                    &lt;!-- never derived: blocks scrolling, always stated --&gt;</code></pre>
         </div>
         <p>
           With <code class="inline-code">prevent-default-events</code> omitted, <code class="inline-code">prevent-default</code> derives
@@ -476,7 +477,7 @@ modifier  := debounce(ms) | throttle(ms) | once()</code></pre>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-implementation)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -544,7 +545,7 @@ export const modifiable = defineImplementation("modifiable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-signatures)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -627,7 +628,7 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-dirtyable)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -646,7 +647,7 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-revealable)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -696,7 +697,7 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-pipeline)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -704,22 +705,24 @@ export const attributable = defineImplementation("attributable", {
           <pre class="code" id="code-docs-pipeline" data-lang="text"><code>DOM event on the trigger (passive listener bound in connectedCallback)
   → parse(attributeValue)          cached by string → Phrase[] with unresolved refs
   → runPhrases(this, phrases, ev)
-      → key filter; drop phrases whose once() is spent
-      → throttle/debounce (timer keyed by element + attribute + phrase index)
+      → key filter
       → run the units in order (one unit, or all &amp;&amp; / all ||)
-          resolve the unit's receiver (#id → getElementById, this → the source); missing → console.error, stop the phrase
-          for each link: resolve arg (scalar, or object literal field by field) → dispatch InteractionEvent
-            · host: find the implementation owning the verb → e.handled = true
-            · host: validate arg against the signature, call the verb — both inside try/catch → e.error on throw
-            · executor, after dispatch:  !e.handled → console.error "no implementation on &lt;receiver&gt; handles verb()", stop
-                                        e.error    → console.error once with receiver and verb, stop
-                                        e.defaultPrevented → stop the unit, quiet
-          &amp;&amp;: next unit only if this one completed; ||: next unit only if this one was guard-aborted
-      → once() spent when the phrase completed without any guard abort</code></pre>
+          leading debounce/throttle first (timer keyed by element + attribute + phrase + unit)
+          resolve the unit's receiver (#id → getElementById, this → the source); missing → console.error, stop
+          for each link in order, modifiers where they sit:
+              once() → spent when the walk passes it; a spent gate cuts the chain from there
+              delay(ms) → pause the chain; the remainder runs ms later
+              resolve arg → dispatch InteractionEvent
+                · host: find the implementation owning the verb → e.handled = true
+                · host: validate arg against the signature, call the verb — both inside try/catch → e.error on throw
+                · executor, after dispatch:  !e.handled → console.error "no implementation on &lt;receiver&gt; handles verb()", stop
+                                            e.error    → console.error once with receiver and verb, stop
+                                            e.defaultPrevented → stop the unit, quiet
+          &amp;&amp;: next unit only if this one completed; ||: next unit only if this one was guard-aborted</code></pre>
         </div>
         <ul>
           <li><strong>Nested triggers behave like nested <code class="inline-code">onclick</code>.</strong> A click on a button inside a <code class="inline-code">&lt;div on-click&gt;</code> fires the button&rsquo;s phrase, then bubbles and fires the div&rsquo;s. No implicit innermost-wins; suppression is explicit via <code class="inline-code">no-propagate</code> on the inner element.</li>
-          <li><strong>Timers and <code class="inline-code">once</code> state are keyed per element</strong> (in a <code class="inline-code">WeakMap</code>) and cleared on disconnect via <code class="inline-code">clearPhraseState</code>.</li>
+          <li><strong>Timers and <code class="inline-code">once</code> state are keyed per element, per receiver-chain</strong> (in a <code class="inline-code">WeakMap</code>) and cleared on disconnect via <code class="inline-code">clearPhraseState</code>.</li>
           <li><strong>Imperative path:</strong> <code class="inline-code">runPhrases(el, "#pop.show()", someEvent)</code> is the one entry point, and its first argument is what <code class="inline-code">this</code> means — the trigger listener and every implementation&rsquo;s continuation phrase call the same function.</li>
         </ul>
 
@@ -732,7 +735,7 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-native-defaults)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -749,12 +752,12 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-async)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-async" data-lang="html"><code>&lt;input is="interactable-input" id="q" on-input="#results.send().debounce(300)"&gt;
+          <pre class="code" id="code-docs-async" data-lang="html"><code>&lt;input is="interactable-input" id="q" on-input="#results.debounce(300).send()"&gt;
 
 &lt;ul is="interactable-ul" id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
@@ -771,7 +774,7 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">#results.send().highlight()</code> — a link after the response</td><td>The chain would have to await, and every question about what happens while it waits needs an executor answer</td><td><code class="inline-code">requestable-after="this.highlight()"</code></td></tr>
               <tr><td>A verb returning a promise</td><td>The host ignores the value and warns; the chain has already moved on</td><td>Start the work in the verb; consume it in the closure; continue via a config phrase</td></tr>
               <tr><td>A guard that asks the server</td><td>A guard is a synchronous yes/no; a round trip is a request</td><td><code class="inline-code">send()</code> with the check server-side, and <code class="inline-code">requestable-error</code> for the no</td></tr>
-              <tr><td><code class="inline-code">once()</code> as a double-submit guard for a request</td><td>It spends on first synchronous completion, so a failed request leaves a dead trigger</td><td><code class="inline-code">requestable</code>&rsquo;s concurrency policy</td></tr>
+              <tr><td><code class="inline-code">once()</code> as a double-submit guard for a request</td><td>It spends when the walk passes it, before the request returns, so a failed request leaves a dead trigger</td><td><code class="inline-code">requestable</code>&rsquo;s concurrency policy</td></tr>
               <tr><td>An interaction queued until an implementation arrives</td><td>A queued interaction is a chain that waits; the host would answer after <code class="inline-code">dispatchEvent</code> returned, to nobody</td><td>Implementations attach synchronously; a late registration re-runs the attach pass</td></tr>
             </tbody>
           </table>
@@ -786,7 +789,7 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-full-calc)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -819,7 +822,7 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-full-order)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -876,7 +879,7 @@ export const attributable = defineImplementation("attributable", {
           <li><strong>One argument per verb:</strong> a scalar or one object literal. Positional lists were rejected because schema order is invisible in HTML — inserting an argument in the middle would silently re-bind every call site. A signature change is a loud parse error instead.</li>
           <li><strong><code class="inline-code">;</code> independent, <code class="inline-code">.</code> sequential and abortable:</strong> two separators, two meanings, which is what justifies keeping both.</li>
           <li><strong><code class="inline-code">&amp;&amp;</code> / <code class="inline-code">||</code> continue across receivers, and <code class="inline-code">||</code> is guard-only.</strong> A guard&rsquo;s <code class="inline-code">preventDefault()</code> is the one stop the phrase can observe synchronously, so it is the only stop <code class="inline-code">||</code> reacts to; errors and unowned verbs are bugs and stay loud. <code class="inline-code">&amp;&amp;</code> is the success branch. They exist because validation failure was otherwise a dead end — sibling <code class="inline-code">;</code> phrases run regardless and no verb can observe another&rsquo;s abort. One operator per phrase keeps precedence and associativity out of the grammar.</li>
-          <li><strong><code class="inline-code">once()</code> spent on completion</strong> so <code class="inline-code">validate().send().once()</code> means &ldquo;send once, after validation passes&rdquo;, not &ldquo;after the first attempt&rdquo;.</li>
+          <li><strong><code class="inline-code">once()</code> spends on passing through</strong> so <code class="inline-code">#a.once().x().y()</code> means &ldquo;x and y run once ever, together&rdquo;; the gate is about entry, and an abort or pause after it never refunds it.</li>
           <li><strong>No class or selector receivers.</strong> Classes are global; scoping is a selector language; a selector language is jQuery. Containers + scoped selector <em>arguments</em> cover the dynamic-set case with a 1:1 receiver graph.</li>
           <li><strong>Triggers are hosts, not delegated.</strong> One place decides anything about an element. Cost: <code class="inline-code">is=</code> on every trigger (or the auto-loader), and the Safari polyfill covers more elements.</li>
           <li><strong><code class="inline-code">this</code> for the trigger:</strong> the word inline handlers have bound to the element for thirty years.</li>
@@ -900,7 +903,7 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-reference-grammar)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -908,14 +911,14 @@ export const attributable = defineImplementation("attributable", {
           <pre class="code" id="code-docs-reference-grammar" data-lang="text"><code>attribute := 'on-' event-type
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
-unit      := ref ('.' call)+ ('.' modifier)*
+unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
 arg       := number | "'" string "'" | 'true' | 'false' | ref | read
 read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
-modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()'</code></pre>
+modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'</code></pre>
         </div>
         <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">this</code> is a keyword; an element with <code class="inline-code">id="this"</code> is addressed as <code class="inline-code">#this</code>. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
         <h3>Signature language</h3>

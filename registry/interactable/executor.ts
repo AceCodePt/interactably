@@ -59,35 +59,22 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
 
   const key = `${value}\u0000${index}`;
   const state = stateOf(source);
-  if (state.spentOnce.has(key)) return;
+  clearPending(state, key, phrase.units.length);
 
-  const units: Unit[] = [{ ref: phrase.ref, calls: phrase.calls }, ...(phrase.rest ?? [])];
-
-  const execute = (): void => {
-    const pending = state.timers.get(pauseTimerKey(key));
-    if (pending !== undefined) {
-      clearTimeout(pending);
-      state.timers.delete(pauseTimerKey(key));
-    }
-    const walkState: WalkState = { source, phrase, units, ev, key, unitIndex: 0, callIndex: 0, aborted: false };
-    try {
-      spendOnce(state, phrase, key, walk(walkState));
-    } catch (err) {
-      console.error("[Interactable]", err);
-    }
+  const walkState: WalkState = {
+    source,
+    phrase,
+    units: phrase.units,
+    ev,
+    key,
+    unitIndex: 0,
+    callIndex: 0,
+    modIndex: 0,
   };
-
-  const timing = phrase.modifiers.find(
-    (m): m is Modifier & { kind: "debounce" | "throttle" } => m.kind === "debounce" || m.kind === "throttle",
-  );
-  if (timing === undefined) {
-    execute();
-    return;
-  }
-  if (timing.kind === "debounce") {
-    scheduleDebounce(source, key, timing.ms, execute);
-  } else {
-    scheduleThrottle(source, key, timing.ms, execute);
+  try {
+    walk(walkState);
+  } catch (err) {
+    console.error("[Interactable]", err);
   }
 }
 
@@ -95,7 +82,6 @@ type Outcome = "completed" | "guard" | "failed" | "paused";
 
 interface ChainResult {
   outcome: Outcome;
-  aborted: boolean;
 }
 
 interface WalkState {
@@ -106,7 +92,7 @@ interface WalkState {
   key: string;
   unitIndex: number;
   callIndex: number;
-  aborted: boolean;
+  modIndex: number;
 }
 
 function walk(state: WalkState): ChainResult {
@@ -117,36 +103,52 @@ function walk(state: WalkState): ChainResult {
     if (result.outcome === "paused") return result;
     if (operator === undefined) return result;
     if (operator === "&&") {
-      if (result.outcome === "guard") {
-        state.aborted = true;
-        return result;
-      }
+      if (result.outcome === "guard") return result;
       if (result.outcome !== "completed") return result;
       state.unitIndex += 1;
       state.callIndex = 0;
+      state.modIndex = 0;
       continue;
     }
-    if (result.outcome === "completed") return { outcome: "completed", aborted: state.aborted };
+    if (result.outcome === "completed") return { outcome: "completed" };
     if (result.outcome === "guard") {
-      state.aborted = true;
       state.unitIndex += 1;
       state.callIndex = 0;
+      state.modIndex = 0;
       continue;
     }
-    return { outcome: "failed", aborted: state.aborted };
+    return { outcome: "failed" };
   }
-  return operator === "||" ? { outcome: "guard", aborted: true } : { outcome: "completed", aborted: state.aborted };
+  return operator === "||" ? { outcome: "guard" } : { outcome: "completed" };
 }
 
 function walkUnit(state: WalkState, unit: Unit): ChainResult {
   const source = state.source;
+  while (
+    state.modIndex < unit.modifiers.length &&
+    unit.modifiers[state.modIndex]!.position === 0 &&
+    (unit.modifiers[state.modIndex]!.kind === "debounce" || unit.modifiers[state.modIndex]!.kind === "throttle")
+  ) {
+    const modifier = unit.modifiers[state.modIndex]!;
+    state.modIndex += 1;
+    const outcome = applyModifier(state, modifier);
+    if (outcome !== undefined) return { outcome };
+  }
+
   const receiver = resolveRef(unit.ref, source);
   if (receiver === null) {
     logOnce(source, `receiver ${describeRef(unit.ref)} not found; phrase skipped`);
-    return { outcome: "failed", aborted: false };
+    return { outcome: "failed" };
   }
 
-  while (state.callIndex < unit.calls.length) {
+  while (true) {
+    while (state.modIndex < unit.modifiers.length && unit.modifiers[state.modIndex]!.position <= state.callIndex) {
+      const modifier = unit.modifiers[state.modIndex]!;
+      state.modIndex += 1;
+      const outcome = applyModifier(state, modifier);
+      if (outcome !== undefined) return { outcome };
+    }
+    if (state.callIndex >= unit.calls.length) break;
     const call = unit.calls[state.callIndex]!;
     state.callIndex += 1;
     let arg: unknown;
@@ -154,7 +156,7 @@ function walkUnit(state: WalkState, unit: Unit): ChainResult {
       arg = resolveArg(call.arg, source);
     } catch (err) {
       logOnce(source, `argument for ${call.verb}(): ${(err as Error).message}; phrase skipped`);
-      return { outcome: "failed", aborted: false };
+      return { outcome: "failed" };
     }
 
     const event = new InteractionEvent({ verb: call.verb, arg, source, originalEvent: state.ev });
@@ -162,19 +164,65 @@ function walkUnit(state: WalkState, unit: Unit): ChainResult {
 
     if (!event.handled) {
       logOnce(source, `no implementation on ${describeElement(receiver)} handles ${call.verb}()`);
-      return { outcome: "failed", aborted: false };
+      return { outcome: "failed" };
     }
     if (event.error !== undefined) {
       logOnce(source, `${call.verb}() on ${describeElement(receiver)} threw: ${describeError(event.error)}`);
-      return { outcome: "failed", aborted: false };
+      return { outcome: "failed" };
     }
     if (event.pauseMs !== undefined) {
       scheduleResume(state, event.pauseMs);
-      return { outcome: "paused", aborted: false };
+      return { outcome: "paused" };
     }
-    if (event.defaultPrevented) return { outcome: "guard", aborted: true };
+    if (event.defaultPrevented) return { outcome: "guard" };
   }
-  return { outcome: "completed", aborted: false };
+  return { outcome: "completed" };
+}
+
+function applyModifier(state: WalkState, modifier: Modifier): Outcome | undefined {
+  const chainKey = chainKeyOf(state.key, state.unitIndex);
+  const elState = stateOf(state.source);
+  switch (modifier.kind) {
+    case "once": {
+      if (elState.spentOnce.has(chainKey)) return "guard";
+      elState.spentOnce.add(chainKey);
+      return undefined;
+    }
+    case "delay":
+      scheduleResume(state, modifier.ms);
+      return "paused";
+    case "debounce":
+      scheduleDebounce(state, chainKey, modifier.ms);
+      return "paused";
+    case "throttle": {
+      const last = elState.throttles.get(chainKey) ?? 0;
+      const now = Date.now();
+      if (now - last < modifier.ms) return "guard";
+      elState.throttles.set(chainKey, now);
+      return undefined;
+    }
+  }
+}
+
+function chainKeyOf(key: string, unitIndex: number): string {
+  return `${key}\u0000${unitIndex}`;
+}
+
+function clearPending(state: ElementPhraseState, key: string, unitCount: number): void {
+  const pauseKey = pauseTimerKey(key);
+  const pending = state.timers.get(pauseKey);
+  if (pending !== undefined) {
+    clearTimeout(pending);
+    state.timers.delete(pauseKey);
+  }
+  for (let unitIndex = 0; unitIndex < unitCount; unitIndex++) {
+    const chainKey = chainKeyOf(key, unitIndex);
+    const timer = state.timers.get(chainKey);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      state.timers.delete(chainKey);
+    }
+  }
 }
 
 function scheduleResume(state: WalkState, ms: number): void {
@@ -185,7 +233,7 @@ function scheduleResume(state: WalkState, ms: number): void {
   const timer = setTimeout(() => {
     timers.delete(pauseKey);
     try {
-      spendOnce(stateOf(state.source), state.phrase, state.key, walk(state));
+      walk(state);
     } catch (err) {
       console.error("[Interactable]", err);
     }
@@ -193,14 +241,23 @@ function scheduleResume(state: WalkState, ms: number): void {
   timers.set(pauseKey, timer);
 }
 
-function pauseTimerKey(key: string): string {
-  return `${key}\u0000pause`;
+function scheduleDebounce(state: WalkState, chainKey: string, ms: number): void {
+  const timers = stateOf(state.source).timers;
+  const existing = timers.get(chainKey);
+  if (existing !== undefined) clearTimeout(existing);
+  const timer = setTimeout(() => {
+    timers.delete(chainKey);
+    try {
+      walk(state);
+    } catch (err) {
+      console.error("[Interactable]", err);
+    }
+  }, ms);
+  timers.set(chainKey, timer);
 }
 
-function spendOnce(state: ElementPhraseState, phrase: Phrase, key: string, result: ChainResult): void {
-  if (result.outcome === "completed" && !result.aborted && phrase.modifiers.some((m) => m.kind === "once")) {
-    state.spentOnce.add(key);
-  }
+function pauseTimerKey(key: string): string {
+  return `${key}\u0000pause`;
 }
 
 function resolveRef(ref: Ref, source: Element): Element | null {
@@ -237,37 +294,6 @@ function resolveArg(arg: Arg | undefined, source: Element): unknown {
       for (const field of arg.fields) out[field.name] = resolveArg(field.value, source);
       return out;
     }
-  }
-}
-
-function scheduleDebounce(
-  source: Element,
-  key: string,
-  ms: number,
-  fn: () => void,
-): void {
-  const state = stateOf(source);
-  const existing = state.timers.get(key);
-  if (existing !== undefined) clearTimeout(existing);
-  const timer = setTimeout(() => {
-    state.timers.delete(key);
-    fn();
-  }, ms);
-  state.timers.set(key, timer);
-}
-
-function scheduleThrottle(
-  source: Element,
-  key: string,
-  ms: number,
-  fn: () => void,
-): void {
-  const state = stateOf(source);
-  const last = state.throttles.get(key) ?? 0;
-  const now = Date.now();
-  if (now - last >= ms) {
-    state.throttles.set(key, now);
-    fn();
   }
 }
 

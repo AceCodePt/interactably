@@ -58,7 +58,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                         on-click="this.copy(#code-quickstart-auto)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -78,7 +78,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
                         on-click="this.copy(#code-quickstart-is)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -162,7 +162,7 @@
           <span class="why-n">3</span>
           <div>
             <span class="why-q">Why should debounce, throttle or &ldquo;only once&rdquo; mean reaching for an event library?</span>
-            <span class="why-a">They&rsquo;re just phrase modifiers: <code class="inline-code">#echo.set(this.value).debounce(300)</code>, <code class="inline-code">#tour.show().once()</code>. No imports, no options objects.</span>
+            <span class="why-a">They&rsquo;re just phrase modifiers: <code class="inline-code">#echo.debounce(300).set(this.value)</code>, <code class="inline-code">#tour.once().show()</code>. No imports, no options objects.</span>
           </div>
         </li>
         <li>
