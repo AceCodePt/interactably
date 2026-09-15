@@ -26,6 +26,7 @@ const KNOWN_BUNDLES = new Set([
   "prevent-default",
   "requestable",
   "revealable",
+  "spyable",
   "storable",
   "validatable",
 ]);

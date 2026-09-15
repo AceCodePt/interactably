@@ -39,7 +39,7 @@
     <div class="layout">
       <aside class="sidebar">
         <h2>Contents</h2>
-        <nav aria-label="Documentation sections">
+        <nav aria-label="Documentation sections" implements="spyable" spyable-offset="96">
           <a href="#quick-start">Quick start</a>
           <a href="#trigger-grammar">The trigger grammar</a>
           <a href="#grammar" class="sub">Grammar</a>
@@ -406,6 +406,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td><code class="inline-code">paste-transform</code></td><td>input, textarea</td><td>&mdash;</td><td><code class="inline-code">patterns</code>, <code class="inline-code">replaces</code></td><td>rewrite pasted text with regexes</td></tr>
               <tr><td><code class="inline-code">copyable</code></td><td>button</td><td><code class="inline-code">copy</code></td><td><code class="inline-code">copied</code> (state)</td><td>copies a target element&rsquo;s text to the clipboard; the button shows <code class="inline-code">data-copied</code> on success</td></tr>
               <tr><td><code class="inline-code">json-template</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">for</code>, <code class="inline-code">slice</code></td><td>render a JSON data source through a child <code class="inline-code">&lt;template&gt;</code></td></tr>
+              <tr><td><code class="inline-code">spyable</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">offset</code></td><td>marks the anchor of the section in view with <code class="inline-code">data-active</code> and <code class="inline-code">aria-current="location"</code></td></tr>
             </tbody>
           </table>
         </div>
@@ -865,7 +866,7 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
               <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">value</code> &rarr; <code class="inline-code">data-value</code> &rarr; textContent) and write helpers</td></tr>
               <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
-              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code></td></tr>
+              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code>, <code class="inline-code">spyable</code></td></tr>
             </tbody>
           </table>
         </div>

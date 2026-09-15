@@ -268,6 +268,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
 | `copyable` | button | `copy` | `copied` state; `after`, `error` config | copies a target element's text to the clipboard; sets `data-copied` and runs a continuation phrase on success or failure |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
+| `spyable` | any | — | `offset` | watches scroll and marks the anchor of the section in view (`data-active`, `aria-current="location"`) |
 
 ### The pause mechanism
 
