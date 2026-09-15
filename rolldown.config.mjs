@@ -12,6 +12,7 @@ const implementations = [
   "auto-grow",
   "copyable",
   "dirtyable",
+  "hashable",
   "json-template",
   "listable",
   "logger",

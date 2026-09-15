@@ -271,6 +271,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `copyable` | button | `copy` | `copied` state; `after`, `error` config | copies a target element's text to the clipboard; sets `data-copied` and runs a continuation phrase on success or failure |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
 | `spyable` | any | — | `offset` | watches scroll and marks the anchor of the section in view (`data-active`, `aria-current="location"`) |
+| `hashable` | any | `hash` | — | writes `#<id>` into the location hash with `replaceState` (no history entry); no-op when already set, warns once without an id |
 
 ### The pause mechanism
 
@@ -323,6 +324,10 @@ A keyed `on-keydown` phrase that *replaces* a browser default should always carr
 | anything else | fallback | `data-open` | `data-open` |
 
 Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling come with the first three for free; the fourth row is the only one that invents anything. `show`/`hide`/`toggle` also keep the panel's accessibility wiring current: every element whose `aria-controls` names the panel gets `aria-expanded` set to the panel's state, and a trigger that declares none gets `aria-controls` added. Tab pairs where each button controls its own panel therefore stay correct — hiding one panel collapses the button that controls it, whoever fired the verb.
+
+### Hashable
+
+`hashable` writes `#<id>` into the location hash — a record of where you are, not a command. `hash()` uses `history.replaceState`, so scrolling does not grow history; `replaceState` fires no `hashchange`, and nothing reads the hash back — that is `:target` and the browser's own navigation. An element without an `id` warns once and does nothing.
 
 ---
 
@@ -757,7 +762,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`value` → `data-value` → textContent) and write helpers |
 | `NotReadyError` | Error set on `e.error` when a verb reaches a host that has never connected |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `spyable`, `hashable` |
 
 ---
 
@@ -862,19 +867,3 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 **Why not a general `<name>-after` convention for every implementation?** The word is shared, the event is not: a request failing and an upload failing call for different follow-ups. Each implementation names the moments it exposes; only `runPhrases` is shared.
 
 **Why not queue an interaction until the lazily loaded implementation arrives?** A queue is a waiting chain, and the host would answer the event after `dispatchEvent` returned, when the executor had already read the channels. With implementations imported before the markup, the case never occurs.
-
----
-
-## The `$` baseline
-
-The DSL has a concrete opponent, kept for reference:
-
-```js
-const $ = (sel) => {
-  const el = document.querySelector(sel);
-  return new Proxy(el, { get: (t, k) => verbOf(t, k) ?? t[k] });
-};
-// <button onclick="$('#pop').show()">
-```
-
-For a single consumer, that shim is a legitimate alternative. The DSL earns its parser on four things: key/timing modifiers without branching in handlers; a receiver that can intercept and abort; static tooling (verb completion per receiver, missing-id and unknown-verb errors before the page loads); and CSP compatibility.
