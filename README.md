@@ -11,6 +11,8 @@ You write plain HTML. `is="interactable-<tag>"` turns an element into a **host**
 
 Clicking the button sends the verb `show()` to `#modal`, which implements `revealable`. No page JavaScript.
 
+> **Full documentation:** [acecodept.github.io/interactably](https://acecodept.github.io/interactably/) — the extensive guide, [live examples](https://acecodept.github.io/interactably/examples.html) and the [API reference](https://acecodept.github.io/interactably/reference.html).
+
 - **Triggers** carry `on-<event>` attributes whose value is a tiny DSL: `#id.verb(arg)`.
 - **Receivers** `implements` named capabilities (`revealable`, `modifiable`, `listable`, …).
 - **Every participating element is a host.** The host binds trigger listeners, instantiates implementations, and routes interactions between them.
