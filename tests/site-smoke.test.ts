@@ -47,8 +47,9 @@ function vendorRefs(...sources: string[]): string[] {
 
 function bareSpecifiers(source: string): string[] {
   const found: string[] = [];
-  for (const match of source.matchAll(/(?:from\s+|import\s*\()\s*["']([^"']+)["']/g)) {
-    const spec = match[1];
+  const pattern = /\b(?:import|export)\b[^\n]*?\bfrom\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']/g;
+  for (const match of source.matchAll(pattern)) {
+    const spec = match[1] ?? match[2];
     if (spec !== undefined && !spec.startsWith(".") && !spec.startsWith("/")) found.push(spec);
   }
   return found;
