@@ -431,7 +431,7 @@ code, pre, kbd {
 
 .code.shiki,
 .code.shiki span {
-  font-family: inherit;
+  font-family: var(--mono);
 }
 
 @media (prefers-color-scheme: dark) {
