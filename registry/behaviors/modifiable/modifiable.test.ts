@@ -88,6 +88,38 @@ test("inc and dec step by 1 by default and accept an explicit amount", async () 
   assert.equal(input.value, "11");
 });
 
+test("inc and dec accept a numeric string from a text input", async () => {
+  const input = hostElement("input", { implements: "modifiable", value: "5" }) as HTMLInputElement;
+  document.body.appendChild(input);
+  await flush();
+
+  interact(input, "inc", "5");
+  assert.equal(input.value, "10");
+  interact(input, "dec", "3");
+  assert.equal(input.value, "7");
+});
+
+test("a numeric verb that cannot read its string reports the verb and the raw input", async () => {
+  const input = hostElement("input", { implements: "modifiable", value: "5" }) as HTMLInputElement;
+  document.body.appendChild(input);
+  await flush();
+
+  const event = interact(input, "inc", "banana");
+  assert.match(String(event.error), /inc\(\) could not read a number from "banana"/);
+  assert.equal(input.value, "5");
+});
+
+test("set accepts both a string and a number", async () => {
+  const input = hostElement("input", { implements: "modifiable" }) as HTMLInputElement;
+  document.body.appendChild(input);
+  await flush();
+
+  interact(input, "set", "42");
+  assert.equal(input.value, "42");
+  interact(input, "set", 7);
+  assert.equal(input.value, "7");
+});
+
 test("modifiable-step config is the default step", async () => {
   const input = hostElement("input", { implements: "modifiable", "modifiable-step": "3", value: "0" }) as HTMLInputElement;
   document.body.appendChild(input);

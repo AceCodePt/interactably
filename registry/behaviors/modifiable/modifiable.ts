@@ -1,5 +1,5 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { valueOf } from "@behaviors/implementation-utils.ts";
+import { toNumber, valueOf } from "@behaviors/implementation-utils.ts";
 import { evaluateFormula } from "@utils/formula.ts";
 
 export const modifiable = defineImplementation(
@@ -12,9 +12,9 @@ export const modifiable = defineImplementation(
       "invalid-value": "string | undefined",
     },
     verbs: {
-      set: "string",
-      inc: "number | undefined",
-      dec: "number | undefined",
+      set: "string | number",
+      inc: "string | number | undefined",
+      dec: "string | number | undefined",
       clear: "undefined",
       reset: "undefined",
       compute: "undefined",
@@ -58,10 +58,17 @@ export const modifiable = defineImplementation(
       el instanceof HTMLInputElement && el[k] !== "" ? Number(el[k]) : undefined;
     const clamp = (n: number): number =>
       Math.min(bound("max") ?? Infinity, Math.max(bound("min") ?? -Infinity, n));
+    const numberArg = (verb: string, value: string | number): number => {
+      const parsed = toNumber(value);
+      if (Number.isNaN(parsed)) {
+        throw new Error(`${verb}() could not read a number from "${String(value)}"`);
+      }
+      return parsed;
+    };
     return {
       set: (_e, v) => write(v),
-      inc: (_e, n = attrs.step ?? 1) => write(clamp(valueOf(el) + n)),
-      dec: (_e, n = attrs.step ?? 1) => write(clamp(valueOf(el) - n)),
+      inc: (_e, n = attrs.step ?? 1) => write(clamp(valueOf(el) + numberArg("inc", n))),
+      dec: (_e, n = attrs.step ?? 1) => write(clamp(valueOf(el) - numberArg("dec", n))),
       clear: () => write(""),
       reset: () => write(el.getAttribute("value") ?? ""),
       compute: () => compute(),

@@ -14,19 +14,23 @@ export class NotReadyError extends Error {
   }
 }
 
+export function toNumber(value: string | number): number {
+  return typeof value === "number" ? value : Number(value);
+}
+
 export function valueOf(el: Element): number {
   const value = (el as unknown as { value?: unknown }).value;
   if (typeof value === "number") return value;
   if (typeof value === "string" && value !== "") {
-    const parsed = Number(value);
+    const parsed = toNumber(value);
     if (!Number.isNaN(parsed)) return parsed;
   }
   const data = (el as unknown as { dataset?: { value?: string } }).dataset?.value;
   if (data !== undefined && data !== "") {
-    const parsed = Number(data);
+    const parsed = toNumber(data);
     if (!Number.isNaN(parsed)) return parsed;
   }
-  const parsed = Number((el.textContent ?? "").trim());
+  const parsed = toNumber((el.textContent ?? "").trim());
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 

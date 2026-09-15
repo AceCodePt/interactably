@@ -252,7 +252,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 
 | Implementation | Tags | Verbs | Config / state | What it does |
 | --- | --- | --- | --- | --- |
-| `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute`, `is` | `step`, `formula`, `invalid-value` | typed writes with clamping; evaluates a formula on `compute()` and on connect; `is({op, value})` is a guard verb that compares the element's value |
+| `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute`, `is` | `step`, `formula`, `invalid-value` | typed writes with clamping; `set` takes a string or a number and `inc`/`dec` accept a number or a numeric string, throwing a named error when it cannot be read; evaluates a formula on `compute()` and on connect; `is({op, value})` is a guard verb that compares the element's value |
 | `dirtyable` | input, textarea, select, output | `markClean` | — | toggles `.is-dirty` while `el.value` differs from the connect-time baseline |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
 | `requestable` | any | `send`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency`, `after`, `error` + `status` state | fetch, swap the response into the DOM, run continuation phrases ([§ Asynchrony](#asynchrony)) |
@@ -335,9 +335,9 @@ export const modifiable = defineImplementation("modifiable", {
   config: { step: "number | undefined" },                // authored: modifiable-step, read-only
   // no min/max here: <input> already has them as el.min / el.max
   verbs: {
-    set:   "string",
-    inc:   "number | undefined",
-    dec:   "number | undefined",
+    set:   "string | number",
+    inc:   "string | number | undefined",
+    dec:   "string | number | undefined",
     clear: "undefined",
     reset: "undefined",
   },
@@ -537,7 +537,7 @@ DOM event on the trigger (passive listener bound in connectedCallback)
 
 `parse` caches by attribute string; the cached value is an AST in which `#id`, `this` and reads are **tokens**, not elements or values. Resolution happens per fire, inside `runPhrases`; two identical rows share one parse and resolve to two different elements. `this` is resolved as `token === "this" ? source : document.getElementById(id)` — never rewritten into the attribute, never stamped into an id, never consulted from `event.currentTarget`.
 
-**Argument validation is the receiver's job, not the parser's.** The parser knows every literal's kind from syntax (bare `5` is a number, `'5'` is a string, `#id` / `this` are elements). Scalars go through `parseValueAgainstDSL` against the slot's tsyntax string; resolved elements go through `instanceof` against the slot's constructor. The only runtime-typed values are reads, and they carry the platform's type: `this.value` is a string, `#qty.valueAsNumber` is a number, `#agree.checked` is a boolean. There is no coercion — `#total.add(this.value)` with `add: "number"` fails and the message says so: `add() wants number, got string from this.value; on <input type="number"> read this.valueAsNumber`.
+**Argument validation is the receiver's job, not the parser's.** The parser knows every literal's kind from syntax (bare `5` is a number, `'5'` is a string, `#id` / `this` are elements). Scalars go through `parseValueAgainstDSL` against the slot's tsyntax string; resolved elements go through `instanceof` against the slot's constructor. The only runtime-typed values are reads, and they carry the platform's type: `this.value` is a string, `#qty.valueAsNumber` is a number, `#agree.checked` is a boolean. The system never coerces a read; a verb that wants both types widens its own signature — `modifiable`'s numeric verbs are declared `"string | number | undefined"` and parse the string themselves, throwing a named error when they cannot: `inc() could not read a number from "banana"`.
 
 ### Native default actions and propagation
 
@@ -642,7 +642,7 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
 
 Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the buttons address it); the six buttons are trigger-only; `#preview`, `#list` and `#total` are receivers; the `<li>` is a plain element — the row is reached through `#list.removeRow(this)`, so it needs no implementation, no host and no id, and cloning it from `#row-tpl` produces nothing that has to be unique.
 
-**`+5` trace.** The button's host bound `click` in `connectedCallback` → `parse("#qty.inc(5)")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → host validates `5` against `"number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → synthetic `input` → `dirtyable.onInput` toggles `is-dirty` → the same `input` reaches `#qty`'s own `on-input` listener → `#preview.set(this.value)`.
+**`+5` trace.** The button's host bound `click` in `connectedCallback` → `parse("#qty.inc(5)")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → host validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → synthetic `input` → `dirtyable.onInput` toggles `is-dirty` → the same `input` reaches `#qty`'s own `on-input` listener → `#preview.set(this.value)`.
 
 **`×` trace.** Phrase 1 resolves `#list`, arg `this` is the button → `removeRow(e, button)` finds the row via `closest(":scope > *")` → phrase 2 (independent) resolves `#total` → `compute()` re-evaluates `sum('#list .amount')` over the remaining inputs.
 
