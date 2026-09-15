@@ -104,7 +104,9 @@ export function defineInteractableHost(tag: Tag): void {
           event.error = new NotReadyError(this.getAttribute("implements"), event.verb);
           return;
         }
-        for (const [name, implementation] of this._implementations) {
+        for (const name of (this.getAttribute("implements") ?? "").split(/\s+/)) {
+          const implementation = this._implementations.get(name);
+          if (implementation === undefined) continue;
           const def = getImplementationDef(name);
           const signature = def?.verbs[event.verb];
           if (signature === undefined) continue;

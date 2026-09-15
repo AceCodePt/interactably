@@ -229,6 +229,24 @@ test("implements order decides shared verbs", async () => {
   assert.deepEqual(calls, ["beta.shared"]);
 });
 
+test("implements order decides shared verbs when an earlier name registers after attach", () => {
+  const receiver = hostElement("div", { id: "route3", implements: "late-shared beta" });
+  document.body.appendChild(receiver);
+
+  defineImplementation(
+    "late-shared",
+    { tags: ["div"], verbs: { shared: "undefined" } },
+    () => ({
+      shared: () => {
+        calls.push("late-shared.shared");
+      },
+    }),
+  );
+
+  dispatchInteraction(receiver, "shared");
+  assert.deepEqual(calls, ["late-shared.shared"]);
+});
+
 test("a verb no implementation owns leaves handled false for the executor to report", async (t) => {
   const error = t.mock.method(console, "error");
   const trigger = hostElement("button", { "on-click": "#recv4.nope()" });
