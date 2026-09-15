@@ -28,8 +28,8 @@ const FORM_OPEN = `<form is="interactable-form" id="order" novalidate
 
 const HAPPY = `${FORM_OPEN}
       requestable-target="#receipt"
-      requestable-after="#receipt.show(); #alert.hide()"
-      requestable-error="#alert.show()"
+      on-response="#receipt.show(); #alert.hide()"
+      on-request-error="#alert.show()"
       on-submit="this.validate().send()">
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
@@ -39,8 +39,8 @@ const HAPPY = `${FORM_OPEN}
 
 const UNOWNED = `${FORM_OPEN}
       requestable-target="#receipt"
-      requestable-after="#receipt.show(); this.reset()"
-      requestable-error="#alert.show()"
+      on-response="#receipt.show(); this.reset()"
+      on-request-error="#alert.show()"
       on-submit="this.validate().send()">
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
@@ -50,8 +50,8 @@ const UNOWNED = `${FORM_OPEN}
 
 const OUTER = `${FORM_OPEN}
       requestable-swap="outerHTML"
-      requestable-after="#receipt.show()"
-      requestable-error="#alert.show()"
+      on-response="#receipt.show()"
+      on-request-error="#alert.show()"
       on-submit="this.validate().send()">
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
@@ -180,7 +180,7 @@ test("double submit under first-wins sends once and runs after once", async () =
   assert.equal(form().hasAttribute("aria-busy"), false);
 });
 
-test("server 500 sets status=error and runs the error continuation", async () => {
+test("server 500 sets status=error and fires on-request-error", async () => {
   mount(HAPPY);
   await flush();
   qty().value = "2";
@@ -212,7 +212,7 @@ test("an unowned continuation verb logs and stops; the earlier phrase still runs
   );
 });
 
-test("a response that replaces the form skips the continuation", async () => {
+test("a response that replaces the form skips on-response", async () => {
   mount(OUTER);
   await flush();
   qty().value = "2";

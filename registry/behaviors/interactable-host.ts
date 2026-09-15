@@ -1,6 +1,7 @@
 import { defineAutoWebComponent } from "auto-wc";
 import type { Constructor } from "auto-wc";
-import { LEGACY_EVENTS_WITHOUT_IDL } from "@interactable/events.ts";
+import { LEGACY_EVENTS_WITHOUT_IDL, isImplementationEvent } from "@interactable/events.ts";
+import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import { NotReadyError } from "@behaviors/implementation-utils.ts";
@@ -140,16 +141,19 @@ export function defineInteractableHost(tag: Tag): void {
           if (!attribute.startsWith("on-")) continue;
           const type = attribute.slice(3);
           const handler = (ev: Event): void => {
+            if (!(ev instanceof ImplementationEvent) && isImplementationEvent(this, type)) return;
             runPhrases(this, this.getAttribute(attribute) ?? "", ev);
           };
           this.addEventListener(type, handler, { passive: true });
-          if (!(("on" + type) in this) && !LEGACY_EVENTS_WITHOUT_IDL.has(type)) {
-            console.warn(
-              `[Interactable] on-${type} on ${describeElement(this)}: <${this.localName}> has no "${type}" ` +
-                `event; custom events are fine, but check the spelling and case`,
-            );
+          if (!isImplementationEvent(this, type)) {
+            if (!(("on" + type) in this) && !LEGACY_EVENTS_WITHOUT_IDL.has(type)) {
+              console.warn(
+                `[Interactable] on-${type} on ${describeElement(this)}: <${this.localName}> has no "${type}" ` +
+                  `event; custom events are fine, but check the spelling and case`,
+              );
+            }
+            warnIfNativeActionLikelyUnwanted(this, type);
           }
-          warnIfNativeActionLikelyUnwanted(this, type);
           this._interactionCleanup.push(() => this.removeEventListener(type, handler));
         }
       }

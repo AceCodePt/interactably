@@ -140,6 +140,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Construct | Example | Meaning |
 | --- | --- | --- |
 | Trigger | `on-click="#pop.show()"` | On `click`, run the phrase |
+| Implementation event | `on-copy="#flash.show()"` | On a copyable element `on-copy` is copyable's event and the native clipboard event doesn't fire it. Continuations now share trigger-attribute `once`/`debounce` semantics |
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from (the trigger for `on-*`) |
 | Chain | `#pop.show().focus()` | `.show()` then `.focus()` on the same receiver, in order |
@@ -157,7 +158,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Delay | `#note.delay(500).reset()` | Pauses the chain where it sits; downstream links — even past `&&` — wait |
 | Selector | `modifiable-formula="sum('#list .amount')"` | Selectors appear only inside string arguments |
 
-`<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions.
+`<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions. An implementation may declare its own events (`copy`, `response`, `request-error`); on the element that implements it, `on-<event>` fires only for the implementation's `ImplementationEvent`, never for a same-named DOM event.
 
 ### Rules
 
@@ -216,16 +217,21 @@ One customized built-in per tag, defined with [`auto-wc`](https://github.com/Ace
 for (const name of this.getAttributeNames()) {
   if (!name.startsWith("on-")) continue;
   const type = name.slice(3);
-  const handler = (ev: Event) => runPhrases(this, this.getAttribute(name)!, ev);   // value read at event time
+  const handler = (ev: Event) => {
+    if (!(ev instanceof ImplementationEvent) && isImplementationEvent(this, type)) return;
+    runPhrases(this, this.getAttribute(name)!, ev);   // value read at event time
+  };
   this.addEventListener(type, handler, { passive: true });                          // the DSL never cancels
-  if (!(("on" + type) in this) && !LEGACY_EVENTS_WITHOUT_IDL.has(type))
-    console.warn(`[Interactable] on-${type} on ${describe(this)}: <${this.localName}> has no "${type}" event; custom events are fine, but check the spelling and case`);
-  warnIfNativeActionLikelyUnwanted(this, type);                                     // <form on-submit>, <a href on-click> without prevent-default
+  if (!isImplementationEvent(this, type)) {                                          // declared events never warn
+    if (!(("on" + type) in this) && !LEGACY_EVENTS_WITHOUT_IDL.has(type))
+      console.warn(`[Interactable] on-${type} on ${describe(this)}: <${this.localName}> has no "${type}" event; custom events are fine, but check the spelling and case`);
+    warnIfNativeActionLikelyUnwanted(this, type);                                     // <form on-submit>, <a href on-click> without prevent-default
+  }
   this._interactionCleanup.push(() => this.removeEventListener(type, handler));
 }
 ```
 
-A trigger is live the moment it connects. `disconnectedCallback` runs the cleanup list. The `on-*` **value** is read at event time, so editing `on-click="#a.show()"` to `"#b.show()"` takes effect on the next click. Adding a brand-new `on-*` attribute after connect requires re-inserting the element.
+A trigger is live the moment it connects. `disconnectedCallback` runs the cleanup list. The `on-*` **value** is read at event time, so editing `on-click="#a.show()"` to `"#b.show()"` takes effect on the next click. Adding a brand-new `on-*` attribute after connect requires re-inserting the element. Whether a name is an implementation event is also read at event time, from the element's current `implements` — not baked in when the listener binds.
 
 **Receiver side.** Read `implements`; for each name, check the implementation's `tags` admits `this.localName`, instantiate the factory with `(this, attrs)`, wire the implementation's `on*` methods as listeners on itself, forward lifecycle callbacks, and route `onInteraction(e)` to the **first implementation in `implements` order** that declares `e.verb` — after validating `e.arg` against the verb's signature.
 
@@ -258,7 +264,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute` | `step`, `formula`, `invalid-value` | typed writes with clamping; `set` takes a string or a number and `inc`/`dec` accept a number or a numeric string, throwing a named error when it cannot be read; evaluates a formula on `compute()` and on connect |
 | `dirtyable` | input, textarea, select, output | `markClean` | — | toggles `.is-dirty` while `el.value` differs from the connect-time baseline |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
-| `requestable` | any | `send`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency`, `after`, `error` + `status` state | fetch, swap the response into the DOM, run continuation phrases ([§ Asynchrony](#asynchrony)) |
+| `requestable` | any | `send`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
 | `logger` | any | `log` | — | `console.log` from a phrase |
 | `validatable` | form, input, select, textarea | `validate` | — | guard verb: `reportValidity()`, `preventDefault()` on failure |
@@ -268,7 +274,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `auto-grow` | textarea | — | — | auto-height textarea |
 | `storable` | any | `save`, `load`, `clear` | `key`, `type` (`local`/`session`), `attr` | persist a field's value to storage |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
-| `copyable` | button | `copy` | `copied` state; `after`, `error` config | copies a target element's text to the clipboard; sets `data-copied` and runs a continuation phrase on success or failure |
+| `copyable` | button | `copy` | `copied` state; event `copy` | copies a target element's text to the clipboard; sets `data-copied` and fires `copy` on success |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
 | `spyable` | any | — | `offset` | watches scroll and marks the anchor of the section in view (`data-active`, `aria-current="location"`) |
 | `hashable` | any | `hash` | — | writes `#<id>` into the location hash with `replaceState` (no history entry); no-op when already set, warns once without an id |
@@ -370,7 +376,7 @@ export const modifiable = defineImplementation("modifiable", {
 });
 ```
 
-`defineImplementation(name, { tags?, config?, state?, verbs }, factory)`:
+`defineImplementation(name, { tags?, config?, state?, verbs, events? }, factory)`:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
@@ -379,6 +385,7 @@ export const modifiable = defineImplementation("modifiable", {
 | `config` | `Record<string, tsyntax-string>` | Authored input, read-only, stored as `<name>-<key>` (`modifiable-step`) |
 | `state` | `Record<string, tsyntax-string>` | Invented live state, read/write, stored as `data-<key>` (`data-open`) |
 | `verbs` | `Record<verb, Sig>` | Public surface. `Sig` is a tsyntax string, an element constructor, or a record of those |
+| `events` | `string[]` (optional) | Events the implementation dispatches (`copy`, `response`, `request-error`); on the element, `on-<event>` fires only for the implementation's `ImplementationEvent` |
 | `factory` | `(el, attrs) => Implementation` | Returns the verb bodies and lifecycle/`on*` handlers |
 
 ### Signatures
@@ -440,7 +447,7 @@ Built once per instance by `bindAttributes(el, name, def)`. Each getter reads th
 - **Verbs receive `(e, arg)`.** `arg` is already validated against the signature. Inputs come from `arg`; `e.source` and `e.originalEvent` are *context*, not input — metadata about the trigger (`aria-expanded` on the button that opened a dialog), not what to act on.
 - **Verbs are synchronous.** Do the work, return; the host stores the return value on `e.result`. A verb that returns a promise gets a console warning.
 - **Lifecycle:** `connectedCallback`, `disconnectedCallback`, `attributeChangedCallback(name, old, new)` may be returned from the factory alongside the verbs.
-- **Implementations never call verbs on other elements.** Work that completes later declares **its own continuation phrases** as config (`requestable-after`, `requestable-error`) and hands the string to `runPhrases(el, str, e.originalEvent)` when the moment arrives. `this` in a continuation is the element the phrase was read from — passing `el` first is what binds it.
+- **Implementations never call verbs on other elements.** Work that completes later declares **its own events** (`copyable` declares `"copy"`; `requestable` declares `"response"` and `"request-error"`) and dispatches an `ImplementationEvent` when the moment arrives; the follow-up is a plain `on-<event>` trigger attribute on that element, so `this` in the continuation is the element that did the work.
 - **Registering an implementation ensures its hosts.** The registry calls `defineInteractableHost(tag)` for every tag in `tags`; tag-less implementations ensure nothing. `defineInteractableHost` is idempotent, so two implementations sharing a tag share one host class.
 
 ---
@@ -500,7 +507,7 @@ There is no store, no signals, no cross-element watching. The DOM is the store; 
 | **Dynamic triggers** (rows cloned from a template) | Put `is="interactable-<tag>"` in the template. On Chrome and Firefox the clone upgrades synchronously on insertion; `on-click="this.remove()"` / `#list.removeRow(this)` works on every clone with no generated ids. On Safari, and when the auto-loader adds `is=` for you, the upgrade is deferred ([below](#upgrade-timing)) |
 | **Dynamic receivers** (a row's own subtotal) | Receivers stay ids or `this`. Either address a stable ancestor and let the implementation find the relative element from `e.source` (`closest("li")`), or stamp ids in the template |
 | **Dynamic data sources** (sum whatever inputs exist) | Formula with a selector: `#total implements="modifiable" modifiable-formula="sum('#list .amount')"`, recomputed by `#total.compute()`. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time |
-| **Change without interaction** (server swap, external mutation) | The implementation that performed the change runs the follow-up via its own continuation phrase (`requestable-after="#count.compute()"`), a new synchronous chain with `this` bound to that element |
+| **Change without interaction** (server swap, external mutation) | The implementation that performed the change fires its own event (`on-response="#count.compute()"`), a new synchronous chain with `this` bound to that element |
 
 <a name="upgrade-timing"></a>**Upgrade timing is not uniform.** `is=` written in the markup (server-rendered or in a `<template>`) upgrades synchronously on insertion in Chrome and Firefox. Two paths are asynchronous:
 
@@ -541,7 +548,7 @@ DOM event on the trigger (passive listener bound in connectedCallback)
 
 - **Nested triggers behave like nested `onclick`.** A click on a button inside a `<div on-click>` fires the button's phrase, then bubbles and fires the div's. No implicit innermost-wins; suppression is explicit via `no-propagate` on the inner element.
 - **Timers and `once` state are keyed per element, per receiver-chain** (in a `WeakMap`) and cleared on disconnect via `clearPhraseState`.
-- **Imperative path:** `runPhrases(el, "#pop.show()", someEvent)` is the one entry point, and its first argument is what `this` means — the trigger listener and every implementation's continuation phrase call the same function.
+- **Imperative path:** `runPhrases(el, "#pop.show()", someEvent)` is the one entry point, and its first argument is what `this` means — the trigger listener and every implementation-event handler call the same function.
 
 ### Parse cache and resolution
 
@@ -566,47 +573,47 @@ The executor does neither. Every `on-*` listener is passive; a phrase describes 
 
 ## Asynchrony
 
-**Verbs are synchronous and chains never await.** This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A `.` chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints. Work that finishes later belongs to an implementation that owns it — today `requestable` — and continues by running a new synchronous chain the author wrote into the implementation's own config.
+**Verbs are synchronous and chains never await.** This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A `.` chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints. Work that finishes later belongs to an implementation that owns it — today `requestable` — and continues by dispatching an `ImplementationEvent` the author's `on-response` / `on-request-error` attributes turn into a new synchronous chain.
 
 A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain where it sits, and the executor runs the remainder of the chain `ms` later as its own scheduled step. That is the mechanism behind a "temporarily set attribute" — `copyable` marks `data-copied` on success and never clears it, so the *developer* decides whether the flash persists or disappears:
 
 ```html
 <button is="interactable-button" implements="copyable attributable"
         on-click="this.copy(#snippet)"
-        copyable-after="this.delay(1500).removeAttr('data-copied')">
+        on-copy="this.delay(1500).removeAttr('data-copied')">
   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
 </button>
 ```
 
-`copy` runs its continuation on success (`this` is the button); `delay(1500)` pauses; `removeAttr('data-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
+`copy` fires its `copy` event on success (`this` is the button); `delay(1500)` pauses; `removeAttr('data-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
 
 ```html
 <input is="interactable-input" id="q" on-input="#results.debounce(300).send()">
 
 <ul is="interactable-ul" id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
-    requestable-after="#count.compute(); #status.hide()"
-    requestable-error="#status.show()"></ul>
+    on-response="#count.compute(); #status.hide()"
+    on-request-error="#status.show()"></ul>
 <output is="interactable-output" id="count" implements="modifiable"
         modifiable-formula="count('#results > li')"></output>
 ```
 
-The trigger's chain is one synchronous link: `send()` aborts the previous in-flight request for `#results`, starts a new one, and returns. When the response lands, `requestable` swaps its children and calls `runPhrases(el, attrs.after, e.originalEvent)` — a second synchronous chain in which `this` is `#results`. The network gap sits between two chains and has a name and a place in the markup.
+The trigger's chain is one synchronous link: `send()` aborts the previous in-flight request for `#results`, starts a new one, and returns. When the response lands, `requestable` swaps its children and dispatches `new ImplementationEvent("response", { originalEvent: e.originalEvent })`; the element's own `on-response` attribute runs a second synchronous chain in which `this` is `#results`. The network gap sits between two chains and has a name and a place in the markup.
 
 What this rules out, and why it is the right trade:
 
 | Not possible | Because | Instead |
 | --- | --- | --- |
-| `#results.send().highlight()` — a link after the response | The chain would have to await, and every question about what happens while it waits (a second fire, a removed receiver, a swapped `#results`) needs an executor answer | `requestable-after="this.highlight()"` |
-| A verb returning a promise | The host ignores the value and warns; the chain has already moved on | Start the work in the verb; consume it in the closure; continue via a config phrase |
-| A guard that asks the server | A guard is a synchronous yes/no; a round trip is a request | `send()` with the check server-side, and `requestable-error` for the no |
+| `#results.send().highlight()` — a link after the response | The chain would have to await, and every question about what happens while it waits (a second fire, a removed receiver, a swapped `#results`) needs an executor answer | `on-response="this.highlight()"` |
+| A verb returning a promise | The host ignores the value and warns; the chain has already moved on | Start the work in the verb; consume it in the closure; dispatch your own `ImplementationEvent` |
+| A guard that asks the server | A guard is a synchronous yes/no; a round trip is a request | `send()` with the check server-side, and `on-request-error` for the no |
 | `once()` as a double-submit guard for a request | It spends when the walk passes it, before the request returns, so a failed request leaves a dead trigger | `requestable`'s concurrency policy, below |
 | An interaction queued until an implementation arrives | A queued interaction is a chain that waits; the host would answer after `dispatchEvent` returned, to nobody | Implementations attach synchronously; a late registration re-runs the attach pass |
 | A value comparison in the attribute (`is`, `if`, `==`) | The rule belongs to an implementation | `validatable`'s constraints, or write a verb |
 
 **Concurrency policy belongs to the implementation that owns the I/O.** `requestable` derives it from the method, the way `revealable` derives its strategy from the tag: a GET is idempotent, so a new send aborts the previous one (**latest wins**); anything else may already have happened on the server, so a new send while one is in flight is refused (**first wins**). `requestable-concurrency="latest | first | all"` overrides. Under `all`, every send starts its own request; `abort()` cancels every request in flight. Because `send()` sets `aria-busy="true"` synchronously and clears it when the last in-flight request settles, `form[aria-busy="true"] button { pointer-events: none }` disables the trigger with no JavaScript.
 
-**Continuations run only if the element is still connected.** A response that replaces the requestable element itself (`requestable-swap="outerHTML"`) disconnects its host; `requestable-after` is skipped. Cancellation is `AbortError`, which runs neither continuation and logs nothing.
+**Continuations run only if the element is still connected.** A response that replaces the requestable element itself (`requestable-swap="outerHTML"`) disconnects its host; the `on-response` event is skipped. Cancellation is `AbortError`, which runs neither event and logs nothing.
 
 ---
 
@@ -666,8 +673,8 @@ Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the 
       implements="prevent-default validatable requestable"
       requestable-url="/api/orders" requestable-method="post"
       requestable-target="#receipt"
-      requestable-after="#receipt.show(); #alert.hide()"
-      requestable-error="#alert.show()"
+      on-response="#receipt.show(); #alert.hide()"
+      on-request-error="#alert.show()"
       on-submit="this.validate().send() || #validate-alert.show()">
   <input name="qty" type="number" min="1" required>
   <button>Place order</button>
@@ -716,12 +723,12 @@ The core of `requestable` (config and swap details elided):
           const html = await res.text();
           swap(el, attrs, html);
           settle();
-          if (attrs.after && el.isConnected) runPhrases(el, attrs.after, e.originalEvent);   // this = el
+          if (el.isConnected) el.dispatchEvent(new ImplementationEvent("response", { originalEvent: e.originalEvent }));
         })
         .catch((err) => {
-          if (err.name === "AbortError") return;        // cancelled: not an error, no phrase
+          if (err.name === "AbortError") return;        // cancelled: not an error, no event
           settle("error");
-          if (attrs.error && el.isConnected) runPhrases(el, attrs.error, e.originalEvent);
+          if (el.isConnected) el.dispatchEvent(new ImplementationEvent("request-error", { originalEvent: e.originalEvent }));
         });
       // no return value: the verb is synchronous and the chain is complete
     },
@@ -731,13 +738,13 @@ The core of `requestable` (config and swap details elided):
 
 **What each failure path does:**
 
-- **Happy path.** `submit` → `validate` passes → `send` starts the POST (`data-status="loading"`, `aria-busy="true"`), returns. Chain complete, two dispatches, well under a frame. On 200, the response swaps into `#receipt`, then `#receipt.show(); #alert.hide()` runs.
+- **Happy path.** `submit` → `validate` passes → `send` starts the POST (`data-status="loading"`, `aria-busy="true"`), returns. Chain complete, two dispatches, well under a frame. On 200, the response swaps into `#receipt`, then `#receipt.show(); #alert.hide()` runs from `on-response`.
 - **Validation fails.** Because of `novalidate` the `submit` event fires anyway; `reportValidity()` shows the browser's bubble and returns false, the verb calls `e.preventDefault()`, the executor stops before `send` and runs the `||` branch instead: `#validate-alert.show()`. Nothing logged, no request.
 - **Double submit.** The second `submit` sees `inflight` and the POST policy is `first`, so `send` returns. The button was already inert from `form[aria-busy="true"] button { pointer-events: none }`.
-- **Server 500.** `settle("error")`, `data-status="error"`, `#alert.show()` runs. Values kept, button re-enabled, the user retries.
+- **Server 500.** `settle("error")`, `data-status="error"`, `on-request-error` runs `#alert.show()`. Values kept, button re-enabled, the user retries.
 - **A verb throws.** The host catches, sets `e.error`, the executor logs once and stops that chain. `#alert.hide()` is a separate `;` phrase and still runs — that is what `;` promises.
-- **Nobody handles it.** `requestable-after="#receipt.show(); this.reset()"`: `reset` dispatches to the form, none of its implementations owns it, `handled` stays false, and the executor logs `no implementation on form#order handles reset()`. A typo (`sned()`) takes the same path.
-- **Response replaces the form.** `requestable-swap="outerHTML"` with no `target`: the swap removes `#order`, its host disconnects, `el.isConnected` is false, `after` is skipped. The new form carries its own attributes and upgrades on insertion.
+- **Nobody handles it.** `on-response="#receipt.show(); this.reset()"`: `reset` dispatches to the form, none of its implementations owns it, `handled` stays false, and the executor logs `no implementation on form#order handles reset()`. A typo (`sned()`) takes the same path.
+- **Response replaces the form.** `requestable-swap="outerHTML"` with no `target`: the swap removes `#order`, its host disconnects, `el.isConnected` is false, `on-response` is skipped. The new form carries its own attributes and upgrades on insertion.
 
 ---
 
@@ -756,6 +763,8 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `parse(value)` | Parse an attribute string into phrases (cached) |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](#the-interaction-event)) |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`) |
+| `isImplementationEvent(el, type)` | True when `type` is an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
@@ -860,10 +869,10 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 
 **Why not autonomous wrapper elements instead of `is=`?** They would fix Safari's asynchronous upgrade at the price of form participation, native semantics and existing CSS on every element, for every engine.
 
-**Why don't chains await a verb's promise?** Every question it raises (a second fire mid-flight, a removed receiver while awaiting, `once()` while pending, latest vs first) is answerable only by the implementation doing the work. Verbs are synchronous; the implementation runs a continuation phrase from its own config.
+**Why don't chains await a verb's promise?** Every question it raises (a second fire mid-flight, a removed receiver while awaiting, `once()` while pending, latest vs first) is answerable only by the implementation doing the work. Verbs are synchronous; the implementation dispatches its own `ImplementationEvent` when the work finishes.
 
 **Why `handled` and `error` on the event rather than exceptions?** `dispatchEvent` swallows listener exceptions and returns normally. An async wrapper would fix throws by making every chain asynchronous; a direct method call would add a second dispatch path. Fields on the event fix both with no change to either.
 
-**Why not a general `<name>-after` convention for every implementation?** The word is shared, the event is not: a request failing and an upload failing call for different follow-ups. Each implementation names the moments it exposes; only `runPhrases` is shared.
+**Why not a general `<name>-after` convention for every implementation?** The word is shared, the event is not: a request failing and an upload failing call for different follow-ups. Each implementation names the moments it exposes as events (`copy`, `response`, `request-error`); the phrase for each is a plain `on-<event>` trigger attribute, and only dispatch is shared.
 
 **Why not queue an interaction until the lazily loaded implementation arrives?** A queue is a waiting chain, and the host would answer the event after `dispatchEvent` returned, when the executor had already read the channels. With implementations imported before the markup, the case never occurs.

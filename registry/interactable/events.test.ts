@@ -1,6 +1,24 @@
-import { test } from "node:test";
+import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
-import { LEGACY_EVENTS_WITHOUT_IDL } from "@interactable/events.ts";
+import type { JSDOM } from "jsdom";
+import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
+import { LEGACY_EVENTS_WITHOUT_IDL, isImplementationEvent } from "@interactable/events.ts";
+import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+
+let dom: JSDOM;
+
+before(() => {
+  dom = setupJsdom();
+  defineImplementation(
+    "eventful",
+    { tags: ["div"], events: ["settled", "boom"], verbs: {} },
+    () => ({}),
+  );
+});
+
+after(() => {
+  teardownJsdom(dom);
+});
 
 test("the legacy set is exported and is a Set", () => {
   assert.ok(LEGACY_EVENTS_WITHOUT_IDL instanceof Set);
@@ -17,4 +35,21 @@ test("common IDL-backed events are not in the legacy set", () => {
   assert.equal(LEGACY_EVENTS_WITHOUT_IDL.has("click"), false);
   assert.equal(LEGACY_EVENTS_WITHOUT_IDL.has("input"), false);
   assert.equal(LEGACY_EVENTS_WITHOUT_IDL.has("submit"), false);
+});
+
+test("isImplementationEvent reads the element's implements at call time", () => {
+  const el = document.createElement("div");
+  assert.equal(isImplementationEvent(el, "settled"), false);
+
+  el.setAttribute("implements", "eventful");
+  assert.equal(isImplementationEvent(el, "settled"), true);
+  assert.equal(isImplementationEvent(el, "boom"), true);
+  assert.equal(isImplementationEvent(el, "click"), false);
+});
+
+test("isImplementationEvent ignores unknown names and undeclared events", () => {
+  const el = document.createElement("div");
+  el.setAttribute("implements", "ghost eventful");
+  assert.equal(isImplementationEvent(el, "settled"), true);
+  assert.equal(isImplementationEvent(el, "nope"), false);
 });

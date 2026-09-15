@@ -15,6 +15,7 @@ export interface NormalizedImplementationDef {
   config: Record<string, AttributeSlot>;
   state: Record<string, AttributeSlot>;
   verbs: Record<string, CompiledSignature>;
+  events: readonly string[];
   factory: (el: Element, attrs: Record<string, unknown>) => ImplementationInstance;
 }
 
@@ -37,6 +38,14 @@ export function registerImplementation(def: NormalizedImplementationDef): Normal
         );
       }
     }
+    for (const event of def.events) {
+      if (other.events.includes(event) && tagsOverlap(def.tags, other.tags)) {
+        throw new Error(
+          `[Interactable] event "${event}" is registered by both "${otherName}" and "${def.name}"; ` +
+            `two implementations on the same tag cannot claim the same event`,
+        );
+      }
+    }
   }
   definitions.set(def.name, def);
   try {
@@ -53,6 +62,11 @@ export function registerImplementation(def: NormalizedImplementationDef): Normal
 
 export function getImplementationDef(name: string): NormalizedImplementationDef | undefined {
   return definitions.get(name);
+}
+
+function tagsOverlap(a: readonly Tag[] | undefined, b: readonly Tag[] | undefined): boolean {
+  if (a === undefined || b === undefined) return true;
+  return a.some((tag) => b.includes(tag));
 }
 
 export function getObservedAttributes(def: NormalizedImplementationDef): string[] {

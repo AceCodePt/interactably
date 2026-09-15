@@ -48,5 +48,6 @@ export interface ImplementationDef<
   readonly config: Validated<C> | undefined;
   readonly state: Validated<S> | undefined;
   readonly verbs: ValidatedSigs<V>;
+  readonly events: readonly string[];
   readonly factory: (el: El<T>, attrs: Attrs<C, S>) => Implementation<V>;
 }

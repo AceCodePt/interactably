@@ -1,14 +1,11 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { runPhrases } from "@interactable/executor.ts";
+import { ImplementationEvent } from "@interactable/implementation-event.ts";
 
 export const copyable = defineImplementation(
   "copyable",
   {
     tags: ["button"],
-    config: {
-      after: "string | undefined",
-      error: "string | undefined",
-    },
+    events: ["copy"],
     state: { copied: "boolean | undefined" },
     verbs: { copy: HTMLElement },
   },
@@ -22,14 +19,11 @@ export const copyable = defineImplementation(
       void copyText(text).then((ok) => {
         if (ok) {
           attrs.copied = true;
-          if (attrs.after !== undefined && el.isConnected) {
-            runPhrases(el, attrs.after, e.originalEvent);
+          if (el.isConnected) {
+            el.dispatchEvent(new ImplementationEvent("copy", { originalEvent: e.originalEvent }));
           }
         } else {
           console.warn(`[Interactable] copyable: could not copy #${target.id}`);
-          if (attrs.error !== undefined && el.isConnected) {
-            runPhrases(el, attrs.error, e.originalEvent);
-          }
         }
       });
     },

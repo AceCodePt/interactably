@@ -86,6 +86,54 @@ test("allows the same state key when the signatures agree", () => {
   );
 });
 
+test("throws when two same-tag definitions declare the same event", () => {
+  defineImplementation(
+    "registry-event-a",
+    { tags: ["div"], events: ["settled"], verbs: {} },
+    () => ({}),
+  );
+  assert.throws(
+    () =>
+      defineImplementation(
+        "registry-event-b",
+        { tags: ["div"], events: ["settled"], verbs: {} },
+        () => ({}),
+      ),
+    /event "settled" is registered by both "registry-event-a" and "registry-event-b"/,
+  );
+});
+
+test("a tag-less definition collides with any same-event definition; disjoint tags do not", () => {
+  defineImplementation(
+    "registry-event-c",
+    { tags: ["section"], events: ["settled"], verbs: {} },
+    () => ({}),
+  );
+  assert.throws(
+    () =>
+      defineImplementation(
+        "registry-event-d",
+        { events: ["settled"], verbs: {} },
+        () => ({}),
+      ),
+    /event "settled" is registered by both/,
+  );
+  assert.doesNotThrow(() =>
+    defineImplementation(
+      "registry-event-e",
+      { tags: ["input"], events: ["settled"], verbs: {} },
+      () => ({}),
+    ),
+  );
+  assert.doesNotThrow(() =>
+    defineImplementation(
+      "registry-event-f",
+      { tags: ["button"], events: ["done"], verbs: {} },
+      () => ({}),
+    ),
+  );
+});
+
 test("ensureImplementation returns one instance per element and name", async () => {
   defineImplementation(
     "registry-ensure",
@@ -121,6 +169,7 @@ test("registerImplementation refuses a duplicate name", () => {
       config: {},
       state: {},
       verbs: {},
+      events: [],
       factory: () => ({}),
     }),
   );
