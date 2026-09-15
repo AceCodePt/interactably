@@ -1,4 +1,7 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { parse } from "@interactable/parser.ts";
+import type { Call } from "@interactable/parser.ts";
+import { InteractionEvent } from "@interactable/interaction-event.ts";
 
 type Strategy =
   | { kind: "details" }
@@ -9,7 +12,7 @@ type Strategy =
 export const revealable = defineImplementation("revealable", {
   config: { modal: "boolean | undefined" },
   state: { open: "boolean | undefined" },
-  verbs: { show: "undefined", hide: "undefined", toggle: "undefined" },
+  verbs: { show: "boolean | undefined", toggle: "undefined" },
 }, (el, attrs) => {
   const strategy = strategyOf(el);
   const isOpen = (): boolean => {
@@ -52,19 +55,20 @@ export const revealable = defineImplementation("revealable", {
     if (strategy.kind === "data-open") el.hidden = !(attrs.open === true);
   };
   return {
-    show: (e) => {
-      setOpen(true);
-      syncAria(el, e.source, isOpen());
-    },
-    hide: (e) => {
-      setOpen(false);
-      syncAria(el, e.source, isOpen());
+    show: (e, value) => {
+      const resolved = value ?? true;
+      if (resolved) closeRadioSiblings(el, e);
+      setOpen(resolved);
+      syncAria(el, e.source, isOpen(), resolved);
     },
     toggle: (e) => {
       setOpen(!isOpen());
-      syncAria(el, e.source, isOpen());
+      syncAria(el, e.source, isOpen(), true);
     },
-    connectedCallback: render,
+    connectedCallback: (): void => {
+      render();
+      if (el.id !== "") wireControllers(el, isOpen());
+    },
     attributeChangedCallback: (name: string): void => {
       if (name === "data-open") render();
     },
@@ -78,16 +82,85 @@ function strategyOf(el: HTMLElement): Strategy {
   return { kind: "data-open" };
 }
 
-function syncAria(el: HTMLElement, source: Element, open: boolean): void {
+function syncAria(el: HTMLElement, source: Element, open: boolean, control: boolean): void {
   if (el.id === "") return;
-  if (source instanceof HTMLElement && source !== el && controlsOf(source).length === 0) {
+  if (control && source instanceof HTMLElement && source !== el && controlsOf(source).length === 0) {
     source.setAttribute("aria-controls", el.id);
   }
   for (const controller of document.querySelectorAll("[aria-controls]")) {
-    if (controlsOf(controller).includes(el.id)) {
+    if (controlsOf(controller).includes(el.id) && canBeExpanded(controller)) {
       controller.setAttribute("aria-expanded", String(open));
     }
   }
+}
+
+function wireControllers(el: HTMLElement, open: boolean): void {
+  for (const host of document.querySelectorAll<HTMLElement>('[is^="interactable-"]')) {
+    if (host === el) continue;
+    if (!controlledPanelIds(host).has(el.id)) continue;
+    const tokens = controlsOf(host);
+    if (!tokens.includes(el.id)) {
+      tokens.push(el.id);
+      host.setAttribute("aria-controls", tokens.join(" "));
+    }
+    if (canBeExpanded(host)) host.setAttribute("aria-expanded", String(open));
+  }
+}
+
+function closeRadioSiblings(el: HTMLElement, e: InteractionEvent): void {
+  const source = e.source;
+  if (!(source instanceof HTMLInputElement)) return;
+  if (source.type !== "radio") return;
+  const name = source.name;
+  if (name === "") return;
+  const owner = source.form ?? document;
+  const radios = owner.querySelectorAll<HTMLInputElement>("input[type='radio']");
+  for (const radio of radios) {
+    if (radio === source) continue;
+    if (radio.name !== name) continue;
+    if ((radio.form ?? document) !== owner) continue;
+    for (const id of controlledPanelIds(radio)) {
+      const panel = document.getElementById(id);
+      if (panel === null || panel === el) continue;
+      if (!panel.isConnected) continue;
+      if (!implementsRevealable(panel)) continue;
+      panel.dispatchEvent(
+        new InteractionEvent({ verb: "show", arg: false, source: radio, originalEvent: e.originalEvent }),
+      );
+    }
+  }
+}
+
+function controlledPanelIds(host: Element): Set<string> {
+  const ids = new Set<string>();
+  for (const name of host.getAttributeNames()) {
+    if (!name.startsWith("on-")) continue;
+    const value = host.getAttribute(name) ?? "";
+    const phrases = parse(value, name.slice(3));
+    for (const phrase of phrases) {
+      for (const unit of phrase.units) {
+        if (unit.ref.kind !== "id") continue;
+        if (unit.calls.some(isControllingCall)) ids.add(unit.ref.id);
+      }
+    }
+  }
+  return ids;
+}
+
+function isControllingCall(call: Call): boolean {
+  if (call.verb === "toggle") return true;
+  if (call.verb !== "show") return false;
+  const arg = call.arg;
+  if (arg === undefined) return true;
+  return !(arg.kind === "boolean" && arg.value === false);
+}
+
+function implementsRevealable(el: Element): boolean {
+  return (el.getAttribute("implements") ?? "").split(/\s+/).includes("revealable");
+}
+
+function canBeExpanded(el: Element): boolean {
+  return !(el instanceof HTMLInputElement && (el.type === "radio" || el.type === "checkbox"));
 }
 
 function controlsOf(el: Element): string[] {

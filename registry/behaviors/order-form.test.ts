@@ -28,7 +28,7 @@ const FORM_OPEN = `<form is="interactable-form" id="order" novalidate
 
 const HAPPY = `${FORM_OPEN}
       requestable-target="#receipt"
-      on-response="#receipt.show(); #alert.hide()"
+      on-response="#receipt.show(); #alert.show(false)"
       on-request-error="#alert.show()"
       on-submit="this.validate().send()">
   <input id="qty" name="qty" type="number" min="1" required>

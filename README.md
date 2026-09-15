@@ -114,7 +114,7 @@ One attribute per interaction; the value is the phrase language.
 <input  on-input="#echo.set(this.value); #results.debounce(300).filter(this.value)">
 <input  on-keydown="escape: this.reset(); enter: #form.validate().send()">
 <button on-click="#tour.once().show()">
-<button on-click="#pb.hide(); #pc.hide(); #pa.show()">
+<button on-click="#pb.show(false); #pc.show(false); #pa.show()">
 <button on-click="#note.transform({mode: 'upper', shift: 2})">
 <button on-click="#list.removeRow(this)">
 <form   on-submit="#order.validate().send() || #alert.show()">
@@ -145,7 +145,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from (the trigger for `on-*`) |
 | Chain | `#pop.show().focus()` | `.show()` then `.focus()` on the same receiver, in order |
-| Independent | `#pb.hide(); #pa.show()` | Two phrases that run regardless of each other |
+| Independent | `#pb.show(false); #pa.show()` | Two phrases that run regardless of each other |
 | And | `#form.validate() && #hint.show()` | `.validate()` then, only if it completed, `#hint.show()` — possibly on another receiver |
 | Or | `#form.validate().send() \|\| #alert.show()` | `#alert.show()` only if a guard aborted the first unit |
 | Scalar arg | `#qty.inc(5)` | Numbers, `'strings'`, `true` / `false` |
@@ -165,7 +165,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`. Class or attribute selectors are never receivers.
-3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form: `#a.hide(); #b.hide()` is still two phrases.
+3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form: `#a.show(false); #b.show(false)` is still two phrases.
 4. **Keys are legal only under `on-keydown` / `on-keyup` and under the three intersect triggers**, one per phrase. Two keyboard keys is two phrases: `enter: #f.send(); numpadenter: #f.send()`. Keyboard names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under `on-intersect-enter` / `on-intersect-half` / `on-intersect-full` the key is that phrase's `rootMargin` — a CSS length/percentage string that selects which crossing fires it (a keyless phrase matches `0px`).
 5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** `#a.once().x().y()` runs both once ever; `#a.x().once().y()` runs `x` every time and `y` once. It never crosses `&&`: each receiver carries its own modifiers, so `#a.once().x() && #b.y()` runs `#b.y()` every time the first half runs. `debounce`/`throttle` are legal only right after the ref (a timer mid-chain is a parse error); `once` and `delay` may sit anywhere. Modifiers stack and repeat freely — the parser has no duplicate check.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops if a verb's event is `preventDefault()`-ed, if the verb threw, or if no implementation owns the verb. `&&` runs the next unit only if the previous one completed; `||` runs it only if the previous one was stopped by a guard's `preventDefault()`. An error or unowned verb stops both — `||` fires only on a guard abort. One phrase is all `&&` or all `||`; mixing is a parse error. Guards are verbs owned by an implementation that knows the rule; the grammar has no general comparison, by design.
@@ -271,7 +271,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `validatable` | form, input, select, textarea | `validate` | — | guard verb: `reportValidity()`, `preventDefault()` on failure |
 | `no-propagate` | any | — | `events` (default `"click"`) | `stopPropagation` on listed events |
 | `prevent-default` | any | — | `events` (derived, see below) | `preventDefault` on listed events |
-| `revealable` | any | `show`, `hide`, `toggle` | `modal` + `open` state | strategies per element ([below](#revealable)) |
+| `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([below](#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea |
 | `storable` | any | `save`, `load`, `clear` | `key`, `type` (`local`/`session`), `attr` | persist a field's value to storage |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
@@ -321,16 +321,20 @@ A keyed `on-keydown` phrase that *replaces* a browser default should always carr
 
 ### Revealable
 
-`revealable` is the model generic implementation: it declares nothing the platform already holds, derives its strategy from the element at connect, and invents state only where nothing exists.
+`revealable` is the model generic implementation: it declares nothing the platform already holds, derives its strategy from the element at connect, and invents state only where nothing exists. Two verbs and one boolean: `show()` opens, `show(false)` closes, `toggle()` flips.
 
 | Element | Detected by | `show()` | Live state read from |
 | --- | --- | --- | --- |
-| `<details>` | tag | `el.open = true` | `el.open` |
-| `<dialog>` | tag | `el.showModal()` (or `el.show()` with `revealable-modal="false"`) | `el.open` |
-| popover | `el.hasAttribute("popover")` | `el.showPopover()` | `el.matches(":popover-open")` |
+| `<details>` | tag | `el.open = value` | `el.open` |
+| `<dialog>` | tag | `el.showModal()` (or `el.show()` with `revealable-modal="false"`); `show(false)` → `el.close()` | `el.open` |
+| popover | `el.hasAttribute("popover")` | `el.showPopover()` / `el.hidePopover()` | `el.matches(":popover-open")` |
 | anything else | fallback | `data-open` | `data-open` |
 
-Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling come with the first three for free; the fourth row is the only one that invents anything. `show`/`hide`/`toggle` also keep the panel's accessibility wiring current: every element whose `aria-controls` names the panel gets `aria-expanded` set to the panel's state, and a trigger that declares none gets `aria-controls` added. Tab pairs where each button controls its own panel therefore stay correct — hiding one panel collapses the button that controls it, whoever fired the verb.
+Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling come with the first three for free; the fourth row is the only one that invents anything.
+
+**Controllers are wired at connect.** When a panel with an `id` connects, `revealable` scans the `is="interactable-…"` hosts, parses each one's `on-*` values through the same cached `parse()` the executor uses, and for every host that *controls* the panel — `#id.toggle()`, or `#id.show()` / `#id.show(true)` / `#id.show(this.checked)`; the literal `show(false)` is a side effect, not control — it appends the panel's id to the host's `aria-controls` (deduped, existing tokens preserved) and sets `aria-expanded` to the current state, skipped on radio and checkbox inputs where it is meaningless. The sync continues at fire time: every element whose `aria-controls` names the panel gets `aria-expanded` refreshed, and a bare trigger that declares none gets `aria-controls` added — unless the verb was `show(false)`, which only updates, never claims.
+
+**Radio-derived exclusivity, no attribute.** A panel shown *from* an `<input type="radio">` closes the panels of that radio's siblings — the radios sharing its `name` and its form owner (`source.form`, else `document`). Each sibling's `on-*` phrases are parsed, and every panel the sibling controls, other than the one being opened, receives `show(false)`. The browser's radio group *is* the group: a package-manager tab set is three radios named `manager` plus three panels, nothing else. Checkbox and button sources close nothing.
 
 ### Hashable
 
@@ -482,8 +486,7 @@ The `value` attribute / `value` property pair is the canonical case: `el.value =
 // revealable on a plain panel — the one case with invented state
 // state: { open: "boolean | undefined" } → data-open
 (el, attrs) => ({
-  show:   () => { attrs.open = true; },
-  hide:   () => { attrs.open = undefined; },
+  show:   (_e, value) => { attrs.open = value === false ? undefined : true; },
   toggle: () => { attrs.open = attrs.open ? undefined : true; },
   attributeChangedCallback(name) { if (name === "data-open") el.hidden = !attrs.open; },   // renders
 })
@@ -593,7 +596,7 @@ A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain whe
 
 <ul is="interactable-ul" id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
-    on-response="#count.compute(); #status.hide()"
+    on-response="#count.compute(); #status.show(false)"
     on-request-error="#status.show()"></ul>
 <output is="interactable-output" id="count" implements="modifiable"
         modifiable-formula="count('#results > li')"></output>
@@ -674,7 +677,7 @@ Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the 
       implements="prevent-default validatable requestable"
       requestable-url="/api/orders" requestable-method="post"
       requestable-target="#receipt"
-      on-response="#receipt.show(); #alert.hide()"
+      on-response="#receipt.show(); #alert.show(false)"
       on-request-error="#alert.show()"
       on-submit="this.validate().send() || #validate-alert.show()">
   <input name="qty" type="number" min="1" required>
@@ -739,11 +742,11 @@ The core of `requestable` (config and swap details elided):
 
 **What each failure path does:**
 
-- **Happy path.** `submit` → `validate` passes → `send` starts the POST (`data-status="loading"`, `aria-busy="true"`), returns. Chain complete, two dispatches, well under a frame. On 200, the response swaps into `#receipt`, then `#receipt.show(); #alert.hide()` runs from `on-response`.
+- **Happy path.** `submit` → `validate` passes → `send` starts the POST (`data-status="loading"`, `aria-busy="true"`), returns. Chain complete, two dispatches, well under a frame. On 200, the response swaps into `#receipt`, then `#receipt.show(); #alert.show(false)` runs from `on-response`.
 - **Validation fails.** Because of `novalidate` the `submit` event fires anyway; `reportValidity()` shows the browser's bubble and returns false, the verb calls `e.preventDefault()`, the executor stops before `send` and runs the `||` branch instead: `#validate-alert.show()`. Nothing logged, no request.
 - **Double submit.** The second `submit` sees `inflight` and the POST policy is `first`, so `send` returns. The button was already inert from `form[aria-busy="true"] button { pointer-events: none }`.
 - **Server 500.** `settle("error")`, `data-status="error"`, `on-request-error` runs `#alert.show()`. Values kept, button re-enabled, the user retries.
-- **A verb throws.** The host catches, sets `e.error`, the executor logs once and stops that chain. `#alert.hide()` is a separate `;` phrase and still runs — that is what `;` promises.
+- **A verb throws.** The host catches, sets `e.error`, the executor logs once and stops that chain. `#alert.show(false)` is a separate `;` phrase and still runs — that is what `;` promises.
 - **Nobody handles it.** `on-response="#receipt.show(); this.reset()"`: `reset` dispatches to the form, none of its implementations owns it, `handled` stays false, and the executor logs `no implementation on form#order handles reset()`. A typo (`sned()`) takes the same path.
 - **Response replaces the form.** `requestable-swap="outerHTML"` with no `target`: the swap removes `#order`, its host disconnects, `el.isConnected` is false, `on-response` is skipped. The new form carries its own attributes and upgrades on insertion.
 
@@ -867,7 +870,7 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 
 **Why is there no key list, `enter, numpadenter: #f.send()`?** It is one phrase standing for two, and every per-phrase mechanism (does Enter spend `once()` for NumpadEnter? do debounce timers merge?) then has to pick an answer. `;` already writes two phrases.
 
-**Why is there no group receiver, `(#a, #b).hide()`?** The chain aborts per receiver, so the group form is exactly `#a.hide(); #b.hide()` with a second spelling and a bookkeeping key that has to survive `#b` being replaced in the DOM. A shorthand that needs a paragraph is not a shorthand.
+**Why is there no group receiver, `(#a, #b).show(false)`?** The chain aborts per receiver, so the group form is exactly `#a.show(false); #b.show(false)` with a second spelling and a bookkeeping key that has to survive `#b` being replaced in the DOM. A shorthand that needs a paragraph is not a shorthand.
 
 **Why not innermost-wins when triggers nest?** It is a `closest()` walk per trigger per event, added solely to suppress the outer phrase in a rare case — and inline handlers fire inner and outer, so matching that is the least surprising default.
 
