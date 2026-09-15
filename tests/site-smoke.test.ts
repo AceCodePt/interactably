@@ -275,8 +275,8 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(consent.hidden, true, "the age gate starts closed");
   const age = byId("age") as HTMLInputElement;
   age.value = "18";
-  age.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.equal(consent.hidden, false, "is() passes and show() opens the consent panel");
+  age.dispatchEvent(new Event("change", { bubbles: true }));
+  assert.equal(consent.hidden, false, "validate() passes the min=18 constraint and show() opens the consent panel");
 
   const faq = byId("faq") as HTMLDetailsElement;
   assert.equal(faq.open, false);

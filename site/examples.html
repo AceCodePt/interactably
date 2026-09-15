@@ -407,17 +407,18 @@
         <h2 id="ex-age">An age gate</h2>
         <p class="ex-note">
           Raise the age to 18 and the message appears — no button, no script.
-          The guard verb <code class="inline-code">is({op: '>=', value: 18})</code> on the field passes
-          when the comparison holds, and <code class="inline-code">&amp;&amp;</code> then runs
-          <code class="inline-code">show()</code> on the consent panel.
+          The guard verb <code class="inline-code">validate()</code> passes when the field&rsquo;s
+          <code class="inline-code">min="18"</code> constraint holds, and <code class="inline-code">&amp;&amp;</code> then runs
+          <code class="inline-code">show()</code> on the consent panel. It triggers on
+          <code class="inline-code">on-change</code>, so the check happens when you commit the value — not on every keystroke.
         </p>
       </div>
       <div class="example-body">
         <div class="demo">
           <div class="row">
             <label>Age
-              <input is="interactable-input" id="age" type="number" value="17" min="0" implements="modifiable"
-                     on-input="this.is({op: '>=', value: 18}) &amp;&amp; #consent.show()">
+              <input is="interactable-input" id="age" type="number" value="17" min="18" implements="validatable"
+                     on-change="this.validate() &amp;&amp; #consent.show()">
             </label>
           </div>
           <section is="interactable-section" id="consent" implements="revealable" hidden>
@@ -435,8 +436,8 @@
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-age" data-lang="html"><code>&lt;input is="interactable-input" id="age" type="number" value="17" min="0" implements="modifiable"
-       on-input="this.is({op: '&gt;=', value: 18}) &amp;&amp; #consent.show()"&gt;
+          <pre class="code" id="code-ex-age" data-lang="html"><code>&lt;input is="interactable-input" id="age" type="number" value="17" min="18" implements="validatable"
+       on-change="this.validate() &amp;&amp; #consent.show()"&gt;
 &lt;section is="interactable-section" id="consent" implements="revealable" hidden&gt;
   Thanks &mdash; you&rsquo;re old enough to continue.
 &lt;/section&gt;</code></pre>
