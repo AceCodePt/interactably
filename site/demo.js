@@ -17,6 +17,7 @@ import "./vendor/auto-grow.js";
 import "./vendor/paste-transform.js";
 import "./vendor/json-template.js";
 import { defineInteractableHost } from "./vendor/interactably-core.js";
+import { installAutoLoader } from "./vendor/auto-loader.js";
 
 // The demo markup is already in the document. Importing the bundles registers
 // the implementations and defines the hosts for their tags, so the elements
@@ -29,3 +30,5 @@ defineInteractableHost("section");
 defineInteractableHost("div");
 defineInteractableHost("details");
 defineInteractableHost("dialog");
+
+installAutoLoader();

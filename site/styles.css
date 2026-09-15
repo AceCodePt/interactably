@@ -1116,6 +1116,60 @@ code, pre, kbd {
   margin: 0 0 0.9rem;
 }
 
+/* ---------- option tabs (auto-loader vs is=) ---------- */
+
+.tabs {
+  margin: 1rem 0 1.25rem;
+}
+
+.tabs .tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.tabs .tabbar button {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 650 0.78rem/1 var(--mono);
+  letter-spacing: 0.02em;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tabs .tabbar button:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.tabs .tabbar button[aria-expanded="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.tabs .tabpanel {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.tabs [hidden] {
+  display: none;
+}
+
+.tabs .tabpanel > :first-child {
+  margin-top: 0;
+}
+
+.tabs .tabpanel > :last-child {
+  margin-bottom: 0;
+}
+
 /* ---------- reference ---------- */
 
 .ref-grid {

@@ -2,7 +2,7 @@
 
 A declarative interaction language for **customized built-in web components**, and the host that runs it.
 
-You write plain HTML. `is="interactable-<tag>"` turns an element into a **host**. An `on-*` attribute makes it a **trigger**; `implements="…"` makes it a **receiver**.
+You write plain HTML. `is="interactable-<tag>"` turns an element into a **host**. An `on-*` attribute makes it a **trigger**; `implements="…"` makes it a **receiver**. The auto-loader can add `is=` for you, so the markup can stay plain HTML ([§ Quick start](#quick-start)).
 
 ```html
 <button is="interactable-button" on-click="#modal.show()">Open</button>
@@ -45,7 +45,30 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
 npm install interactably
 ```
 
-Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the core's registry on import, and defines the hosts for its declared tags:
+Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the core's registry on import, and defines the hosts for its declared tags. There are two ways to write the markup; both produce the same page.
+
+**Option A — the auto-loader (simplest).** Import `installAutoLoader()` and omit `is=` entirely. It upgrades every element that has `implements` or an `on-*` attribute:
+
+```html
+<script type="module">
+  import "interactably/dist/cdn/modifiable.js";
+  import "interactably/dist/cdn/revealable.js";
+  import { installAutoLoader } from "interactably/dist/cdn/auto-loader.js";
+  installAutoLoader();
+</script>
+
+<button id="inc" on-click="#qty.inc()">+</button>
+
+<label>Qty
+  <input id="qty" implements="modifiable"
+         type="number" value="1" min="0" max="10"
+         on-input="#preview.set(this.value)">
+</label>
+
+<output id="preview" implements="modifiable">1</output>
+```
+
+**Option B — explicit `is=` (faster).** State the host name yourself; the element upgrades synchronously on insertion in Chrome and Firefox, with no observer and no node replacement:
 
 ```html
 <script type="module">
@@ -74,8 +97,9 @@ Bundle files:
 | --- | --- |
 | `interactably-core.js` | parser, executor, event, host, registry. No implementations. |
 | `modifiable.js`, `dirtyable.js`, `listable.js`, … | one implementation per file, registering into the core's registry on import |
+| `auto-loader.js` | optional: watches the DOM and adds `is=` to any element with `implements` or an `on-*` attribute |
 
-> **`is=` rule.** An element carries `is="interactable-<tag>"` when it has `implements`, any `on-*` attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`.
+> **`is=` rule.** An element carries `is="interactable-<tag>"` when it has `implements`, any `on-*` attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. The auto-loader fills `is=` in at runtime so you can omit it; writing it yourself is the synchronous, production form.
 
 ---
 
@@ -473,10 +497,10 @@ There is no store, no signals, no cross-element watching. The DOM is the store; 
 
 <a name="upgrade-timing"></a>**Upgrade timing is not uniform.** `is=` written in the markup (server-rendered or in a `<template>`) upgrades synchronously on insertion in Chrome and Firefox. Two paths are asynchronous:
 
-- **The auto-loader** (a prototyping helper in this repo, not a public API). Customized built-ins only upgrade when `is` is present at *creation*, so the loader watches with a `MutationObserver`, then **replaces the node**: `createElement(tag, { is })`, copy attributes, move children. Between insertion and the swap the element has no listeners — a programmatic `.click()` in that gap is lost, focus is dropped, and JS references captured before the swap point at a detached node. `getElementById` and the DSL's late-bound `#id` are unaffected. Prefer explicit `is=` in templates and server output.
+- **The auto-loader** (`installAutoLoader()`). Customized built-ins only upgrade when `is` is present at *creation*, so the loader watches with a `MutationObserver`, then **replaces the node**: `createElement(tag, { is })`, copy attributes, move children. Between insertion and the swap the element has no listeners — a programmatic `.click()` in that gap is lost, focus is dropped, and JS references captured before the swap point at a detached node. `getElementById` and the DSL's late-bound `#id` are unaffected. It is the simplest way to write markup — no `is=` anywhere — at the cost of a document-wide observer and a microtask-late upgrade. Use it to start; switch to explicit `is=` for production.
 - **Safari.** Needs the [`@ungap/custom-elements`](https://github.com/ungap/custom-elements) polyfill; even explicit `is=` upgrades a tick late there (it is itself a MutationObserver).
 
-Consequence: write `is=` explicitly, treat the auto-loader as a prototyping convenience, and if code inserts a trigger and drives it immediately, await `customElements.whenDefined()` plus a microtask — or drive the receiver directly with `dispatchInteraction`.
+Consequence: the auto-loader is a supported convenience, but explicit `is=` is the faster, synchronous form — prefer it in templates and server output. If code inserts a trigger and drives it immediately, await `customElements.whenDefined()` plus a microtask — or drive the receiver directly with `dispatchInteraction`.
 
 Selector rule: **selectors may appear in arguments, never as receivers.** The dispatch graph stays 1:1 — every interaction goes to one element with one `implements`, so completion, grep (`#pop.` finds every writer) and error rules stay exact.
 
@@ -709,12 +733,13 @@ The core of `requestable` (config and swap details elided):
 
 ## API reference
 
-All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the core subset).
+All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the core subset). `installAutoLoader` also ships as `interactably/dist/cdn/auto-loader.js`.
 
 | Export | What it is |
 | --- | --- |
 | `defineImplementation(name, decl, factory)` | Declare an implementation ([§ Writing an implementation](#writing-an-implementation)) |
 | `defineInteractableHost(tag)` | Define `interactable-<tag>`; idempotent, returns nothing |
+| `installAutoLoader()` | Opt in to the auto-loader: watch the DOM and add `is=` to any element with `implements` or `on-*`; returns a dispose function ([§ Dynamics](#dynamics)) |
 | `registerImplementation(def)` | Register a normalized definition (used by `defineImplementation`) |
 | `getImplementationDef(name)` | Look up a registered definition |
 | `runPhrases(el, value, ev)` | Run an attribute string against an element and a DOM event; the one entry point |

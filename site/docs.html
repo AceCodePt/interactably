@@ -88,17 +88,58 @@
         </div>
         <p>
           Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the
-          core&rsquo;s registry on import, and defines the hosts for its declared tags:
+          core&rsquo;s registry on import, and defines the hosts for its declared tags. You can write the markup two ways:
+          let the auto-loader add <code class="inline-code">is=</code> for you, or state it yourself.
         </p>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-load)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
+        <div class="tabs">
+          <div class="tabbar">
+            <button is="interactable-button" type="button" aria-expanded="true" aria-controls="docs-quick-auto"
+                    on-click="#docs-quick-auto.show(); #docs-quick-is.hide()">Auto-loader &mdash; no is=</button>
+            <button is="interactable-button" type="button" aria-expanded="false" aria-controls="docs-quick-is"
+                    on-click="#docs-quick-auto.hide(); #docs-quick-is.show()">Explicit is= &mdash; faster</button>
           </div>
-          <pre class="code" id="code-docs-load" data-lang="html"><code>&lt;script type="module"&gt;
+
+          <section is="interactable-section" id="docs-quick-auto" implements="revealable" class="tabpanel" data-open="true">
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                        on-click="this.copy(#code-docs-load-auto)" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="code-docs-load-auto" data-lang="html"><code>&lt;script type="module"&gt;
+  import "interactably/dist/cdn/modifiable.js";
+  import "interactably/dist/cdn/revealable.js";
+  import { installAutoLoader } from "interactably/dist/cdn/auto-loader.js";
+  installAutoLoader();
+&lt;/script&gt;
+
+&lt;button id="inc" on-click="#qty.inc()"&gt;+&lt;/button&gt;
+
+&lt;label&gt;Qty
+  &lt;input id="qty" implements="modifiable"
+         type="number" value="1" min="0" max="10"
+         on-input="#preview.set(this.value)"&gt;
+&lt;/label&gt;
+
+&lt;output id="preview" implements="modifiable"&gt;1&lt;/output&gt;</code></pre>
+            </div>
+            <p class="note">No <code class="inline-code">is=</code> anywhere: the auto-loader upgrades every element that has
+              <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute, adding
+              <code class="inline-code">is="interactable-&lt;tag&gt;"</code> for you.</p>
+          </section>
+
+          <section is="interactable-section" id="docs-quick-is" implements="revealable" class="tabpanel" hidden>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                        on-click="this.copy(#code-docs-load-is)" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="code-docs-load-is" data-lang="html"><code>&lt;script type="module"&gt;
   import "interactably/dist/cdn/modifiable.js";
   import "interactably/dist/cdn/revealable.js";
   import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
@@ -114,6 +155,10 @@
 &lt;/label&gt;
 
 &lt;output is="interactable-output" id="preview" implements="modifiable"&gt;1&lt;/output&gt;</code></pre>
+            </div>
+            <p class="note"><code class="inline-code">is=</code> is present at creation, so the element upgrades synchronously on
+              insertion in Chrome and Firefox &mdash; the production choice when performance matters.</p>
+          </section>
         </div>
         <p>Every click on <code class="inline-code">+</code> calls <code class="inline-code">#qty.inc()</code>: the input clamps to
           <code class="inline-code">max</code>, dispatches a synthetic <code class="inline-code">input</code>, and the preview follows.</p>
@@ -143,13 +188,14 @@
             <tbody>
               <tr><td><code class="inline-code">interactably-core.js</code></td><td>parser, executor, event, host, registry. No implementations.</td></tr>
               <tr><td><code class="inline-code">modifiable.js</code>, <code class="inline-code">dirtyable.js</code>, <code class="inline-code">listable.js</code>, &hellip;</td><td>one implementation per file, registering into the core&rsquo;s registry on import</td></tr>
+              <tr><td><code class="inline-code">auto-loader.js</code></td><td>optional: watches the DOM and adds <code class="inline-code">is=</code> to any element with <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="callout">
           <h4>The <code class="inline-code">is=</code> rule</h4>
-          <p>An element carries <code class="inline-code">is="interactable-&lt;tag&gt;"</code> when it has <code class="inline-code">implements</code>, any <code class="inline-code">on-*</code> attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an <code class="inline-code">id</code>.</p>
+          <p>An element carries <code class="inline-code">is="interactable-&lt;tag&gt;"</code> when it has <code class="inline-code">implements</code>, any <code class="inline-code">on-*</code> attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an <code class="inline-code">id</code>. The auto-loader fills <code class="inline-code">is=</code> in at runtime so you can omit it; writing it yourself is the synchronous, production form.</p>
         </div>
 
         <h2 id="trigger-grammar">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
@@ -638,10 +684,10 @@ export const attributable = defineImplementation("attributable", {
         </div>
         <p id="upgrade-timing" style="scroll-margin-top:5rem"><strong>Upgrade timing is not uniform.</strong> <code class="inline-code">is=</code> written in the markup (server-rendered or in a <code class="inline-code">&lt;template&gt;</code>) upgrades synchronously on insertion in Chrome and Firefox. Two paths are asynchronous:</p>
         <ul>
-          <li><strong>The auto-loader</strong> (a prototyping helper in this repo, not a public API). Customized built-ins only upgrade when <code class="inline-code">is</code> is present at <em>creation</em>, so the loader watches with a <code class="inline-code">MutationObserver</code>, then <strong>replaces the node</strong>. Prefer explicit <code class="inline-code">is=</code> in templates and server output.</li>
+          <li><strong>The auto-loader</strong> (<code class="inline-code">installAutoLoader()</code>). Customized built-ins only upgrade when <code class="inline-code">is</code> is present at <em>creation</em>, so the loader watches with a <code class="inline-code">MutationObserver</code>, then <strong>replaces the node</strong>. It is the simplest way to write markup — no <code class="inline-code">is=</code> anywhere — at the cost of a document-wide observer, a microtask-late upgrade, dropped focus and lost programmatic clicks in the gap. Use it to start; switch to explicit <code class="inline-code">is=</code> for production.</li>
           <li><strong>Safari.</strong> Needs the <a href="https://github.com/ungap/custom-elements">@ungap/custom-elements</a> polyfill; even explicit <code class="inline-code">is=</code> upgrades a tick late there.</li>
         </ul>
-        <p>Consequence: write <code class="inline-code">is=</code> explicitly, treat the auto-loader as a prototyping convenience, and if code inserts a trigger and drives it immediately, await <code class="inline-code">customElements.whenDefined()</code> plus a microtask — or drive the receiver directly with <code class="inline-code">dispatchInteraction</code>.</p>
+        <p>Consequence: the auto-loader is a supported convenience, but explicit <code class="inline-code">is=</code> is the faster, synchronous form — prefer it in templates and server output. If code inserts a trigger and drives it immediately, await <code class="inline-code">customElements.whenDefined()</code> plus a microtask — or drive the receiver directly with <code class="inline-code">dispatchInteraction</code>.</p>
         <p>Selector rule: <strong>selectors may appear in arguments, never as receivers.</strong> The dispatch graph stays 1:1 — every interaction goes to one element with one <code class="inline-code">implements</code>, so completion, grep (<code class="inline-code">#pop.</code> finds every writer) and error rules stay exact.</p>
 
         <h2 id="parser-and-executor">Parser and executor <a class="anchor" href="#parser-and-executor">#</a></h2>
@@ -797,13 +843,14 @@ export const attributable = defineImplementation("attributable", {
         <p><code class="inline-code">novalidate</code> is load-bearing: without it the browser&rsquo;s interactive validation runs first and, for an invalid form, never fires <code class="inline-code">submit</code> at all. The phrase decides <em>when</em> validation happens; the platform still decides <em>what</em> valid means.</p>
 
         <h2 id="api-reference">API reference <a class="anchor" href="#api-reference">#</a></h2>
-        <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset).</p>
+        <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset). <code class="inline-code">installAutoLoader</code> ships in the full package and as <code class="inline-code">interactably/dist/cdn/auto-loader.js</code>.</p>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Export</th><th>What it is</th></tr></thead>
             <tbody>
               <tr><td><code class="inline-code">defineImplementation(name, decl, factory)</code></td><td>Declare an implementation (<a href="#writing-an-implementation">§ Writing an implementation</a>)</td></tr>
               <tr><td><code class="inline-code">defineInteractableHost(tag)</code></td><td>Define <code class="inline-code">interactable-&lt;tag&gt;</code>; idempotent, returns nothing</td></tr>
+              <tr><td><code class="inline-code">installAutoLoader()</code></td><td>Opt in to the auto-loader: watch the DOM and add <code class="inline-code">is=</code> to any element with <code class="inline-code">implements</code> or <code class="inline-code">on-*</code>; returns a dispose function (<a href="#dynamics">§ Dynamics</a>)</td></tr>
               <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition (used by <code class="inline-code">defineImplementation</code>)</td></tr>
               <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
               <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>

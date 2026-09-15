@@ -116,4 +116,13 @@ export default defineConfig([
       entryFileNames: "[name].js",
     },
   },
+  {
+    tsconfig: "./tsconfig.json",
+    input: path.join(root, "registry", "utils", "auto-loader.ts"),
+    plugins: [externalizeCore()],
+    output: {
+      format: "esm",
+      file: "dist/cdn/auto-loader.js",
+    },
+  },
 ]);

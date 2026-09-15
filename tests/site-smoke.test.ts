@@ -12,6 +12,7 @@ const cdnDir = new URL("../dist/cdn/", import.meta.url);
 
 const KNOWN_BUNDLES = new Set([
   "interactably-core",
+  "auto-loader",
   "attributable",
   "auto-grow",
   "condition",
@@ -142,15 +143,28 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   document.body.appendChild(holder);
 
   const core = await import(coreUrl.href);
+  let autoLoader: { installAutoLoader(): () => void } | undefined;
   for (const name of names) {
     if (name === "interactably-core.js") continue;
-    await import(new URL(name, cdnDir).href);
+    const bundle = await import(new URL(name, cdnDir).href);
+    if (name === "auto-loader.js") autoLoader = bundle as typeof autoLoader;
   }
   const extraTags = [...demo.matchAll(EXTRA_HOST)].map((match) => match[1]!);
   assert.ok(extraTags.length > 0, "demo.js defines the extra hosts");
   for (const tag of extraTags) core.defineInteractableHost(tag);
 
+  assert.ok(autoLoader !== undefined, "demo.js installs the auto-loader");
+  autoLoader.installAutoLoader();
+
   await flush();
+
+  const autoPanel = byId("auto-demo-panel");
+  assert.equal(autoPanel.getAttribute("is"), "interactable-section", "the auto-loader adds is= to the no-is= demo");
+  assert.equal(autoPanel.hidden, true, "the no-is= panel starts closed");
+  click(byId("auto-demo-btn"));
+  assert.equal(autoPanel.hidden, false, "the no-is= demo runs through the auto-loader");
+  click(byId("auto-demo-btn"));
+  assert.equal(autoPanel.hidden, true, "the no-is= demo toggles back");
 
   const total = byId("total") as HTMLOutputElement & { didEnsure: boolean };
   assert.equal(total.didEnsure, true, "#total upgraded into the interactable host");

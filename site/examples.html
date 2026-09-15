@@ -38,6 +38,92 @@
 
     <section class="example">
       <div class="example-head">
+        <h2 id="ex-auto">Same interaction, two ways</h2>
+        <p class="ex-note">
+          The pair below is one button and one panel, written twice. On the <em>Auto-loader</em> tab the markup carries no
+          <code class="inline-code">is=</code> at all &mdash; <code class="inline-code">installAutoLoader()</code> adds it for you.
+          On the <em>Explicit is=</em> tab you write it yourself. Both are live; the difference is when the upgrade happens.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="tabs">
+          <div class="tabbar">
+            <button is="interactable-button" type="button" aria-expanded="true" aria-controls="demo-auto"
+                    on-click="#demo-auto.show(); #demo-is.hide()">Auto-loader &mdash; no is=</button>
+            <button is="interactable-button" type="button" aria-expanded="false" aria-controls="demo-is"
+                    on-click="#demo-auto.hide(); #demo-is.show()">Explicit is= &mdash; faster</button>
+          </div>
+
+          <section is="interactable-section" id="demo-auto" implements="revealable" class="tabpanel" data-open="true">
+            <div class="demo">
+              <div class="row">
+                <button id="auto-demo-btn" type="button" on-click="#auto-demo-panel.toggle()"
+                        aria-expanded="false" aria-controls="auto-demo-panel">Toggle panel</button>
+              </div>
+              <section id="auto-demo-panel" implements="revealable" hidden>
+                <p>No <code class="inline-code">is=</code> on this button or this panel. The auto-loader added
+                  <code class="inline-code">is="interactable-button"</code> and <code class="inline-code">is="interactable-section"</code>
+                  when the page loaded.</p>
+              </section>
+            </div>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                        on-click="this.copy(#code-ex-auto)" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="code-ex-auto" data-lang="html"><code>&lt;script type="module"&gt;
+  import "interactably/dist/cdn/revealable.js";
+  import { installAutoLoader } from "interactably/dist/cdn/auto-loader.js";
+  installAutoLoader();
+&lt;/script&gt;
+
+&lt;button on-click="#panel.toggle()" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
+&lt;section id="panel" implements="revealable" hidden&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+            </div>
+          </section>
+
+          <section is="interactable-section" id="demo-is" implements="revealable" class="tabpanel" hidden>
+            <div class="demo">
+              <div class="row">
+                <button is="interactable-button" id="is-demo-btn" type="button" on-click="#is-demo-panel.toggle()"
+                        aria-expanded="false" aria-controls="is-demo-panel">Toggle panel</button>
+              </div>
+              <section is="interactable-section" id="is-demo-panel" implements="revealable" hidden>
+                <p>Explicit <code class="inline-code">is=</code> upgrades synchronously on insertion &mdash; no observer,
+                  no node replacement, no gap. This is the form to ship.</p>
+              </section>
+            </div>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button is="interactable-button" class="copy-btn" implements="copyable delay attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                        on-click="this.copy(#code-ex-is)" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="code-ex-is" data-lang="html"><code>&lt;script type="module"&gt;
+  import "interactably/dist/cdn/revealable.js";
+  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
+  defineInteractableHost("button");
+&lt;/script&gt;
+
+&lt;button is="interactable-button" on-click="#panel.toggle()" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
+&lt;section is="interactable-section" id="panel" implements="revealable" hidden&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
         <h2 id="ex-calc">Price calculator</h2>
         <p class="ex-note">
           Add rows, adjust quantities, and watch the total recompute from a formula —

@@ -16,3 +16,4 @@ export { condition } from "@behaviors/condition/condition.ts";
 export { copyable } from "@behaviors/copyable/copyable.ts";
 export { delay } from "@behaviors/delay/delay.ts";
 export { jsonTemplate } from "@behaviors/json-template/json-template.ts";
+export { installAutoLoader } from "@utils/auto-loader.ts";
