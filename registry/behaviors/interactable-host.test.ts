@@ -2,6 +2,11 @@ import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
+import {
+  FakeIntersectionObserver,
+  installFakeIntersectionObserver,
+  resetFakeIntersectionObserver,
+} from "@tests/intersection-observer.ts";
 
 let dom: JSDOM;
 let defineImplementation: typeof import("@behaviors/_implementation-definition.ts").defineImplementation;
@@ -11,6 +16,7 @@ const calls: string[] = [];
 
 before(async () => {
   dom = setupJsdom();
+  installFakeIntersectionObserver();
   ({ defineImplementation } = await import("@behaviors/_implementation-definition.ts"));
   ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   ({ InteractionEvent } = await import("@interactable/interaction-event.ts"));
@@ -114,6 +120,7 @@ after(() => {
 
 beforeEach(() => {
   calls.length = 0;
+  resetFakeIntersectionObserver();
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
@@ -485,4 +492,71 @@ test("a name still missing when the turn settles is reported once", async () => 
   }
   const reports = errors.filter((message) => message.includes("never-registers"));
   assert.equal(reports.length, 2, "one report per element with the missing name");
+});
+
+test("on-intersect-* needs no implements and never warns about a missing event", (t) => {
+  const warn = t.mock.method(console, "warn");
+  const trigger = hostElement("section", { "on-intersect-enter": "#recv.go()" });
+  document.body.appendChild(trigger);
+  assert.equal(warn.mock.callCount(), 0);
+  trigger.remove();
+});
+
+test("an intersect crossing runs only the phrases whose margin matches", async () => {
+  const receiver = hostElement("div", { id: "spy", implements: "alpha" });
+  const trigger = hostElement("section", { "on-intersect-half": "0px: #spy.go(); 50px: #spy.go()" });
+  document.body.append(trigger, receiver);
+  await flush();
+
+  const zero = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px");
+  const fifty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "50px");
+  assert.ok(zero && fifty);
+
+  zero!.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 0.6 }]);
+  assert.deepEqual(calls, ["alpha.go"], "only the 0px phrase runs on the 0px observer");
+  calls.length = 0;
+  fifty!.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 0.6 }]);
+  assert.deepEqual(calls, ["alpha.go"], "the 50px phrase runs on the 50px observer");
+});
+
+test("an intersect trigger fires on every crossing, both directions", async () => {
+  const receiver = hostElement("div", { id: "both", implements: "alpha" });
+  const trigger = hostElement("section", { "on-intersect-enter": "#both.go()" });
+  document.body.append(trigger, receiver);
+  await flush();
+
+  const observer = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px")!;
+  observer.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 1 }]);
+  observer.trigger([{ target: trigger, isIntersecting: false, intersectionRatio: 0 }]);
+  observer.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 1 }]);
+  assert.deepEqual(calls, ["alpha.go", "alpha.go", "alpha.go"]);
+});
+
+test("once() is the only filter for intersect crossings", async () => {
+  const receiver = hostElement("div", { id: "once", implements: "alpha" });
+  const trigger = hostElement("section", { "on-intersect-enter": "#once.once().go()" });
+  document.body.append(trigger, receiver);
+  await flush();
+
+  const observer = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px")!;
+  observer.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 1 }]);
+  observer.trigger([{ target: trigger, isIntersecting: false, intersectionRatio: 0 }]);
+  observer.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 1 }]);
+  assert.deepEqual(calls, ["alpha.go"], "once() gates the phrase across later crossings");
+});
+
+test("intersect observers are rebuilt on attribute change and torn down on disconnect", async () => {
+  const trigger = hostElement("section", { "on-intersect-enter": "10px: #recv.go()" });
+  document.body.appendChild(trigger);
+  await flush();
+  assert.equal(FakeIntersectionObserver.instances.length, 1);
+  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "10px");
+
+  trigger.setAttribute("on-intersect-enter", "20px: #recv.go()");
+  assert.equal(FakeIntersectionObserver.instances.length, 2);
+  assert.equal(FakeIntersectionObserver.instances[0]!.observed.length, 0, "the old observer was disconnected");
+  assert.equal(FakeIntersectionObserver.instances[1]!.rootMargin, "20px");
+
+  trigger.remove();
+  assert.equal(FakeIntersectionObserver.instances[1]!.observed.length, 0, "disconnect tears down the observer");
 });

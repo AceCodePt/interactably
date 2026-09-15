@@ -33,6 +33,7 @@ const coreFiles = [
   "registry/interactable/events.ts",
   "registry/interactable/executor.ts",
   "registry/interactable/implementation-event.ts",
+  "registry/interactable/intersect.ts",
   "registry/interactable/interaction-event.ts",
   "registry/interactable/keys.ts",
   "registry/interactable/parser.ts",

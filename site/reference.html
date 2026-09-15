@@ -226,12 +226,15 @@
           <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition</td></tr>
           <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
           <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
-          <tr><td><code class="inline-code">parse(value)</code></td><td>Parse an attribute string into phrases (cached)</td></tr>
+          <tr><td><code class="inline-code">parse(value, eventName?)</code></td><td>Parse an attribute string into phrases (cached by event name and value)</td></tr>
           <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
           <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class</td></tr>
-          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>)</td></tr>
-          <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is an event some implementation on <code class="inline-code">el</code> declares</td></tr>
+          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code></td></tr>
+          <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is an intersect name or an event some implementation on <code class="inline-code">el</code> declares</td></tr>
           <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
+          <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s <code class="inline-code">IntersectionObserver</code>s, one per <code class="inline-code">(threshold, rootMargin)</code></td></tr>
+          <tr><td><code class="inline-code">normaliseRootMargin(margin?)</code></td><td>Normalise and validate a CSS root-margin string (<code class="inline-code">undefined</code>/empty &rarr; <code class="inline-code">"0px"</code>; throws otherwise)</td></tr>
+          <tr><td><code class="inline-code">INTERSECT_THRESHOLDS</code></td><td>The intersect name &rarr; threshold table (<code class="inline-code">intersect-enter</code> 0, <code class="inline-code">intersect-half</code> 0.5, <code class="inline-code">intersect-full</code> 1)</td></tr>
           <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive)</td></tr>
           <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
           <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
@@ -249,7 +252,7 @@
           <tr><td><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code></td><td>Modifiers — an implementation may not name a verb that way</td></tr>
           <tr><td><code class="inline-code">this</code></td><td>The only keyword</td></tr>
           <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
-          <tr><td><code class="inline-code">enter</code>, <code class="inline-code">escape</code>, <code class="inline-code">space</code>, &hellip;</td><td>Key names, matching <code class="inline-code">KeyboardEvent.key</code> case-insensitively, one per phrase, under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code></td></tr>
+          <tr><td><code class="inline-code">enter</code>, <code class="inline-code">escape</code>, <code class="inline-code">space</code>, &hellip;</td><td>Key names, matching <code class="inline-code">KeyboardEvent.key</code> case-insensitively, one per phrase, under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code>; under the intersect triggers the key is a CSS root-margin string instead</td></tr>
         </tbody>
       </table>
     </div>

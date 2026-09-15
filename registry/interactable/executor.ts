@@ -1,5 +1,7 @@
 import { parse } from "@interactable/parser.ts";
 import { matchesKey } from "@interactable/keys.ts";
+import { normaliseRootMargin } from "@interactable/intersect.ts";
+import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { Arg, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
 
@@ -33,7 +35,7 @@ export function clearPhraseState(el: Element): void {
 export function runPhrases(source: Element, value: string, ev: Event): void {
   let phrases: Phrase[];
   try {
-    phrases = parse(value);
+    phrases = parse(value, ev.type);
   } catch (err) {
     console.error("[Interactable]", err);
     return;
@@ -48,13 +50,16 @@ export function runPhrases(source: Element, value: string, ev: Event): void {
 }
 
 function runPhrase(source: Element, value: string, index: number, phrase: Phrase, ev: Event): void {
-  if (phrase.key !== undefined) {
-    if (!KEYBOARD_EVENT_TYPES.has(ev.type)) {
-      logOnce(source, `key "${phrase.key}" on non-keyboard event "${ev.type}"; phrase skipped`);
-      return;
+  if (KEYBOARD_EVENT_TYPES.has(ev.type)) {
+    if (phrase.key !== undefined) {
+      const keyboardEvent = ev as KeyboardEvent;
+      if (typeof keyboardEvent.key !== "string" || !matchesKey(keyboardEvent, phrase.key)) return;
     }
-    const keyboardEvent = ev as KeyboardEvent;
-    if (typeof keyboardEvent.key !== "string" || !matchesKey(keyboardEvent, phrase.key)) return;
+  } else if (ev instanceof ImplementationEvent && ev.key !== undefined) {
+    if (normaliseRootMargin(phrase.key) !== ev.key) return;
+  } else if (phrase.key !== undefined) {
+    logOnce(source, `key "${phrase.key}" on non-keyboard event "${ev.type}"; phrase skipped`);
+    return;
   }
 
   const key = `${value}\u0000${index}`;

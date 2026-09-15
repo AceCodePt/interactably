@@ -8,6 +8,12 @@ export { NotReadyError, bindEvents, toNumber, valueOf, writeValue } from "@behav
 export type { BindEventsOptions, BoundEvents, ImplementationInstance } from "@behaviors/implementation-utils.ts";
 export { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 export { parse } from "@interactable/parser.ts";
+export {
+  INTERSECT_THRESHOLDS,
+  normaliseRootMargin,
+  syncIntersect,
+  teardownIntersect,
+} from "@interactable/intersect.ts";
 export { dispatchInteraction } from "@interactable/dispatch.ts";
 export type { DispatchInteractionOptions } from "@interactable/dispatch.ts";
 export { InteractionEvent } from "@interactable/interaction-event.ts";
