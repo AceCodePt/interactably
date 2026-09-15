@@ -58,8 +58,6 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
   }
 
   const key = `${value}\u0000${index}`;
-  const state = stateOf(source);
-  clearPending(state, key, phrase.units.length);
 
   const walkState: WalkState = {
     source,
@@ -206,23 +204,6 @@ function applyModifier(state: WalkState, modifier: Modifier): Outcome | undefine
 
 function chainKeyOf(key: string, unitIndex: number): string {
   return `${key}\u0000${unitIndex}`;
-}
-
-function clearPending(state: ElementPhraseState, key: string, unitCount: number): void {
-  const pauseKey = pauseTimerKey(key);
-  const pending = state.timers.get(pauseKey);
-  if (pending !== undefined) {
-    clearTimeout(pending);
-    state.timers.delete(pauseKey);
-  }
-  for (let unitIndex = 0; unitIndex < unitCount; unitIndex++) {
-    const chainKey = chainKeyOf(key, unitIndex);
-    const timer = state.timers.get(chainKey);
-    if (timer !== undefined) {
-      clearTimeout(timer);
-      state.timers.delete(chainKey);
-    }
-  }
 }
 
 function scheduleResume(state: WalkState, ms: number): void {

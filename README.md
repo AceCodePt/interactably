@@ -198,7 +198,7 @@ class InteractionEvent extends Event {
 - **Non-bubbling.** A host receives interactions aimed at itself and nothing else — no `if (e.target !== el)` guards.
 - **`preventDefault()` aborts the rest of the chain.** This is the guard-verb mechanism: `validate().send()`, with `||` as the failure branch.
 - **Four return channels, because a DOM event has none.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened". So the host writes `handled` (an implementation owned the verb), `error` (validation or the verb body threw), `result` (the return value) and `pauseMs` (a verb paused the chain) onto the event, and the executor reads them after dispatch.
-- **`pauseMs` defers the chain, it does not abort it.** The `delay(ms)` modifier — and any verb that sets `e.pauseMs = N` — stops the chain where it is, schedules the remainder to run N ms later, and returns. A re-fire of the same phrase cancels the pending remainder (latest wins), and disconnecting the element drops it — the timer lives in the same per-element state as `debounce`.
+- **`pauseMs` defers the chain, it does not abort it.** The `delay(ms)` modifier — and any verb that sets `e.pauseMs = N` — stops the chain where it is, schedules the remainder to run N ms later, and returns. A re-fire that reaches the same pause reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. Disconnecting the element drops it — the timer lives in the same per-element state as `debounce`.
 - **No `isTrusted` gate.** Tests dispatch real DOM events on triggers.
 - **The browser's `command` event plays no part.** A page can also use native invokers; an implementation may listen to `command` like any other DOM event.
 
@@ -278,7 +278,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
         on-click="this.delay(300).setAttr({name: 'aria-busy', value: 'true'})">…</button>
 ```
 
-The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms` later, and returns. A re-fire of the same phrase cancels the pending remainder (latest wins), and the timer is keyed per element and dropped on disconnect. The copy-flash pattern is unchanged: `this.copy(#snippet).delay(1500).removeAttr('data-copied')` marks the button, pauses, and the reset runs 1.5 s later. A pause is a scheduling decision the executor owns — never an awaited interaction.
+The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms` later, and returns. A re-fire that reaches the same delay reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. The timer is keyed per element and dropped on disconnect. The copy-flash pattern is unchanged: `this.copy(#snippet).delay(1500).removeAttr('data-copied')` marks the button, pauses, and the reset runs 1.5 s later. A pause is a scheduling decision the executor owns — never an awaited interaction.
 
 ### `prevent-default` and `no-propagate`
 

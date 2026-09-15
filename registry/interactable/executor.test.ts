@@ -567,6 +567,18 @@ test("once() with a delay is spent when the walk passes it", async () => {
   assert.equal(showCalls, 1);
 });
 
+test("a second click does not cancel once-gated delayed work", async () => {
+  const receiver = el("m");
+  let showCalls = 0;
+  wireHost(receiver, { show: () => void showCalls++ });
+
+  const trigger = el();
+  run(trigger, "#m.once().delay(20).show()", new Event("click"));
+  run(trigger, "#m.once().delay(20).show()", new Event("click"));
+  await delay(60);
+  assert.equal(showCalls, 1, "the re-fire is gated before the delay, so the first run's resume survives");
+});
+
 test("clearPhraseState cancels a pending delay resume", async () => {
   const receiver = el("m");
   let showCalls = 0;
