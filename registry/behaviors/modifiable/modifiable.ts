@@ -18,6 +18,7 @@ export const modifiable = defineImplementation(
       clear: "undefined",
       reset: "undefined",
       compute: "undefined",
+      is: { op: "'==' | '!=' | '>' | '<' | '>=' | '<='", value: "number | string" },
     },
   },
   (el, attrs) => {
@@ -64,6 +65,9 @@ export const modifiable = defineImplementation(
       clear: () => write(""),
       reset: () => write(el.getAttribute("value") ?? ""),
       compute: () => compute(),
+      is: (e, { op, value }) => {
+        if (!compare(rawValue(el), value, op)) e.preventDefault();
+      },
       connectedCallback: () => compute(),
     };
   },
@@ -71,4 +75,27 @@ export const modifiable = defineImplementation(
 
 function hasValue(el: Element): el is Element & { value: string } {
   return "value" in el;
+}
+
+type Op = "==" | "!=" | ">" | "<" | ">=" | "<=";
+
+function rawValue(el: HTMLElement): string {
+  return "value" in el ? String((el as { value: unknown }).value) : el.textContent ?? "";
+}
+
+function compare(actual: string, expected: number | string, op: Op): boolean {
+  switch (op) {
+    case "==":
+      return actual === String(expected);
+    case "!=":
+      return actual !== String(expected);
+    case ">":
+      return Number(actual) > Number(expected);
+    case "<":
+      return Number(actual) < Number(expected);
+    case ">=":
+      return Number(actual) >= Number(expected);
+    case "<=":
+      return Number(actual) <= Number(expected);
+  }
 }

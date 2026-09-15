@@ -8,7 +8,6 @@ import "./vendor/prevent-default.js";
 import "./vendor/attributable.js";
 import "./vendor/logger.js";
 import "./vendor/validatable.js";
-import "./vendor/condition.js";
 import "./vendor/copyable.js";
 import "./vendor/delay.js";
 import "./vendor/no-propagate.js";

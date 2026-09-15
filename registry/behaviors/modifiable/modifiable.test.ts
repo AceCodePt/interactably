@@ -315,3 +315,44 @@ test("a missing #id dependency counts as zero", async () => {
   await flush();
   assert.equal(out.textContent, "5");
 });
+
+test("is() passes when the comparison holds and guards when it fails", async () => {
+  const input = hostElement("input", { implements: "modifiable", value: "18" }) as HTMLInputElement;
+  document.body.appendChild(input);
+  await flush();
+
+  const pass = interact(input, "is", { op: ">=", value: 18 });
+  assert.equal(pass.defaultPrevented, false, "the chain continues when the comparison holds");
+
+  const guard = interact(input, "is", { op: ">", value: 18 });
+  assert.equal(guard.defaultPrevented, true, "preventDefault() aborts the chain when the comparison fails");
+});
+
+test("is() compares strings with ==", async () => {
+  const select = hostElement("select", { implements: "modifiable" }) as HTMLSelectElement;
+  const option = document.createElement("option");
+  option.value = "yes";
+  option.textContent = "yes";
+  select.appendChild(option);
+  document.body.appendChild(select);
+  await flush();
+
+  const pass = interact(select, "is", { op: "==", value: "yes" });
+  assert.equal(pass.defaultPrevented, false);
+
+  const guard = interact(select, "is", { op: "==", value: "no" });
+  assert.equal(guard.defaultPrevented, true);
+});
+
+test("is() reads the current value off an output element", async () => {
+  const output = hostElement("output", { implements: "modifiable" }) as HTMLOutputElement;
+  output.textContent = "7";
+  document.body.appendChild(output);
+  await flush();
+
+  const pass = interact(output, "is", { op: ">", value: 5 });
+  assert.equal(pass.defaultPrevented, false);
+
+  const guard = interact(output, "is", { op: "<", value: 5 });
+  assert.equal(guard.defaultPrevented, true);
+});

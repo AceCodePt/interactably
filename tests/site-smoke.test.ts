@@ -15,7 +15,6 @@ const KNOWN_BUNDLES = new Set([
   "auto-loader",
   "attributable",
   "auto-grow",
-  "condition",
   "copyable",
   "delay",
   "dirtyable",
@@ -276,7 +275,7 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   const age = byId("age") as HTMLInputElement;
   age.value = "18";
   age.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.equal(consent.hidden, false, "condition fires show() when the watched value crosses the threshold");
+  assert.equal(consent.hidden, false, "is() passes and show() opens the consent panel");
 
   const faq = byId("faq") as HTMLDetailsElement;
   assert.equal(faq.open, false);

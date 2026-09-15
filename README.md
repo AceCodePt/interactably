@@ -252,7 +252,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 
 | Implementation | Tags | Verbs | Config / state | What it does |
 | --- | --- | --- | --- | --- |
-| `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute` | `step`, `formula`, `invalid-value` | typed writes with clamping; evaluates a formula on `compute()` and on connect |
+| `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute`, `is` | `step`, `formula`, `invalid-value` | typed writes with clamping; evaluates a formula on `compute()` and on connect; `is({op, value})` is a guard verb that compares the element's value |
 | `dirtyable` | input, textarea, select, output | `markClean` | — | toggles `.is-dirty` while `el.value` differs from the connect-time baseline |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
 | `requestable` | any | `send`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency`, `after`, `error` + `status` state | fetch, swap the response into the DOM, run continuation phrases ([§ Asynchrony](#asynchrony)) |
@@ -265,7 +265,6 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `auto-grow` | textarea | — | — | auto-height textarea |
 | `storable` | any | `save`, `load`, `clear` | `key`, `type` (`local`/`session`), `attr` | persist a field's value to storage |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
-| `condition` | any | — | `watch`, `on`, `op`, `value`, `verb`, `target` | fire a verb on another element when a condition holds |
 | `copyable` | button | `copy` | `copied` state; `after`, `error` config | copies a target element's text to the clipboard; sets `data-copied` and runs a continuation phrase on success or failure |
 | `delay` | any | `delay` | — | pauses the chain: the links after `delay(ms)` run `ms` later ([below](#the-pause-mechanism)) |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
@@ -752,7 +751,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`value` → `data-value` → textContent) and write helpers |
 | `NotReadyError` | Error set on `e.error` when a verb reaches a host that has never connected |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `condition`, `copyable`, `delay`, `jsonTemplate` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `delay`, `jsonTemplate` |
 
 ---
 
