@@ -49,9 +49,9 @@
         <div class="tabs">
           <div class="tabbar">
             <button is="interactable-button" type="button" aria-expanded="true" aria-controls="demo-auto"
-                    on-click="#demo-auto.show(); #demo-is.hide()">Auto-loader &mdash; no is=</button>
+                    on-click="#demo-auto.show(); #demo-is.show(false)">Auto-loader &mdash; no is=</button>
             <button is="interactable-button" type="button" aria-expanded="false" aria-controls="demo-is"
-                    on-click="#demo-auto.hide(); #demo-is.show()">Explicit is= &mdash; faster</button>
+                    on-click="#demo-auto.show(false); #demo-is.show()">Explicit is= &mdash; faster</button>
           </div>
 
           <section is="interactable-section" id="demo-auto" implements="revealable" class="tabpanel" data-open="true">
@@ -470,7 +470,7 @@
           </details>
           <dialog is="interactable-dialog" id="dlg" implements="revealable">
             <p>A native <code class="inline-code">&lt;dialog&gt;</code>, opened with <code class="inline-code">showModal()</code>.</p>
-            <button is="interactable-button" type="button" on-click="#dlg.hide()">Close</button>
+            <button is="interactable-button" type="button" on-click="#dlg.show(false)">Close</button>
           </dialog>
           <div is="interactable-div" id="pop" implements="revealable" popover>
             A popover in the top layer, toggled through <code class="inline-code">showPopover()</code>.
@@ -498,7 +498,7 @@
 
 &lt;dialog is="interactable-dialog" id="dlg" implements="revealable"&gt;
   &lt;p&gt;A native &lt;code&gt;&amp;lt;dialog&amp;gt;&lt;/code&gt;, opened with &lt;code&gt;showModal()&lt;/code&gt;.&lt;/p&gt;
-  &lt;button is="interactable-button" on-click="#dlg.hide()"&gt;Close&lt;/button&gt;
+  &lt;button is="interactable-button" on-click="#dlg.show(false)"&gt;Close&lt;/button&gt;
 &lt;/dialog&gt;
 
 &lt;div is="interactable-div" id="pop" implements="revealable" popover&gt;
@@ -521,18 +521,18 @@
         <div class="demo">
           <div class="tabbar">
             <button is="interactable-button" type="button"
-                    on-click="#tab-overview.show(); #tab-specs.hide(); #tab-notes.hide()">Overview</button>
+                    on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)">Overview</button>
             <button is="interactable-button" type="button"
-                    on-click="#tab-overview.hide(); #tab-specs.show(); #tab-notes.hide()">Specs</button>
+                    on-click="#tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false)">Specs</button>
             <button is="interactable-button" type="button"
-                    on-click="#tab-overview.hide(); #tab-specs.hide(); #tab-notes.show()">Notes</button>
+                    on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()">Notes</button>
           </div>
           <section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" data-open="true">
             <p><strong>Overview.</strong> A plain <code class="inline-code">&lt;section&gt;</code> whose visibility is driven by
             <code class="inline-code">revealable</code>. The other two panels stay <code class="inline-code">hidden</code> until you pick them.</p>
           </section>
           <section is="interactable-section" id="tab-specs" implements="revealable" class="tabpanel" hidden>
-            <p><strong>Specs.</strong> One phrase, three verbs: <code class="inline-code">#tab-specs.show(); #tab-overview.hide(); #tab-notes.hide()</code>.</p>
+            <p><strong>Specs.</strong> One phrase, three verbs: <code class="inline-code">#tab-specs.show(); #tab-overview.show(false); #tab-notes.show(false)</code>.</p>
           </section>
           <section is="interactable-section" id="tab-notes" implements="revealable" class="tabpanel" hidden>
             <p><strong>Notes.</strong> The verbs can be anything — <code class="inline-code">set()</code>, <code class="inline-code">setAttr()</code>,
@@ -552,11 +552,11 @@
           </div>
           <pre class="code" id="code-ex-tabs" data-lang="html"><code>&lt;div class="tabbar"&gt;
   &lt;button is="interactable-button"
-          on-click="#tab-overview.show(); #tab-specs.hide(); #tab-notes.hide()"&gt;Overview&lt;/button&gt;
+          on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)"&gt;Overview&lt;/button&gt;
   &lt;button is="interactable-button"
-          on-click="#tab-overview.hide(); #tab-specs.show(); #tab-notes.hide()"&gt;Specs&lt;/button&gt;
+          on-click="#tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false)"&gt;Specs&lt;/button&gt;
   &lt;button is="interactable-button"
-          on-click="#tab-overview.hide(); #tab-specs.hide(); #tab-notes.show()"&gt;Notes&lt;/button&gt;
+          on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()"&gt;Notes&lt;/button&gt;
 &lt;/div&gt;
 
 &lt;section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" data-open="true"&gt;
@@ -568,6 +568,73 @@
 &lt;section is="interactable-section" id="tab-notes" implements="revealable" class="tabpanel" hidden&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;</code></pre>
+        </div>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-pkg">Package-manager tabs from one radio group</h2>
+        <p class="ex-note">
+          Three radios named <code class="inline-code">manager</code>, three panels &mdash; no group attribute, no
+          <code class="inline-code">hide()</code> calls. <code class="inline-code">revealable</code> derives the
+          exclusivity from the browser&rsquo;s radio group: picking <em>pnpm</em> sends <code class="inline-code">show(false)</code>
+          to the other two panels, because their radios are that radio&rsquo;s siblings. Each panel&rsquo;s
+          <code class="inline-code">aria-controls</code> is wired onto its radio at connect.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <label><input is="interactable-input" type="radio" name="manager" checked
+                          on-change="#pm-1.show()"> npm</label>
+            <label><input is="interactable-input" type="radio" name="manager"
+                          on-change="#pm-2.show()"> pnpm</label>
+            <label><input is="interactable-input" type="radio" name="manager"
+                          on-change="#pm-3.show()"> yarn</label>
+          </div>
+          <div is="interactable-div" id="pm-1" implements="revealable" class="tabpanel" data-open="true">
+            <p>npm ships with Node. This panel&rsquo;s radio was given <code class="inline-code">aria-controls="pm-1"</code>
+            at connect &mdash; no attribute was written by hand.</p>
+          </div>
+          <div is="interactable-div" id="pm-2" implements="revealable" class="tabpanel" hidden>
+            <p>pnpm is the fast, disk-efficient one. Selecting it closes the npm and yarn panels &mdash; the radio group
+            is the group.</p>
+          </div>
+          <div is="interactable-div" id="pm-3" implements="revealable" class="tabpanel" hidden>
+            <p>yarn is the classic alternative. No <code class="inline-code">show(false)</code> phrase names it from the
+            npm or pnpm radios; the exclusivity does.</p>
+          </div>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-ex-pkg)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-pkg" data-lang="html"><code>&lt;div class="row"&gt;
+  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager" checked
+                on-change="#pm-1.show()"&gt; npm&lt;/label&gt;
+  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager"
+                on-change="#pm-2.show()"&gt; pnpm&lt;/label&gt;
+  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager"
+                on-change="#pm-3.show()"&gt; yarn&lt;/label&gt;
+&lt;/div&gt;
+
+&lt;div is="interactable-div" id="pm-1" implements="revealable" class="tabpanel" data-open="true"&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div is="interactable-div" id="pm-2" implements="revealable" class="tabpanel" hidden&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div is="interactable-div" id="pm-3" implements="revealable" class="tabpanel" hidden&gt;
+  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;/div&gt;</code></pre>
         </div>
       </details>
     </section>
@@ -586,7 +653,7 @@
       <div class="example-body">
         <div class="demo">
           <form is="interactable-form" id="signup" novalidate implements="prevent-default validatable attributable"
-                on-submit="#signup-alert.hide(); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()">
+                on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()">
             <div class="row">
               <label>Email
                 <input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com">
@@ -610,7 +677,7 @@
           </div>
           <pre class="code" id="code-ex-valid" data-lang="html"><code>&lt;form is="interactable-form" id="signup" novalidate
       implements="prevent-default validatable attributable"
-      on-submit="#signup-alert.hide(); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()"&gt;
+      on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()"&gt;
   &lt;label&gt;Email
     &lt;input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com"&gt;
   &lt;/label&gt;
@@ -739,7 +806,7 @@
           <form is="interactable-form" id="order" novalidate implements="prevent-default requestable"
                 requestable-url="/api/orders" requestable-method="post"
                 requestable-target="#receipt"
-                on-response="#receipt.show(); #alert.hide()"
+                on-response="#receipt.show(); #alert.show(false)"
                 on-request-error="#alert.show()"
                 on-submit="this.send()">
             <label>Qty
@@ -765,7 +832,7 @@
       implements="prevent-default requestable"
       requestable-url="/api/orders" requestable-method="post"
       requestable-target="#receipt"
-      on-response="#receipt.show(); #alert.hide()"
+      on-response="#receipt.show(); #alert.show(false)"
       on-request-error="#alert.show()"
       on-submit="this.send()"&gt;
   &lt;label&gt;Qty

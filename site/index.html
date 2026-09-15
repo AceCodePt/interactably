@@ -49,9 +49,9 @@
         <div class="tabs">
           <div class="tabbar">
             <button is="interactable-button" type="button" aria-expanded="true" aria-controls="quick-auto"
-                    on-click="#quick-auto.show(); #quick-is.hide()">Auto-loader &mdash; no is=</button>
+                    on-click="#quick-auto.show(); #quick-is.show(false)">Auto-loader &mdash; no is=</button>
             <button is="interactable-button" type="button" aria-expanded="false" aria-controls="quick-is"
-                    on-click="#quick-auto.hide(); #quick-is.show()">Explicit is= &mdash; faster</button>
+                    on-click="#quick-auto.show(false); #quick-is.show()">Explicit is= &mdash; faster</button>
           </div>
 
           <section is="interactable-section" id="quick-auto" implements="revealable" class="tabpanel" data-open="true">
