@@ -79,7 +79,17 @@ function strategyOf(el: HTMLElement): Strategy {
 }
 
 function syncAria(el: HTMLElement, source: Element, open: boolean): void {
-  if (source === el || !(source instanceof HTMLElement)) return;
-  source.setAttribute("aria-expanded", String(open));
-  if (el.id !== "") source.setAttribute("aria-controls", el.id);
+  if (el.id === "") return;
+  if (source instanceof HTMLElement && source !== el && controlsOf(source).length === 0) {
+    source.setAttribute("aria-controls", el.id);
+  }
+  for (const controller of document.querySelectorAll("[aria-controls]")) {
+    if (controlsOf(controller).includes(el.id)) {
+      controller.setAttribute("aria-expanded", String(open));
+    }
+  }
+}
+
+function controlsOf(el: Element): string[] {
+  return (el.getAttribute("aria-controls") ?? "").split(/\s+/).filter((token) => token !== "");
 }

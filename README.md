@@ -319,7 +319,7 @@ A keyed `on-keydown` phrase that *replaces* a browser default should always carr
 | popover | `el.hasAttribute("popover")` | `el.showPopover()` | `el.matches(":popover-open")` |
 | anything else | fallback | `data-open` | `data-open` |
 
-Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling come with the first three for free; the fourth row is the only one that invents anything. `show`/`hide`/`toggle` also keep the triggering element's `aria-expanded` / `aria-controls` in sync.
+Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling come with the first three for free; the fourth row is the only one that invents anything. `show`/`hide`/`toggle` also keep the panel's accessibility wiring current: every element whose `aria-controls` names the panel gets `aria-expanded` set to the panel's state, and a trigger that declares none gets `aria-controls` added. Tab pairs where each button controls its own panel therefore stay correct — hiding one panel collapses the button that controls it, whoever fired the verb.
 
 ---
 

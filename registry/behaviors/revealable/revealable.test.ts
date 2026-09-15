@@ -197,18 +197,56 @@ test("authored data-open renders at connect", async () => {
   assert.equal(closed.hidden, true);
 });
 
-test("ARIA sync sets aria-expanded and aria-controls on the source", async () => {
+test("ARIA sync wires up a bare trigger and sets aria-expanded on every controller", async () => {
   const panel = hostElement("section", { implements: "revealable", id: "panel", hidden: "" });
-  const trigger = document.createElement("button");
-  document.body.append(panel, trigger);
+  const bare = document.createElement("button");
+  const declared = document.createElement("button");
+  declared.setAttribute("aria-controls", "panel");
+  document.body.append(panel, bare, declared);
   await flush();
 
-  interact(panel, "show", trigger);
-  assert.equal(trigger.getAttribute("aria-expanded"), "true");
-  assert.equal(trigger.getAttribute("aria-controls"), "panel");
+  interact(panel, "show", bare);
+  assert.equal(bare.getAttribute("aria-controls"), "panel");
+  assert.equal(bare.getAttribute("aria-expanded"), "true");
+  assert.equal(declared.getAttribute("aria-expanded"), "true");
 
-  interact(panel, "hide", trigger);
-  assert.equal(trigger.getAttribute("aria-expanded"), "false");
+  interact(panel, "hide", declared);
+  assert.equal(bare.getAttribute("aria-expanded"), "false");
+  assert.equal(declared.getAttribute("aria-expanded"), "false");
+});
+
+test("a trigger of one panel is not rewritten when it triggers another panel", async () => {
+  const auto = hostElement("section", { implements: "revealable", id: "tab-auto", hidden: "" });
+  const is = hostElement("section", { implements: "revealable", id: "tab-is", hidden: "" });
+  const tabA = document.createElement("button");
+  tabA.setAttribute("aria-controls", "tab-auto");
+  const tabB = document.createElement("button");
+  tabB.setAttribute("aria-controls", "tab-is");
+  document.body.append(auto, is, tabA, tabB);
+  await flush();
+
+  tabA.setAttribute("aria-expanded", "true");
+  tabB.setAttribute("aria-expanded", "false");
+
+  const event = new InteractionEventClass({
+    verb: "hide",
+    arg: undefined,
+    source: tabB,
+    originalEvent: new Event("interaction"),
+  });
+  auto.dispatchEvent(event);
+  is.dispatchEvent(
+    new InteractionEventClass({
+      verb: "show",
+      arg: undefined,
+      source: tabB,
+      originalEvent: new Event("interaction"),
+    }),
+  );
+
+  assert.equal(tabB.getAttribute("aria-controls"), "tab-is", "the trigger's own aria-controls is untouched");
+  assert.equal(tabA.getAttribute("aria-expanded"), "false");
+  assert.equal(tabB.getAttribute("aria-expanded"), "true");
 });
 
 test("no ARIA sync when the element triggers itself", async () => {

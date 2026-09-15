@@ -327,4 +327,13 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(receipt.hidden, false);
   assert.equal(byId("alert").hidden, true);
   assert.equal(form.hasAttribute("data-status"), false);
+
+  const tabAuto = byId("demo-auto").parentElement!.querySelector(".tabbar button[aria-controls='demo-auto']")!;
+  const tabExplicit = document.querySelector(".tabbar button[aria-controls='demo-is']")!;
+  click(tabExplicit);
+  assert.equal(tabAuto.getAttribute("aria-expanded"), "false", "hiding the sibling panel collapses its controller");
+  assert.equal(tabExplicit.getAttribute("aria-expanded"), "true");
+  click(tabAuto);
+  assert.equal(tabAuto.getAttribute("aria-expanded"), "true");
+  assert.equal(tabExplicit.getAttribute("aria-expanded"), "false", "exactly one tab reads expanded");
 });
