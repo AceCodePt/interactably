@@ -1125,36 +1125,47 @@ code, pre, kbd {
 .tabs .tabbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-bottom: 0.75rem;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .tabs .tabbar button {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+  appearance: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
   color: var(--muted);
   font: 650 0.78rem/1 var(--mono);
   letter-spacing: 0.02em;
-  padding: 0.45rem 0.85rem;
-  border-radius: 8px;
+  white-space: nowrap;
+  padding: 0.6rem 0.85rem 0.55rem;
+  margin-bottom: -1px;
+  border-radius: 8px 8px 0 0;
   cursor: pointer;
 }
 
 .tabs .tabbar button:hover {
-  border-color: var(--accent);
   color: var(--fg);
+  background: var(--surface-3);
+}
+
+.tabs .tabbar button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 6px 6px 0 0;
 }
 
 .tabs .tabbar button[aria-expanded="true"] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
   color: var(--accent-strong);
+  background: var(--surface-2);
+  border-bottom-color: var(--accent);
 }
 
 .tabs .tabpanel {
   padding: 1rem 1.1rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
   background: var(--surface-2);
 }
 
