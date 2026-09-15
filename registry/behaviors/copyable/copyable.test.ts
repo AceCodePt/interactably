@@ -7,6 +7,7 @@ import type { InteractionEvent } from "@interactable/interaction-event.ts";
 let dom: JSDOM;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
 let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
+let RegistryChangedEvent: string;
 
 before(async () => {
   dom = setupJsdom();
@@ -17,6 +18,7 @@ before(async () => {
   defineInteractableHost("button");
   defineInteractableHost("section");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
+  ({ REGISTRY_CHANGED_EVENT: RegistryChangedEvent } = await import("@behaviors/implementation-registry.ts"));
 });
 
 after(() => {
@@ -109,13 +111,13 @@ test("an empty target warns without flashing", async (t) => {
   assert.equal(button.hasAttribute("data-copied"), false);
 });
 
-test("a successful copy runs copyable-after", async () => {
+test("a successful copy runs on-copy", async () => {
   installClipboard(async () => {});
   const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
   const button = hostElement("button", {
     implements: "copyable",
     id: "copy-btn",
-    "copyable-after": "#receipt.show()",
+    "on-copy": "#receipt.show()",
   });
   const code = hostElement("pre", { id: "code" });
   code.textContent = "copy me";
@@ -127,7 +129,7 @@ test("a successful copy runs copyable-after", async () => {
   assert.equal(receipt.getAttribute("data-open"), "true");
 });
 
-test("a failed copy runs copyable-error and never marks copied", async () => {
+test("a failed copy warns and never marks copied or fires on-copy", async () => {
   installClipboard(async () => {
     throw new Error("denied");
   });
@@ -135,7 +137,7 @@ test("a failed copy runs copyable-error and never marks copied", async () => {
   const button = hostElement("button", {
     implements: "copyable",
     id: "copy-btn",
-    "copyable-error": "#alert.show()",
+    "on-copy": "#alert.show()",
   });
   const code = hostElement("pre", { id: "code" });
   code.textContent = "copy me";
@@ -144,16 +146,66 @@ test("a failed copy runs copyable-error and never marks copied", async () => {
 
   interact(button, "copy", code);
   await flush();
-  assert.equal(alert.getAttribute("data-open"), "true");
+  assert.equal(alert.hidden, true);
   assert.equal(button.hasAttribute("data-copied"), false);
 });
 
-test("copyable-after runs with this bound to the button", async () => {
+test("a native copy event on a copyable element does not run on-copy", async (t) => {
+  const warn = t.mock.method(console, "warn");
+  installClipboard(async () => {});
+  const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
+  const button = hostElement("button", {
+    implements: "copyable",
+    id: "copy-btn",
+    "on-copy": "#receipt.show()",
+  });
+  const code = hostElement("pre", { id: "code" });
+  code.textContent = "copy me";
+  document.body.append(button, code, receipt);
+  await flush();
+
+  button.dispatchEvent(new Event("copy"));
+  assert.equal(receipt.hidden, true, "the native clipboard event does not fire copyable's on-copy");
+  assert.equal(warn.mock.callCount(), 0, "a declared event never triggers the no-such-event warning");
+});
+
+test("a native copy event on a non-copyable element does run on-copy", async () => {
+  const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
+  const button = hostElement("button", { id: "copy-btn", "on-copy": "#receipt.show()" });
+  document.body.append(button, receipt);
+  await flush();
+
+  button.dispatchEvent(new Event("copy"));
+  assert.equal(receipt.hidden, false, "without copyable the plain DOM copy event fires the phrase");
+});
+
+test("implements added after wiring is respected at dispatch time", async () => {
+  installClipboard(async () => {});
+  const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
+  const button = hostElement("button", { id: "late-btn", "on-copy": "#receipt.show()" });
+  const code = hostElement("pre", { id: "code" });
+  code.textContent = "copy me";
+  document.body.append(button, code, receipt);
+  await flush();
+
+  button.dispatchEvent(new Event("copy"));
+  assert.equal(receipt.hidden, false, "before copyable attaches, the native copy event fires the phrase");
+
+  button.setAttribute("implements", "copyable");
+  document.dispatchEvent(new Event(RegistryChangedEvent));
+  await flush();
+  receipt.hidden = true;
+
+  button.dispatchEvent(new Event("copy"));
+  assert.equal(receipt.hidden, true, "once copyable declares copy, the native event no longer fires on-copy");
+});
+
+test("on-copy runs with this bound to the button", async () => {
   installClipboard(async () => {});
   const button = hostElement("button", {
     implements: "copyable attributable",
     id: "copy-btn",
-    "copyable-after": "this.setAttr({name: 'data-done', value: 'yes'})",
+    "on-copy": "this.setAttr({name: 'data-done', value: 'yes'})",
   });
   const code = hostElement("pre", { id: "code" });
   code.textContent = "copy me";

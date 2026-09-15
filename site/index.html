@@ -58,7 +58,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
                         on-click="this.copy(#code-quickstart-auto)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -78,7 +78,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
                         on-click="this.copy(#code-quickstart-is)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -169,7 +169,7 @@
           <span class="why-n">4</span>
           <div>
             <span class="why-q">Why should &ldquo;when the request finishes&rdquo; hide in a callback?</span>
-            <span class="why-a">The work that takes time owns its moment. The follow-up is a phrase in the markup: <code class="inline-code">requestable-after="#receipt.show()"</code>.</span>
+            <span class="why-a">The work that takes time owns its moment. The follow-up is a trigger attribute in the markup: <code class="inline-code">on-response="#receipt.show()"</code>.</span>
           </div>
         </li>
         <li>

@@ -71,11 +71,13 @@
       <article class="ref-card">
         <h3><code class="inline-code">requestable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">Fetch, swap the response into the DOM, run continuation phrases. GET is latest-wins; anything else is first-wins.</p>
+        <p class="ref-desc">Fetch, swap the response into the DOM, fire its own events. GET is latest-wins; anything else is first-wins.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">send</span><span class="verb-tag">abort</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">url</span><span class="verb-tag">method</span><span class="verb-tag">target</span><span class="verb-tag">swap</span><span class="verb-tag">include</span><span class="verb-tag">concurrency</span><span class="verb-tag">after</span><span class="verb-tag">error</span><span class="verb-tag">status (state)</span></div>
+        <div><span class="verb-tag">url</span><span class="verb-tag">method</span><span class="verb-tag">target</span><span class="verb-tag">swap</span><span class="verb-tag">include</span><span class="verb-tag">concurrency</span><span class="verb-tag">status (state)</span></div>
+        <p class="ref-labels">Events</p>
+        <div><span class="verb-tag">response</span><span class="verb-tag">request-error</span></div>
       </article>
 
       <article class="ref-card">
@@ -201,11 +203,13 @@
       <article class="ref-card">
         <h3><code class="inline-code">copyable</code></h3>
         <p class="ref-tags">button</p>
-        <p class="ref-desc">Copies a target element&rsquo;s text to the clipboard: <code class="inline-code">on-click="this.copy(#id)"</code>. Sets <code class="inline-code">data-copied</code> on the button on success.</p>
+        <p class="ref-desc">Copies a target element&rsquo;s text to the clipboard: <code class="inline-code">on-click="this.copy(#id)"</code>. Sets <code class="inline-code">data-copied</code> on the button and fires <code class="inline-code">copy</code> on success.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">copy</span></div>
         <p class="ref-labels">Config / state</p>
         <div><span class="verb-tag">copied (state)</span></div>
+        <p class="ref-labels">Events</p>
+        <div><span class="verb-tag">copy</span></div>
       </article>
 
     </div>
@@ -225,6 +229,8 @@
           <tr><td><code class="inline-code">parse(value)</code></td><td>Parse an attribute string into phrases (cached)</td></tr>
           <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
           <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class</td></tr>
+          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>)</td></tr>
+          <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is an event some implementation on <code class="inline-code">el</code> declares</td></tr>
           <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
           <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive)</td></tr>
           <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
@@ -252,7 +258,7 @@
     <div class="codeblock">
       <div class="codeblock-bar">
         <span class="codeblock-lang">Text</span>
-        <button is="interactable-button" class="copy-btn" implements="copyable attributable" copyable-after="this.delay(1500).removeAttr('data-copied')"
+        <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
                 on-click="this.copy(#code-reference-grammar)" type="button">
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>

@@ -20,9 +20,12 @@ export function defineImplementation<
     config?: Validated<C>;
     state?: Validated<S>;
     verbs: V & ValidatedSigs<V>;
+    events?: readonly string[];
   },
   factory: (el: El<T>, attrs: Attrs<C, S>) => Implementation<V>,
 ): ImplementationDef<T, C, S, V> {
+  const events = decl.events ?? [];
+  validateEvents(name, events);
   validateSlots(name, decl.config ?? {}, decl.state ?? {}, decl.verbs);
   registerImplementation({
     name,
@@ -30,9 +33,18 @@ export function defineImplementation<
     config: compileAttrs(decl.config ?? {}),
     state: compileAttrs(decl.state ?? {}),
     verbs: compileVerbs(decl.verbs),
+    events,
     factory: factory as unknown as NormalizedImplementationDef["factory"],
   });
-  return { name, tags: decl.tags, config: decl.config, state: decl.state, verbs: decl.verbs, factory };
+  return { name, tags: decl.tags, config: decl.config, state: decl.state, verbs: decl.verbs, events, factory };
+}
+
+function validateEvents(name: string, events: readonly string[]): void {
+  for (const event of events) {
+    if (typeof event !== "string" || event.trim() === "") {
+      throw new Error(`[Interactable] ${name} events: "${String(event)}" is not a valid event name`);
+    }
+  }
 }
 
 function validateSlots(

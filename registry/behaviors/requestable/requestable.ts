@@ -1,11 +1,12 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { runPhrases } from "@interactable/executor.ts";
+import { ImplementationEvent } from "@interactable/implementation-event.ts";
 
 type Policy = "latest" | "first" | "all";
 
 export const requestable = defineImplementation(
   "requestable",
   {
+    events: ["response", "request-error"],
     config: {
       url: "string | undefined",
       method: "'get' | 'post' | 'put' | 'delete' | 'patch' | undefined",
@@ -14,8 +15,6 @@ export const requestable = defineImplementation(
         "'innerHTML' | 'outerHTML' | 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend' | 'delete' | 'none' | undefined",
       include: "string | undefined",
       concurrency: "'latest' | 'first' | 'all' | undefined",
-      after: "string | undefined",
-      error: "string | undefined",
     },
     state: { status: "'idle' | 'loading' | 'error' | undefined" },
     verbs: { send: "undefined", abort: "undefined" },
@@ -68,8 +67,8 @@ export const requestable = defineImplementation(
             }
             applySwap(el, attrs.swap, attrs.target, html);
             finish(controller, false);
-            if (attrs.after !== undefined && el.isConnected) {
-              runPhrases(el, attrs.after, e.originalEvent);
+            if (el.isConnected) {
+              el.dispatchEvent(new ImplementationEvent("response", { originalEvent: e.originalEvent }));
             }
           })
           .catch((err: unknown) => {
@@ -82,8 +81,8 @@ export const requestable = defineImplementation(
               return;
             }
             finish(controller, true);
-            if (attrs.error !== undefined && el.isConnected) {
-              runPhrases(el, attrs.error, e.originalEvent);
+            if (el.isConnected) {
+              el.dispatchEvent(new ImplementationEvent("request-error", { originalEvent: e.originalEvent }));
             }
           });
       },

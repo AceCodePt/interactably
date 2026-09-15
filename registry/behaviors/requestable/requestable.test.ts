@@ -209,10 +209,11 @@ test("an out-of-set requestable-concurrency is rejected before anything is sent"
   assert.equal(el.hasAttribute("aria-busy"), false);
 });
 
-test("send sets status=loading and aria-busy synchronously; success clears both and runs after", async () => {
+test("send sets status=loading and aria-busy synchronously; success clears both and runs on-response", async (t) => {
+  const warn = t.mock.method(console, "warn");
   const el = await mount({
     "requestable-url": "/api",
-    "requestable-after": "#receipt.show()",
+    "on-response": "#receipt.show()",
     "requestable-target": "#receipt",
   });
   const receipt = revealable("section", "receipt");
@@ -229,10 +230,11 @@ test("send sets status=loading and aria-busy synchronously; success clears both 
   assert.equal(el.hasAttribute("aria-busy"), false);
   assert.equal(receipt.innerHTML, "<p>hi</p>");
   assert.equal(receipt.hidden, false);
+  assert.equal(warn.mock.callCount(), 0, "a declared event never triggers the no-such-event warning");
 });
 
-test("a non-ok response sets status=error and runs the error continuation", async () => {
-  const el = await mount({ "requestable-url": "/api", "requestable-error": "#alert.show()" });
+test("a non-ok response sets status=error and runs on-request-error", async () => {
+  const el = await mount({ "requestable-url": "/api", "on-request-error": "#alert.show()" });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
   await flush();
@@ -245,8 +247,22 @@ test("a non-ok response sets status=error and runs the error continuation", asyn
   assert.equal(alert.hidden, false);
 });
 
-test("abort() aborts the request and clears status and aria-busy without running a continuation", async () => {
-  const el = await mount({ "requestable-url": "/api", "requestable-after": "#receipt.show()" });
+test("a network failure sets status=error and fires on-request-error", async () => {
+  const el = await mount({ "requestable-url": "/api", "on-request-error": "#alert.show()" });
+  const alert = revealable("div", "alert");
+  document.body.appendChild(alert);
+  await flush();
+
+  interact(el, "send");
+  fetchCalls[0]!.reject(new Error("network down"));
+  await flush();
+  assert.equal(el.getAttribute("data-status"), "error");
+  assert.equal(el.hasAttribute("aria-busy"), false);
+  assert.equal(alert.hidden, false);
+});
+
+test("abort() aborts the request and clears status and aria-busy without running on-response", async () => {
+  const el = await mount({ "requestable-url": "/api", "on-response": "#receipt.show()" });
   const receipt = revealable("section", "receipt");
   document.body.appendChild(receipt);
   await flush();
@@ -261,11 +277,11 @@ test("abort() aborts the request and clears status and aria-busy without running
   assert.equal(receipt.hidden, true);
 });
 
-test("a response that replaces the element skips the continuation", async () => {
+test("a response that replaces the element skips on-response", async () => {
   const el = await mount({
     "requestable-url": "/api",
     "requestable-swap": "outerHTML",
-    "requestable-after": "#receipt.show()",
+    "on-response": "#receipt.show()",
   });
   const receipt = revealable("section", "receipt");
   document.body.appendChild(receipt);
