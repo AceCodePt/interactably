@@ -62,6 +62,7 @@
     "@types/jsdom": "^30.0.0",
     "@types/node": "^22.20.2",
     "jsdom": "^30.0.1",
+    "playwright": "^1.63.0",
     "rolldown": "^1.2.8",
     "shiki": "^4.4.3",
     "tsx": "^4.23.13",
