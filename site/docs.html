@@ -246,6 +246,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
             <tbody>
               <tr><td>Trigger</td><td><code class="inline-code">on-click="#pop.show()"</code></td><td>On <code class="inline-code">click</code>, run the phrase</td></tr>
               <tr><td>Implementation event</td><td><code class="inline-code">on-copy="#flash.show()"</code></td><td>On a copyable element <code class="inline-code">on-copy</code> is copyable&rsquo;s event and the native clipboard event doesn&rsquo;t fire it. Continuations now share trigger-attribute <code class="inline-code">once</code>/<code class="inline-code">debounce</code> semantics.</td></tr>
+              <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect-half="0px 0px -50% 0px: #nav.bump()"</code></td><td><code class="inline-code">IntersectionObserver</code> thresholds against the viewport; the phrase key is the <code class="inline-code">rootMargin</code>, and each <code class="inline-code">;</code> phrase observes its own margin</td></tr>
               <tr><td>Receiver</td><td><code class="inline-code">#pop.show()</code></td><td>Send verb <code class="inline-code">show()</code> to the element with <code class="inline-code">id="pop"</code></td></tr>
               <tr><td>Self</td><td><code class="inline-code">this.reset()</code></td><td>The element the phrase was read from (the trigger for <code class="inline-code">on-*</code>)</td></tr>
               <tr><td>Chain</td><td><code class="inline-code">#pop.show().focus()</code></td><td><code class="inline-code">.show()</code> then <code class="inline-code">.focus()</code> on the same receiver, in order</td></tr>
@@ -273,12 +274,24 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           itself, so there is no supported-events list. Every trigger names its event; there are no default interactions.
         </p>
 
+        <p>
+          Triggers are three kinds: <strong>native DOM events</strong>, <strong>implementation events</strong>, and <strong>synthetic triggers</strong>.
+          An implementation may declare its own events (<code class="inline-code">copy</code>, <code class="inline-code">response</code>,
+          <code class="inline-code">request-error</code>); on the element that implements it, <code class="inline-code">on-&lt;event&gt;</code> fires only
+          for the implementation&rsquo;s <code class="inline-code">ImplementationEvent</code>, never for a same-named DOM event. The synthetic names
+          <code class="inline-code">on-intersect-enter</code> / <code class="inline-code">on-intersect-half</code> / <code class="inline-code">on-intersect-full</code>
+          map to <code class="inline-code">IntersectionObserver</code> thresholds 0, 0.5 and 1 with the viewport as root, so they need no
+          <code class="inline-code">implements</code> and never warn about a missing event; the phrase key is the observer&rsquo;s
+          <code class="inline-code">rootMargin</code> (a CSS length/percentage string, or nothing for <code class="inline-code">0px</code>), and each
+          <code class="inline-code">;</code> phrase observes its own margin.
+        </p>
+
         <h3 id="rules">Rules <a class="anchor" href="#rules">#</a></h3>
         <ol>
           <li><strong>Parens are mandatory.</strong> <code class="inline-code">#pop.show</code> is a CSS selector; <code class="inline-code">#pop.show()</code> is a call.</li>
           <li><strong>Receivers are <code class="inline-code">#id</code> or <code class="inline-code">this</code>.</strong> Ids may not contain <code class="inline-code">.</code>. Class or attribute selectors are never receivers.</li>
           <li><strong>One receiver per unit.</strong> A <code class="inline-code">.</code> chain stays on one receiver; <code class="inline-code">&amp;&amp;</code>/<code class="inline-code">||</code> units may each name a different one. There is no group form: <code class="inline-code">#a.hide(); #b.hide()</code> is still two phrases.</li>
-          <li><strong>Keys are legal only under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code>, one per phrase.</strong> Two keys is two phrases: <code class="inline-code">enter: #f.send(); numpadenter: #f.send()</code>. Names match <code class="inline-code">KeyboardEvent.key</code> case-insensitively; <code class="inline-code">space</code> means <code class="inline-code">" "</code>.</li>
+          <li><strong>Keys are legal only under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code> and under the three intersect triggers, one per phrase.</strong> Two keyboard keys is two phrases: <code class="inline-code">enter: #f.send(); numpadenter: #f.send()</code>. Keyboard names match <code class="inline-code">KeyboardEvent.key</code> case-insensitively; <code class="inline-code">space</code> means <code class="inline-code">" "</code>. Under <code class="inline-code">on-intersect-enter</code> / <code class="inline-code">on-intersect-half</code> / <code class="inline-code">on-intersect-full</code> the key is that phrase&rsquo;s <code class="inline-code">rootMargin</code> &mdash; a CSS length/percentage string that selects which crossing fires it (a keyless phrase matches <code class="inline-code">0px</code>).</li>
           <li><strong>A modifier is a step in a receiver&rsquo;s chain and governs the rest of that chain from where it sits.</strong> <code class="inline-code">#a.once().x().y()</code> runs both once ever; <code class="inline-code">#a.x().once().y()</code> runs <code class="inline-code">x</code> every time and <code class="inline-code">y</code> once. It never crosses <code class="inline-code">&amp;&amp;</code>: each receiver carries its own modifiers, so <code class="inline-code">#a.once().x() &amp;&amp; #b.y()</code> runs <code class="inline-code">#b.y()</code> every time the first half runs. <code class="inline-code">debounce</code>/<code class="inline-code">throttle</code> are legal only right after the ref (a timer mid-chain is a parse error); <code class="inline-code">once</code> and <code class="inline-code">delay</code> may sit anywhere. Modifiers stack and repeat freely — the parser has no duplicate check.</li>
           <li><strong><code class="inline-code">;</code> is independent, <code class="inline-code">.</code> is sequential and abortable, <code class="inline-code">&amp;&amp;</code>/<code class="inline-code">||</code> continue across receivers.</strong> A <code class="inline-code">.</code> chain stops if a verb&rsquo;s event is <code class="inline-code">preventDefault()</code>-ed, if the verb threw, or if no implementation owns the verb. <code class="inline-code">&amp;&amp;</code> runs the next unit only if the previous one completed; <code class="inline-code">||</code> runs it only if the previous one was stopped by a guard&rsquo;s <code class="inline-code">preventDefault()</code>. An error or unowned verb stops both &mdash; <code class="inline-code">||</code> fires only on a guard abort. One phrase is all <code class="inline-code">&amp;&amp;</code> or all <code class="inline-code">||</code>; mixing is a parse error.</li>
           <li><strong><code class="inline-code">once()</code> spends on passing through, not on completion.</strong> The gate is about entry: the moment the walk reaches the <code class="inline-code">once</code> it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.</li>
@@ -368,7 +381,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           and the report is deferred one turn so the imports that follow can register it first; only a name still missing when the current script settles is
           reported with <code class="inline-code">console.error</code>. When it registers later, the registry dispatches <code class="inline-code">interactably:register</code>
           and every connected host re-runs its attach pass. Markup may therefore precede the imports. Config and state attributes are delivered through the
-          class&rsquo;s <code class="inline-code">observedAttributes</code> snapshot plus one <code class="inline-code">MutationObserver</code> per element, never for <code class="inline-code">on-*</code>.
+          class&rsquo;s <code class="inline-code">observedAttributes</code> snapshot plus one <code class="inline-code">MutationObserver</code> per element, never for <code class="inline-code">on-*</code> &mdash; the three intersect attributes are the one exception, observed statically so the host can rebuild their observers when they change.
         </p>
 
         <h3 id="four-kinds">Four kinds of element <a class="anchor" href="#four-kinds">#</a></h3>
@@ -794,7 +807,7 @@ export const attributable = defineImplementation("attributable", {
         <p><strong>Continuations run only if the element is still connected.</strong> A response that replaces the requestable element itself (<code class="inline-code">requestable-swap="outerHTML"</code>) disconnects its host; the <code class="inline-code">on-response</code> event is skipped. Cancellation is <code class="inline-code">AbortError</code>, which runs neither event and logs nothing.</p>
 
         <h2 id="full-examples">Full examples <a class="anchor" href="#full-examples">#</a></h2>
-        <p>Both examples are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
+        <p>The examples below are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
 
         <h3>Price calculator</h3>
         <div class="codeblock">
@@ -855,6 +868,29 @@ export const attributable = defineImplementation("attributable", {
         <p>The form is the receiver of both <code class="inline-code">validate()</code> and <code class="inline-code">send()</code> in the first unit; <code class="inline-code">||</code> switches to <code class="inline-code">#validate-alert</code> only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event.</p>
         <p><code class="inline-code">novalidate</code> is load-bearing: without it the browser&rsquo;s interactive validation runs first and, for an invalid form, never fires <code class="inline-code">submit</code> at all. The phrase decides <em>when</em> validation happens; the platform still decides <em>what</em> valid means.</p>
 
+        <h3>Scroll-spy &mdash; synthetic triggers</h3>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-docs-full-spy)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-full-spy" data-lang="html"><code>&lt;script type="module"&gt;
+  import "interactably/dist/cdn/attributable.js";
+  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
+  for (const tag of ["section", "aside"]) defineInteractableHost(tag);
+&lt;/script&gt;
+
+&lt;!-- the first time each section is half in view, mark it seen --&gt;
+&lt;section is="interactable-section" id="intro" implements="attributable"
+         on-intersect-half="this.once().setAttr({name: 'data-seen', value: 'true'})"&gt;&hellip;&lt;/section&gt;
+&lt;section is="interactable-section" id="guide" implements="attributable"
+         on-intersect-half="0px 0px -50% 0px: this.once().setAttr({name: 'data-seen', value: 'true'})"&gt;&hellip;&lt;/section&gt;</code></pre>
+        </div>
+        <p><code class="inline-code">on-intersect-half</code> fires every time the section crosses the viewport&rsquo;s halfway threshold, in either direction &mdash; there is no entering/leaving distinction &mdash; so <code class="inline-code">once()</code> is the natural partner: the first half-in-view crossing is the only one that acts. A margin key narrows the window: <code class="inline-code">0px 0px -50% 0px</code> waits until the section is past the viewport&rsquo;s middle line, and each <code class="inline-code">;</code> phrase under one attribute observes its own margin, so <code class="inline-code">on-intersect-half="0px 0px -50% 0px: #a.mark(); 0px: #b.mark()"</code> is two observers on one attribute. The <code class="inline-code">spyable</code> implementation, which tracks <em>which</em> section is in view, remains the tool when a one-at-a-time current-section marker is needed.</p>
+
         <h2 id="api-reference">API reference <a class="anchor" href="#api-reference">#</a></h2>
         <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset). <code class="inline-code">installAutoLoader</code> ships in the full package and as <code class="inline-code">interactably/dist/cdn/auto-loader.js</code>.</p>
         <div class="tbl-wrap">
@@ -867,12 +903,15 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition (used by <code class="inline-code">defineImplementation</code>)</td></tr>
               <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
               <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
-              <tr><td><code class="inline-code">parse(value)</code></td><td>Parse an attribute string into phrases (cached)</td></tr>
+              <tr><td><code class="inline-code">parse(value, eventName?)</code></td><td>Parse an attribute string into phrases (cached by event name and value)</td></tr>
               <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
               <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class (<a href="#interaction-event">§ The interaction event</a>)</td></tr>
-              <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>)</td></tr>
-              <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is an event some implementation on <code class="inline-code">el</code> declares</td></tr>
+              <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code></td></tr>
+              <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is an intersect name or an event some implementation on <code class="inline-code">el</code> declares</td></tr>
               <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
+              <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s <code class="inline-code">IntersectionObserver</code>s, one per <code class="inline-code">(threshold, rootMargin)</code></td></tr>
+              <tr><td><code class="inline-code">normaliseRootMargin(margin?)</code></td><td>Normalise and validate a CSS root-margin string (<code class="inline-code">undefined</code>/empty &rarr; <code class="inline-code">"0px"</code>; throws otherwise)</td></tr>
+              <tr><td><code class="inline-code">INTERSECT_THRESHOLDS</code></td><td>The intersect name &rarr; threshold table (<code class="inline-code">intersect-enter</code> 0, <code class="inline-code">intersect-half</code> 0.5, <code class="inline-code">intersect-full</code> 1)</td></tr>
               <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive) used by keys and event lists</td></tr>
               <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>

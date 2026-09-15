@@ -2,6 +2,7 @@ import { defineAutoWebComponent } from "auto-wc";
 import type { Constructor } from "auto-wc";
 import { LEGACY_EVENTS_WITHOUT_IDL, isImplementationEvent } from "@interactable/events.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
+import { INTERSECT_ATTRIBUTES, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import { NotReadyError } from "@behaviors/implementation-utils.ts";
@@ -27,7 +28,7 @@ interface HostElementBase {
 export function defineInteractableHost(tag: Tag): void {
   const hostName = `interactable-${tag}`;
   if (customElements.get(hostName)) return;
-  const observed = allObservedAttributes();
+  const observed = [...allObservedAttributes(), ...INTERSECT_ATTRIBUTES];
   const HostFactory = ((Base: Constructor<HTMLElement & HostElementBase>) => {
     class InteractableHostElement extends Base {
       didEnsure = false;
@@ -40,6 +41,7 @@ export function defineInteractableHost(tag: Tag): void {
       override connectedCallback(): void {
         super.connectedCallback?.();
         this.wireTriggers();
+        syncIntersect(this);
         this.wireAttributeObserver();
         for (const implementation of this._implementations.values()) {
           implementation.connectedCallback?.();
@@ -58,6 +60,7 @@ export function defineInteractableHost(tag: Tag): void {
         for (const implementation of this._implementations.values()) {
           implementation.disconnectedCallback?.();
         }
+        teardownIntersect(this);
         clearPhraseState(this as unknown as Element);
         super.disconnectedCallback?.();
       }
@@ -66,6 +69,7 @@ export function defineInteractableHost(tag: Tag): void {
         for (const implementation of this._implementations.values()) {
           implementation.attributeChangedCallback?.(name, oldValue, newValue);
         }
+        if (INTERSECT_ATTRIBUTES.includes(name)) syncIntersect(this);
         super.attributeChangedCallback?.(name, oldValue, newValue);
       }
 

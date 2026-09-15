@@ -1,3 +1,5 @@
+import { INTERSECT_EVENT_NAMES, normaliseRootMargin } from "@interactable/intersect.ts";
+
 export type Ref = { kind: "id"; id: string } | { kind: "this" };
 
 export type Arg =
@@ -44,8 +46,9 @@ const READABLE_PROPERTIES = new Set(["value", "checked", "valueAsNumber"]);
 
 const cache = new Map<string, Phrase[]>();
 
-export function parse(value: string): Phrase[] {
-  const hit = cache.get(value);
+export function parse(value: string, eventName?: string): Phrase[] {
+  const cacheKey = `${eventName ?? ""}\u0000${value}`;
+  const hit = cache.get(cacheKey);
   if (hit !== undefined) return hit;
 
   const phrases: Phrase[] = [];
@@ -54,25 +57,29 @@ export function parse(value: string): Phrase[] {
     const trimmed = raw.trim();
     if (trimmed === "") continue;
     try {
-      phrases.push(parsePhrase(trimmed));
+      phrases.push(parsePhrase(trimmed, eventName));
     } catch (err) {
       errors.push(`"${trimmed}": ${(err as Error).message}`);
     }
   }
 
-  cache.set(value, phrases);
+  cache.set(cacheKey, phrases);
   for (const error of errors) console.error(`[Interactable] invalid phrase ${error}`);
   return phrases;
 }
 
-function parsePhrase(raw: string): Phrase {
+function parsePhrase(raw: string, eventName?: string): Phrase {
   const colon = findKeyColon(raw);
   let key: string | undefined;
   let body = raw;
   if (colon !== -1) {
     const keyText = raw.slice(0, colon).trim();
     if (keyText === "") throw new Error(`empty key before ":"`);
-    if (!KEY.test(keyText)) throw new Error(`invalid key "${keyText}"`);
+    if (eventName !== undefined && INTERSECT_EVENT_NAMES.has(eventName)) {
+      normaliseRootMargin(keyText);
+    } else if (!KEY.test(keyText)) {
+      throw new Error(`invalid key "${keyText}"`);
+    }
     key = keyText;
     body = raw.slice(colon + 1);
   }

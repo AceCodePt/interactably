@@ -2,6 +2,7 @@ import { afterEach, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
+import { ImplementationEvent } from "@interactable/implementation-event.ts";
 
 class FakeElement extends EventTarget {
   id: string;
@@ -824,4 +825,64 @@ test("a keyed phrase works with && and ||", () => {
 
   run(trigger, "enter: #form.validate() && #alert.show()", keyEvent("Enter"));
   assert.deepEqual(order, ["validate"], "&& stops after the guard abort");
+});
+
+test("an intersect event's key is the margin: only matching phrases run", () => {
+  const receiver = el("nav");
+  let bumpCalls = 0;
+  wireHost(receiver, { bump: () => void bumpCalls++ });
+
+  const trigger = el();
+  run(trigger, "0px: #nav.bump()", new ImplementationEvent("intersect-enter", { key: "0px" }));
+  assert.equal(bumpCalls, 1);
+  run(trigger, "0px: #nav.bump()", new ImplementationEvent("intersect-enter", { key: "10px" }));
+  assert.equal(bumpCalls, 1, "a non-matching margin is skipped quietly");
+});
+
+test("a keyless intersect phrase only reacts to its 0px observer", () => {
+  const receiver = el("nav");
+  let bumpCalls = 0;
+  wireHost(receiver, { bump: () => void bumpCalls++ });
+
+  const trigger = el();
+  const value = "#nav.bump()";
+  run(trigger, value, new ImplementationEvent("intersect-full", { key: "0px" }));
+  assert.equal(bumpCalls, 1);
+  run(trigger, value, new ImplementationEvent("intersect-full", { key: "10px" }));
+  assert.equal(bumpCalls, 1, "a keyless phrase matches only the 0px observer");
+});
+
+test("a keyed phrase on a non-matching synthetic event is skipped quietly", (t) => {
+  const spy = t.mock.method(console, "error");
+  const receiver = el("f");
+  let sendCalls = 0;
+  wireHost(receiver, { send: () => void sendCalls++ });
+
+  const trigger = el();
+  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-half", { key: "0px" }));
+  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-half", { key: "0px" }));
+  assert.equal(sendCalls, 0);
+  assert.equal(spy.mock.callCount(), 0, "non-matching synthetic keys log nothing");
+});
+
+test("an intersect event with a keyed phrase does not fall into the skip-and-log branch", (t) => {
+  const spy = t.mock.method(console, "error");
+  const receiver = el("f");
+  let sendCalls = 0;
+  wireHost(receiver, { send: () => void sendCalls++ });
+
+  const trigger = el();
+  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-half", { key: "10px" }));
+  assert.equal(sendCalls, 1);
+  assert.equal(spy.mock.callCount(), 0);
+});
+
+test("keyless phrases on keyless implementation events keep running", () => {
+  const receiver = el("copier");
+  let copyCalls = 0;
+  wireHost(receiver, { flash: () => void copyCalls++ });
+
+  const trigger = el();
+  run(trigger, "#copier.flash()", new ImplementationEvent("copy", {}));
+  assert.equal(copyCalls, 1, "a keyless on-copy phrase is not gated by the key guard");
 });
