@@ -421,7 +421,7 @@ code, pre, kbd {
 .code {
   margin: 0;
   padding: 1rem 1.1rem;
-  overflow-x: auto;
+  overflow: auto hidden;
   font-size: 0.84rem;
   line-height: 1.6;
   color: var(--code-fg);
