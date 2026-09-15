@@ -273,7 +273,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `prevent-default` | any | — | `events` (derived, see below) | `preventDefault` on listed events |
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([below](#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea |
-| `storable` | any | `save`, `load`, `clear` | `key`, `type` (`local`/`session`), `attr` | persist a field's value to storage |
+| `storable` | input, select, textarea | — | `scope` (`local`/`session`), `key` | a field restores its value from storage on connect and persists it on change |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
 | `copyable` | button | `copy` | `copied` state; event `copy` | copies a target element's text to the clipboard; sets `data-copied` and fires `copy` on success |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
@@ -339,6 +339,12 @@ Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling c
 ### Hashable
 
 `hashable` writes `#<id>` into the location hash — a record of where you are, not a command. `hash()` uses `history.replaceState`, so scrolling does not grow history; `replaceState` fires no `hashchange`, and nothing reads the hash back — that is `:target` and the browser's own navigation. An element without an `id` warns once and does nothing.
+
+### Storable
+
+`storable` gives a form field a memory with no verbs: it restores its own value from storage on connect and saves it back on `change`, and nothing else knows it exists. The storage key is `interactable:<key ?? name>`, the default scope is `local`, and radios and checkboxes store the checked values for their name as a list.
+
+Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here.
 
 ---
 
