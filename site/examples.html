@@ -377,7 +377,6 @@
                     placeholder="Type or paste some text&hellip;"></textarea>
           <div class="row">
             <button is="interactable-button" id="note-clean" type="button" on-click="#note.markClean()">Mark clean</button>
-            <button is="interactable-button" id="note-forget" type="button" on-click="#note.clear()">Forget saved value</button>
           </div>
         </div>
       </div>
@@ -396,8 +395,7 @@
           storable-key="interactably-demo-note" rows="2"
           paste-transform-patterns="\s+" paste-transform-replaces=" "
           placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;
-&lt;button is="interactable-button" on-click="#note.markClean()"&gt;Mark clean&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#note.clear()"&gt;Forget saved value&lt;/button&gt;</code></pre>
+&lt;button is="interactable-button" on-click="#note.markClean()"&gt;Mark clean&lt;/button&gt;</code></pre>
         </div>
       </details>
     </section>
@@ -586,11 +584,14 @@
       <div class="example-body">
         <div class="demo">
           <div class="row">
-            <label><input is="interactable-input" type="radio" name="manager" checked
+            <label><input is="interactable-input" type="radio" name="manager" value="npm" checked
+                          implements="storable"
                           on-change="#pm-1.show()"> npm</label>
-            <label><input is="interactable-input" type="radio" name="manager"
+            <label><input is="interactable-input" type="radio" name="manager" value="pnpm"
+                          implements="storable"
                           on-change="#pm-2.show()"> pnpm</label>
-            <label><input is="interactable-input" type="radio" name="manager"
+            <label><input is="interactable-input" type="radio" name="manager" value="yarn"
+                          implements="storable"
                           on-change="#pm-3.show()"> yarn</label>
           </div>
           <div is="interactable-div" id="pm-1" implements="revealable" class="tabpanel" data-open="true">
@@ -618,12 +619,12 @@
             </button>
           </div>
           <pre class="code" id="code-ex-pkg" data-lang="html"><code>&lt;div class="row"&gt;
-  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager" checked
-                on-change="#pm-1.show()"&gt; npm&lt;/label&gt;
-  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager"
-                on-change="#pm-2.show()"&gt; pnpm&lt;/label&gt;
-  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager"
-                on-change="#pm-3.show()"&gt; yarn&lt;/label&gt;
+  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager" value="npm" checked
+                implements="storable" on-change="#pm-1.show()"&gt; npm&lt;/label&gt;
+  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager" value="pnpm"
+                implements="storable" on-change="#pm-2.show()"&gt; pnpm&lt;/label&gt;
+  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager" value="yarn"
+                implements="storable" on-change="#pm-3.show()"&gt; yarn&lt;/label&gt;
 &lt;/div&gt;
 
 &lt;div is="interactable-div" id="pm-1" implements="revealable" class="tabpanel" data-open="true"&gt;

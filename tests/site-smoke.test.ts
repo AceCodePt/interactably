@@ -134,11 +134,13 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
     globalThis.fetch = originalFetch;
   });
 
-  // Mirror the deployed page: examples.html is parsed with the demo markup
-  // already in the document, then demo.js imports the bundles (which register
-  // the implementations and define their hosts) and defines the remaining
-  // hosts, so each element upgrades in place and any name registered afterwards
-  // attaches through the registry-changed re-check.
+  // Mirror the deployed page-load sequence: the markup is already being parsed
+  // (readyState "loading"), the storable manager choice is pre-seeded, then
+  // demo.js imports the bundles (which register the implementations and define
+  // their hosts), the auto-loader runs, and DOMContentLoaded fires - which is
+  // when storable restores.
+  Object.defineProperty(document, "readyState", { value: "loading", configurable: true });
+  localStorage.setItem("interactable:manager", JSON.stringify(["pnpm"]));
   const holder = document.createElement("div");
   holder.innerHTML = bodyMarkup(html);
   document.body.appendChild(holder);
@@ -158,6 +160,22 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   autoLoader.installAutoLoader();
 
   await flush();
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+
+  const managerNpm = document.querySelector('input[name="manager"][value="npm"]') as HTMLInputElement;
+  const managerPnpm = document.querySelector('input[name="manager"][value="pnpm"]') as HTMLInputElement;
+  assert.equal(managerPnpm.checked, true, "the stored radio is checked after the page-load restore");
+  assert.equal(managerNpm.checked, false, "the authored checked radio yields to the stored value");
+  const pm1 = byId("pm-1");
+  const pm2 = byId("pm-2");
+  assert.equal(pm2.hidden, false, "the stored radio's panel is open");
+  assert.equal(pm1.hidden, true, "radio exclusivity closed the authored radio's panel");
+  click(managerNpm);
+  assert.equal(managerNpm.checked, true, "clicking another radio selects it");
+  assert.equal(pm1.hidden, false, "the clicked radio's panel opens");
+  assert.equal(pm2.hidden, true, "the previous panel closes");
+  assert.equal(localStorage.getItem("interactable:manager"), '["npm"]', "the new selection is stored");
 
   const autoPanel = byId("auto-demo-panel");
   assert.equal(autoPanel.getAttribute("is"), "interactable-section", "the auto-loader adds is= to the no-is= demo");
@@ -265,12 +283,11 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   note.value = "typed note";
   note.dispatchEvent(new Event("input", { bubbles: true }));
   assert.equal(note.classList.contains("is-dirty"), true, "dirtyable marks the edited field");
-  assert.equal(localStorage.getItem("interactably-demo-note"), "typed note", "storable persists on input");
+  note.dispatchEvent(new Event("change", { bubbles: true }));
+  assert.equal(localStorage.getItem("interactable:interactably-demo-note"), "typed note", "storable persists on change");
   note.value = "clean";
   click(byId("note-clean"));
   assert.equal(note.classList.contains("is-dirty"), false, "markClean() re-baselines the dirty state");
-  click(byId("note-forget"));
-  assert.equal(localStorage.getItem("interactably-demo-note"), null, "storable.clear() drops the saved value");
 
   const consent = byId("consent");
   assert.equal(consent.hidden, true, "the age gate starts closed");
