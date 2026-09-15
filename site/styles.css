@@ -312,6 +312,15 @@ code, pre, kbd {
   margin: 0.3rem 0;
 }
 
+.content li:has(> strong:first-child) {
+  margin: 1.1rem 0;
+}
+
+.content li > strong:first-child {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
 .content > p:first-of-type {
   margin-top: 0;
 }
