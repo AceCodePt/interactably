@@ -303,6 +303,17 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <code class="inline-code">full</code> fire on every threshold crossing, in either direction.
         </p>
 
+        <p><strong>Keys and keyed event lists.</strong> Key names match <code class="inline-code">KeyboardEvent.key</code> case-insensitively
+          &mdash; <code class="inline-code">enter</code>, <code class="inline-code">Enter</code>, <code class="inline-code">ENTER</code> are the same key &mdash; and <code class="inline-code">space</code> means the
+          space bar; there are no aliases, so <code class="inline-code">Esc</code> is not <code class="inline-code">escape</code>. A key is a keyboard-event fact:
+          <code class="inline-code">on-click="enter: #f.send()"</code> parses, but at fire time the phrase is skipped with a one-time
+          <code class="inline-code">console.error</code> (<code class="inline-code">key "enter" on non-keyboard event "click"; phrase skipped</code>). The
+          <code class="inline-code">event:key</code> entries in the comma-separated config lists (<code class="inline-code">prevent-default-events</code>,
+          <code class="inline-code">no-propagate-events</code>) use the same matcher: each entry is one <code class="inline-code">event</code> or one
+          <code class="inline-code">event:key</code> pair, a keyed entry only ever matches a keyboard event (a non-keyboard event never carries a
+          <code class="inline-code">key</code>), and listing the same pair twice is harmless &mdash; the second occurrence is dropped. In the phrase
+          grammar, the same key twice is simply two phrases (<code class="inline-code">escape: this.reset(); escape: #other.show()</code>), and both run.</p>
+
         </section>
         <section id="sec-rules" is="interactable-section" on-intersect-enter="#toc-rules.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="#toc-rules.removeAttr('data-visible')">
         <h3 id="rules">Rules <a class="anchor" href="#rules">#</a></h3>
@@ -372,12 +383,13 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
   handled = false;                // true when an implementation owned the verb
   error?: unknown;                // set when validation or the verb threw
   result?: unknown;               // the verb's return value
+  pauseMs?: number;               // an implementation may set this to defer the rest of the chain
 }</code></pre>
         </div>
         <ul>
           <li><strong>Non-bubbling.</strong> A host receives interactions aimed at itself and nothing else — no <code class="inline-code">if (e.target !== el)</code> guards.</li>
           <li><strong><code class="inline-code">preventDefault()</code> aborts the rest of the chain.</strong> This is the guard-verb mechanism: <code class="inline-code">validate().send()</code>, with <code class="inline-code">||</code> as the failure branch.</li>
-          <li><strong>Three return channels, because a DOM event has none.</strong> <code class="inline-code">dispatchEvent</code> swallows listener exceptions and cannot tell &ldquo;handled&rdquo; from &ldquo;nobody listened&rdquo;. So the host writes <code class="inline-code">handled</code>, <code class="inline-code">error</code>, <code class="inline-code">result</code> onto the event, and the executor reads them after dispatch.</li>
+          <li><strong>Four return channels, because a DOM event has none.</strong> <code class="inline-code">dispatchEvent</code> swallows listener exceptions and cannot tell &ldquo;handled&rdquo; from &ldquo;nobody listened&rdquo;. So the host writes <code class="inline-code">handled</code> (an implementation owned the verb), <code class="inline-code">error</code> (validation or the verb body threw), <code class="inline-code">result</code> (the return value) and <code class="inline-code">pauseMs</code> (a verb paused the chain) onto the event, and the executor reads them after dispatch.</li>
           <li><strong>No <code class="inline-code">isTrusted</code> gate.</strong> Tests dispatch real DOM events on triggers.</li>
           <li><strong>The browser&rsquo;s <code class="inline-code">command</code> event plays no part.</strong> A page can also use native invokers; an implementation may listen to <code class="inline-code">command</code> like any other DOM event.</li>
         </ul>
@@ -557,7 +569,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <p><strong>Radio-derived exclusivity, no attribute.</strong> A panel shown <em>from</em> an <code class="inline-code">&lt;input type="radio"&gt;</code> closes the panels of that radio&rsquo;s siblings &mdash; the radios sharing its <code class="inline-code">name</code> and its form owner (<code class="inline-code">source.form</code>, else <code class="inline-code">document</code>). Each sibling&rsquo;s <code class="inline-code">on-*</code> phrases are parsed, and every panel the sibling controls, other than the one being opened, receives <code class="inline-code">show(false)</code> &mdash; dispatched with no interacting source, so nothing is written onto a source element; the closed panel&rsquo;s <code class="inline-code">aria-expanded</code> is still refreshed on its button controllers. The browser&rsquo;s radio group <em>is</em> the group: the package-manager example is three radios named <code class="inline-code">pm</code> plus a panel per section, nothing else. Checkbox and button sources close nothing.</p>
 
         <h3 id="hashable">Hashable <a class="anchor" href="#hashable">#</a></h3>
-        <p><code class="inline-code">hashable</code> writes <code class="inline-code">#&lt;id&gt;</code> into the location hash — a record of where you are, not a command. <code class="inline-code">hash()</code> uses <code class="inline-code">history.replaceState</code>, so scrolling does not grow history; <code class="inline-code">replaceState</code> fires no <code class="inline-code">hashchange</code>, and nothing reads the hash back — that is <code class="inline-code">:target</code> and the browser&rsquo;s own navigation. An element without an <code class="inline-code">id</code> warns once and does nothing.</p>
+        <p><code class="inline-code">hashable</code> records a user-chosen state — a selected tab, an open panel — by writing <code class="inline-code">#&lt;id&gt;</code> into the location hash; a phrase calls the <code class="inline-code">hash()</code> verb on the element whose state the author wants in the URL. <code class="inline-code">hash()</code> uses <code class="inline-code">history.replaceState</code>, so the change is not an extra history entry and fires no <code class="inline-code">hashchange</code>; nothing reads the hash back — that is <code class="inline-code">:target</code> and the browser&rsquo;s own navigation. Scroll position is not that kind of state: scrolling is not a choice worth a URL, and the browser already restores scroll on reload. An element without an <code class="inline-code">id</code> warns once and does nothing.</p>
 
         </section>
         <section id="sec-storable" is="interactable-section" on-intersect-enter="#toc-storable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="#toc-storable.removeAttr('data-visible')">
@@ -863,7 +875,7 @@ export const attributable = defineImplementation("attributable", {
         </section>
         <section id="sec-asynchrony" is="interactable-section" on-intersect-enter="#toc-asynchrony.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="#toc-asynchrony.removeAttr('data-visible')">
         <h2 id="asynchrony">Asynchrony <a class="anchor" href="#asynchrony">#</a></h2>
-        <p><strong>Verbs are synchronous and chains never await.</strong> This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A <code class="inline-code">.</code> chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints. Work that finishes later belongs to an implementation that owns it — today <code class="inline-code">requestable</code> — and continues by dispatching an <code class="inline-code">ImplementationEvent</code> the author&rsquo;s <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> attributes turn into a new synchronous chain.</p>
+        <p><strong>Verbs are synchronous and chains never await.</strong> This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A <code class="inline-code">.</code> chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints &mdash; unless a <code class="inline-code">delay()</code> link splits it. Work that finishes later belongs to an implementation that owns it — today <code class="inline-code">requestable</code> — and continues by dispatching an <code class="inline-code">ImplementationEvent</code> the author&rsquo;s <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> attributes turn into a new synchronous chain.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
@@ -902,7 +914,7 @@ export const attributable = defineImplementation("attributable", {
         <h2 id="full-examples">Full examples <a class="anchor" href="#full-examples">#</a></h2>
         <p>The examples below are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
 
-        <h3>Price calculator</h3>
+        <h3 id="price-calculator">Price calculator</h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
@@ -937,7 +949,7 @@ modifiable-formula="sum('#list .amount:valid')"
         </div>
         <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers; the <code class="inline-code">&lt;li&gt;</code> is a plain element — the row is reached through <code class="inline-code">#list.removeRow(this)</code>, so it needs no implementation, no host and no id, and cloning it produces nothing that has to be unique.</p>
 
-        <h3>Order form — the asynchronous seam</h3>
+        <h3 id="order-form">Order form — the asynchronous seam</h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
@@ -963,7 +975,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <p>The form is the receiver of both <code class="inline-code">validate()</code> and <code class="inline-code">send()</code> in the first unit; <code class="inline-code">||</code> switches to <code class="inline-code">#validate-alert</code> only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event.</p>
         <p><code class="inline-code">novalidate</code> is load-bearing: without it the browser&rsquo;s interactive validation runs first and, for an invalid form, never fires <code class="inline-code">submit</code> at all. The phrase decides <em>when</em> validation happens; the platform still decides <em>what</em> valid means.</p>
 
-        <h3>Scroll-spy &mdash; synthetic triggers</h3>
+        <h3 id="scroll-spy">Scroll-spy &mdash; synthetic triggers</h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
@@ -1021,7 +1033,7 @@ modifiable-formula="sum('#list .amount:valid')"
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
               <tr><td><code class="inline-code">readValue(el)</code></td><td>The element&rsquo;s value as text: <code class="inline-code">formattable-value</code> (the raw store) &rarr; <code class="inline-code">.value</code> &rarr; <code class="inline-code">textContent</code>, a number when the text parses else a string</td></tr>
               <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">toNumber(readValue(el))</code>, NaN &rarr; 0) and write helpers</td></tr>
-              <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
+              <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a verb reaches a host whose implementations have not attached — the host&rsquo;s connect-time attach pass has not run. With the auto-loader in the page it is practically unreachable; without it, any phrase fired before the implementation&rsquo;s script loads can land on it</td></tr>
               <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code>, <code class="inline-code">hashable</code>, <code class="inline-code">formattable</code></td></tr>
             </tbody>
           </table>
@@ -1049,7 +1061,7 @@ modifiable-formula="sum('#list .amount:valid')"
           <li><strong>Strategies are derived, not declared.</strong> <code class="inline-code">revealable</code> picks its behavior from the element at connect instead of an author-written <code class="inline-code">strategy=</code> attribute.</li>
           <li><strong>Default actions and propagation are implementations,</strong> not executor rules or phrase modifiers — they are event-scoped facts and live on the element where a reader finds them. Only the <em>which</em> is derived, never the <em>whether</em>.</li>
           <li><strong>Verbs are synchronous.</strong> Every async question is a question only the implementation doing the work can answer. The network gap is a named attribute, not a disguised dot.</li>
-          <li><strong>Three return channels on the event.</strong> <code class="inline-code">dispatchEvent</code> swallows listener exceptions and cannot tell &ldquo;handled&rdquo; from &ldquo;nobody listened&rdquo;; the host reports <code class="inline-code">handled</code> / <code class="inline-code">error</code> / <code class="inline-code">result</code> on the event.</li>
+          <li><strong>Four return channels on the event.</strong> <code class="inline-code">dispatchEvent</code> swallows listener exceptions and cannot tell &ldquo;handled&rdquo; from &ldquo;nobody listened&rdquo;; the host reports <code class="inline-code">handled</code> / <code class="inline-code">error</code> / <code class="inline-code">result</code> and <code class="inline-code">pauseMs</code> (a verb paused the chain) on the event.</li>
           <li><strong>Readiness is reported, never awaited.</strong> A late-registered implementation re-runs every connected host&rsquo;s attach pass; markup may precede the imports.</li>
           <li><strong>Report with <code class="inline-code">console.error</code>/<code class="inline-code">warn</code>, throw only at definition time.</strong> Host code runs on the browser&rsquo;s stack, which owns its exceptions.</li>
         </ul>
@@ -1065,7 +1077,8 @@ modifiable-formula="sum('#list .amount:valid')"
         </section>
         <section id="sec-not-supported" is="interactable-section" on-intersect-enter="#toc-not-supported.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="#toc-not-supported.removeAttr('data-visible')">
         <h2 id="not-supported">Not supported <a class="anchor" href="#not-supported">#</a></h2>
-        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; dynamic <code class="inline-code">on-*</code> attribute <em>names</em> after connect &middot; cross-element watching &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
+        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; dynamic <code class="inline-code">on-*</code> attribute <em>names</em> after connect &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
+        <p><code class="inline-code">on-load</code>. Every trigger fires after the document is upgraded, so every <code class="inline-code">#id</code> resolves; a connect-time trigger is the one that couldn&rsquo;t make that promise. Author the initial state instead &mdash; <code class="inline-code">open</code>, <code class="inline-code">checked</code>, <code class="inline-code">data-open="true"</code>.</p>
 
         </section>
         <section id="sec-appendices" is="interactable-section" on-intersect-enter="#toc-appendices.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="#toc-appendices.removeAttr('data-visible')">

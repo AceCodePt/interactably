@@ -23,19 +23,42 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
 ## Contents
 
 - [Quick start](#quick-start)
-- [The trigger grammar](#the-trigger-grammar)
-- [The `interaction` event](#the-interaction-event)
+- [The trigger grammar](#trigger-grammar)
+  - [Grammar](#grammar)
+  - [Constructs](#constructs)
+  - [Rules](#rules)
+  - [Reserved names](#reserved-names)
+  - [The formula](#formula)
+- [The `interaction` event](#interaction-event)
 - [Hosts](#hosts)
-- [The shipped implementations](#the-shipped-implementations)
+  - [Four kinds of element](#four-kinds)
+  - [Reporting](#reporting)
+- [The shipped implementations](#implementations)
+  - [The pause mechanism](#the-pause-mechanism)
+  - [`prevent-default` and `no-propagate`](#prevent-default)
+  - [Revealable](#revealable)
+  - [Hashable](#hashable)
+  - [Storable](#storable)
+  - [json-template](#json-template)
 - [Writing an implementation](#writing-an-implementation)
-- [State: three tiers](#state-three-tiers)
+  - [Signatures](#signatures)
+  - [Declare only what you invent](#declare-only)
+  - [`attrs` is a typed proxy](#attrs)
+  - [Conventions](#conventions)
+- [State: three tiers](#state)
 - [Dynamics](#dynamics)
 - [Parser and executor](#parser-and-executor)
+  - [Pipeline](#pipeline)
+  - [Parse cache and resolution](#parse-cache)
+  - [Native default actions and propagation](#native-defaults)
 - [Asynchrony](#asynchrony)
 - [Full examples](#full-examples)
+  - [Price calculator](#price-calculator)
+  - [Order form — the asynchronous seam](#order-form)
+  - [Scroll-spy — synthetic triggers](#scroll-spy)
 - [API reference](#api-reference)
-- [Why it is built this way](#why-it-is-built-this-way)
-- [When not to use this library](#when-not-to-use-this-library)
+- [Why it is built this way](#why-built)
+- [When not to use this library](#when-not-to-use)
 - [Not supported](#not-supported)
 - [Appendix: reference grammar](#appendix-reference-grammar)
 - [Appendix: alternatives considered](#appendix-alternatives-considered)
@@ -162,13 +185,15 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 
 `<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions. Triggers are three kinds: **native DOM events**, **implementation events**, and **synthetic triggers**. An implementation may declare its own events (`copy`, `response`, `request-error`); on the element that implements it, `on-<event>` fires only for the implementation's `ImplementationEvent`, never for a same-named DOM event. The synthetic names `on-intersect-enter` / `on-intersect-leave` / `on-intersect-half` / `on-intersect-full` map to `IntersectionObserver` thresholds 0, 0, 0.5 and 1 with the viewport as root, so they need no `implements` and never warn about a missing event; the phrase key is the observer's `rootMargin` (a CSS length/percentage string, or nothing for `0px`), and each `;` phrase observes its own margin. `enter` fires when the element becomes intersecting — including the observer's initial report for an element visible at load — and `leave` fires when it stops; both observe threshold 0 and share one observer per margin. `half` and `full` fire on every threshold crossing, in either direction.
 
+**Keys and keyed event lists.** Key names match `KeyboardEvent.key` case-insensitively — `enter`, `Enter`, `ENTER` are the same key — and `space` means the space bar; there are no aliases, so `Esc` is not `escape`. A key is a keyboard-event fact: `on-click="enter: #f.send()"` parses, but at fire time the phrase is skipped with a one-time `console.error` (`key "enter" on non-keyboard event "click"; phrase skipped`). The `event:key` entries in the comma-separated config lists (`prevent-default-events`, `no-propagate-events`, [§ prevent-default and no-propagate](#prevent-default)) use the same matcher: each entry is one `event` or one `event:key` pair, a keyed entry only ever matches a keyboard event (a non-keyboard event never carries a `key`), and listing the same pair twice is harmless — the second occurrence is dropped. In the phrase grammar, the same key twice is simply two phrases (`escape: this.reset(); escape: #other.show()`), and both run.
+
 ### Rules
 
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
-2. **Receivers are `#id` or `this`.** Ids may not contain `.`. Class or attribute selectors are never receivers.
+2. **Receivers are `#id` or `this`.** Ids may not contain `.`, `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#`. Class or attribute selectors are never receivers.
 3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form: `#a.show(false); #b.show(false)` is still two phrases.
 4. **Keys are legal only under `on-keydown` / `on-keyup` and under the four intersect triggers**, one per phrase. Two keyboard keys is two phrases: `enter: #f.send(); numpadenter: #f.send()`. Keyboard names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under `on-intersect-enter` / `on-intersect-leave` / `on-intersect-half` / `on-intersect-full` the key is that phrase's `rootMargin` — a CSS length/percentage string that selects which crossing fires it (a keyless phrase matches `0px`).
-5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** `#a.once().x().y()` runs both once ever; `#a.x().once().y()` runs `x` every time and `y` once. It never crosses `&&`: each receiver carries its own modifiers, so `#a.once().x() && #b.y()` runs `#b.y()` every time the first half runs. `debounce`/`throttle` are legal only right after the ref (a timer mid-chain is a parse error); `once` and `delay` may sit anywhere. `once()` must be followed by a call — `#a.x().once()` is a parse error, since a gate over nothing governs the next receiver instead. Modifiers stack and repeat freely — the parser has no duplicate check.
+5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** `#a.once().x().y()` runs both once ever; `#a.x().once().y()` runs `x` every time and `y` once. It never crosses `&&`: each receiver carries its own modifiers, so `#a.once().x() && #b.y()` runs `#b.y()` every time the first half runs. `debounce`/`throttle` are legal only right after the ref (a timer mid-chain is a parse error); `once` and `delay` may sit anywhere. `once()` must be followed by a call — `#a.x().once()` is a parse error, since a gate over nothing governs the next receiver instead. `once` and `delay` stack and repeat freely, but a receiver chain may carry at most one `debounce`/`throttle` — a second timing modifier is a parse error.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops if a verb's event is `preventDefault()`-ed, if the verb threw, or if no implementation owns the verb. `&&` runs the next unit only if the previous one completed; `||` runs it only if the previous one was stopped by a guard's `preventDefault()`. An error or unowned verb stops both — `||` fires only on a guard abort. One phrase is all `&&` or all `||`; mixing is a parse error. Guards are verbs owned by an implementation that knows the rule; the grammar has no general comparison, by design.
 7. **`once()` spends on passing through, not on completion.** The gate is about entry: the moment the walk reaches the `once` it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.
 8. **References are late-bound.** `#id`, `this` and reads resolve at fire time (after any debounce), never at parse time.
@@ -179,7 +204,9 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 
 ### Reserved names
 
-`debounce`, `throttle`, `once`, `delay` are modifiers — an implementation may not name a verb that way. `this` is the only keyword. `value`, `checked`, `valueAsNumber` are property reads, not verbs; an implementation may still define a verb called `value()` (distinguished by its parens).
+`debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb. `this` is the only keyword. `value`, `checked`, `valueAsNumber` are property reads, not verbs; an implementation may still define a verb called `value()` (distinguished by its parens).
+
+Ids are addressable only if they avoid the phrase punctuation. An id containing `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#` is a parse error even though it is valid HTML: `#a:b` reads `invalid id "a:b" in #a:b; ids used in phrases may not contain : & | { } ' " #`.
 
 ### The formula
 
@@ -360,13 +387,26 @@ A radio group is the single source of truth for the panels it drives. Don't also
 
 ### Hashable
 
-`hashable` writes `#<id>` into the location hash — a record of where you are, not a command. `hash()` uses `history.replaceState`, so scrolling does not grow history; `replaceState` fires no `hashchange`, and nothing reads the hash back — that is `:target` and the browser's own navigation. An element without an `id` warns once and does nothing.
+`hashable` records a user-chosen state — a selected tab, an open panel — by writing `#<id>` into the location hash; a phrase calls the `hash()` verb on the element whose state the author wants in the URL. `hash()` uses `history.replaceState`, so the change is not an extra history entry and fires no `hashchange`; nothing reads the hash back — that is `:target` and the browser's own navigation. Scroll position is not that kind of state: scrolling is not a choice worth a URL, and the browser already restores scroll on reload. An element without an `id` warns once and does nothing.
 
 ### Storable
 
 `storable` persists a form field's value to storage through three verbs: `save()`, `load()` and `clear()`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup. The storage key is `interactable:<storable-key ?? name ?? id>`, the default scope is `local`, and same-name checkboxes store as a list: `save()` on either writes the JSON array of every checked control sharing that `name` and form owner. A field with none of `storable-key`, `name` and `id` warns once on connect and stores nothing.
 
 Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here. Restore fires a native `change`, so your `on-change` phrase runs on restore — that is the point: in the package-manager example `name="pm"` does two jobs (the browser's radio group and the storage key), so restoring the stored radio re-opens the section that radio controls. `load()` re-reads the stored value as a user action and fires `change` when it changes; `clear()` removes the key.
+
+### json-template
+
+`json-template` renders a JSON data source through a child `<template>`. `json-template-for` names the element whose text content is the JSON (typically a `<script type="application/json">`); the template is cloned and its text and attribute values are interpolated, and the whole thing re-renders when the source changes.
+
+```
+interpolation := '{' expression '}'
+expression    := path | path ('||' | '??' | '&&') fallback
+path          := segment ('.' segment | '[' (index | "'" key "'" | '"' key '"') ']')*
+fallback      := quoted | number | true | false | bare
+```
+
+`path` is dot and bracket notation — `name`, `user.profile.email`, `items[1].title`, `obj["first-name"]`, `items[-1]` (from the end). A path that does not resolve interpolates to the empty string. `path || fallback` substitutes the fallback when the value is falsy (`""`, `0`, `false`, `null`, `undefined`); `path ?? fallback` only when it is `null` or `undefined`, so `0` and `""` survive; `path && fallback` substitutes when the value is truthy. A fallback may be a quoted string, a number, `true`/`false`, or a bare word. Whitespace around the operator is ignored, and operators inside a quoted fallback are literal. There is no escaping — every `{`…`}` pair is an interpolation — and there is no `{{#each}}`-style directive; a nested `<template data-array="path">` repeats per item, and `json-template-slice="start:end"` trims a root array (`1:3`, or a bare `2`).
 
 ---
 
@@ -563,19 +603,22 @@ DOM event on the trigger (passive listener bound in connectedCallback)
   → runPhrases(this, phrases, ev)
 → key filter
   → run the units in order (one unit, or all `&&` / all `||`)
-      leading debounce/throttle first (timer keyed by element + attribute + phrase + unit)
-      resolve the unit's receiver (#id → getElementById, this → the source); missing → console.error, stop the phrase
+leading debounce/throttle first (timer keyed by element + attribute + phrase + unit)
+      resolve the unit's receiver (#id → getElementById, this → the source); missing → console.error, stop
+      receiver is not a host (no is=) → console.error "#plain is not an interactable host; add is=\"interactable-div\"", stop
       for each link in order, modifiers where they sit:
           once() → spent when the walk passes it; a spent gate cuts the chain from there
           delay(ms) → pause the chain; the remainder runs ms later
           resolve arg (scalar, or object literal field by field) → dispatch InteractionEvent
             · host: find the implementation owning the verb → e.handled = true
             · host: validate arg against the signature, call the verb — both inside try/catch → e.error on throw
-            · executor, after dispatch:  !e.handled → console.error "no implementation on <receiver> handles verb()", stop
+            · executor, after dispatch:  !e.handled → console.error "no implementation on <receiver implements=\"…\"> handles verb()", stop
                                           e.error    → console.error once with receiver and verb, stop
                                           e.defaultPrevented → stop the unit, quiet
           `&&`: next unit only if this one completed; `||`: next unit only if this one was guard-aborted
 ```
+
+Every receiver must be a host — `#id` and `this` resolve to elements carrying `is="interactable-<tag>"`, and a phrase aimed at a plain element is reported as `#plain is not an interactable host; add is="interactable-div"`.
 
 - **Nested triggers behave like nested `onclick`.** A click on a button inside a `<div on-click>` fires the button's phrase, then bubbles and fires the div's. No implicit innermost-wins; suppression is explicit via `no-propagate` on the inner element.
 - **Timers and `once` state are keyed per element, per receiver-chain** (in a `WeakMap`) and cleared on disconnect via `clearPhraseState`.
@@ -598,13 +641,13 @@ The executor does neither. Every `on-*` listener is passive; a phrase describes 
 <button is="interactable-button" implements="no-propagate" on-click="#list.removeRow(this)">×</button>  <!-- row's on-click untouched -->
 ```
 
-`prevent-default` binds its own listeners with `passive: false`, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying `on-submit` on a `<form>` (or `on-click` on an `<a href>`, or `on-keydown` on a `<button>`) without `prevent-default` logs one `console.warn`. A pre-existing `defaultPrevented` does **not** suppress dispatch.
+`prevent-default` binds its own listeners with `passive: false`, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying `on-submit` on a `<form>` (or `on-click` on an `<a href>`, or an **unkeyed** `on-keydown`/`on-keyup` on a `<button>`) without `prevent-default` logs one `console.warn`. A keyed `on-keydown` phrase (`escape: this.reset()`) does not conflict with the button's Enter/Space activation, so it never warns. A pre-existing `defaultPrevented` does **not** suppress dispatch.
 
 ---
 
 ## Asynchrony
 
-**Verbs are synchronous and chains never await.** This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A `.` chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints. Work that finishes later belongs to an implementation that owns it — today `requestable` — and continues by dispatching an `ImplementationEvent` the author's `on-response` / `on-request-error` attributes turn into a new synchronous chain.
+**Verbs are synchronous and chains never await.** This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A `.` chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints — unless a `delay()` link splits it ([§ The pause mechanism](#the-pause-mechanism)). Work that finishes later belongs to an implementation that owns it — today `requestable` — and continues by dispatching an `ImplementationEvent` the author's `on-response` / `on-request-error` attributes turn into a new synchronous chain.
 
 A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain where it sits, and the executor runs the remainder of the chain `ms` later as its own scheduled step. That is the mechanism behind a "temporarily set attribute" — `copyable` marks `data-copied` on success and never clears it, so the *developer* decides whether the flash persists or disappears:
 
@@ -833,7 +876,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `readValue(el)` | The element's value as text: `formattable-value` (the raw store) → `.value` → `textContent`, a number when the text parses else a string |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`toNumber(readValue(el))`, NaN → 0) and write helpers |
-| `NotReadyError` | Error set on `e.error` when a verb reaches a host that has never connected |
+| `NotReadyError` | Error set on `e.error` when a verb reaches a host whose implementations have not attached — the host's connect-time attach pass has not run. With the auto-loader in the page it is practically unreachable; without it, any phrase fired before the implementation's script loads can land on it |
 | Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `hashable`, `formattable` |
 
 ---
@@ -860,7 +903,7 @@ The short versions of the decisions behind the design. The full argument for eac
 - **Default actions and propagation are implementations**, not executor rules or phrase modifiers — they are event-scoped facts and live on the element where a reader finds them. Only the *which* is derived, never the *whether*.
 - **Verbs are synchronous.** Every async question (second fire, removed receiver, `once` while pending, latest vs first) is a question only the implementation doing the work can answer. The network gap is a named attribute, not a disguised dot.
 - **Pauses are modifiers, not verbs.** `delay` sits in the chain like `once` and pauses where it sits — `this.delay(300).setAttr(...)` reads forward, and everything downstream, including past `&&`, waits. The executor owns the pause timer exactly like the debounce timer, so a pause never becomes an awaited interaction.
-- **Three return channels on the event.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened"; the host is the last frame that can catch, so it reports `handled` / `error` / `result` on the event.
+- **Four return channels on the event.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened"; the host is the last frame that can catch, so it reports `handled` / `error` / `result` and `pauseMs` (a verb paused the chain) on the event.
 - **Readiness is reported, never awaited.** A late-registered implementation re-runs every connected host's attach pass; markup may precede the imports.
 - **Report with `console.error`/`warn`, throw only at definition time.** Host code runs on the browser's stack, which owns its exceptions.
 
@@ -880,7 +923,7 @@ Input masks and format-as-you-type belong in a component library built on the sa
 
 ## Not supported
 
-Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `valueAsNumber` · dynamic `on-*` attribute *names* after connect · cross-element watching (`watch()` remains a possible opt-in verb on an implementation, not a mechanism of the system) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1) · a CLI check that `is=` in markup matches the implementations' declared tags.
+Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `valueAsNumber` · dynamic `on-*` attribute *names* after connect · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1) · a CLI check that `is=` in markup matches the implementations' declared tags.
 
 `on-load`. Every trigger fires after the document is upgraded, so every `#id` resolves; a connect-time trigger is the one that couldn't make that promise. Author the initial state instead — `open`, `checked`, `data-open="true"`.
 
@@ -902,7 +945,7 @@ field     := name ':' arg
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'
 ```
 
-Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`. `name` is an identifier. `this` is a keyword; an element with `id="this"` is addressed as `#this`. A `unit` must contain at least one call; `debounce`/`throttle` are legal only before the first call, while `once`/`delay` may sit anywhere. `&&` and `||` are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of `arg` / `object` / nothing a call accepts is decided by the verb's signature, not by the grammar.
+Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`, `:`, `&`, `|`, `{`, `}`, `'`, `"`, `#`. `name` is an identifier. `this` is a keyword; an element with `id="this"` is addressed as `#this`. A `unit` must contain at least one call; `debounce`/`throttle` are legal only before the first call, at most one per unit, while `once`/`delay` may sit anywhere. `&&` and `||` are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of `arg` / `object` / nothing a call accepts is decided by the verb's signature, not by the grammar.
 
 **Signature language** (values in `config`, `state` and `verbs`): a **slot** is either a tsyntax scalar DSL string (`string`, `number`, `bigint`, `boolean`, `undefined`, numeric and quoted literals, template literals, `|` unions) or an element constructor (`HTMLElement`, `HTMLTemplateElement`, …). A verb signature is one slot or a flat record of slots; an attribute signature is one string slot. A record key whose slot admits `undefined` may be omitted from the object literal; any other key is required.
 
