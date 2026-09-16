@@ -31,6 +31,8 @@ type WithOpen = { open?: boolean | undefined };
 type WithStep = { step?: number };
 type WithCount = { count?: number };
 type WithMode = { mode?: "upper" | "lower" };
+type WithValue = { value?: string | number };
+type WithAuto = { mode?: number | "auto" };
 
 test("config keys are read-only getters over <name>-<key>, validated to the slot type", () => {
   const el = document.createElement("div");
@@ -90,6 +92,49 @@ test("string attributes read through unchanged", () => {
   el.setAttribute("demo-mode", "upper");
   const attrs = bindAttributes(el, "demo", def({ mode: "'upper' | 'lower'" }, {})) as WithMode;
   assert.equal(attrs.mode, "upper");
+});
+
+test("a number|string slot keeps the text when it does not parse to a number", () => {
+  const el = document.createElement("div");
+  el.setAttribute("demo-value", "abc");
+  const attrs = bindAttributes(el, "demo", def({ value: "number | string" }, {})) as WithValue;
+  assert.equal(attrs.value, "abc");
+  el.setAttribute("demo-value", "3");
+  assert.equal(attrs.value, 3);
+});
+
+test("a number|literal slot accepts the literal and numeric text", () => {
+  const el = document.createElement("div");
+  el.setAttribute("demo-mode", "auto");
+  const attrs = bindAttributes(el, "demo", def({ mode: "number | 'auto'" }, {})) as WithAuto;
+  assert.equal(attrs.mode, "auto");
+  el.setAttribute("demo-mode", "3");
+  assert.equal(attrs.mode, 3);
+});
+
+test("boolean slots read presence as true and 'false' as false", () => {
+  const el = document.createElement("div");
+  const attrs = bindAttributes(el, "demo", def({}, { open: "boolean | undefined" })) as WithOpen;
+  assert.equal(attrs.open, undefined);
+  el.setAttribute("data-open", "");
+  assert.equal(attrs.open, true);
+  el.setAttribute("data-open", "true");
+  assert.equal(attrs.open, true);
+  el.setAttribute("data-open", "false");
+  assert.equal(attrs.open, false);
+});
+
+test("an invalid value throws naming the element, attribute, and slot signature", () => {
+  const el = document.createElement("div");
+  el.id = "panel";
+  el.setAttribute("demo-step", "banana");
+  const attrs = bindAttributes(el, "demo", def({ step: "number" }, {})) as WithStep;
+  assert.throws(
+    () => {
+      void attrs.step;
+    },
+    /demo-step="banana" on <div#panel>: not a valid value for "number"/,
+  );
 });
 
 test("unknown keys read undefined and writes are inert", () => {

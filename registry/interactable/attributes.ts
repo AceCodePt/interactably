@@ -1,4 +1,5 @@
 import type { CompiledSignature } from "@interactable/signature.ts";
+import { describeElement } from "@interactable/describe-element.ts";
 
 export interface AttributeSlot {
   raw: string;
@@ -44,25 +45,28 @@ export function bindAttributes(el: Element, name: string, def: AttributeBindings
 }
 
 function readAttribute(el: Element, attribute: string, slot: AttributeSlot): unknown {
-  const value = coerceAttribute(slot.raw, el.getAttribute(attribute));
+  const value = coerceAttribute(slot, el, attribute, el.getAttribute(attribute));
   return slot.sig.validate(value);
 }
 
-function coerceAttribute(raw: string, attributeValue: string | null): unknown {
+function coerceAttribute(slot: AttributeSlot, el: Element, attribute: string, attributeValue: string | null): unknown {
   if (attributeValue === null) return undefined;
-  if (/\bnumber\b/.test(raw)) {
-    if (attributeValue.trim() === "" || Number.isNaN(Number(attributeValue))) {
-      throw new Error(`[Interactable] "${attributeValue}" is not a valid number for slot "${raw}"`);
-    }
-    return Number(attributeValue);
-  }
-  if (/\bbigint\b/.test(raw)) {
+  const candidates: unknown[] = [];
+  if (attributeValue.trim() !== "") {
+    const number = Number(attributeValue);
+    if (Number.isFinite(number)) candidates.push(number);
     try {
-      return BigInt(attributeValue);
-    } catch {
-      throw new Error(`[Interactable] "${attributeValue}" is not a valid bigint for slot "${raw}"`);
-    }
+      candidates.push(BigInt(attributeValue));
+    } catch {}
   }
-  if (/\bboolean\b/.test(raw)) return attributeValue === "true";
-  return attributeValue;
+  candidates.push(attributeValue === "false" ? false : true);
+  candidates.push(attributeValue);
+  for (const candidate of candidates) {
+    try {
+      return slot.sig.validate(candidate);
+    } catch {}
+  }
+  throw new Error(
+    `[Interactable] ${attribute}="${attributeValue}" on <${describeElement(el)}>: not a valid value for "${slot.raw}"`,
+  );
 }

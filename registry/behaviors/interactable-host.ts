@@ -1,5 +1,6 @@
 import { defineAutoWebComponent } from "auto-wc";
 import type { Constructor } from "auto-wc";
+import { describeElement } from "@interactable/describe-element.ts";
 import { LEGACY_EVENTS_WITHOUT_IDL, isImplementationEvent } from "@interactable/events.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { INTERSECT_ATTRIBUTES, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
@@ -226,11 +227,6 @@ export function defineInteractableHost(tag: Tag): void {
     return InteractableHostElement as unknown as Constructor<HTMLElement> & { observedAttributes?: string[] };
   }) as unknown as Parameters<typeof defineAutoWebComponent>[2];
   defineAutoWebComponent(hostName, tag, HostFactory, { observedAttributes: observed });
-}
-
-function describeElement(el: Element): string {
-  const id = (el as HTMLElement).id;
-  return id !== "" ? `${el.localName}#${id}` : el.localName;
 }
 
 function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string): void {
