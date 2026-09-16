@@ -85,6 +85,14 @@ test("record slot keys whose signature admits undefined may be omitted", () => {
   assert.throws(() => sig.validate({ unexpected: 1 }));
 });
 
+test("a record whose slots are all optional is itself optional", () => {
+  const allOptional = compileSignature({ method: "'get' | 'post' | 'delete' | undefined", body: "string | undefined" });
+  assert.equal(allOptional.validate(undefined), undefined);
+
+  const someRequired = compileSignature({ title: "string", count: "number | undefined" });
+  assert.throws(() => someRequired.validate(undefined));
+});
+
 test("record slot keys that do not admit undefined stay required", () => {
   const sig = compileSignature({ title: "string", count: "number | undefined" });
   assert.deepEqual(sig.validate({ title: "hello" }), { title: "hello" });

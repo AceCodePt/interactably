@@ -333,6 +333,34 @@ test("once() is spent even when the chain aborts after it", () => {
   assert.equal(sendCalls, 0);
 });
 
+test("a guard-aborted || fallback leaves once() unspent", () => {
+  const form = el("form");
+  const alert = el("alert");
+  let guardCalls = 0;
+  let sendCalls = 0;
+  wireHost(form, {
+    validate: (e) => {
+      e.preventDefault();
+    },
+  });
+  wireHost(alert, {
+    guard: (e) => {
+      guardCalls++;
+      e.preventDefault();
+    },
+    send: () => {
+      sendCalls++;
+    },
+  });
+
+  const trigger = el();
+  const value = "#form.validate() || #alert.once().guard().send()";
+  run(trigger, value, new Event("submit"));
+  run(trigger, value, new Event("submit"));
+  assert.equal(guardCalls, 2, "the fallback aborted by a guard, so its once is refunded and the fallback fires again");
+  assert.equal(sendCalls, 0, "the guard still aborts, so send never runs");
+});
+
 test("key prefixes filter events and are case-insensitive", () => {
   const receiver = el("f");
   let sendCalls = 0;

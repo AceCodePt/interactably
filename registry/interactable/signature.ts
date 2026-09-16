@@ -50,6 +50,7 @@ export function compileSignature(sig: Sig): CompiledSignature {
 
   return {
     validate(value: unknown): unknown {
+      if (value === undefined && optional.size === fields.size) return undefined;
       if (typeof value !== "object" || value === null || Array.isArray(value)) {
         throw new Error(`expected an object argument, got ${value === null ? "null" : Array.isArray(value) ? "array" : typeof value}`);
       }

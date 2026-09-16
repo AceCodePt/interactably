@@ -95,10 +95,10 @@ async function mount(attributes: Record<string, string>): Promise<HTMLElement> {
   return el;
 }
 
-function interact(el: Element, verb: string): InteractionEvent {
+function interact(el: Element, verb: string, arg: unknown = undefined): InteractionEvent {
   const event = new InteractionEventClass({
     verb,
-    arg: undefined,
+    arg,
     source: el,
     originalEvent: new Event("interaction"),
   });
@@ -199,6 +199,49 @@ test("an out-of-set requestable-method is rejected before anything is sent", asy
   assert.equal(fetchCalls.length, 0);
   assert.equal(el.hasAttribute("aria-busy"), false);
   assert.equal(el.hasAttribute("data-status"), false);
+});
+
+test("send() and send({}) both use the config url and method", async () => {
+  const el = await mount({ "requestable-url": "/api/search" });
+  interact(el, "send");
+  interact(el, "send", {});
+  assert.equal(fetchCalls.length, 2);
+  assert.equal(fetchCalls[0]!.url, "/api/search");
+  assert.equal(fetchCalls[0]!.init.method, "GET");
+  assert.equal(fetchCalls[1]!.url, "/api/search");
+  assert.equal(fetchCalls[1]!.init.method, "GET");
+});
+
+test("send({method}) overrides the config method for that one request", async () => {
+  const el = await mount({ "requestable-url": "/api/orders" });
+  interact(el, "send", { method: "delete" });
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0]!.url, "/api/orders");
+  assert.equal(fetchCalls[0]!.init.method, "DELETE");
+});
+
+test("send({url}) overrides the config url for that one request", async () => {
+  const el = await mount({ "requestable-url": "/api/orders", "requestable-method": "post" });
+  interact(el, "send", { url: "/x" });
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0]!.url, "/x");
+  assert.equal(fetchCalls[0]!.init.method, "POST");
+});
+
+test("an out-of-set send({method}) is a signature error naming the method", async () => {
+  const el = await mount({ "requestable-url": "/api" });
+  const event = interact(el, "send", { method: "nonsense" });
+  assert.ok(event.error instanceof Error);
+  assert.equal(fetchCalls.length, 0);
+  assert.equal(el.hasAttribute("aria-busy"), false);
+});
+
+test("an unknown send({key}) is a signature error naming the key", async () => {
+  const el = await mount({ "requestable-url": "/api" });
+  const event = interact(el, "send", { metod: "delete" });
+  assert.ok(event.error instanceof Error);
+  assert.ok(String(event.error.message).includes("metod"), String(event.error.message));
+  assert.equal(fetchCalls.length, 0);
 });
 
 test("an out-of-set requestable-concurrency is rejected before anything is sent", async () => {

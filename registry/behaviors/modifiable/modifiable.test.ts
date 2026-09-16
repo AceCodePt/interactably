@@ -335,3 +335,18 @@ test("compute() on a throwing formula writes invalid-value and logs the formula 
   assert.ok(messages.some((message) => message.includes("#ghost.value * 2")), messages.join(" | "));
 });
 
+test("a division by zero writes invalid-value and logs the division", async (t) => {
+  const error = t.mock.method(console, "error");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "1 / 0",
+    "modifiable-invalid-value": "0",
+  }) as HTMLOutputElement;
+  document.body.appendChild(out);
+  await flush();
+
+  assert.equal(out.textContent, "0");
+  assert.equal(error.mock.callCount(), 1);
+  assert.ok(String(error.mock.calls[0]!.arguments[0]).includes("divided by zero"));
+});
+

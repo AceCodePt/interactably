@@ -74,6 +74,7 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
     unitIndex: 0,
     callIndex: 0,
     modIndex: 0,
+    spentOnces: [],
   };
   try {
     walk(walkState);
@@ -86,6 +87,7 @@ type Outcome = "completed" | "guard" | "failed" | "paused";
 
 interface ChainResult {
   outcome: Outcome;
+  aborted?: boolean;
 }
 
 interface WalkState {
@@ -97,6 +99,7 @@ interface WalkState {
   unitIndex: number;
   callIndex: number;
   modIndex: number;
+  spentOnces: string[];
 }
 
 function walk(state: WalkState): ChainResult {
@@ -116,9 +119,14 @@ function walk(state: WalkState): ChainResult {
     }
     if (result.outcome === "completed") return { outcome: "completed" };
     if (result.outcome === "guard") {
+      const fallbackAborted = state.unitIndex === state.units.length - 1;
       state.unitIndex += 1;
       state.callIndex = 0;
       state.modIndex = 0;
+      if (fallbackAborted) {
+        for (const spent of state.spentOnces) stateOf(state.source).spentOnce.delete(spent);
+        return { outcome: "guard", aborted: true };
+      }
       continue;
     }
     return { outcome: "failed" };
@@ -198,6 +206,7 @@ function applyModifier(state: WalkState, modifier: Modifier): Outcome | undefine
     case "once": {
       if (elState.spentOnce.has(chainKey)) return "guard";
       elState.spentOnce.add(chainKey);
+      state.spentOnces.push(chainKey);
       return undefined;
     }
     case "delay":

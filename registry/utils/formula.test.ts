@@ -262,6 +262,53 @@ test("#a.checked stays a boolean: 1 and 0 in arithmetic", () => {
   assert.equal(evaluateFormula("#a.checked * 5").value, 0);
 });
 
-test("division by zero follows JavaScript: 1 / 0 is Infinity", () => {
-  assert.equal(evaluateFormula("1 / 0").value, Infinity);
+test("division by zero is an error: 1 / 0, 0 / 0 and -0 divisors throw, naming the literal", () => {
+  for (const source of ["1 / 0", "0 / 0", "1 / -0"]) {
+    assert.throws(() => evaluateFormula(source), (err: unknown) => {
+      assert.ok(err instanceof FormulaError);
+      assert.equal(err.operator, "/");
+      assert.equal(err.operand, 0);
+      assert.ok(err.message.includes("divided by zero"), err.message);
+      assert.ok(err.message.includes("(literal)"), err.message);
+      return true;
+    });
+  }
+});
+
+test("an empty divisor reference is an empty-operand error, not division by zero", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "4";
+  const b = document.createElement("input");
+  b.id = "b";
+  b.value = "";
+  document.body.append(a, b);
+
+  assert.throws(() => evaluateFormula("#a.value / #b.value"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.ok(err.message.includes("#b.value"), err.message);
+    assert.ok(err.message.includes("(empty)"), err.message);
+    assert.ok(!err.message.includes("divided by zero"), err.message);
+    return true;
+  });
+});
+
+test("a zero-valued reference divisor is a division error naming the reference", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "4";
+  const b = document.createElement("input");
+  b.id = "b";
+  b.value = "0";
+  document.body.append(a, b);
+
+  assert.throws(() => evaluateFormula("#a.value / #b.value"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.operator, "/");
+    assert.equal(err.operand, 0);
+    assert.ok(err.message.includes("#b.value"), err.message);
+    assert.ok(err.message.includes("divided by zero"), err.message);
+    assert.ok(!err.message.includes("(literal)"), err.message);
+    return true;
+  });
 });

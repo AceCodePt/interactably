@@ -17,7 +17,13 @@ export const requestable = defineImplementation(
       concurrency: "'latest' | 'first' | 'all' | undefined",
     },
     state: { status: "'idle' | 'loading' | 'error' | undefined" },
-    verbs: { send: "undefined", abort: "undefined" },
+    verbs: {
+      send: {
+        method: "'get' | 'post' | 'put' | 'patch' | 'delete' | undefined",
+        url: "string | undefined",
+      },
+      abort: "undefined",
+    },
   },
   (el, attrs) => {
     const inflight = new Set<AbortController>();
@@ -41,8 +47,8 @@ export const requestable = defineImplementation(
         attrs.status = undefined;
         el.removeAttribute("aria-busy");
       },
-      send: (e) => {
-        const method = (attrs.method ?? "get").toLowerCase();
+      send: (e, opts) => {
+        const method = (opts?.method ?? attrs.method ?? "get").toLowerCase();
         const current = policy(method);
         if (inflight.size > 0) {
           if (current === "first") return;
@@ -56,7 +62,7 @@ export const requestable = defineImplementation(
         attrs.status = "loading";
         el.setAttribute("aria-busy", "true");
 
-        const request = buildRequest(el, method, attrs.url, attrs.include, controller.signal);
+        const request = buildRequest(el, method, opts?.url ?? attrs.url, attrs.include, controller.signal);
         fetch(request.url, request.init)
           .then(async (response) => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);

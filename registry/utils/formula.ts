@@ -13,15 +13,16 @@ type Value = number | string | boolean;
 interface Operand {
   readonly value: Value;
   readonly origin: string;
+  readonly literal?: boolean;
 }
 
-type Reason = "empty" | "not-a-number";
+type Reason = "empty" | "not-a-number" | "division-by-zero";
 
 export class FormulaError extends Error {
   readonly formula: string;
   readonly operator: string | undefined;
   readonly function: string | undefined;
-  readonly operand: string;
+  readonly operand: string | number;
   readonly origin: string;
   readonly selector: string | undefined;
   readonly element: Element | undefined;
@@ -31,7 +32,7 @@ export class FormulaError extends Error {
     formula: string;
     operator: string | undefined;
     function: string | undefined;
-    operand: string;
+    operand: string | number;
     origin: string;
     selector: string | undefined;
     element: Element | undefined;
@@ -41,7 +42,9 @@ export class FormulaError extends Error {
       opts.function !== undefined ? `${opts.function}()` : JSON.stringify(opts.operator);
     const reason = opts.reason === "empty" ? "empty" : "not a number";
     super(
-      `formula ${JSON.stringify(opts.formula)}: ${channel} got ${JSON.stringify(opts.operand)} from ${opts.origin} (${reason})`,
+      opts.reason === "division-by-zero"
+        ? `formula ${JSON.stringify(opts.formula)}: ${channel} divided by zero from ${opts.origin}`
+        : `formula ${JSON.stringify(opts.formula)}: ${channel} got ${JSON.stringify(opts.operand)} from ${opts.origin} (${reason})`,
     );
     this.name = "FormulaError";
     this.formula = opts.formula;
@@ -135,6 +138,14 @@ class Formula {
       const rhs = this.parseFactor();
       const left = requireNumber(node, operatorMeta(this.source, op));
       const right = requireNumber(rhs, operatorMeta(this.source, op));
+      if (op === "/" && right === 0) {
+        throw new FormulaError({
+          ...operatorMeta(this.source, op),
+          operand: 0,
+          origin: rhs.literal === true ? "(literal)" : rhs.origin,
+          reason: "division-by-zero",
+        });
+      }
       node = {
         value: op === "*" ? left * right : left / right,
         origin: this.source.slice(start, this.pos).trim(),
@@ -151,6 +162,7 @@ class Formula {
       return {
         value: -requireNumber(operand, operatorMeta(this.source, "unary -")),
         origin: this.source.slice(operandStart, this.pos).trim(),
+        ...(operand.literal === true ? { literal: true as const } : {}),
       };
     }
     return this.parsePrimary();
@@ -161,6 +173,7 @@ class Formula {
     const start = this.pos;
     const ch = this.source[this.pos];
     let value: Value;
+    let literal = false;
     if (ch === "(") {
       this.pos++;
       value = this.parseExpression().value;
@@ -173,12 +186,13 @@ class Formula {
       value = this.parseString(ch);
     } else if (ch !== undefined && /[0-9.]/.test(ch)) {
       value = this.parseNumber();
+      literal = true;
     } else if (ch !== undefined && /[A-Za-z_$]/.test(ch)) {
       value = this.parseCall();
     } else {
       throw new Error(`unexpected "${ch ?? "end of formula"}"`);
     }
-    return { value, origin: this.source.slice(start, this.pos).trim() };
+    return { value, origin: this.source.slice(start, this.pos).trim(), literal };
   }
 
   private parseReference(): Value {

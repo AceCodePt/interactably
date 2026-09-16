@@ -221,11 +221,13 @@ reference := '#' id '.' ('value' | 'checked')
 | Reference | `#qty.value`, `#agree.checked` | `.value` reads the element's text — a number when it parses, else a string; an empty or missing value is `""`. `.checked` is the boolean `el.checked === true`, `false` on an element without one. A bare `#id` is a parse error: `reference #qty needs .value or .checked` |
 | Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"3a"`. `-`, `*`, `/`, unary `-` are always arithmetic; `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers |
 | Boolean in arithmetic | `#item1.value * #item1.checked` | `true` is `1`, `false` is `0` — the line-item pattern: price when ticked, `0` when not |
-| Arithmetic is strict | `#qty.value * #price.value` | `-`, `*`, `/`, unary `-`, and `+` between numbers require number or boolean operands. An empty or non-numeric operand is an error, written to the console and shown as `modifiable-invalid-value` — no `NaN`, no silent zero |
+| Arithmetic is strict | `#qty.value * #price.value` | `-`, `*`, `/`, unary `-`, and `+` between numbers require number or boolean operands. An empty or non-numeric operand is an error, and so is division by zero; both are written to the console and shown as `modifiable-invalid-value` — no `NaN`, no `Infinity`, no silent zero |
+
+`#id` references and `sum(...)`/`count(...)` selectors resolve against the whole document — scope a set by putting its container's id in the selector (`sum('#list .amount')`).
 
 Sharp edge: two numeric-looking text inputs *add* — `#zip1.value + #zip2.value` sums them. Force a join with a literal on the left: `'' + #zip1.value + #zip2.value`.
 
-Division by zero follows JavaScript: `1 / 0` is `Infinity`, `0 / 0` is `NaN`.
+Division by zero is an error, not `Infinity`: `1 / 0` and `0 / 0` throw a `FormulaError` naming the divisor — `(literal)` for a literal zero, else the reference it came from (`#qty.value`).
 
 ---
 
@@ -313,7 +315,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `dirtyable` | input, textarea, select, output | `markClean` | — | toggles `.is-dirty` while `el.value` differs from the connect-time baseline |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
-| `requestable` | any | `send`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events |
+| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
 | `logger` | any | `log` | — | `console.log` from a phrase |
 | `validatable` | form, input, select, textarea | `validate` | — | guard verb: `reportValidity()`, `preventDefault()` on failure |
@@ -565,7 +567,7 @@ Rules:
 - **`config` is read-only.** A verb that needs its own baseline keeps one in the closure, as `dirtyable`'s `markClean` does.
 - **Invented live state is `data-*`** — one namespace, reflected as `el.dataset`, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
 - **Closure state** for transient internals (in-flight request, timers).
-- **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string (an empty value stays the empty string). Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0).
+- **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string (an empty value stays the empty string). Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0). A verb reading a value tolerates the unreadable (`inc()` on an empty counter produces `1`); the formula reading one treats it as an error.
 
 There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.
 
@@ -761,6 +763,8 @@ Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the 
 ```
 
 The form is the receiver of both `validate()` and `send()` in the first unit; `||` switches to `#validate-alert` only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (`new FormData(el)`). The trigger is `on-submit`, not a click on the button, so Enter in the field and the button produce the same one event. `prevent-default` with no config derives `submit` from `<form>`.
+
+`send()` takes an optional `{method, url}` that overrides the element's config for that one request — three buttons aiming at one `#api` with different methods, or a row's `send({url: '/items/3'})`. `method` is a fact about the interaction, not the element; where the response goes and how (`requestable-target`, `requestable-swap`) stays a property of the receiver, so those are not overridable per request.
 
 `novalidate` is load-bearing: without it the browser's interactive validation runs first and, for an invalid form, never fires `submit` at all. `novalidate` disables only that interactive step; the constraint API stays, so `reportValidity()` still shows the native bubble. The phrase decides *when* validation happens; the platform still decides *what* valid means.
 
