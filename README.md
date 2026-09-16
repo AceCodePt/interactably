@@ -356,6 +356,8 @@ Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling c
 
 **Radio-derived exclusivity, no attribute.** A panel shown *from* an `<input type="radio">` closes the panels of that radio's siblings — the radios sharing its `name` and its form owner (`source.form`, else `document`). Each sibling's `on-*` phrases are parsed, and every panel the sibling controls, other than the one being opened, receives `show(false)` — dispatched with no interacting source, so nothing is written onto a source element; the closed panel's `aria-expanded` is still refreshed on its button controllers. The browser's radio group *is* the group: the package-manager example is three radios named `pm` plus a panel per section, nothing else. Checkbox and button sources close nothing.
 
+A radio group is the single source of truth for the panels it drives. Don't also `show()` one of those panels from another button: whichever fired last is what you'll see, and nothing reconciles the two until the next radio change.
+
 ### Hashable
 
 `hashable` writes `#<id>` into the location hash — a record of where you are, not a command. `hash()` uses `history.replaceState`, so scrolling does not grow history; `replaceState` fires no `hashchange`, and nothing reads the hash back — that is `:target` and the browser's own navigation. An element without an `id` warns once and does nothing.
@@ -879,6 +881,8 @@ Input masks and format-as-you-type belong in a component library built on the sa
 ## Not supported
 
 Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `valueAsNumber` · dynamic `on-*` attribute *names* after connect · cross-element watching (`watch()` remains a possible opt-in verb on an implementation, not a mechanism of the system) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1) · a CLI check that `is=` in markup matches the implementations' declared tags.
+
+`on-load`. Every trigger fires after the document is upgraded, so every `#id` resolves; a connect-time trigger is the one that couldn't make that promise. Author the initial state instead — `open`, `checked`, `data-open="true"`.
 
 ---
 

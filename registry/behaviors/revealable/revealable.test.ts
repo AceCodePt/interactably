@@ -5,6 +5,7 @@ import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
+let isImplementationEvent: (el: Element, type: string) => boolean;
 let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 const dialogCalls: string[] = [];
@@ -49,6 +50,7 @@ before(async () => {
   installPlatformPolyfills();
   await import("@behaviors/revealable/revealable.ts");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
+  ({ isImplementationEvent } = await import("@interactable/events.ts"));
   ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("details");
   defineInteractableHost("dialog");
@@ -208,6 +210,7 @@ test("authored data-open renders at connect", async () => {
   document.body.appendChild(open);
   await flush();
   assert.equal(open.hidden, false);
+  assert.equal(open.getAttribute("data-open"), "true", "connect reads data-open; it does not rewrite or remove it");
 
   const closed = hostElement("div", { implements: "revealable" });
   document.body.appendChild(closed);
@@ -550,4 +553,70 @@ test("the sibling-closing no-source path refreshes button controllers and leaves
   assert.equal(p2.hidden, true, "the sibling panel closes");
   assert.equal(button.getAttribute("aria-expanded"), "false", "the button controller is refreshed");
   assert.equal(r2.getAttribute("aria-expanded"), null, "the radio source gets no aria-expanded");
+});
+
+test("radio-driven panels drift when another button shows one; nothing reconciles", async () => {
+  const rA = hostElement("input", { type: "radio", name: "pm", id: "r-a", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
+  const rB = hostElement("input", { type: "radio", name: "pm", id: "r-b", "on-change": "#b.show()" }) as HTMLInputElement;
+  const a = hostElement("div", { implements: "revealable", id: "a", "data-open": "true" });
+  const b = hostElement("div", { implements: "revealable", id: "b" });
+  const btn = hostElement("button", { id: "btn", "on-click": "#b.show()" });
+  document.body.append(rA, rB, a, b, btn);
+  await flush();
+
+  assert.equal(a.hidden, false);
+  assert.equal(b.hidden, true);
+
+  btn.click();
+  await flush();
+  assert.equal(b.hidden, false, "the button won");
+  assert.equal(a.hidden, false, "a was not closed: a button source closes nothing");
+  assert.equal(rA.checked, true, "the radio was not touched");
+  assert.equal(rB.checked, false);
+
+  rA.click();
+  await flush();
+  assert.equal(b.hidden, false, "already checked → no change event → still drifted; this is the documented state");
+
+  rB.click();
+  await flush();
+  assert.equal(a.hidden, true);
+  assert.equal(b.hidden, false, "one full radio change resolves the drift; nothing else does");
+});
+
+test("a panel that shows itself does not write back to a radio that also drives it", async () => {
+  const form = document.createElement("form");
+  const rA = hostElement("input", { type: "radio", name: "pm", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
+  const rB = hostElement("input", { type: "radio", name: "pm", "on-change": "#b.show()" }) as HTMLInputElement;
+  form.append(rA, rB);
+  const a = hostElement("div", { implements: "revealable", id: "a", "data-open": "true" });
+  const b = hostElement("div", { implements: "revealable", id: "b" });
+  const btn = hostElement("button", { "on-click": "#b.show()" });
+  document.body.append(form, a, b, btn);
+  await flush();
+
+  let changes = 0;
+  form.addEventListener("change", () => changes++);
+
+  btn.click();
+  await flush();
+  assert.equal(rB.checked, false, "the radio is not re-checked");
+  assert.equal(changes, 0, "no change event was dispatched on either radio");
+  assert.equal(b.hidden, false);
+});
+
+test("on-load fires nothing at connect", async () => {
+  const warnings: string[] = [];
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => warnings.push(args.map(String).join(" "));
+  try {
+    const p = hostElement("div", { implements: "revealable", id: "p", "on-load": "this.show()" });
+    document.body.appendChild(p);
+    await flush();
+    assert.equal(p.hidden, true, "still closed");
+    assert.equal(isImplementationEvent(p, "load"), false, "not a synthetic trigger");
+    assert.equal(warnings.length, 0, "no console.warn: load is an ordinary DOM event name that never fires on a div");
+  } finally {
+    console.warn = originalWarn;
+  }
 });
