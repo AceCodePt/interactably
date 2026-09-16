@@ -4,9 +4,15 @@ import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
+import {
+  FakeIntersectionObserver,
+  installFakeIntersectionObserver,
+  resetFakeIntersectionObserver,
+} from "@tests/intersection-observer.ts";
 
 const siteDir = new URL("../site/", import.meta.url);
 const examplesUrl = new URL("examples.html", siteDir);
+const docsUrl = new URL("docs.html", siteDir);
 const demoUrl = new URL("demo.js", siteDir);
 const cdnDir = new URL("../dist/cdn/", import.meta.url);
 
@@ -27,7 +33,6 @@ const KNOWN_BUNDLES = new Set([
   "prevent-default",
   "requestable",
   "revealable",
-  "spyable",
   "storable",
   "validatable",
 ]);
@@ -370,4 +375,83 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   click(tabAuto);
   assert.equal(tabAuto.getAttribute("aria-expanded"), "true");
   assert.equal(tabExplicit.getAttribute("aria-expanded"), "false", "exactly one tab reads expanded");
+});
+
+test("site: docs.html sidebar is a push current-section marker", async (t) => {
+  const html = readFileSync(fileURLToPath(docsUrl), "utf8");
+  const demo = readFileSync(fileURLToPath(demoUrl), "utf8");
+  const coreUrl = new URL("interactably-core.js", cdnDir);
+  if (!existsSync(fileURLToPath(coreUrl))) {
+    t.skip("dist not built; run pnpm build first");
+    return;
+  }
+
+  const dom: JSDOM = setupJsdom();
+  t.after(() => teardownJsdom(dom));
+
+  const warns: string[] = [];
+  const errors: string[] = [];
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  console.warn = (...args: unknown[]) => {
+    warns.push(args.map(String).join(" "));
+  };
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+  };
+  t.after(() => {
+    console.warn = originalWarn;
+    console.error = originalError;
+  });
+
+  const holder = document.createElement("div");
+  holder.innerHTML = bodyMarkup(html);
+  document.body.appendChild(holder);
+
+  resetFakeIntersectionObserver();
+  installFakeIntersectionObserver();
+  t.after(resetFakeIntersectionObserver);
+
+  const core = await import(coreUrl.href);
+  const names = vendorRefs(html, demo);
+  let autoLoader: { installAutoLoader(): () => void } | undefined;
+  for (const name of names) {
+    if (name === "interactably-core.js") continue;
+    const bundle = await import(new URL(name, cdnDir).href);
+    if (name === "auto-loader.js") autoLoader = bundle as typeof autoLoader;
+  }
+  const extraTags = [...demo.matchAll(EXTRA_HOST)].map((match) => match[1]!);
+  assert.ok(extraTags.includes("h2") && extraTags.includes("h3"), "demo.js defines the h2 and h3 hosts");
+  for (const tag of extraTags) core.defineInteractableHost(tag);
+
+  assert.ok(autoLoader !== undefined, "demo.js installs the auto-loader");
+  autoLoader.installAutoLoader();
+  await flush();
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+
+  const toc = byId("toc");
+  assert.equal(toc.tagName.toLowerCase(), "nav", "the sidebar nav has id toc");
+  assert.equal(toc.getAttribute("implements"), "attributable", "the sidebar nav implements attributable");
+
+  const heading = document.querySelector<HTMLElement>("h2#quick-start");
+  assert.ok(heading !== null, "the docs body has an h2#quick-start heading");
+  const phrase = heading.getAttribute("on-intersect-half") ?? "";
+  assert.ok(phrase.includes("#toc"), "a heading's on-intersect-half names #toc");
+
+  const observer = FakeIntersectionObserver.instances.find(
+    (instance) => instance.rootMargin === "0px 0px -50% 0px" && instance.observed.includes(heading),
+  );
+  assert.ok(observer !== undefined, "a heading observes the middle-line margin");
+  observer.trigger([{ target: heading }]);
+  await flush();
+
+  assert.equal(
+    toc.getAttribute("data-current"),
+    "quick-start",
+    "crossing the heading sets #toc data-current to the heading's id",
+  );
+
+  assert.deepEqual(warns, [], "the docs body loads without console.warn");
+  assert.deepEqual(errors, [], "the docs body loads without console.error");
 });
