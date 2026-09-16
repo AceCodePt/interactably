@@ -14,7 +14,7 @@ import "./vendor/storable.js";
 import "./vendor/auto-grow.js";
 import "./vendor/paste-transform.js";
 import "./vendor/json-template.js";
-import "./vendor/spyable.js";
+import "./vendor/hashable.js";
 import { defineInteractableHost } from "./vendor/interactably-core.js";
 import { installAutoLoader } from "./vendor/auto-loader.js";
 
@@ -30,5 +30,7 @@ defineInteractableHost("div");
 defineInteractableHost("details");
 defineInteractableHost("dialog");
 defineInteractableHost("nav");
+defineInteractableHost("h2");
+defineInteractableHost("h3");
 
 installAutoLoader();

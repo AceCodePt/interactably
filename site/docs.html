@@ -39,7 +39,13 @@
     <div class="layout">
       <aside class="sidebar">
         <h2>Contents</h2>
-        <nav aria-label="Documentation sections" implements="spyable" spyable-offset="96">
+        <!-- The current-section marker is a push: each heading sets #toc's single
+             data-current as it crosses the viewport's middle line. The trigger fires
+             on every crossing in both directions - scrolling down is exact, but
+             scrolling up re-sets the heading that crosses back below the line until
+             the previous heading crosses. That is the honest behaviour of a push
+             design with no leaving-side distinction; no direction guard is added. -->
+        <nav id="toc" aria-label="Documentation sections" implements="attributable">
           <a href="#quick-start">Quick start</a>
           <a href="#trigger-grammar">The trigger grammar</a>
           <a href="#grammar" class="sub">Grammar</a>
@@ -77,7 +83,7 @@
 
       <div class="content">
 
-        <h2 id="quick-start">Quick start <a class="anchor" href="#quick-start">#</a></h2>
+        <h2 id="quick-start" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'quick-start'}); this.hash()">Quick start <a class="anchor" href="#quick-start">#</a></h2>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Shell</span>
@@ -200,7 +206,7 @@
           <p>An element carries <code class="inline-code">is="interactable-&lt;tag&gt;"</code> when it has <code class="inline-code">implements</code>, any <code class="inline-code">on-*</code> attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an <code class="inline-code">id</code>. The auto-loader fills <code class="inline-code">is=</code> in at runtime so you can omit it; writing it yourself is the synchronous, production form.</p>
         </div>
 
-        <h2 id="trigger-grammar">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
+        <h2 id="trigger-grammar" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'trigger-grammar'}); this.hash()">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
         <p>One attribute per interaction; the value is the phrase language.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -221,7 +227,7 @@
 &lt;input  on-change="#form.validate() &amp;&amp; #hint.show()"&gt;</code></pre>
         </div>
 
-        <h3 id="grammar">Grammar <a class="anchor" href="#grammar">#</a></h3>
+        <h3 id="grammar" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'grammar'}); this.hash()">Grammar <a class="anchor" href="#grammar">#</a></h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
@@ -241,7 +247,7 @@ object    := '{' name ':' arg (',' name ':' arg)* '}'
 modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
 
-        <h3 id="constructs">Constructs <a class="anchor" href="#constructs">#</a></h3>
+        <h3 id="constructs" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'constructs'}); this.hash()">Constructs <a class="anchor" href="#constructs">#</a></h3>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
@@ -288,7 +294,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <code class="inline-code">;</code> phrase observes its own margin.
         </p>
 
-        <h3 id="rules">Rules <a class="anchor" href="#rules">#</a></h3>
+        <h3 id="rules" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'rules'}); this.hash()">Rules <a class="anchor" href="#rules">#</a></h3>
         <ol>
           <li><strong>Parens are mandatory.</strong> <code class="inline-code">#pop.show</code> is a CSS selector; <code class="inline-code">#pop.show()</code> is a call.</li>
           <li><strong>Receivers are <code class="inline-code">#id</code> or <code class="inline-code">this</code>.</strong> Ids may not contain <code class="inline-code">.</code>. Class or attribute selectors are never receivers.</li>
@@ -304,10 +310,10 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <li><strong>Errors are local.</strong> A missing <code class="inline-code">#id</code>, a grammar error, or an argument that fails the signature logs once and skips that phrase/link; the rest of the value runs.</li>
         </ol>
 
-        <h3 id="reserved-names">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
+        <h3 id="reserved-names" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'reserved-names'}); this.hash()">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
         <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
 
-        <h2 id="interaction-event">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
+        <h2 id="interaction-event" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'interaction-event'}); this.hash()">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
         <p>The host wraps every verb call in its own event, dispatched at the receiver:</p>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -335,7 +341,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <li><strong>The browser&rsquo;s <code class="inline-code">command</code> event plays no part.</strong> A page can also use native invokers; an implementation may listen to <code class="inline-code">command</code> like any other DOM event.</li>
         </ul>
 
-        <h2 id="hosts">Hosts <a class="anchor" href="#hosts">#</a></h2>
+        <h2 id="hosts" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'hosts'}); this.hash()">Hosts <a class="anchor" href="#hosts">#</a></h2>
         <p>
           One customized built-in per tag, defined with <a href="https://github.com/AceCodePt/auto-wc">auto-wc</a> via
           <code class="inline-code">defineInteractableHost("input")</code> &rarr; <code class="inline-code">interactable-input</code>. The host does two independent jobs.
@@ -386,7 +392,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           class&rsquo;s <code class="inline-code">observedAttributes</code> snapshot plus one <code class="inline-code">MutationObserver</code> per element, never for <code class="inline-code">on-*</code> &mdash; the three intersect attributes are the one exception, observed statically so the host can rebuild their observers when they change.
         </p>
 
-        <h3 id="four-kinds">Four kinds of element <a class="anchor" href="#four-kinds">#</a></h3>
+        <h3 id="four-kinds" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'four-kinds'}); this.hash()">Four kinds of element <a class="anchor" href="#four-kinds">#</a></h3>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Kind</th><th>Has</th><th>Example</th></tr></thead>
@@ -400,14 +406,14 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
         <p>The fourth kind is why <code class="inline-code">this</code> exists: <code class="inline-code">on-click="this.remove()"</code> works on every row cloned from a template, with no generated ids.</p>
 
-        <h3 id="reporting">Reporting <a class="anchor" href="#reporting">#</a></h3>
+        <h3 id="reporting" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'reporting'}); this.hash()">Reporting <a class="anchor" href="#reporting">#</a></h3>
         <p>The host and executor report through <code class="inline-code">console.error</code> / <code class="inline-code">console.warn</code>; they do not throw (host methods run on the browser&rsquo;s stack, which owns their exceptions). <code class="inline-code">throw</code> is reserved for <code class="inline-code">defineImplementation</code> and the registry, where the exception reaches the developer who wrote the call.</p>
         <ul>
           <li><code class="inline-code">console.error</code> when there is no legitimate reading: unknown <code class="inline-code">implements</code> name, tag outside the implementation&rsquo;s <code class="inline-code">tags</code>, receiver <code class="inline-code">#id</code> not in the document, verb no implementation owns, verb that threw, implementation that failed to attach.</li>
           <li><code class="inline-code">console.warn</code> when the code may well be right but the author should look: <code class="inline-code">on-&lt;type&gt;</code> the element has no event for, <code class="inline-code">&lt;form on-submit&gt;</code> without <code class="inline-code">prevent-default</code>, a verb that returned a promise, <code class="inline-code">prevent-default</code> with nothing derived.</li>
         </ul>
 
-        <h2 id="implementations">The shipped implementations <a class="anchor" href="#implementations">#</a></h2>
+        <h2 id="implementations" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'implementations'}); this.hash()">The shipped implementations <a class="anchor" href="#implementations">#</a></h2>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Implementation</th><th>Tags</th><th>Verbs</th><th>Config / state</th><th>What it does</th></tr></thead>
@@ -427,13 +433,12 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td><code class="inline-code">paste-transform</code></td><td>input, textarea</td><td>&mdash;</td><td><code class="inline-code">patterns</code>, <code class="inline-code">replaces</code></td><td>rewrite pasted text with regexes</td></tr>
               <tr><td><code class="inline-code">copyable</code></td><td>button</td><td><code class="inline-code">copy</code></td><td><code class="inline-code">copied</code> (state); event <code class="inline-code">copy</code></td><td>copies a target element&rsquo;s text to the clipboard; sets <code class="inline-code">data-copied</code> and fires <code class="inline-code">copy</code> on success</td></tr>
               <tr><td><code class="inline-code">json-template</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">for</code>, <code class="inline-code">slice</code></td><td>render a JSON data source through a child <code class="inline-code">&lt;template&gt;</code></td></tr>
-              <tr><td><code class="inline-code">spyable</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">offset</code></td><td>marks the anchor of the section in view with <code class="inline-code">data-active</code> and <code class="inline-code">aria-current="location"</code></td></tr>
               <tr><td><code class="inline-code">hashable</code></td><td>any</td><td><code class="inline-code">hash</code></td><td>&mdash;</td><td>writes <code class="inline-code">#&lt;id&gt;</code> into the location hash with <code class="inline-code">replaceState</code> (no history entry); no-op when already set, warns once without an id</td></tr>
             </tbody>
           </table>
         </div>
 
-        <h3 id="prevent-default">prevent-default and no-propagate <a class="anchor" href="#prevent-default">#</a></h3>
+        <h3 id="prevent-default" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'prevent-default'}); this.hash()">prevent-default and no-propagate <a class="anchor" href="#prevent-default">#</a></h3>
         <p>
           The executor never calls <code class="inline-code">preventDefault()</code> or <code class="inline-code">stopPropagation()</code>
           (every <code class="inline-code">on-*</code> listener is passive). Both facts are said on the element, by name — they are
@@ -480,7 +485,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </p>
         <p><code class="inline-code">no-propagate</code> is its twin: <code class="inline-code">no-propagate-events</code>, default <code class="inline-code">"click"</code>, handler is <code class="inline-code">stopPropagation</code>. Both listen on the element, so both also receive events bubbling up from descendants — put them on the element whose keys or actions are meant, not an ancestor.</p>
 
-        <h3 id="revealable">Revealable <a class="anchor" href="#revealable">#</a></h3>
+        <h3 id="revealable" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'revealable'}); this.hash()">Revealable <a class="anchor" href="#revealable">#</a></h3>
         <p><code class="inline-code">revealable</code> is the model generic implementation: it declares nothing the platform already holds, derives its strategy from the element at connect, and invents state only where nothing exists. Two verbs and one boolean: <code class="inline-code">show()</code> opens, <code class="inline-code">show(false)</code> closes, <code class="inline-code">toggle()</code> flips.</p>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -500,11 +505,11 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <h3 id="hashable">Hashable <a class="anchor" href="#hashable">#</a></h3>
         <p><code class="inline-code">hashable</code> writes <code class="inline-code">#&lt;id&gt;</code> into the location hash — a record of where you are, not a command. <code class="inline-code">hash()</code> uses <code class="inline-code">history.replaceState</code>, so scrolling does not grow history; <code class="inline-code">replaceState</code> fires no <code class="inline-code">hashchange</code>, and nothing reads the hash back — that is <code class="inline-code">:target</code> and the browser&rsquo;s own navigation. An element without an <code class="inline-code">id</code> warns once and does nothing.</p>
 
-        <h3 id="storable">Storable <a class="anchor" href="#storable">#</a></h3>
+        <h3 id="storable" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'storable'}); this.hash()">Storable <a class="anchor" href="#storable">#</a></h3>
         <p><code class="inline-code">storable</code> persists a form field's value to storage through three verbs: <code class="inline-code">save()</code>, <code class="inline-code">load()</code> and <code class="inline-code">clear()</code>. Nothing is stored unless a phrase calls <code class="inline-code">save()</code> &mdash; saving is an act you can see in the markup. The storage key is <code class="inline-code">interactable:&lt;storable-key ?? name ?? id&gt;</code>, the default scope is <code class="inline-code">local</code>, and same-name checkboxes store as a list. A field with none of <code class="inline-code">storable-key</code>, <code class="inline-code">name</code> and <code class="inline-code">id</code> warns once on connect and stores nothing.</p>
         <p>Restore waits for the document to finish parsing, so initial-load markup works regardless of element order &mdash; elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (<code class="inline-code">NotReadyError</code>), logged against that open-list item, not solved here. Restore fires a native <code class="inline-code">change</code>, so your <code class="inline-code">on-change</code> phrase runs on restore &mdash; in the package-manager example <code class="inline-code">name="pm"</code> does two jobs (the browser's radio group and the storage key), and that is the point: restoring the stored radio re-opens the section that radio controls. <code class="inline-code">load()</code> re-reads the stored value as a user action and fires <code class="inline-code">change</code> when it changes; <code class="inline-code">clear()</code> removes the key.</p>
 
-        <h2 id="writing-an-implementation">Writing an implementation <a class="anchor" href="#writing-an-implementation">#</a></h2>
+        <h2 id="writing-an-implementation" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'writing-an-implementation'}); this.hash()">Writing an implementation <a class="anchor" href="#writing-an-implementation">#</a></h2>
         <p>One call declares the name, the tags it may attach to, the config and state it brings, its verb signatures, and the factory — and the factory is type-checked against the signatures.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -563,7 +568,7 @@ export const modifiable = defineImplementation("modifiable", {
           </table>
         </div>
 
-        <h3 id="signatures">Signatures <a class="anchor" href="#signatures">#</a></h3>
+        <h3 id="signatures" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'signatures'}); this.hash()">Signatures <a class="anchor" href="#signatures">#</a></h3>
         <p>
           Every <code class="inline-code">config</code>, <code class="inline-code">state</code> and verb scalar signature is a
           <a href="https://github.com/AceCodePt/tsyntax">tsyntax</a> string — the same string is the TypeScript type (<code class="inline-code">tsc</code> checks
@@ -609,7 +614,7 @@ export const attributable = defineImplementation("attributable", {
 }));</code></pre>
         </div>
 
-        <h3 id="declare-only">Declare only what you invent <a class="anchor" href="#declare-only">#</a></h3>
+        <h3 id="declare-only" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'declare-only'}); this.hash()">Declare only what you invent <a class="anchor" href="#declare-only">#</a></h3>
         <p>
           An implementation never declares an attribute the platform already owns. <code class="inline-code">min</code>, <code class="inline-code">max</code>,
           <code class="inline-code">step</code>, <code class="inline-code">type</code>, <code class="inline-code">open</code>, <code class="inline-code">value</code>,
@@ -626,7 +631,7 @@ export const attributable = defineImplementation("attributable", {
         </ul>
         <p>Most implementations declare no <code class="inline-code">state</code>: <code class="inline-code">dirtyable</code> compares <code class="inline-code">el.value</code> with a baseline in its closure, <code class="inline-code">revealable</code> on a <code class="inline-code">&lt;dialog&gt;</code> reads <code class="inline-code">el.open</code>, <code class="inline-code">modifiable</code> writes <code class="inline-code">el.value</code>. A <code class="inline-code">state</code> entry is the exception, and the smell to check is whether the platform already has the thing under another name.</p>
 
-        <h3 id="attrs">attrs is a typed proxy <a class="anchor" href="#attrs">#</a></h3>
+        <h3 id="attrs" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'attrs'}); this.hash()">attrs is a typed proxy <a class="anchor" href="#attrs">#</a></h3>
         <p>Built once per instance by <code class="inline-code">bindAttributes(el, name, def)</code>. Each getter reads the attribute live and validates it through the same compiled signature verbs use:</p>
         <ul>
           <li><code class="inline-code">config</code> keys are <strong>getters only</strong> — TypeScript rejects <code class="inline-code">attrs.step = 2</code> and the runtime proxy throws.</li>
@@ -634,7 +639,7 @@ export const attributable = defineImplementation("attributable", {
           <li><code class="inline-code">attrs.step</code> maps to <code class="inline-code">modifiable-step</code>, <code class="inline-code">attrs.open</code> maps to <code class="inline-code">data-open</code>; the body spells neither.</li>
         </ul>
 
-        <h3 id="conventions">Conventions <a class="anchor" href="#conventions">#</a></h3>
+        <h3 id="conventions" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'conventions'}); this.hash()">Conventions <a class="anchor" href="#conventions">#</a></h3>
         <ul>
           <li><strong><code class="inline-code">on*</code> methods are event handlers</strong> on the host element (auto-wc semantics; <code class="inline-code">auto-grow</code>&rsquo;s <code class="inline-code">onInput</code> still works). <strong>Every other method is a verb</strong> and must appear in <code class="inline-code">verbs</code>.</li>
           <li><strong>Verbs receive <code class="inline-code">(e, arg)</code>.</strong> <code class="inline-code">arg</code> is already validated against the signature. Inputs come from <code class="inline-code">arg</code>; <code class="inline-code">e.source</code> and <code class="inline-code">e.originalEvent</code> are <em>context</em>, not input.</li>
@@ -644,7 +649,7 @@ export const attributable = defineImplementation("attributable", {
           <li><strong>Registering an implementation ensures its hosts.</strong> The registry calls <code class="inline-code">defineInteractableHost(tag)</code> for every tag in <code class="inline-code">tags</code>; tag-less implementations ensure nothing. <code class="inline-code">defineInteractableHost</code> is idempotent, so two implementations sharing a tag share one host class.</li>
         </ul>
 
-        <h2 id="state">State: three tiers <a class="anchor" href="#state">#</a></h2>
+        <h2 id="state" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'state'}); this.hash()">State: three tiers <a class="anchor" href="#state">#</a></h2>
         <p>A verb&rsquo;s job is to <strong>mutate state</strong>; the reaction (text, classes, ARIA, <code class="inline-code">hidden</code>) happens in <code class="inline-code">attributeChangedCallback</code> or in response to the platform&rsquo;s own events. Verbs do not render.</p>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -701,7 +706,7 @@ export const attributable = defineImplementation("attributable", {
         </ul>
         <p>There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.</p>
 
-        <h2 id="dynamics">Dynamics <a class="anchor" href="#dynamics">#</a></h2>
+        <h2 id="dynamics" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'dynamics'}); this.hash()">Dynamics <a class="anchor" href="#dynamics">#</a></h2>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Case</th><th>Answer</th></tr></thead>
@@ -721,10 +726,10 @@ export const attributable = defineImplementation("attributable", {
         <p>Consequence: the auto-loader is a supported convenience, but explicit <code class="inline-code">is=</code> is the faster, synchronous form — prefer it in templates and server output. If code inserts a trigger and drives it immediately, await <code class="inline-code">customElements.whenDefined()</code> plus a microtask — or drive the receiver directly with <code class="inline-code">dispatchInteraction</code>.</p>
         <p>Selector rule: <strong>selectors may appear in arguments, never as receivers.</strong> The dispatch graph stays 1:1 — every interaction goes to one element with one <code class="inline-code">implements</code>, so completion, grep (<code class="inline-code">#pop.</code> finds every writer) and error rules stay exact.</p>
 
-        <h2 id="parser-and-executor">Parser and executor <a class="anchor" href="#parser-and-executor">#</a></h2>
+        <h2 id="parser-and-executor" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'parser-and-executor'}); this.hash()">Parser and executor <a class="anchor" href="#parser-and-executor">#</a></h2>
         <p>There is no engine. Two pure functions, both called from the host.</p>
 
-        <h3 id="pipeline">Pipeline <a class="anchor" href="#pipeline">#</a></h3>
+        <h3 id="pipeline" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'pipeline'}); this.hash()">Pipeline <a class="anchor" href="#pipeline">#</a></h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
@@ -757,11 +762,11 @@ export const attributable = defineImplementation("attributable", {
           <li><strong>Imperative path:</strong> <code class="inline-code">runPhrases(el, "#pop.show()", someEvent)</code> is the one entry point, and its first argument is what <code class="inline-code">this</code> means — the trigger listener and every implementation-event handler call the same function.</li>
         </ul>
 
-        <h3 id="parse-cache">Parse cache and resolution <a class="anchor" href="#parse-cache">#</a></h3>
+        <h3 id="parse-cache" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'parse-cache'}); this.hash()">Parse cache and resolution <a class="anchor" href="#parse-cache">#</a></h3>
         <p><code class="inline-code">parse</code> caches by attribute string; the cached value is an AST in which <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads are <strong>tokens</strong>, not elements or values. Resolution happens per fire, inside <code class="inline-code">runPhrases</code>; two identical rows share one parse and resolve to two different elements. <code class="inline-code">this</code> is resolved as <code class="inline-code">token === "this" ? source : document.getElementById(id)</code> — never rewritten into the attribute, never stamped into an id, never consulted from <code class="inline-code">event.currentTarget</code>.</p>
         <p><strong>Argument validation is the receiver&rsquo;s job, not the parser&rsquo;s.</strong> The parser knows every literal&rsquo;s kind from syntax (bare <code class="inline-code">5</code> is a number, <code class="inline-code">'5'</code> is a string, <code class="inline-code">#id</code> / <code class="inline-code">this</code> are elements). Scalars go through <code class="inline-code">parseValueAgainstDSL</code> against the slot&rsquo;s tsyntax string; resolved elements go through <code class="inline-code">instanceof</code> against the slot&rsquo;s constructor. The only runtime-typed values are reads, and they carry the platform&rsquo;s type: <code class="inline-code">this.value</code> is a string, <code class="inline-code">#qty.valueAsNumber</code> is a number, <code class="inline-code">#agree.checked</code> is a boolean. There is no coercion — <code class="inline-code">#total.add(this.value)</code> with <code class="inline-code">add: "number"</code> fails and the message says so.</p>
 
-        <h3 id="native-defaults">Native default actions and propagation <a class="anchor" href="#native-defaults">#</a></h3>
+        <h3 id="native-defaults" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'native-defaults'}); this.hash()">Native default actions and propagation <a class="anchor" href="#native-defaults">#</a></h3>
         <p>The executor does neither. Every <code class="inline-code">on-*</code> listener is passive; a phrase describes what happens, not what the browser is allowed to do.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -778,7 +783,7 @@ export const attributable = defineImplementation("attributable", {
         </div>
         <p><code class="inline-code">prevent-default</code> binds its own listeners with <code class="inline-code">passive: false</code>, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying <code class="inline-code">on-submit</code> on a <code class="inline-code">&lt;form&gt;</code> (or <code class="inline-code">on-click</code> on an <code class="inline-code">&lt;a href&gt;</code>, or <code class="inline-code">on-keydown</code> on a <code class="inline-code">&lt;button&gt;</code>) without <code class="inline-code">prevent-default</code> logs one <code class="inline-code">console.warn</code>. A pre-existing <code class="inline-code">defaultPrevented</code> does <strong>not</strong> suppress dispatch.</p>
 
-        <h2 id="asynchrony">Asynchrony <a class="anchor" href="#asynchrony">#</a></h2>
+        <h2 id="asynchrony" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'asynchrony'}); this.hash()">Asynchrony <a class="anchor" href="#asynchrony">#</a></h2>
         <p><strong>Verbs are synchronous and chains never await.</strong> This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A <code class="inline-code">.</code> chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints. Work that finishes later belongs to an implementation that owns it — today <code class="inline-code">requestable</code> — and continues by dispatching an <code class="inline-code">ImplementationEvent</code> the author&rsquo;s <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> attributes turn into a new synchronous chain.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -813,7 +818,7 @@ export const attributable = defineImplementation("attributable", {
         <p><strong>Concurrency policy belongs to the implementation that owns the I/O.</strong> <code class="inline-code">requestable</code> derives it from the method, the way <code class="inline-code">revealable</code> derives its strategy from the tag: a GET is idempotent, so a new send aborts the previous one (<strong>latest wins</strong>); anything else may already have happened on the server, so a new send while one is in flight is refused (<strong>first wins</strong>). <code class="inline-code">requestable-concurrency="latest | first | all"</code> overrides. Because <code class="inline-code">send()</code> sets <code class="inline-code">aria-busy="true"</code> synchronously and clears it when the last in-flight request settles, <code class="inline-code">form[aria-busy="true"] button { pointer-events: none }</code> disables the trigger with no JavaScript.</p>
         <p><strong>Continuations run only if the element is still connected.</strong> A response that replaces the requestable element itself (<code class="inline-code">requestable-swap="outerHTML"</code>) disconnects its host; the <code class="inline-code">on-response</code> event is skipped. Cancellation is <code class="inline-code">AbortError</code>, which runs neither event and logs nothing.</p>
 
-        <h2 id="full-examples">Full examples <a class="anchor" href="#full-examples">#</a></h2>
+        <h2 id="full-examples" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'full-examples'}); this.hash()">Full examples <a class="anchor" href="#full-examples">#</a></h2>
         <p>The examples below are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
 
         <h3>Price calculator</h3>
@@ -896,9 +901,9 @@ export const attributable = defineImplementation("attributable", {
 &lt;section is="interactable-section" id="guide" implements="attributable"
          on-intersect-half="0px 0px -50% 0px: this.once().setAttr({name: 'data-seen', value: 'true'})"&gt;&hellip;&lt;/section&gt;</code></pre>
         </div>
-        <p><code class="inline-code">on-intersect-half</code> fires every time the section crosses the viewport&rsquo;s halfway threshold, in either direction &mdash; there is no entering/leaving distinction &mdash; so <code class="inline-code">once()</code> is the natural partner: the first half-in-view crossing is the only one that acts. A margin key narrows the window: <code class="inline-code">0px 0px -50% 0px</code> waits until the section is past the viewport&rsquo;s middle line, and each <code class="inline-code">;</code> phrase under one attribute observes its own margin, so <code class="inline-code">on-intersect-half="0px 0px -50% 0px: #a.mark(); 0px: #b.mark()"</code> is two observers on one attribute. The <code class="inline-code">spyable</code> implementation, which tracks <em>which</em> section is in view, remains the tool when a one-at-a-time current-section marker is needed.</p>
+        <p><code class="inline-code">on-intersect-half</code> fires every time the section crosses the viewport&rsquo;s halfway threshold, in either direction &mdash; there is no entering/leaving distinction &mdash; so <code class="inline-code">once()</code> is the natural partner: the first half-in-view crossing is the only one that acts. A margin key narrows the window: <code class="inline-code">0px 0px -50% 0px</code> waits until the section is past the viewport&rsquo;s middle line, and each <code class="inline-code">;</code> phrase under one attribute observes its own margin, so <code class="inline-code">on-intersect-half="0px 0px -50% 0px: #a.mark(); 0px: #b.mark()"</code> is two observers on one attribute. The live sidebar of this page is the one-at-a-time current-section marker in the push shape: the nav holds one <code class="inline-code">data-current</code>, set by each heading&rsquo;s <code class="inline-code">on-intersect-half</code>.</p>
 
-        <h2 id="api-reference">API reference <a class="anchor" href="#api-reference">#</a></h2>
+        <h2 id="api-reference" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'api-reference'}); this.hash()">API reference <a class="anchor" href="#api-reference">#</a></h2>
         <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset). <code class="inline-code">installAutoLoader</code> ships in the full package and as <code class="inline-code">interactably/dist/cdn/auto-loader.js</code>.</p>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -924,12 +929,12 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
               <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">value</code> &rarr; <code class="inline-code">data-value</code> &rarr; textContent) and write helpers</td></tr>
               <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
-              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code>, <code class="inline-code">spyable</code>, <code class="inline-code">hashable</code></td></tr>
+              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code>, <code class="inline-code">hashable</code></td></tr>
             </tbody>
           </table>
         </div>
 
-        <h2 id="why-built">Why it is built this way <a class="anchor" href="#why-built">#</a></h2>
+        <h2 id="why-built" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'why-built'}); this.hash()">Why it is built this way <a class="anchor" href="#why-built">#</a></h2>
         <p>The short versions of the decisions behind the design.</p>
         <ul>
           <li><strong>Our own attribute and event</strong> (<code class="inline-code">on-*</code>, <code class="inline-code">interaction</code>), not the browser&rsquo;s <code class="inline-code">command</code>/<code class="inline-code">commandfor</code>. No negotiation with native verb names, no deferral table, no double dispatch; native invokers coexist on the same button.</li>
@@ -954,15 +959,15 @@ export const attributable = defineImplementation("attributable", {
           <li><strong>Report with <code class="inline-code">console.error</code>/<code class="inline-code">warn</code>, throw only at definition time.</strong> Host code runs on the browser&rsquo;s stack, which owns its exceptions.</li>
         </ul>
 
-        <h2 id="when-not-to-use">When not to use this library <a class="anchor" href="#when-not-to-use">#</a></h2>
+        <h2 id="when-not-to-use" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'when-not-to-use'}); this.hash()">When not to use this library <a class="anchor" href="#when-not-to-use">#</a></h2>
         <p><strong>This is a push system, not a pull one.</strong> An event on a trigger pushes a verb onto a named receiver, the DOM changes once, and the interaction is over &mdash; there is no subscription, no reactivity, and no derived state. Nothing watches a value and re-runs phrases when it changes.</p>
         <p>The tabs example is the honest boundary case. Each radio&rsquo;s <code class="inline-code">on-change</code> pushes <code class="inline-code">show()</code> onto its panels, and the exclusivity closes the rest; &ldquo;which tab is visible&rdquo; is never stored &mdash; every switch rewrites the panels&rsquo; visibility by hand. Adding a fourth section means editing all three radio phrases, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.</p>
         <p>When the behaviour you need <em>pulls</em> &mdash; a value kept in sync with other values, recomputed on change, reactive by construction &mdash; a reactive/data-flow framework is the right tool. The one async seam this library does own is <code class="inline-code">requestable</code>: the trigger pushes <code class="inline-code">send()</code>, and <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> continue from the element that did the work.</p>
 
-        <h2 id="not-supported">Not supported <a class="anchor" href="#not-supported">#</a></h2>
+        <h2 id="not-supported" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'not-supported'}); this.hash()">Not supported <a class="anchor" href="#not-supported">#</a></h2>
         <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; dynamic <code class="inline-code">on-*</code> attribute <em>names</em> after connect &middot; cross-element watching &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
 
-        <h2 id="appendices">Appendices <a class="anchor" href="#appendices">#</a></h2>
+        <h2 id="appendices" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'appendices'}); this.hash()">Appendices <a class="anchor" href="#appendices">#</a></h2>
         <h3>Reference grammar</h3>
         <div class="codeblock">
           <div class="codeblock-bar">

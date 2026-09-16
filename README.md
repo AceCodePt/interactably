@@ -278,7 +278,6 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
 | `copyable` | button | `copy` | `copied` state; event `copy` | copies a target element's text to the clipboard; sets `data-copied` and fires `copy` on success |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
-| `spyable` | any | — | `offset` | watches scroll and marks the anchor of the section in view (`data-active`, `aria-current="location"`) |
 | `hashable` | any | `hash` | — | writes `#<id>` into the location hash with `replaceState` (no history entry); no-op when already set, warns once without an id |
 
 ### The pause mechanism
@@ -773,7 +772,7 @@ The core of `requestable` (config and swap details elided):
          on-intersect-half="0px 0px -50% 0px: this.once().setAttr({name: 'data-seen', value: 'true'})">…</section>
 ```
 
-`on-intersect-half` fires every time the section crosses the viewport's halfway threshold, in either direction — there is no entering/leaving distinction — so `once()` is the natural partner: the first half-in-view crossing is the only one that acts. A margin key narrows the window: `0px 0px -50% 0px` waits until the section is past the viewport's middle line, and each `;` phrase under one attribute observes its own margin, so `on-intersect-half="0px 0px -50% 0px: #a.mark(); 0px: #b.mark()"` is two observers on one attribute. The `spyable` implementation, which tracks *which* section is in view, remains the tool when a one-at-a-time current-section marker is needed.
+`on-intersect-half` fires every time the section crosses the viewport's halfway threshold, in either direction — there is no entering/leaving distinction — so `once()` is the natural partner: the first half-in-view crossing is the only one that acts. A margin key narrows the window: `0px 0px -50% 0px` waits until the section is past the viewport's middle line, and each `;` phrase under one attribute observes its own margin, so `on-intersect-half="0px 0px -50% 0px: #a.mark(); 0px: #b.mark()"` is two observers on one attribute.
 
 ---
 
@@ -803,7 +802,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`value` → `data-value` → textContent) and write helpers |
 | `NotReadyError` | Error set on `e.error` when a verb reaches a host that has never connected |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `spyable`, `hashable` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `hashable` |
 
 ---
 
