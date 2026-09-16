@@ -120,6 +120,11 @@ function parseUnit(raw: string): Unit {
     calls.push(parseCall(segment));
   }
   if (calls.length === 0) throw new Error("a phrase needs at least one verb call with parens");
+  for (const modifier of modifiers) {
+    if (modifier.kind === "once" && modifier.position === calls.length) {
+      throw new Error("once() must be followed by a verb call; it cannot end a chain");
+    }
+  }
   return { ref, calls, modifiers };
 }
 

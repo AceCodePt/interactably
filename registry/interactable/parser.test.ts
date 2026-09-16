@@ -115,6 +115,38 @@ test("debounce/throttle must come right after the receiver, before any call", ()
   assert.deepEqual(parse("#a.show().once().debounce(300)"), []);
 });
 
+test("once() must be followed by a verb call in the same chain", (t) => {
+  const spy = errorsOf(t);
+
+  assert.deepEqual(parse("#a.x().once()"), []);
+  assert.deepEqual(parse("#a.x().once().delay(500)"), []);
+
+  const [leading] = parse("#a.once().x()");
+  assert.ok(leading);
+  assert.deepEqual(first(leading).modifiers, [{ kind: "once", position: 0 }]);
+
+  const [mid] = parse("#a.x().once().y()");
+  assert.ok(mid);
+  assert.deepEqual(first(mid).modifiers, [{ kind: "once", position: 1 }]);
+
+  const [delayed] = parse("#a.x().delay(500)");
+  assert.ok(delayed);
+  assert.deepEqual(first(delayed).modifiers, [{ kind: "delay", ms: 500, position: 1 }]);
+
+  assert.equal(spy.mock.callCount(), 2);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("once()"));
+  assert.ok(String(spy.mock.calls[1]!.arguments[0]).includes("once()"));
+});
+
+test("a trailing once() skips only its phrase; the rest of the value runs", (t) => {
+  const spy = errorsOf(t);
+  const phrases = parse("#a.x().once() && #b.y(); #c.z()");
+  assert.equal(phrases.length, 1);
+  assert.deepEqual(first(phrases[0]!).ref, { kind: "id", id: "c" });
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("once()"));
+});
+
 test("rule 9: a verb takes one argument; two positional arguments are an error", () => {
   assert.deepEqual(parse("#total.sum(#list, '.amount')"), []);
 
@@ -208,10 +240,9 @@ test("chains link calls with dots", () => {
 });
 
 test("whitespace is insignificant outside string literals", () => {
-  const [phrase] = parse("  #pop . show ( )  . once ( )  ");
+  const [phrase] = parse("  #pop . show ( )  . once ( )  . focus()  ");
   assert.ok(phrase);
-  assert.equal(first(phrase).calls[0]!.verb, "show");
-  assert.equal(first(phrase).calls[0]!.arg, undefined);
+  assert.deepEqual(first(phrase).calls.map((c) => c.verb), ["show", "focus"]);
   assert.deepEqual(first(phrase).modifiers, [{ kind: "once", position: 1 }]);
 
   const [stringy] = parse("#x.set( 'a b' )");
@@ -336,7 +367,7 @@ test("mixing && and || in one phrase is a parse error", (t) => {
 });
 
 test("each unit carries its own modifiers, and no modifier crosses &&", () => {
-  const [phrase] = parse("#a.once().validate().send() || #alert.show().once()");
+  const [phrase] = parse("#a.once().validate().send() || #alert.show().once().focus()");
   assert.ok(phrase);
   assert.deepEqual(phrase.units[0]!.modifiers, [{ kind: "once", position: 0 }]);
   assert.deepEqual(phrase.units[1]!.modifiers, [{ kind: "once", position: 1 }]);
