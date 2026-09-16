@@ -274,7 +274,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `prevent-default` | any | — | `events` (derived, see below) | `preventDefault` on listed events |
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([below](#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea |
-| `storable` | input, select, textarea | — | `scope` (`local`/`session`), `key` | a field restores its value from storage on connect and persists it on change |
+| `storable` | input, select, textarea | `save`, `load`, `clear` | `scope` (`local`/`session`), `key` | persist a field's value to storage; restores on connect and fires `change` |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
 | `copyable` | button | `copy` | `copied` state; event `copy` | copies a target element's text to the clipboard; sets `data-copied` and fires `copy` on success |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
@@ -343,9 +343,9 @@ Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling c
 
 ### Storable
 
-`storable` gives a form field a memory with no verbs: it restores its own value from storage on connect and saves it back on `change`, and nothing else knows it exists. The storage key is `interactable:<key ?? name>`, the default scope is `local`, and radios and checkboxes store the checked values for their name as a list.
+`storable` persists a form field's value to storage through three verbs: `save()`, `load()` and `clear()`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup. The storage key is `interactable:<storable-key ?? name ?? id>`, the default scope is `local`, and same-name checkboxes store as a list: `save()` on either writes the JSON array of every checked control sharing that `name` and form owner. A field with none of `storable-key`, `name` and `id` warns once on connect and stores nothing.
 
-Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here.
+Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here. Restore fires a native `change`, so your `on-change` phrase runs on restore — that is the point: in the package-manager example `name="pm"` does two jobs (the browser's radio group and the storage key), so restoring the stored radio re-opens the section that radio controls. `load()` re-reads the stored value as a user action and fires `change` when it changes; `clear()` removes the key.
 
 ---
 

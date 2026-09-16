@@ -373,6 +373,7 @@
           <textarea is="interactable-textarea" id="note"
                     implements="auto-grow dirtyable storable paste-transform"
                     storable-key="interactably-demo-note" rows="2"
+                    on-change="this.save()"
                     paste-transform-patterns="\s+" paste-transform-replaces=" "
                     placeholder="Type or paste some text&hellip;"></textarea>
           <div class="row">
@@ -393,6 +394,7 @@
           <pre class="code" id="code-ex-note" data-lang="html"><code>&lt;textarea is="interactable-textarea" id="note"
           implements="auto-grow dirtyable storable paste-transform"
           storable-key="interactably-demo-note" rows="2"
+          on-change="this.save()"
           paste-transform-patterns="\s+" paste-transform-replaces=" "
           placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;
 &lt;button is="interactable-button" on-click="#note.markClean()"&gt;Mark clean&lt;/button&gt;</code></pre>
@@ -585,11 +587,14 @@
         <div class="demo">
           <div role="radiogroup" aria-label="Package manager" class="visually-hidden">
             <input is="interactable-input" type="radio" name="pm" value="npm" id="pm-npm" checked
-                   on-change="#install-npm.show(); #config-npm.show(); #trouble-npm.show()">
+                   implements="storable"
+                   on-change="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); this.save()">
             <input is="interactable-input" type="radio" name="pm" value="pnpm" id="pm-pnpm"
-                   on-change="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show()">
+                   implements="storable"
+                   on-change="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); this.save()">
             <input is="interactable-input" type="radio" name="pm" value="bun" id="pm-bun"
-                   on-change="#install-bun.show(); #config-bun.show(); #trouble-bun.show()">
+                   implements="storable"
+                   on-change="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); this.save()">
           </div>
           <div class="demo-section">
             <div class="tabbar">
@@ -653,11 +658,14 @@
           </div>
           <pre class="code" id="code-ex-pkg" data-lang="html"><code>&lt;div role="radiogroup" aria-label="Package manager" class="visually-hidden"&gt;
   &lt;input is="interactable-input" type="radio" name="pm" value="npm" id="pm-npm" checked
-         on-change="#install-npm.show(); #config-npm.show(); #trouble-npm.show()"&gt;
+         implements="storable"
+         on-change="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); this.save()"&gt;
   &lt;input is="interactable-input" type="radio" name="pm" value="pnpm" id="pm-pnpm"
-         on-change="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show()"&gt;
+         implements="storable"
+         on-change="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); this.save()"&gt;
   &lt;input is="interactable-input" type="radio" name="pm" value="bun" id="pm-bun"
-         on-change="#install-bun.show(); #config-bun.show(); #trouble-bun.show()"&gt;
+         implements="storable"
+         on-change="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); this.save()"&gt;
 &lt;/div&gt;
 
 &lt;div class="demo-section"&gt;
