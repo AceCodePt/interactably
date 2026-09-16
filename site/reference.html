@@ -153,9 +153,9 @@
       <article class="ref-card">
         <h3><code class="inline-code">storable</code></h3>
         <p class="ref-tags">input &middot; select &middot; textarea</p>
-        <p class="ref-desc">A field restores its own value from <code class="inline-code">local</code> or <code class="inline-code">session</code> storage on connect and persists it on <code class="inline-code">change</code> &mdash; no verbs. Radios and checkboxes store the checked values for their name as a list.</p>
+        <p class="ref-desc">Persists a field&rsquo;s value to <code class="inline-code">local</code> or <code class="inline-code">session</code> storage &mdash; nothing is stored unless a phrase calls <code class="inline-code">save()</code>. Restores on connect (firing a native <code class="inline-code">change</code>); <code class="inline-code">load()</code> re-reads and <code class="inline-code">clear()</code> removes. Same-name checkboxes store as a list.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">save</span><span class="verb-tag">load</span><span class="verb-tag">clear</span></div>
         <p class="ref-labels">Config / state</p>
         <div><span class="verb-tag">scope</span><span class="verb-tag">key</span></div>
       </article>

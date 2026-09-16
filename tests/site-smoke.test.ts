@@ -137,7 +137,8 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   // Mirror the deployed page-load sequence: the markup is already being parsed
   // (readyState "loading") when demo.js imports the bundles (which register the
   // implementations and define their hosts), the auto-loader runs, and
-  // DOMContentLoaded fires - which is when storable restores the note textarea.
+  // DOMContentLoaded fires - which is when storable restores the stored radios.
+  localStorage.setItem("interactable:pm", JSON.stringify(["pnpm"]));
   Object.defineProperty(document, "readyState", { value: "loading", configurable: true });
   const holder = document.createElement("div");
   holder.innerHTML = bodyMarkup(html);
@@ -164,29 +165,32 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   const pmNpm = document.querySelector('input[name="pm"][value="npm"]') as HTMLInputElement;
   const pmPnpm = document.querySelector('input[name="pm"][value="pnpm"]') as HTMLInputElement;
   const pmBun = document.querySelector('input[name="pm"][value="bun"]') as HTMLInputElement;
-  assert.equal(pmNpm.checked, true, "the authored npm radio is selected");
-  assert.equal(pmPnpm.checked, false);
+  assert.equal(pmPnpm.checked, true, "the stored radio is restored checked");
+  assert.equal(pmNpm.checked, false, "the authored npm radio is overridden by the stored selection");
   assert.equal(pmBun.checked, false);
-  assert.equal(byId("install-npm").hidden, false, "the selected radio's install panel is open");
-  assert.equal(byId("config-npm").hidden, false, "the selected radio's config panel is open");
-  assert.equal(byId("trouble-npm").hidden, false, "the selected radio's trouble panel is open");
-  assert.equal(byId("install-pnpm").hidden, true, "the sibling radio's install panel is closed");
-  assert.equal(byId("config-pnpm").hidden, true, "the sibling radio's config panel is closed");
-  assert.equal(byId("trouble-pnpm").hidden, true, "the sibling radio's trouble panel is closed");
-  click(pmPnpm);
-  assert.equal(pmPnpm.checked, true, "clicking another radio selects it");
-  assert.equal(byId("install-pnpm").hidden, false, "the clicked radio's install panel opens");
-  assert.equal(byId("config-pnpm").hidden, false, "the clicked radio's config panel opens");
-  assert.equal(byId("trouble-pnpm").hidden, false, "the clicked radio's trouble panel opens");
-  assert.equal(byId("install-npm").hidden, true, "the previous radio's install panel closes");
-  assert.equal(byId("config-npm").hidden, true, "the previous radio's config panel closes");
-  assert.equal(byId("trouble-npm").hidden, true, "the previous radio's trouble panel closes");
+  assert.equal(byId("install-pnpm").hidden, false, "the stored radio's install panel is open");
+  assert.equal(byId("config-pnpm").hidden, false, "the stored radio's config panel is open");
+  assert.equal(byId("trouble-pnpm").hidden, false, "the stored radio's trouble panel is open");
+  assert.equal(byId("install-npm").hidden, true, "the sibling's install panel is closed");
+  assert.equal(byId("config-npm").hidden, true, "the sibling's config panel is closed");
+  assert.equal(byId("trouble-npm").hidden, true, "the sibling's trouble panel is closed");
   assert.equal(byId("install-bun").hidden, true, "the unselected radio's install panel stays closed");
+  click(pmNpm);
+  assert.equal(pmNpm.checked, true, "clicking another radio selects it");
+  assert.equal(byId("install-npm").hidden, false, "the clicked radio's install panel opens");
+  assert.equal(byId("config-npm").hidden, false, "the clicked radio's config panel opens");
+  assert.equal(byId("trouble-npm").hidden, false, "the clicked radio's trouble panel opens");
+  assert.equal(byId("install-pnpm").hidden, true, "the previous radio's install panel closes");
+  assert.equal(byId("config-pnpm").hidden, true, "the previous radio's config panel closes");
+  assert.equal(byId("trouble-pnpm").hidden, true, "the previous radio's trouble panel closes");
+  assert.equal(byId("install-bun").hidden, true, "the unselected radio's install panel stays closed");
+  assert.equal(localStorage.getItem("interactable:pm"), JSON.stringify(["npm"]), "clicking stores the new selection");
   click(pmBun);
   assert.equal(byId("install-bun").hidden, false, "the bun radio opens all three bun panels");
   assert.equal(byId("config-bun").hidden, false);
   assert.equal(byId("trouble-bun").hidden, false);
   assert.equal(byId("install-pnpm").hidden, true, "the pnpm panels close when bun is picked");
+  assert.equal(localStorage.getItem("interactable:pm"), JSON.stringify(["bun"]), "the bun selection is stored");
 
   const autoPanel = byId("auto-demo-panel");
   assert.equal(autoPanel.getAttribute("is"), "interactable-section", "the auto-loader adds is= to the no-is= demo");
@@ -295,7 +299,7 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   note.dispatchEvent(new Event("input", { bubbles: true }));
   assert.equal(note.classList.contains("is-dirty"), true, "dirtyable marks the edited field");
   note.dispatchEvent(new Event("change", { bubbles: true }));
-  assert.equal(localStorage.getItem("interactable:interactably-demo-note"), "typed note", "storable persists on change");
+  assert.equal(localStorage.getItem("interactable:interactably-demo-note"), "typed note", "storable saves via the this.save() phrase");
   note.value = "clean";
   click(byId("note-clean"));
   assert.equal(note.classList.contains("is-dirty"), false, "markClean() re-baselines the dirty state");
