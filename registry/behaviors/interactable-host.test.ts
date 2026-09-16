@@ -583,3 +583,34 @@ test("intersect observers are rebuilt on attribute change and torn down on disco
   trigger.remove();
   assert.equal(FakeIntersectionObserver.instances[1]!.observed.length, 0, "disconnect tears down the observer");
 });
+
+test("one registration refreshes each connected host once and skips disconnected hosts", () => {
+  type Tracked = HTMLElement & { ensureImplementations(): void };
+  const refreshed: number[] = [];
+  const hosts: Tracked[] = [];
+  for (let i = 0; i < 50; i++) {
+    const host = hostElement("div", { implements: "perf-impl", id: `perf-${i}` }) as Tracked;
+    document.body.appendChild(host);
+    const original = host.ensureImplementations.bind(host);
+    host.ensureImplementations = () => {
+      refreshed.push(i);
+      original();
+    };
+    hosts.push(host);
+  }
+
+  defineImplementation("perf-impl", { tags: ["div"], verbs: { ping: "undefined" } }, () => ({
+    ping: () => undefined,
+  }));
+  assert.equal(refreshed.length, 50, "each connected host is refreshed exactly once, not once per listener");
+
+  const removed = hosts[0]!;
+  removed.remove();
+  refreshed.length = 0;
+
+  defineImplementation("perf-impl-two", { tags: ["div"], verbs: { pong: "undefined" } }, () => ({
+    pong: () => undefined,
+  }));
+  assert.equal(refreshed.length, 49, "a disconnected host is not touched");
+  assert.ok(!refreshed.includes(0), "the disconnected host's refresh is absent");
+});

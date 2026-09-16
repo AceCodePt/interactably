@@ -1,4 +1,5 @@
 import { defineInteractableHost } from "@behaviors/interactable-host.ts";
+import type { InteractableHost } from "@behaviors/interactable-host.ts";
 import { bindAttributes } from "@interactable/attributes.ts";
 import type { CompiledSignature } from "@interactable/signature.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
@@ -21,8 +22,17 @@ export interface NormalizedImplementationDef {
 
 const definitions = new Map<string, NormalizedImplementationDef>();
 const instancesByElement = new WeakMap<Element, Map<string, ImplementationInstance>>();
+const connectedHosts = new Set<InteractableHost>();
 
 export const REGISTRY_CHANGED_EVENT = "interactably:register";
+
+export function trackConnectedHost(host: InteractableHost): void {
+  connectedHosts.add(host);
+}
+
+export function untrackConnectedHost(host: InteractableHost): void {
+  connectedHosts.delete(host);
+}
 
 export function registerImplementation(def: NormalizedImplementationDef): NormalizedImplementationDef {
   if (definitions.has(def.name)) {
@@ -45,6 +55,7 @@ export function registerImplementation(def: NormalizedImplementationDef): Normal
     definitions.delete(def.name);
     throw err;
   }
+  for (const host of connectedHosts) host.ensureImplementations();
   if (typeof document !== "undefined") {
     document.dispatchEvent(new Event(REGISTRY_CHANGED_EVENT));
   }

@@ -12,14 +12,16 @@ import { NotReadyError } from "@behaviors/implementation-utils.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
 import type { Tag } from "@behaviors/_implementation-definition.ts";
 import {
-  REGISTRY_CHANGED_EVENT,
   allObservedAttributes,
   ensureImplementation,
   getImplementationDef,
+  trackConnectedHost,
+  untrackConnectedHost,
 } from "@behaviors/implementation-registry.ts";
 
 export interface InteractableHost extends HTMLElement {
   didEnsure: boolean;
+  ensureImplementations(): void;
   readonly [IS_HOST]?: true;
 }
 
@@ -52,11 +54,11 @@ export function defineInteractableHost(tag: Tag): void {
           this.wireImplementationHandlers(implementation);
         }
         this.ensureImplementations();
-        this.ownerDocument.addEventListener(REGISTRY_CHANGED_EVENT, this.onRegistryChanged);
+        trackConnectedHost(this);
       }
 
       override disconnectedCallback(): void {
-        this.ownerDocument.removeEventListener(REGISTRY_CHANGED_EVENT, this.onRegistryChanged);
+        untrackConnectedHost(this);
         this._attributeObserver?.disconnect();
         this._attributeObserver = null;
         for (const cleanup of this._interactionCleanup) cleanup();
@@ -166,11 +168,7 @@ export function defineInteractableHost(tag: Tag): void {
         }
       }
 
-      private onRegistryChanged = (): void => {
-        this.ensureImplementations();
-      };
-
-      private ensureImplementations(): void {
+      ensureImplementations(): void {
         const names = (this.getAttribute("implements") ?? "").split(/\s+/).filter((name) => name !== "");
         for (const name of names) {
           if (this._implementations.has(name)) continue;
