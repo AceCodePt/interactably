@@ -82,7 +82,7 @@ function strategyOf(el: HTMLElement): Strategy {
   return { kind: "data-open" };
 }
 
-function syncAria(el: HTMLElement, source: Element, open: boolean, control: boolean): void {
+function syncAria(el: HTMLElement, source: Element | undefined, open: boolean, control: boolean): void {
   if (el.id === "") return;
   if (control && source instanceof HTMLElement && source !== el && controlsOf(source).length === 0) {
     source.setAttribute("aria-controls", el.id);
@@ -125,7 +125,7 @@ function closeRadioSiblings(el: HTMLElement, e: InteractionEvent): void {
       if (!panel.isConnected) continue;
       if (!implementsRevealable(panel)) continue;
       panel.dispatchEvent(
-        new InteractionEvent({ verb: "show", arg: false, source: radio, originalEvent: e.originalEvent }),
+        new InteractionEvent({ verb: "show", arg: false, originalEvent: e.originalEvent }),
       );
     }
   }
@@ -152,7 +152,7 @@ function isControllingCall(call: Call): boolean {
   if (call.verb !== "show") return false;
   const arg = call.arg;
   if (arg === undefined) return true;
-  return !(arg.kind === "boolean" && arg.value === false);
+  return arg.kind === "boolean" && arg.value === true;
 }
 
 function implementsRevealable(el: Element): boolean {

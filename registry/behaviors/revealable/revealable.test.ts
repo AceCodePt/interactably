@@ -465,3 +465,89 @@ test("syncAria does not write aria-controls onto a show(false) source", async ()
   assert.equal(bare.getAttribute("aria-controls"), null);
   assert.equal(bare.getAttribute("aria-expanded"), null);
 });
+
+test("wiring: a #p.show(this.checked) host is not wired, but claims at fire time from the resolved value", async () => {
+  const input = hostElement("input", {
+    type: "radio",
+    name: "g",
+    checked: "checked",
+    "on-change": "#p.show(this.checked)",
+  });
+  document.body.appendChild(input);
+  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  document.body.appendChild(panel);
+  await flush();
+
+  assert.equal(input.getAttribute("aria-controls"), null, "a non-literal argument is not control at connect");
+  assert.equal(input.getAttribute("aria-expanded"), null);
+
+  interact(panel, "show", true, input);
+  assert.equal(input.getAttribute("aria-controls"), "p", "the resolved value (true) claims at fire time");
+});
+
+test("wiring: a #p.show(true) host is wired", async () => {
+  const button = hostElement("button", { "on-click": "#p.show(true)" });
+  document.body.appendChild(button);
+  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  document.body.appendChild(panel);
+  await flush();
+
+  assert.equal(button.getAttribute("aria-controls"), "p");
+  assert.equal(button.getAttribute("aria-expanded"), "false");
+});
+
+test("a radio with an empty name closes nothing", async () => {
+  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
+  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
+  const r1 = radio({ name: "", "on-change": "#p1.show()" });
+  const r2 = radio({ name: "", "on-change": "#p2.show()" });
+  document.body.append(p1, p2, r1, r2);
+  await flush();
+
+  interact(p2, "show");
+  assert.equal(p2.hidden, false);
+
+  interact(p1, "show", undefined, r1);
+  assert.equal(p1.hidden, false);
+  assert.equal(p2.hidden, false, "an empty-name radio is not a group");
+});
+
+test("a sibling naming a non-existent id is skipped silently", async () => {
+  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
+  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
+  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
+  const r2 = radio({ name: "g", "on-change": "#ghost.show()" });
+  document.body.append(p1, p2, r1, r2);
+  await flush();
+
+  interact(p2, "show");
+  assert.equal(p2.hidden, false);
+
+  interact(p1, "show", undefined, r1);
+  assert.equal(p1.hidden, false);
+  assert.equal(p2.hidden, false, "the sibling's ghost target is skipped, p2 stays open");
+});
+
+test("the sibling-closing no-source path refreshes button controllers and leaves the radio source untouched", async () => {
+  const r2 = hostElement("input", { type: "radio", name: "g", "on-change": "#p2.show()" });
+  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
+  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
+  const button = document.createElement("button");
+  button.setAttribute("aria-controls", "p2");
+  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
+  document.body.append(r2, p1, p2, button, r1);
+  await flush();
+
+  assert.equal(button.getAttribute("aria-controls"), "p2");
+  assert.equal(r2.getAttribute("aria-controls"), "p2", "the sibling radio is wired at connect");
+
+  interact(p2, "show");
+  assert.equal(p2.hidden, false);
+  assert.equal(button.getAttribute("aria-expanded"), "true");
+
+  interact(p1, "show", undefined, r1);
+  assert.equal(p1.hidden, false);
+  assert.equal(p2.hidden, true, "the sibling panel closes");
+  assert.equal(button.getAttribute("aria-expanded"), "false", "the button controller is refreshed");
+  assert.equal(r2.getAttribute("aria-expanded"), null, "the radio source gets no aria-expanded");
+});
