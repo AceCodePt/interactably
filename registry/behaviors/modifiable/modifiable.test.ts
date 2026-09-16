@@ -309,7 +309,7 @@ test("the formula supports parentheses, unary minus and min/max/floor/ceil/round
   assert.equal(neg.textContent, "9");
 });
 
-test("a missing #id dependency counts as zero", async () => {
+test("a missing #id dependency joins as the empty string", async () => {
   const out = hostElement("output", {
     implements: "modifiable",
     "modifiable-formula": "#ghost.value + 5",
@@ -317,5 +317,21 @@ test("a missing #id dependency counts as zero", async () => {
   document.body.appendChild(out);
   await flush();
   assert.equal(out.textContent, "5");
+});
+
+test("compute() on a throwing formula writes invalid-value and logs the formula source", async (t) => {
+  const error = t.mock.method(console, "error");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "modifiable-formula": "#ghost.value * 2",
+    "modifiable-invalid-value": "0",
+  }) as HTMLOutputElement;
+  document.body.appendChild(out);
+  await flush();
+
+  assert.equal(out.textContent, "0");
+  assert.equal(error.mock.callCount(), 1);
+  const messages = error.mock.calls.map((call) => String(call.arguments[0]));
+  assert.ok(messages.some((message) => message.includes("#ghost.value * 2")), messages.join(" | "));
 });
 

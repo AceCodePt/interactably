@@ -22,6 +22,7 @@ export function readValue(el: Element): number | string {
   const stored = el.getAttribute("formattable-value");
   const value = (el as unknown as { value?: unknown }).value;
   const text = stored !== null ? stored : typeof value === "string" ? value : el.textContent ?? "";
+  if (text.trim() === "") return text;
   const parsed = toNumber(text);
   return Number.isNaN(parsed) ? text : parsed;
 }

@@ -52,7 +52,7 @@ test("readValue reads formattable-value first, then .value as a number when it p
 
   const empty = document.createElement("input");
   empty.value = "";
-  assert.equal(readValue(empty), 0);
+  assert.equal(readValue(empty), "");
 
   const byText = document.createElement("div");
   byText.textContent = "7";

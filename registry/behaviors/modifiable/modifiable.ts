@@ -37,7 +37,8 @@ export const modifiable = defineImplementation(
       if (formula === undefined) return;
       try {
         write(String(evaluateFormula(formula).value));
-      } catch {
+      } catch (err) {
+        console.error(String(err instanceof Error ? err.message : err));
         write(attrs["invalid-value"] ?? "Error");
       }
     };

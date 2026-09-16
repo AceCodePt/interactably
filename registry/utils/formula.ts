@@ -1,4 +1,4 @@
-import { readValue, valueOf } from "@behaviors/implementation-utils.ts";
+import { readValue } from "@behaviors/implementation-utils.ts";
 
 export interface FormulaResult {
   value: number | string;
@@ -9,6 +9,67 @@ interface EvalContext {
 }
 
 type Value = number | string | boolean;
+
+interface Operand {
+  readonly value: Value;
+  readonly origin: string;
+}
+
+type Reason = "empty" | "not-a-number";
+
+export class FormulaError extends Error {
+  readonly formula: string;
+  readonly operator: string | undefined;
+  readonly function: string | undefined;
+  readonly operand: string;
+  readonly origin: string;
+  readonly selector: string | undefined;
+  readonly element: Element | undefined;
+  readonly reason: Reason;
+
+  constructor(opts: {
+    formula: string;
+    operator: string | undefined;
+    function: string | undefined;
+    operand: string;
+    origin: string;
+    selector: string | undefined;
+    element: Element | undefined;
+    reason: Reason;
+  }) {
+    const channel =
+      opts.function !== undefined ? `${opts.function}()` : JSON.stringify(opts.operator);
+    const reason = opts.reason === "empty" ? "empty" : "not a number";
+    super(
+      `formula ${JSON.stringify(opts.formula)}: ${channel} got ${JSON.stringify(opts.operand)} from ${opts.origin} (${reason})`,
+    );
+    this.name = "FormulaError";
+    this.formula = opts.formula;
+    this.operator = opts.operator;
+    this.function = opts.function;
+    this.operand = opts.operand;
+    this.origin = opts.origin;
+    this.selector = opts.selector;
+    this.element = opts.element;
+    this.reason = opts.reason;
+  }
+}
+
+interface Meta {
+  formula: string;
+  operator: string | undefined;
+  function: string | undefined;
+  selector: string | undefined;
+  element: Element | undefined;
+}
+
+function operatorMeta(formula: string, operator: string): Meta {
+  return { formula, operator, function: undefined, selector: undefined, element: undefined };
+}
+
+function functionMeta(formula: string, name: string, selector?: string, element?: Element): Meta {
+  return { formula, operator: undefined, function: name, selector, element };
+}
 
 export function evaluateFormula(source: string, context: EvalContext = { document }): FormulaResult {
   return toResult(new Formula(source, context).evaluate());
@@ -25,70 +86,99 @@ class Formula {
   }
 
   evaluate(): Value {
-    const value = this.parseExpression();
+    const node = this.parseExpression();
     this.skipSpace();
     if (this.pos < this.source.length) throw new Error(`unexpected "${this.source[this.pos] ?? ""}"`);
-    return value;
+    return node.value;
   }
 
-  private parseExpression(): Value {
-    let value = this.parseTerm();
+  private parseExpression(): Operand {
+    this.skipSpace();
+    const start = this.pos;
+    let node = this.parseTerm();
     for (;;) {
       this.skipSpace();
       const op = this.source[this.pos];
-      if (op !== "+" && op !== "-") return value;
+      if (op !== "+" && op !== "-") return node;
       this.pos++;
       const rhs = this.parseTerm();
       if (op === "+") {
-        value =
-          typeof value === "string" || typeof rhs === "string"
-            ? String(value) + String(rhs)
-            : toNumber(value) + toNumber(rhs);
+        node =
+          typeof node.value === "string" || typeof rhs.value === "string"
+            ? { value: String(node.value) + String(rhs.value), origin: this.source.slice(start, this.pos).trim() }
+            : {
+                value:
+                  requireNumber(node, operatorMeta(this.source, op)) +
+                  requireNumber(rhs, operatorMeta(this.source, op)),
+                origin: this.source.slice(start, this.pos).trim(),
+              };
       } else {
-        value = toNumber(value) - toNumber(rhs);
+        node = {
+          value:
+            requireNumber(node, operatorMeta(this.source, op)) -
+            requireNumber(rhs, operatorMeta(this.source, op)),
+          origin: this.source.slice(start, this.pos).trim(),
+        };
       }
     }
   }
 
-  private parseTerm(): Value {
-    let value = this.parseFactor();
+  private parseTerm(): Operand {
+    this.skipSpace();
+    const start = this.pos;
+    let node = this.parseFactor();
     for (;;) {
       this.skipSpace();
       const op = this.source[this.pos];
-      if (op !== "*" && op !== "/") return value;
+      if (op !== "*" && op !== "/") return node;
       this.pos++;
       const rhs = this.parseFactor();
-      const left = toNumber(value);
-      const right = toNumber(rhs);
-      value = op === "*" ? left * right : right === 0 ? 0 : left / right;
+      const left = requireNumber(node, operatorMeta(this.source, op));
+      const right = requireNumber(rhs, operatorMeta(this.source, op));
+      node = {
+        value: op === "*" ? left * right : left / right,
+        origin: this.source.slice(start, this.pos).trim(),
+      };
     }
   }
 
-  private parseFactor(): Value {
+  private parseFactor(): Operand {
     this.skipSpace();
     if (this.source[this.pos] === "-") {
       this.pos++;
-      return -toNumber(this.parseFactor());
+      const operandStart = this.pos;
+      const operand = this.parseFactor();
+      return {
+        value: -requireNumber(operand, operatorMeta(this.source, "unary -")),
+        origin: this.source.slice(operandStart, this.pos).trim(),
+      };
     }
     return this.parsePrimary();
   }
 
-  private parsePrimary(): Value {
+  private parsePrimary(): Operand {
     this.skipSpace();
+    const start = this.pos;
     const ch = this.source[this.pos];
+    let value: Value;
     if (ch === "(") {
       this.pos++;
-      const value = this.parseExpression();
+      value = this.parseExpression().value;
       this.skipSpace();
       if (this.source[this.pos] !== ")") throw new Error("missing )");
       this.pos++;
-      return value;
+    } else if (ch === "#") {
+      value = this.parseReference();
+    } else if (ch === "'" || ch === '"') {
+      value = this.parseString(ch);
+    } else if (ch !== undefined && /[0-9.]/.test(ch)) {
+      value = this.parseNumber();
+    } else if (ch !== undefined && /[A-Za-z_$]/.test(ch)) {
+      value = this.parseCall();
+    } else {
+      throw new Error(`unexpected "${ch ?? "end of formula"}"`);
     }
-    if (ch === "#") return this.parseReference();
-    if (ch === "'" || ch === '"') return this.parseString(ch);
-    if (ch !== undefined && /[0-9.]/.test(ch)) return this.parseNumber();
-    if (ch !== undefined && /[A-Za-z_$]/.test(ch)) return this.parseCall();
-    throw new Error(`unexpected "${ch ?? "end of formula"}"`);
+    return { value, origin: this.source.slice(start, this.pos).trim() };
   }
 
   private parseReference(): Value {
@@ -116,11 +206,11 @@ class Formula {
     this.skipSpace();
     if (this.source[this.pos] !== "(") throw new Error(`unknown token "${name}"`);
     this.pos++;
-    return applyFunction(name, this.parseArguments(), this.context);
+    return applyFunction(name, this.parseArguments(), this.source, this.context);
   }
 
-  private parseArguments(): Value[] {
-    const args: Value[] = [];
+  private parseArguments(): Operand[] {
+    const args: Operand[] = [];
     this.skipSpace();
     if (this.source[this.pos] === ")") {
       this.pos++;
@@ -178,48 +268,54 @@ class Formula {
   }
 }
 
-function applyFunction(name: string, args: Value[], context: EvalContext): Value {
+function applyFunction(name: string, args: Operand[], formula: string, context: EvalContext): Value {
   switch (name) {
     case "min": {
       if (args.length < 1) throw new Error("min() needs at least one argument");
-      return Math.min(...args.map(toNumber));
+      return Math.min(...args.map((arg) => requireNumber(arg, functionMeta(formula, name))));
     }
     case "max": {
       if (args.length < 1) throw new Error("max() needs at least one argument");
-      return Math.max(...args.map(toNumber));
+      return Math.max(...args.map((arg) => requireNumber(arg, functionMeta(formula, name))));
     }
     case "floor":
-      requireArity(name, args, 1);
-      return Math.floor(toNumber(args[0]));
+      requireArity(name, args.length, 1);
+      return Math.floor(requireNumber(args[0]!, functionMeta(formula, name)));
     case "ceil":
-      requireArity(name, args, 1);
-      return Math.ceil(toNumber(args[0]));
+      requireArity(name, args.length, 1);
+      return Math.ceil(requireNumber(args[0]!, functionMeta(formula, name)));
     case "round":
-      requireArity(name, args, 1);
-      return Math.round(toNumber(args[0]));
+      requireArity(name, args.length, 1);
+      return Math.round(requireNumber(args[0]!, functionMeta(formula, name)));
     case "sum":
-      requireArity(name, args, 1);
-      return sum(selectorArg(args[0]), context);
+      requireArity(name, args.length, 1);
+      return sum(selectorArg(args[0]!.value), formula, context);
     case "count":
-      requireArity(name, args, 1);
-      return count(selectorArg(args[0]), context);
+      requireArity(name, args.length, 1);
+      return count(selectorArg(args[0]!.value), context);
     default:
       throw new Error(`unknown function ${name}()`);
   }
 }
 
-function requireArity(name: string, args: Value[], count: number): void {
-  if (args.length !== count) throw new Error(`${name}() takes ${count} argument${count === 1 ? "" : "s"}`);
+function requireArity(name: string, actual: number, expected: number): void {
+  if (actual !== expected) throw new Error(`${name}() takes ${expected} argument${expected === 1 ? "" : "s"}`);
 }
 
-function selectorArg(value: Value | undefined): string {
+function selectorArg(value: Value): string {
   if (typeof value !== "string") throw new Error("sum()/count() need a selector string");
   return value;
 }
 
-function sum(selector: string, context: EvalContext): number {
+function sum(selector: string, formula: string, context: EvalContext): number {
   let total = 0;
-  for (const element of Array.from(context.document.querySelectorAll(selector))) total += valueOf(element);
+  const matches = Array.from(context.document.querySelectorAll(selector));
+  matches.forEach((element, index) => {
+    total += requireNumber(
+      { value: readValue(element), origin: element.id !== "" ? `#${element.id}` : `match ${index + 1}` },
+      functionMeta(formula, "sum", selector, element),
+    );
+  });
   return total;
 }
 
@@ -227,10 +323,21 @@ function count(selector: string, context: EvalContext): number {
   return context.document.querySelectorAll(selector).length;
 }
 
-function toNumber(value: Value | undefined): number {
-  if (typeof value === "number") return value;
-  if (typeof value === "string") return Number(value);
-  return value ? 1 : 0;
+function requireNumber(operand: Operand, meta: Meta): number {
+  const value = operand.value;
+  if (typeof value === "number") {
+    if (Number.isNaN(value)) {
+      throw new FormulaError({ ...meta, operand: "NaN", origin: operand.origin, reason: "not-a-number" });
+    }
+    return value;
+  }
+  if (typeof value === "boolean") return value ? 1 : 0;
+  throw new FormulaError({
+    ...meta,
+    operand: String(value),
+    origin: operand.origin,
+    reason: value === "" ? "empty" : "not-a-number",
+  });
 }
 
 function toResult(value: Value): FormulaResult {

@@ -191,11 +191,14 @@ reference := '#' id '.' ('value' | 'checked')
 
 | Construct | Example | Meaning |
 | --- | --- | --- |
-| Reference | `#qty.value`, `#agree.checked` | `.value` reads the element's text — a number when it parses (an empty string is `0`), else a string; `.checked` is the boolean `el.checked === true`, `false` on an element without one. A missing element is `""` / `false`. A bare `#id` is a parse error: `reference #qty needs .value or .checked` |
+| Reference | `#qty.value`, `#agree.checked` | `.value` reads the element's text — a number when it parses, else a string; an empty or missing value is `""`. `.checked` is the boolean `el.checked === true`, `false` on an element without one. A bare `#id` is a parse error: `reference #qty needs .value or .checked` |
 | Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"3a"`. `-`, `*`, `/`, unary `-` are always arithmetic; `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers |
 | Boolean in arithmetic | `#item1.value * #item1.checked` | `true` is `1`, `false` is `0` — the line-item pattern: price when ticked, `0` when not |
+| Arithmetic is strict | `#qty.value * #price.value` | `-`, `*`, `/`, unary `-`, and `+` between numbers require number or boolean operands. An empty or non-numeric operand is an error, written to the console and shown as `modifiable-invalid-value` — no `NaN`, no silent zero |
 
 Sharp edge: two numeric-looking text inputs *add* — `#zip1.value + #zip2.value` sums them. Force a join with a literal on the left: `'' + #zip1.value + #zip2.value`.
+
+Division by zero follows JavaScript: `1 / 0` is `Infinity`, `0 / 0` is `NaN`.
 
 ---
 
@@ -520,7 +523,7 @@ Rules:
 - **`config` is read-only.** A verb that needs its own baseline keeps one in the closure, as `dirtyable`'s `markClean` does.
 - **Invented live state is `data-*`** — one namespace, reflected as `el.dataset`, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
 - **Closure state** for transient internals (in-flight request, timers).
-- **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string. Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0).
+- **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string (an empty value stays the empty string). Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0).
 
 There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.
 
@@ -532,7 +535,7 @@ There is no store, no signals, no cross-element watching. The DOM is the store; 
 | --- | --- |
 | **Dynamic triggers** (rows cloned from a template) | Put `is="interactable-<tag>"` in the template. On Chrome and Firefox the clone upgrades synchronously on insertion; `on-click="this.remove()"` / `#list.removeRow(this)` works on every clone with no generated ids. On Safari, and when the auto-loader adds `is=` for you, the upgrade is deferred ([below](#upgrade-timing)) |
 | **Dynamic receivers** (a row's own subtotal) | Receivers stay ids or `this`. Either address a stable ancestor and let the implementation find the relative element from `e.source` (`closest("li")`), or stamp ids in the template |
-| **Dynamic data sources** (sum whatever inputs exist) | Formula with a selector: `#total implements="modifiable" modifiable-formula="sum('#list .amount')"`, recomputed by `#total.compute()`. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time. Filter the set in the selector — `sum('#list .amount:checked')` sums only ticked checkboxes |
+| **Dynamic data sources** (sum whatever inputs exist) | Formula with a selector: `#total implements="modifiable" modifiable-formula="sum('#list .amount:valid')"`, recomputed by `#total.compute()`. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time. `sum` is strict; filter blanks in the selector — `sum('#list .amount:valid')` (blank `required` inputs are `:invalid`), `sum('#list .amount:not(:placeholder-shown)')` (blank inputs carrying a `placeholder`, even `placeholder=" "`), `sum('#list .amount:checked')` sums only ticked checkboxes |
 | **Change without interaction** (server swap, external mutation) | The implementation that performed the change fires its own event (`on-response="#count.compute()"`), a new synchronous chain with `this` bound to that element |
 
 <a name="upgrade-timing"></a>**Upgrade timing is not uniform.** `is=` written in the markup (server-rendered or in a `<template>`) upgrades synchronously on insertion in Chrome and Firefox. Two paths are asynchronous:
@@ -905,6 +908,8 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 **Why `this` rather than `$self` or `$source`?** `this` is the inline-handler word for exactly this element, needs no explanation, and works in both the receiver slot and the argument slot — one word replaces two.
 
 **Why is there no key list, `enter, numpadenter: #f.send()`?** It is one phrase standing for two, and every per-phrase mechanism (does Enter spend `once()` for NumpadEnter? do debounce timers merge?) then has to pick an answer. `;` already writes two phrases.
+
+**Why isn't an empty field zero?** Because zero is an answer and an empty field is the lack of one — a blank quantity multiplied into a total of `0` invents the answer. The library refuses to invent it: an empty or non-numeric operand is an error, written to the console and shown as `modifiable-invalid-value`, and the author filters blanks in the selector (`:valid`, `:not(:placeholder-shown)`) when a set is allowed to have gaps.
 
 **Why is there no group receiver, `(#a, #b).show(false)`?** The chain aborts per receiver, so the group form is exactly `#a.show(false); #b.show(false)` with a second spelling and a bookkeeping key that has to survive `#b` being replaced in the DOM. A shorthand that needs a paragraph is not a shorthand.
 

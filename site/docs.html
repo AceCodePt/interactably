@@ -739,7 +739,7 @@ export const attributable = defineImplementation("attributable", {
             <tbody>
               <tr><td><strong>Dynamic triggers</strong> (rows cloned from a template)</td><td>Put <code class="inline-code">is="interactable-&lt;tag&gt;"</code> in the template. On Chrome and Firefox the clone upgrades synchronously on insertion; <code class="inline-code">on-click="this.remove()"</code> / <code class="inline-code">#list.removeRow(this)</code> works on every clone with no generated ids. On Safari, and when the auto-loader adds <code class="inline-code">is=</code> for you, the upgrade is deferred (<a href="#upgrade-timing">below</a>)</td></tr>
               <tr><td><strong>Dynamic receivers</strong> (a row&rsquo;s own subtotal)</td><td>Receivers stay ids or <code class="inline-code">this</code>. Either address a stable ancestor and let the implementation find the relative element from <code class="inline-code">e.source</code> (<code class="inline-code">closest("li")</code>), or stamp ids in the template</td></tr>
-              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>Formula with a selector: <code class="inline-code">#total implements="modifiable" modifiable-formula="sum('#list .amount')"</code>, recomputed by <code class="inline-code">#total.compute()</code>. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. Filter the set in the selector — <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes</td></tr>
+              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>Formula with a selector: <code class="inline-code">#total implements="modifiable" modifiable-formula="sum('#list .amount:valid')"</code>, recomputed by <code class="inline-code">#total.compute()</code>. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. <code class="inline-code">sum</code> is strict; filter blanks in the selector — <code class="inline-code">sum('#list .amount:valid')</code> (blank <code class="inline-code">required</code> inputs are <code class="inline-code">:invalid</code>), <code class="inline-code">sum('#list .amount:not(:placeholder-shown)')</code> (blank inputs carrying a <code class="inline-code">placeholder</code>, even <code class="inline-code">placeholder=" "</code>), <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes</td></tr>
               <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change fires its own event (<code class="inline-code">on-response="#count.compute()"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
             </tbody>
           </table>
@@ -870,14 +870,14 @@ export const attributable = defineImplementation("attributable", {
 
 &lt;ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1"&gt;
   &lt;li&gt;
-    &lt;input is="interactable-input" class="amount" type="number" on-input="#total.compute()"&gt;
+    &lt;input is="interactable-input" class="amount" type="number" step="any" required on-input="#total.compute()"&gt;
     &lt;button is="interactable-button" on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
 &lt;button is="interactable-button" on-click="#list.adopt(#row-tpl)"&gt;Add row&lt;/button&gt;
 &lt;template id="row-tpl"&gt;&lt;li&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
 &lt;output is="interactable-output" id="total" implements="modifiable formattable"
-        modifiable-formula="sum('#list .amount')"
+modifiable-formula="sum('#list .amount:valid')"
         formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;</code></pre>
         </div>
         <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers; the <code class="inline-code">&lt;li&gt;</code> is a plain element — the row is reached through <code class="inline-code">#list.removeRow(this)</code>, so it needs no implementation, no host and no id, and cloning it produces nothing that has to be unique.</p>

@@ -2,7 +2,7 @@ import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
-import { evaluateFormula } from "@utils/formula.ts";
+import { FormulaError, evaluateFormula } from "@utils/formula.ts";
 
 let dom: JSDOM;
 
@@ -18,7 +18,7 @@ beforeEach(() => {
   document.body.replaceChildren();
 });
 
-test("#a.value is a number when the text parses, else a string; empty is 0", () => {
+test("#a.value is a number when the text parses, else a string; empty is the empty string", () => {
   const numeric = document.createElement("input");
   numeric.id = "numeric";
   numeric.value = "42";
@@ -33,7 +33,7 @@ test("#a.value is a number when the text parses, else a string; empty is 0", () 
   const n = evaluateFormula("#numeric.value");
   assert.equal(n.value, 42);
   assert.equal(evaluateFormula("#words.value").value, "abc");
-  assert.equal(evaluateFormula("#empty.value").value, 0);
+  assert.equal(evaluateFormula("#empty.value").value, "");
 });
 
 test("a missing element referenced by .value is the empty string", () => {
@@ -153,4 +153,115 @@ test("sum over plain inputs and count over li are unchanged", () => {
 
   assert.equal(evaluateFormula("sum('.amount')").value, 5.75);
   assert.equal(evaluateFormula("count('.row')").value, 2);
+});
+
+test("arithmetic on a non-numeric reference throws a FormulaError naming operator, operand and reference", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "abc";
+  document.body.appendChild(a);
+
+  assert.throws(() => evaluateFormula("#a.value - 1"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.ok(err.message.includes('"-"'), err.message);
+    assert.ok(err.message.includes('"abc"'), err.message);
+    assert.ok(err.message.includes("#a.value"), err.message);
+    return true;
+  });
+});
+
+test("an empty .value operand is an error marked (empty)", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "";
+  const b = document.createElement("input");
+  b.id = "b";
+  b.value = "3";
+  document.body.append(a, b);
+
+  assert.throws(() => evaluateFormula("#a.value * #b.value"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.ok(err.message.includes("(empty)"), err.message);
+    return true;
+  });
+});
+
+test("a missing element reaches arithmetic as the empty string and errors, but joins fine", () => {
+  assert.throws(() => evaluateFormula("#gone.value * 2"), /\(empty\)/);
+  assert.equal(evaluateFormula("'' + #gone.value").value, "");
+});
+
+test("numeric functions require number arguments", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "x";
+  document.body.appendChild(a);
+
+  assert.throws(() => evaluateFormula("min(#a.value, 3)"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.ok(err.message.includes("min()"), err.message);
+    assert.ok(err.message.includes("#a.value"), err.message);
+    return true;
+  });
+});
+
+test("sum is strict: a blank row is an error naming the row's id", () => {
+  const list = document.createElement("ul");
+  list.id = "list";
+  list.innerHTML = `
+    <li><input class="amount" value="10"></li>
+    <li><input id="row3" class="amount" value=""></li>
+    <li><input class="amount" value="30"></li>`;
+  document.body.appendChild(list);
+
+  assert.throws(() => evaluateFormula("sum('#list .amount')"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.ok(err.message.includes("#row3"), err.message);
+    assert.ok(err.message.includes("sum()"), err.message);
+    return true;
+  });
+});
+
+test("sum skips a required-but-blank row when filtered by :valid", () => {
+  const list = document.createElement("ul");
+  list.id = "list";
+  list.innerHTML = `
+    <li><input class="amount" value="10"></li>
+    <li><input class="amount" required value=""></li>
+    <li><input class="amount" value="30"></li>`;
+  document.body.appendChild(list);
+
+  assert.equal(evaluateFormula("sum('#list .amount:valid')").value, 40);
+});
+
+test("sum skips a blank placeholder row when filtered by :not(:placeholder-shown)", () => {
+  const list = document.createElement("ul");
+  list.id = "list";
+  list.innerHTML = `
+    <li><input class="amount" value="10"></li>
+    <li><input class="amount" placeholder=" " value=""></li>
+    <li><input class="amount" value="30"></li>`;
+  document.body.appendChild(list);
+
+  assert.equal(evaluateFormula("sum('#list .amount:not(:placeholder-shown)')").value, 40);
+});
+
+test("count over an empty selection is 0, no throw", () => {
+  assert.equal(evaluateFormula("count('#list .none')").value, 0);
+});
+
+test("#a.checked stays a boolean: 1 and 0 in arithmetic", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.type = "checkbox";
+  a.checked = true;
+  document.body.appendChild(a);
+
+  assert.equal(evaluateFormula("#a.checked * 5").value, 5);
+  a.checked = false;
+  assert.equal(evaluateFormula("#a.checked * 5").value, 0);
+});
+
+test("division by zero follows JavaScript: 1 / 0 is Infinity", () => {
+  assert.equal(evaluateFormula("1 / 0").value, Infinity);
 });
