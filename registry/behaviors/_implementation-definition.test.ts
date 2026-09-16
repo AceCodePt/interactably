@@ -66,6 +66,18 @@ test("throws on a duplicate name", () => {
   );
 });
 
+test("the reserved modifier names cannot be verbs", () => {
+  for (const verb of ["debounce", "throttle", "once", "delay"]) {
+    assert.throws(
+      () =>
+        defineImplementation(`reserved-${verb}`, { verbs: { [verb]: "undefined" } }, () => ({
+          [verb]: () => undefined,
+        })),
+      new RegExp(`"${verb}" is a reserved modifier and cannot be a verb`),
+    );
+  }
+});
+
 test("an element-constructor slot is not a tsyntax string and compiles to instanceof", () => {
   defineImplementation(
     "with-ctor",

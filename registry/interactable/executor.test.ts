@@ -1,20 +1,33 @@
 import { afterEach, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
+import { IS_HOST } from "@interactable/host.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 
 class FakeElement extends EventTarget {
   id: string;
+  localName = "div";
   value = "";
   checked = false;
   valueAsNumber = NaN;
+  private attrs = new Map<string, string>();
 
   constructor(id = "") {
     super();
     this.id = id;
   }
+
+  getAttribute(name: string): string | null {
+    return this.attrs.get(name) ?? null;
+  }
+
+  setAttribute(name: string, value: string): void {
+    this.attrs.set(name, value);
+  }
 }
+
+(FakeElement.prototype as unknown as Record<PropertyKey, unknown>)[IS_HOST] = true;
 
 const byId = new Map<string, FakeElement>();
 const created: FakeElement[] = [];
@@ -162,7 +175,35 @@ test("an unowned verb aborts the chain and is logged", (t) => {
   run(el(), "#m.missing().show()", new Event("click"));
   assert.deepEqual(order, []);
   assert.equal(spy.mock.callCount(), 1);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("no implementation on <element#m> handles missing()"));
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("no implementation on <div#m> handles missing()"));
+});
+
+test("a non-host receiver is reported with the is= fix", (t) => {
+  const spy = t.mock.method(console, "error");
+  const plain = el("plain");
+  (plain as unknown as Record<PropertyKey, unknown>)[IS_HOST] = false;
+
+  run(el(), "#plain.show()", new Event("click"));
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes(
+      '#plain is not an interactable host; add is="interactable-div"',
+    ),
+  );
+});
+
+test("a host no implementation handles reports the implements list", (t) => {
+  const spy = t.mock.method(console, "error");
+  const receiver = el("plain");
+  receiver.setAttribute("implements", "attributable");
+
+  run(el(), "#plain.show()", new Event("click"));
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes(
+      'no implementation on <div#plain implements="attributable"> handles show()',
+    ),
+  );
 });
 
 test("semicolon phrases are independent", (t) => {

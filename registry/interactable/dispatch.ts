@@ -1,3 +1,4 @@
+import { isHost } from "@interactable/host.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
 
 export interface DispatchInteractionOptions {
@@ -11,6 +12,11 @@ export function dispatchInteraction(
   arg?: unknown,
   options: DispatchInteractionOptions = {},
 ): unknown {
+  if (!isHost(el)) {
+    const id = (el as { id?: unknown }).id;
+    const subject = typeof id === "string" && id !== "" ? `#${id}` : el.localName;
+    throw new Error(`${subject} is not an interactable host; add is="interactable-${el.localName}"`);
+  }
   const event = new InteractionEvent({
     verb,
     arg,
@@ -26,6 +32,10 @@ export function dispatchInteraction(
 }
 
 function describe(el: Element): string {
-  const id = (el as HTMLElement).id;
-  return id !== "" ? `${el.localName}#${id}` : el.localName;
+  const id = (el as { id?: unknown }).id;
+  const base = typeof id === "string" && id !== "" ? `${el.localName}#${id}` : el.localName;
+  const implementsValue = el.getAttribute("implements");
+  const implementsSuffix =
+    implementsValue !== null && implementsValue !== "" ? ` implements="${implementsValue}"` : "";
+  return `<${base}${implementsSuffix}>`;
 }

@@ -43,6 +43,45 @@ test("rule 2: receivers are #ids or this; ids may not contain dots", () => {
   assert.equal(first(dotted).calls[0]!.verb, "b");
 });
 
+test("an id may not contain the phrase punctuation : & | { } ' \" #", (t) => {
+  const spy = errorsOf(t);
+  for (const ch of [":", "&", "|", "{", "}", "'", '"', "#"]) {
+    assert.deepEqual(parse(`#x.set(#a${ch}b)`), [], `id "a${ch}b" is not addressable`);
+  }
+  assert.equal(spy.mock.callCount(), 8);
+  for (let i = 0; i < 8; i++) {
+    assert.ok(String(spy.mock.calls[i]!.arguments[0]).includes("may not contain"));
+  }
+});
+
+test("the id error names the full ref and the excluded characters", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("#x.set(#q:b)"), []);
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes(
+      'invalid id "q:b" in #q:b; ids used in phrases may not contain : & | { } \' " #',
+    ),
+  );
+});
+
+test("a key may not contain the phrase punctuation", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("a&b: #f.send()"), []);
+  assert.deepEqual(parse("a|b: #f.send()"), []);
+  assert.deepEqual(parse('a"b: #f.send()'), []);
+  assert.deepEqual(parse("a#b: #f.send()"), []);
+  assert.deepEqual(parse("a'b: #f.send()"), []);
+  assert.deepEqual(parse("a{b: #f.send()"), []);
+  assert.deepEqual(parse("a}b: #f.send()"), []);
+  assert.deepEqual(parse("#a:b.show()"), []);
+  assert.equal(spy.mock.callCount(), 8);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('invalid key "a&b"'));
+  assert.ok(String(spy.mock.calls[1]!.arguments[0]).includes('invalid key "a|b"'));
+  assert.ok(String(spy.mock.calls[2]!.arguments[0]).includes('invalid key "a"b"'));
+  assert.ok(String(spy.mock.calls[3]!.arguments[0]).includes('invalid key "a#b"'));
+  assert.ok(String(spy.mock.calls[7]!.arguments[0]).includes('invalid key "#a"'));
+});
+
 test("rule 3: one receiver per phrase; groups and broadcasts are errors", () => {
   assert.equal(parse("#a.hide(); #b.hide()").length, 2);
   assert.deepEqual(parse("#a, #b.hide()"), []);
@@ -85,19 +124,12 @@ test("rule 5: modifiers sit in the chain with their position recorded", () => {
   assert.deepEqual(first(mid).modifiers, [{ kind: "once", position: 1 }]);
 });
 
-test("modifiers stack and repeat without error; the parser has no duplicate check", () => {
+test("once() and delay() stack and repeat freely", () => {
   const [stacked] = parse("#a.debounce(300).once().x()");
   assert.ok(stacked);
   assert.deepEqual(first(stacked).modifiers, [
     { kind: "debounce", ms: 300, position: 0 },
     { kind: "once", position: 0 },
-  ]);
-
-  const [repeated] = parse("#a.debounce(1).debounce(2).x()");
-  assert.ok(repeated);
-  assert.deepEqual(first(repeated).modifiers, [
-    { kind: "debounce", ms: 1, position: 0 },
-    { kind: "debounce", ms: 2, position: 0 },
   ]);
 
   const [interleaved] = parse("#a.x().once().y().delay(50).z()");
@@ -106,6 +138,32 @@ test("modifiers stack and repeat without error; the parser has no duplicate chec
     { kind: "once", position: 1 },
     { kind: "delay", ms: 50, position: 2 },
   ]);
+});
+
+test("only one debounce()/throttle() timing modifier per receiver chain", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("#a.debounce(300).throttle(16).x()"), []);
+  assert.deepEqual(parse("#a.throttle(16).debounce(300).x()"), []);
+  assert.deepEqual(parse("#a.debounce(1).debounce(2).x()"), []);
+  assert.equal(spy.mock.callCount(), 3);
+  for (let i = 0; i < 3; i++) {
+    assert.ok(String(spy.mock.calls[i]!.arguments[0]).includes("only one of debounce()/throttle()"));
+  }
+});
+
+test("each receiver chain in a phrase may carry its own timing modifier", () => {
+  const [phrase] = parse("#a.debounce(1).x() && #b.throttle(2).y()");
+  assert.ok(phrase);
+  assert.equal(phrase.operator, "&&");
+  assert.deepEqual(phrase.units[0]!.modifiers, [{ kind: "debounce", ms: 1, position: 0 }]);
+  assert.deepEqual(phrase.units[1]!.modifiers, [{ kind: "throttle", ms: 2, position: 0 }]);
+});
+
+test("a trailing modifier on a non-last unit is rejected; it never governs the next receiver", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("#a.x().once() && #b.y()"), []);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("once()"));
 });
 
 test("debounce/throttle must come right after the receiver, before any call", () => {

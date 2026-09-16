@@ -37,8 +37,8 @@ const CALL = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*\(([\s\S]*)\)$/;
 const NUMBER = /^-?\d+(?:\.\d+)?$/;
 const STRING = /^'([^']*)'$/;
 const IDENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-const ID = /^[^\s,;.()]+$/;
-const KEY = /^[^\s.,;()]+$/;
+const ID = /^[^\s,;.()&|{}:'"#]+$/;
+const KEY = /^[^\s.,;()&|{}:'"#]+$/;
 const TIMING = /^(debounce|throttle|delay)\(([^)]*)\)$/;
 const READ = /^(this|#[^\s,;.()]+)\.([A-Za-z_$][A-Za-z0-9_$]*)$/;
 
@@ -107,12 +107,17 @@ function parseUnit(raw: string): Unit {
 
   const calls: Call[] = [];
   const modifiers: Modifier[] = [];
+  let timingSeen = false;
   for (const segment of segments.slice(1)) {
     if (segment === "") throw new Error("empty link between dots");
     const modifier = parseModifier(segment);
     if (modifier !== undefined) {
       if ((modifier.kind === "debounce" || modifier.kind === "throttle") && calls.length > 0) {
         throw new Error(`modifier ${modifier.kind}() must come right after the receiver`);
+      }
+      if (modifier.kind === "debounce" || modifier.kind === "throttle") {
+        if (timingSeen) throw new Error("only one of debounce()/throttle() per receiver chain");
+        timingSeen = true;
       }
       modifiers.push({ ...modifier, position: calls.length });
       continue;
@@ -140,7 +145,11 @@ function parseRef(segment: string): Ref {
 
 function validateId(id: string): void {
   if (id === "") throw new Error("empty id after #");
-  if (!ID.test(id)) throw new Error(`invalid id "#${id}"`);
+  if (!ID.test(id)) {
+    throw new Error(
+      `invalid id "${id}" in #${id}; ids used in phrases may not contain : & | { } ' " #`,
+    );
+  }
 }
 
 type ModifierSpec =

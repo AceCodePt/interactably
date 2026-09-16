@@ -214,6 +214,23 @@ test("prevent-default silences the native-action warning", (t) => {
   );
 });
 
+test("a keyed button on-keydown/on-keyup does not warn; an unkeyed one does", (t) => {
+  const warn = t.mock.method(console, "warn");
+  const keyed = hostElement("button", { "on-keydown": "escape: #recv.go()" });
+  document.body.appendChild(keyed);
+  const unkeyedDown = hostElement("button", { "on-keydown": "#recv.go()" });
+  document.body.appendChild(unkeyedDown);
+  const unkeyedUp = hostElement("button", { "on-keyup": "#recv.go()" });
+  document.body.appendChild(unkeyedUp);
+
+  const enterWarns = warn.mock.calls
+    .map((call) => String(call.arguments[0]))
+    .filter((message) => message.includes("Enter/Space"));
+  assert.equal(enterWarns.length, 2, "the two unkeyed buttons warn; the keyed one does not");
+  assert.ok(enterWarns[0]!.includes("on-keydown"));
+  assert.ok(enterWarns[1]!.includes("on-keyup"));
+});
+
 test("implements routing picks the first implementation in order that declares the verb", async () => {
   const receiver = hostElement("div", { id: "route", implements: "alpha beta" });
   document.body.appendChild(receiver);

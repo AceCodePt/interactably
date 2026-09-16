@@ -4,6 +4,8 @@ import { LEGACY_EVENTS_WITHOUT_IDL, isImplementationEvent } from "@interactable/
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { INTERSECT_ATTRIBUTES, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
+import { IS_HOST } from "@interactable/host.ts";
+import { parse } from "@interactable/parser.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import { NotReadyError } from "@behaviors/implementation-utils.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
@@ -17,6 +19,7 @@ import {
 
 export interface InteractableHost extends HTMLElement {
   didEnsure: boolean;
+  readonly [IS_HOST]?: true;
 }
 
 interface HostElementBase {
@@ -219,6 +222,7 @@ export function defineInteractableHost(tag: Tag): void {
         }
       }
     }
+    (InteractableHostElement.prototype as unknown as Record<PropertyKey, unknown>)[IS_HOST] = true;
     return InteractableHostElement as unknown as Constructor<HTMLElement> & { observedAttributes?: string[] };
   }) as unknown as Parameters<typeof defineAutoWebComponent>[2];
   defineAutoWebComponent(hostName, tag, HostFactory, { observedAttributes: observed });
@@ -237,6 +241,9 @@ function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string): void {
   } else if (el instanceof HTMLAnchorElement && el.href && type === "click") {
     console.warn(`[Interactable] on-click on ${describeElement(el)}: <a href> also navigates; add implements="prevent-default" to cancel it`);
   } else if (el instanceof HTMLButtonElement && (type === "keydown" || type === "keyup")) {
-    console.warn(`[Interactable] on-${type} on ${describeElement(el)}: <button> also activates on Enter/Space; add implements="prevent-default" to cancel it`);
+    const phrases = parse(el.getAttribute(`on-${type}`) ?? "", type);
+    if (phrases.some((phrase) => phrase.key === undefined)) {
+      console.warn(`[Interactable] on-${type} on ${describeElement(el)}: <button> also activates on Enter/Space; add implements="prevent-default" to cancel it`);
+    }
   }
 }

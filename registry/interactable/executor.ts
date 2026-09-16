@@ -1,3 +1,4 @@
+import { isHost } from "@interactable/host.ts";
 import { parse } from "@interactable/parser.ts";
 import { matchesKey } from "@interactable/keys.ts";
 import { normaliseRootMargin } from "@interactable/intersect.ts";
@@ -141,6 +142,14 @@ function walkUnit(state: WalkState, unit: Unit): ChainResult {
   const receiver = resolveRef(unit.ref, source);
   if (receiver === null) {
     logOnce(source, `receiver ${describeRef(unit.ref)} not found; phrase skipped`);
+    return { outcome: "failed" };
+  }
+  if (!isHost(receiver)) {
+    logOnce(
+      source,
+      `${describeRef(unit.ref)} is not an interactable host; ` +
+        `add is="interactable-${(receiver as { localName?: unknown }).localName}"`,
+    );
     return { outcome: "failed" };
   }
 
@@ -300,7 +309,10 @@ function describeElement(el: Element): string {
   const name = typeof tag === "string" && tag !== "" ? tag.toLowerCase() : "element";
   const id = (el as { id?: unknown }).id;
   const suffix = typeof id === "string" && id !== "" ? `#${id}` : "";
-  return `<${name}${suffix}>`;
+  const implementsValue = el.getAttribute("implements");
+  const implementsSuffix =
+    implementsValue !== null && implementsValue !== "" ? ` implements="${implementsValue}"` : "";
+  return `<${name}${suffix}${implementsSuffix}>`;
 }
 
 function describeError(err: unknown): string {

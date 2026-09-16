@@ -47,6 +47,8 @@ function validateEvents(name: string, events: readonly string[]): void {
   }
 }
 
+const RESERVED_VERB_NAMES = new Set(["debounce", "throttle", "once", "delay"]);
+
 function validateSlots(
   name: string,
   config: Record<string, string>,
@@ -55,7 +57,14 @@ function validateSlots(
 ): void {
   for (const [key, raw] of Object.entries(config)) validateScalar(name, `config "${key}"`, raw);
   for (const [key, raw] of Object.entries(state)) validateScalar(name, `state "${key}"`, raw);
-  for (const [verb, sig] of Object.entries(verbs)) validateVerbSlot(name, verb, sig);
+  for (const [verb, sig] of Object.entries(verbs)) {
+    if (RESERVED_VERB_NAMES.has(verb)) {
+      throw new Error(
+        `[Interactable] ${name} verb ${verb}(): "${verb}" is a reserved modifier and cannot be a verb`,
+      );
+    }
+    validateVerbSlot(name, verb, sig);
+  }
 }
 
 function validateVerbSlot(name: string, verb: string, sig: Sig): void {
