@@ -226,7 +226,7 @@ test("modifiable-formula evaluates against #id references at fire time", async (
   const qty = dep("qty", "3");
   const total = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "#price * #qty + 1",
+    "modifiable-formula": "#price.value * #qty.value + 1",
   }) as HTMLOutputElement;
   document.body.append(price, qty, total);
   await flush();
@@ -309,7 +309,7 @@ test("format(value, { type: 'date' }) parses the reference as a date", async () 
   const joined = dep("joined", "2024-01-02");
   const out = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "format(#joined, { type: 'date', dateStyle: 'medium' })",
+    "modifiable-formula": "format(#joined.value, { type: 'date', dateStyle: 'medium' })",
   }) as HTMLOutputElement;
   document.body.append(joined, out);
   await flush();
@@ -322,7 +322,7 @@ test("the formula supports parentheses, unary minus and min/max/floor/ceil/round
   const b = dep("b", "5");
   const out = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "min(#a, #b) + round(2.6) * floor(2.7) - (1 + 1)",
+    "modifiable-formula": "min(#a.value, #b.value) + round(2.6) * floor(2.7) - (1 + 1)",
   }) as HTMLOutputElement;
   document.body.append(a, b, out);
   await flush();
@@ -331,7 +331,7 @@ test("the formula supports parentheses, unary minus and min/max/floor/ceil/round
 
   const neg = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "-#a + 10",
+    "modifiable-formula": "-#a.value + 10",
   }) as HTMLOutputElement;
   document.body.appendChild(neg);
   await flush();
@@ -341,7 +341,7 @@ test("the formula supports parentheses, unary minus and min/max/floor/ceil/round
 test("a missing #id dependency counts as zero", async () => {
   const out = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "#ghost + 5",
+    "modifiable-formula": "#ghost.value + 5",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
   await flush();

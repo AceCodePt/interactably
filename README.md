@@ -181,6 +181,22 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 
 `debounce`, `throttle`, `once`, `delay` are modifiers — an implementation may not name a verb that way. `this` is the only keyword. `value`, `checked`, `valueAsNumber` are property reads, not verbs; an implementation may still define a verb called `value()` (distinguished by its parens).
 
+### The formula
+
+`modifiable-formula` is the second grammar an author meets on the same page as the trigger DSL, and it spells references the same way: the property is explicit, nothing is guessed from the tag.
+
+```
+reference := '#' id '.' ('value' | 'checked')
+```
+
+| Construct | Example | Meaning |
+| --- | --- | --- |
+| Reference | `#qty.value`, `#agree.checked` | `.value` reads the element's text — a number when it parses (an empty string is `0`), else a string; `.checked` is the boolean `el.checked === true`, `false` on an element without one. A missing element is `""` / `false`. A bare `#id` is a parse error: `reference #qty needs .value or .checked` |
+| Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"3a"`. `-`, `*`, `/`, unary `-` are always arithmetic; `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers |
+| Boolean in arithmetic | `#item1.value * #item1.checked` | `true` is `1`, `false` is `0` — the line-item pattern: price when ticked, `0` when not |
+
+Sharp edge: two numeric-looking text inputs *add* — `#zip1.value + #zip2.value` sums them. Force a join with a literal on the left: `'' + #zip1.value + #zip2.value`.
+
 ---
 
 ## The `interaction` event
@@ -516,7 +532,7 @@ There is no store, no signals, no cross-element watching. The DOM is the store; 
 | --- | --- |
 | **Dynamic triggers** (rows cloned from a template) | Put `is="interactable-<tag>"` in the template. On Chrome and Firefox the clone upgrades synchronously on insertion; `on-click="this.remove()"` / `#list.removeRow(this)` works on every clone with no generated ids. On Safari, and when the auto-loader adds `is=` for you, the upgrade is deferred ([below](#upgrade-timing)) |
 | **Dynamic receivers** (a row's own subtotal) | Receivers stay ids or `this`. Either address a stable ancestor and let the implementation find the relative element from `e.source` (`closest("li")`), or stamp ids in the template |
-| **Dynamic data sources** (sum whatever inputs exist) | Formula with a selector: `#total implements="modifiable" modifiable-formula="sum('#list .amount')"`, recomputed by `#total.compute()`. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time |
+| **Dynamic data sources** (sum whatever inputs exist) | Formula with a selector: `#total implements="modifiable" modifiable-formula="sum('#list .amount')"`, recomputed by `#total.compute()`. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time. Filter the set in the selector — `sum('#list .amount:checked')` sums only ticked checkboxes |
 | **Change without interaction** (server swap, external mutation) | The implementation that performed the change fires its own event (`on-response="#count.compute()"`), a new synchronous chain with `this` bound to that element |
 
 <a name="upgrade-timing"></a>**Upgrade timing is not uniform.** `is=` written in the markup (server-rendered or in a `<template>`) upgrades synchronously on insertion in Chrome and Firefox. Two paths are asynchronous:

@@ -2,7 +2,7 @@ import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
-import { bindEvents, NotReadyError, valueOf } from "@behaviors/implementation-utils.ts";
+import { bindEvents, NotReadyError, readValue, valueOf } from "@behaviors/implementation-utils.ts";
 
 let dom: JSDOM;
 
@@ -33,6 +33,28 @@ test("valueOf reads .value first, then data-value, then textContent", () => {
 
   const empty = document.createElement("div");
   assert.equal(valueOf(empty), 0);
+});
+
+test("readValue reads .value as a number when it parses, else as a string, falling back to textContent", () => {
+  const numeric = document.createElement("input");
+  numeric.value = "42";
+  assert.equal(readValue(numeric), 42);
+
+  const words = document.createElement("input");
+  words.value = "abc";
+  assert.equal(readValue(words), "abc");
+
+  const empty = document.createElement("input");
+  empty.value = "";
+  assert.equal(readValue(empty), 0);
+
+  const byText = document.createElement("div");
+  byText.textContent = "7";
+  assert.equal(readValue(byText), 7);
+
+  const byTextWords = document.createElement("div");
+  byTextWords.textContent = "seven";
+  assert.equal(readValue(byTextWords), "seven");
 });
 
 test("bindEvents binds one listener per entry, filters event:key pairs, and updates live", () => {

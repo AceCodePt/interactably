@@ -33,7 +33,7 @@ export const modifiable = defineImplementation(
       }
       target.dispatchEvent(new Event("input", { bubbles: true }));
     };
-    const writeComputed = (text: string, value: number | null): void => {
+    const writeComputed = (text: string, value: number | string | null): void => {
       const target: Element = el;
       if (hasValue(target)) {
         target.value = text;

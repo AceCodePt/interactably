@@ -1,8 +1,8 @@
-import { valueOf } from "@behaviors/implementation-utils.ts";
+import { readValue, valueOf } from "@behaviors/implementation-utils.ts";
 
 export interface FormulaResult {
   text: string;
-  value: number | null;
+  value: number | string;
 }
 
 interface EvalContext {
@@ -53,9 +53,14 @@ class Formula {
       if (op !== "+" && op !== "-") return value;
       this.pos++;
       const rhs = this.parseTerm();
-      const left = toNumber(value);
-      const right = toNumber(rhs);
-      value = op === "+" ? left + right : left - right;
+      if (op === "+") {
+        value =
+          typeof value === "string" || typeof rhs === "string"
+            ? String(value) + String(rhs)
+            : toNumber(value) + toNumber(rhs);
+      } else {
+        value = toNumber(value) - toNumber(rhs);
+      }
     }
   }
 
@@ -101,14 +106,22 @@ class Formula {
     throw new Error(`unexpected "${ch ?? "end of formula"}"`);
   }
 
-  private parseReference(): string {
+  private parseReference(): Value {
     this.pos++;
     const start = this.pos;
     while (this.pos < this.source.length && /[\w-]/.test(this.source[this.pos]!)) this.pos++;
     const id = this.source.slice(start, this.pos);
     if (id === "") throw new Error("empty # reference");
+    this.skipSpace();
+    if (this.source[this.pos] !== ".") throw new Error(`reference #${id} needs .value or .checked`);
+    this.pos++;
+    const propStart = this.pos;
+    while (this.pos < this.source.length && /[A-Za-z]/.test(this.source[this.pos]!)) this.pos++;
+    const prop = this.source.slice(propStart, this.pos);
     const element = this.context.document.getElementById(id);
-    return element === null ? "" : rawValue(element);
+    if (prop === "value") return element === null ? "" : readValue(element);
+    if (prop === "checked") return element === null ? false : (element as unknown as { checked?: unknown }).checked === true;
+    throw new Error(`reference #${id} needs .value or .checked`);
   }
 
   private parseCall(): Value {
@@ -310,11 +323,6 @@ function format(value: Value | undefined, options: Value | undefined): Formatted
   return new Formatted(text, Number.isFinite(number) ? number : null);
 }
 
-function rawValue(element: Element): string {
-  const value = (element as unknown as { value?: unknown }).value;
-  return typeof value === "string" ? value : element.textContent ?? "";
-}
-
 function isOptions(value: Value | undefined): value is Options {
   return typeof value === "object" && value !== null && !(value instanceof Formatted);
 }
@@ -342,8 +350,11 @@ function numericOrNull(value: Value | undefined): number | null {
 
 function toResult(value: Value): FormulaResult {
   if (typeof value === "number") return { text: String(value), value };
-  if (typeof value === "string") return { text: value, value: null };
-  if (typeof value === "boolean") return { text: String(value), value: null };
-  if (value instanceof Formatted) return { text: value.text, value: value.value };
-  return { text: "", value: null };
+  if (typeof value === "string") return { text: value, value };
+  if (typeof value === "boolean") {
+    const text = String(value);
+    return { text, value: text };
+  }
+  if (value instanceof Formatted) return { text: value.text, value: value.value ?? "" };
+  return { text: "", value: "" };
 }

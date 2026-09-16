@@ -52,6 +52,7 @@
           <a href="#constructs" class="sub">Constructs</a>
           <a href="#rules" class="sub">Rules</a>
           <a href="#reserved-names" class="sub">Reserved names</a>
+          <a href="#formula" class="sub">The formula</a>
           <a href="#interaction-event">The interaction event</a>
           <a href="#hosts">Hosts</a>
           <a href="#four-kinds" class="sub">Four kinds of element</a>
@@ -312,6 +313,30 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
 
         <h3 id="reserved-names" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'reserved-names'}); this.hash()">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
         <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
+
+        <h3 id="formula" is="interactable-h3" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'formula'}); this.hash()">The formula <a class="anchor" href="#formula">#</a></h3>
+        <p><code class="inline-code">modifiable-formula</code> is the second grammar an author meets on the same page as the trigger DSL, and it spells references the same way: the property is explicit, nothing is guessed from the tag.</p>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">Text</span>
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-docs-formula)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-docs-formula" data-lang="text"><code>reference := '#' id '.' ('value' | 'checked')</code></pre>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td>Reference</td><td><code class="inline-code">#qty.value</code>, <code class="inline-code">#agree.checked</code></td><td><code class="inline-code">.value</code> reads the element&rsquo;s text — a number when it parses (an empty string is <code class="inline-code">0</code>), else a string; <code class="inline-code">.checked</code> is the boolean <code class="inline-code">el.checked === true</code>, <code class="inline-code">false</code> on an element without one. A missing element is <code class="inline-code">""</code> / <code class="inline-code">false</code>. A bare <code class="inline-code">#id</code> is a parse error: <code class="inline-code">reference #qty needs .value or .checked</code></td></tr>
+              <tr><td>Typed <code class="inline-code">+</code></td><td><code class="inline-code">'invoice-' + #slug.value + '.pdf'</code></td><td>Joins when either side is a string, adds otherwise, left to right: <code class="inline-code">'a' + 1 + 2</code> is <code class="inline-code">"a12"</code>, <code class="inline-code">1 + 2 + 'a'</code> is <code class="inline-code">"3a"</code>. <code class="inline-code">-</code>, <code class="inline-code">*</code>, <code class="inline-code">/</code>, unary <code class="inline-code">-</code> are always arithmetic; <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">floor</code>/<code class="inline-code">ceil</code>/<code class="inline-code">round</code>/<code class="inline-code">sum</code>/<code class="inline-code">count</code> return numbers</td></tr>
+              <tr><td>Boolean in arithmetic</td><td><code class="inline-code">#item1.value * #item1.checked</code></td><td><code class="inline-code">true</code> is <code class="inline-code">1</code>, <code class="inline-code">false</code> is <code class="inline-code">0</code> — the line-item pattern: price when ticked, <code class="inline-code">0</code> when not</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Sharp edge: two numeric-looking text inputs <em>add</em> — <code class="inline-code">#zip1.value + #zip2.value</code> sums them. Force a join with a literal on the left: <code class="inline-code">'' + #zip1.value + #zip2.value</code>.</p>
 
         <h2 id="interaction-event" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'interaction-event'}); this.hash()">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
         <p>The host wraps every verb call in its own event, dispatched at the receiver:</p>
@@ -713,7 +738,7 @@ export const attributable = defineImplementation("attributable", {
             <tbody>
               <tr><td><strong>Dynamic triggers</strong> (rows cloned from a template)</td><td>Put <code class="inline-code">is="interactable-&lt;tag&gt;"</code> in the template. On Chrome and Firefox the clone upgrades synchronously on insertion; <code class="inline-code">on-click="this.remove()"</code> / <code class="inline-code">#list.removeRow(this)</code> works on every clone with no generated ids. On Safari, and when the auto-loader adds <code class="inline-code">is=</code> for you, the upgrade is deferred (<a href="#upgrade-timing">below</a>)</td></tr>
               <tr><td><strong>Dynamic receivers</strong> (a row&rsquo;s own subtotal)</td><td>Receivers stay ids or <code class="inline-code">this</code>. Either address a stable ancestor and let the implementation find the relative element from <code class="inline-code">e.source</code> (<code class="inline-code">closest("li")</code>), or stamp ids in the template</td></tr>
-              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>Formula with a selector: <code class="inline-code">#total implements="modifiable" modifiable-formula="sum('#list .amount')"</code>, recomputed by <code class="inline-code">#total.compute()</code>. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time</td></tr>
+              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>Formula with a selector: <code class="inline-code">#total implements="modifiable" modifiable-formula="sum('#list .amount')"</code>, recomputed by <code class="inline-code">#total.compute()</code>. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. Filter the set in the selector — <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes</td></tr>
               <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change fires its own event (<code class="inline-code">on-response="#count.compute()"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
             </tbody>
           </table>

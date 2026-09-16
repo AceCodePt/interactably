@@ -18,6 +18,13 @@ export function toNumber(value: string | number): number {
   return typeof value === "number" ? value : Number(value);
 }
 
+export function readValue(el: Element): number | string {
+  const value = (el as unknown as { value?: unknown }).value;
+  const text = typeof value === "string" ? value : el.textContent ?? "";
+  const parsed = toNumber(text);
+  return Number.isNaN(parsed) ? text : parsed;
+}
+
 export function valueOf(el: Element): number {
   const value = (el as unknown as { value?: unknown }).value;
   if (typeof value === "number") return value;
