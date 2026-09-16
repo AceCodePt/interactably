@@ -1,7 +1,6 @@
 import { readValue, valueOf } from "@behaviors/implementation-utils.ts";
 
 export interface FormulaResult {
-  text: string;
   value: number | string;
 }
 
@@ -9,20 +8,7 @@ interface EvalContext {
   readonly document: Document;
 }
 
-type OptionValue = string | number | boolean;
-type Options = Record<string, OptionValue>;
-
-class Formatted {
-  readonly text: string;
-  readonly value: number | null;
-
-  constructor(text: string, value: number | null) {
-    this.text = text;
-    this.value = value;
-  }
-}
-
-type Value = number | string | boolean | Options | Formatted;
+type Value = number | string | boolean;
 
 export function evaluateFormula(source: string, context: EvalContext = { document }): FormulaResult {
   return toResult(new Formula(source, context).evaluate());
@@ -100,7 +86,6 @@ class Formula {
     }
     if (ch === "#") return this.parseReference();
     if (ch === "'" || ch === '"') return this.parseString(ch);
-    if (ch === "{") return this.parseObject();
     if (ch !== undefined && /[0-9.]/.test(ch)) return this.parseNumber();
     if (ch !== undefined && /[A-Za-z_$]/.test(ch)) return this.parseCall();
     throw new Error(`unexpected "${ch ?? "end of formula"}"`);
@@ -155,63 +140,6 @@ class Formula {
       }
       throw new Error("expected , or ) in arguments");
     }
-  }
-
-  private parseObject(): Options {
-    this.pos++;
-    const options: Options = {};
-    this.skipSpace();
-    if (this.source[this.pos] === "}") {
-      this.pos++;
-      return options;
-    }
-    for (;;) {
-      this.skipSpace();
-      const key = this.parseObjectKey();
-      this.skipSpace();
-      if (this.source[this.pos] !== ":") throw new Error(`expected ":" after option "${key}"`);
-      this.pos++;
-      options[key] = this.parseLiteral();
-      this.skipSpace();
-      const next = this.source[this.pos];
-      if (next === ",") {
-        this.pos++;
-        continue;
-      }
-      if (next === "}") {
-        this.pos++;
-        return options;
-      }
-      throw new Error("expected , or } in options");
-    }
-  }
-
-  private parseObjectKey(): string {
-    this.skipSpace();
-    const ch = this.source[this.pos];
-    if (ch === "'" || ch === '"') return this.parseString(ch);
-    const start = this.pos;
-    while (this.pos < this.source.length && /[A-Za-z0-9_$]/.test(this.source[this.pos]!)) this.pos++;
-    const key = this.source.slice(start, this.pos);
-    if (key === "") throw new Error("expected an option name");
-    return key;
-  }
-
-  private parseLiteral(): OptionValue {
-    this.skipSpace();
-    const ch = this.source[this.pos];
-    if (ch === "'" || ch === '"') return this.parseString(ch);
-    if (ch === "-") {
-      this.pos++;
-      return -this.parseNumber();
-    }
-    if (ch !== undefined && /[0-9.]/.test(ch)) return this.parseNumber();
-    const start = this.pos;
-    while (this.pos < this.source.length && /[A-Za-z]/.test(this.source[this.pos]!)) this.pos++;
-    const word = this.source.slice(start, this.pos);
-    if (word === "true") return true;
-    if (word === "false") return false;
-    throw new Error(`expected a literal value, got "${word}"`);
   }
 
   private parseString(quote: string): string {
@@ -275,9 +203,6 @@ function applyFunction(name: string, args: Value[], context: EvalContext): Value
     case "count":
       requireArity(name, args, 1);
       return count(selectorArg(args[0]), context);
-    case "format":
-      requireArity(name, args, 2);
-      return format(args[0], args[1]);
     default:
       throw new Error(`unknown function ${name}()`);
   }
@@ -302,59 +227,14 @@ function count(selector: string, context: EvalContext): number {
   return context.document.querySelectorAll(selector).length;
 }
 
-function format(value: Value | undefined, options: Value | undefined): Formatted {
-  const settings = isOptions(options) ? options : {};
-  const locale = typeof settings["locale"] === "string" ? settings["locale"] : "en-US";
-  const type = settings["type"] === "date" ? "date" : "number";
-  const intlOptions: Record<string, OptionValue> = {};
-  for (const [key, option] of Object.entries(settings)) {
-    if (key !== "locale" && key !== "type") intlOptions[key] = option;
-  }
-  if (type === "date") {
-    const raw = toText(value);
-    const date = new Date(raw);
-    const text = Number.isNaN(date.getTime())
-      ? raw
-      : new Intl.DateTimeFormat(locale, intlOptions as unknown as Intl.DateTimeFormatOptions).format(date);
-    return new Formatted(text, numericOrNull(value));
-  }
-  const number = toNumber(value);
-  const text = new Intl.NumberFormat(locale, intlOptions as unknown as Intl.NumberFormatOptions).format(number);
-  return new Formatted(text, Number.isFinite(number) ? number : null);
-}
-
-function isOptions(value: Value | undefined): value is Options {
-  return typeof value === "object" && value !== null && !(value instanceof Formatted);
-}
-
 function toNumber(value: Value | undefined): number {
   if (typeof value === "number") return value;
   if (typeof value === "string") return Number(value);
-  if (typeof value === "boolean") return value ? 1 : 0;
-  if (value instanceof Formatted) return value.value ?? Number(value.text);
-  return Number.NaN;
-}
-
-function toText(value: Value | undefined): string {
-  if (typeof value === "string") return value;
-  if (typeof value === "number") return String(value);
-  if (typeof value === "boolean") return String(value);
-  if (value instanceof Formatted) return value.text;
-  return "";
-}
-
-function numericOrNull(value: Value | undefined): number | null {
-  const number = toNumber(value);
-  return Number.isFinite(number) ? number : null;
+  return value ? 1 : 0;
 }
 
 function toResult(value: Value): FormulaResult {
-  if (typeof value === "number") return { text: String(value), value };
-  if (typeof value === "string") return { text: value, value };
-  if (typeof value === "boolean") {
-    const text = String(value);
-    return { text, value: text };
-  }
-  if (value instanceof Formatted) return { text: value.text, value: value.value ?? "" };
-  return { text: "", value: "" };
+  if (typeof value === "number") return { value };
+  if (typeof value === "string") return { value };
+  return { value: String(value) };
 }

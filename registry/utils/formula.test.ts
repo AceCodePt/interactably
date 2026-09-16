@@ -32,7 +32,6 @@ test("#a.value is a number when the text parses, else a string; empty is 0", () 
 
   const n = evaluateFormula("#numeric.value");
   assert.equal(n.value, 42);
-  assert.equal(n.text, "42");
   assert.equal(evaluateFormula("#words.value").value, "abc");
   assert.equal(evaluateFormula("#empty.value").value, 0);
 });
@@ -40,7 +39,6 @@ test("#a.value is a number when the text parses, else a string; empty is 0", () 
 test("a missing element referenced by .value is the empty string", () => {
   const result = evaluateFormula("#ghost.value");
   assert.equal(result.value, "");
-  assert.equal(result.text, "");
 });
 
 test("#a.checked is the element's checked boolean, false when there is none", () => {
