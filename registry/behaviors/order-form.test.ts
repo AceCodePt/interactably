@@ -143,7 +143,7 @@ test("happy path: validate passes, the POST is sent, the response swaps and afte
   assert.equal(fetchCalls[0]!.url, "/api/orders");
   assert.equal(fetchCalls[0]!.init.method, "POST");
   assert.ok(fetchCalls[0]!.init.body instanceof FormData);
-  assert.equal(form().getAttribute("data-status"), "loading");
+  assert.equal(form().getAttribute("requestable-status"), "loading");
   assert.equal(form().getAttribute("aria-busy"), "true");
 
   fetchCalls[0]!.resolve(response(true, 200, "<p>placed</p>"));
@@ -151,7 +151,7 @@ test("happy path: validate passes, the POST is sent, the response swaps and afte
   assert.equal(receipt().innerHTML, "<p>placed</p>");
   assert.equal(receipt().hidden, false);
   assert.equal(alertEl().hidden, true);
-  assert.equal(form().hasAttribute("data-status"), false);
+  assert.equal(form().hasAttribute("requestable-status"), false);
   assert.equal(form().hasAttribute("aria-busy"), false);
 });
 
@@ -161,7 +161,7 @@ test("validation failure aborts before send", async () => {
 
   submit();
   assert.equal(fetchCalls.length, 0);
-  assert.equal(form().hasAttribute("data-status"), false);
+  assert.equal(form().hasAttribute("requestable-status"), false);
   assert.equal(form().hasAttribute("aria-busy"), false);
 });
 
@@ -188,7 +188,7 @@ test("server 500 sets status=error and fires on-request-error", async () => {
   submit();
   fetchCalls[0]!.resolve(response(false, 500, "boom"));
   await flush();
-  assert.equal(form().getAttribute("data-status"), "error");
+  assert.equal(form().getAttribute("requestable-status"), "error");
   assert.equal(alertEl().hidden, false);
   assert.equal(receipt().hidden, true);
   assert.equal(form().hasAttribute("aria-busy"), false);

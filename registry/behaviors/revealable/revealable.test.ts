@@ -107,7 +107,7 @@ test("<details>: show()/show(true)/show(false)/toggle() write and read el.open",
   assert.equal(details.open, false);
   interact(details, "show");
   assert.equal(details.open, true);
-  assert.equal(details.hasAttribute("data-open"), false);
+  assert.equal(details.hasAttribute("revealable-open"), false);
 
   interact(details, "toggle");
   assert.equal(details.open, false);
@@ -183,34 +183,34 @@ test("[popover]: show/show(false)/toggle use showPopover and read :popover-open"
   assert.equal(el.matches(":popover-open"), true);
 });
 
-test("a plain element falls back to data-open and renders hidden from it", async () => {
+test("a plain element falls back to revealable-open and renders hidden from it", async () => {
   const panel = hostElement("div", { implements: "revealable", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
   assert.equal(panel.hidden, true);
-  assert.equal(panel.getAttribute("data-open"), null);
+  assert.equal(panel.getAttribute("revealable-open"), null);
 
   interact(panel, "show");
-  assert.equal(panel.getAttribute("data-open"), "true");
+  assert.equal(panel.getAttribute("revealable-open"), "true");
   assert.equal(panel.hidden, false);
 
   interact(panel, "toggle");
-  assert.equal(panel.hasAttribute("data-open"), false);
+  assert.equal(panel.hasAttribute("revealable-open"), false);
   assert.equal(panel.hidden, true);
 
   interact(panel, "show");
   interact(panel, "show", false);
-  assert.equal(panel.hasAttribute("data-open"), false);
+  assert.equal(panel.hasAttribute("revealable-open"), false);
   assert.equal(panel.hidden, true);
 });
 
-test("authored data-open renders at connect", async () => {
-  const open = hostElement("div", { implements: "revealable", "data-open": "true" });
+test("authored revealable-open renders at connect", async () => {
+  const open = hostElement("div", { implements: "revealable", "revealable-open": "true" });
   document.body.appendChild(open);
   await flush();
   assert.equal(open.hidden, false);
-  assert.equal(open.getAttribute("data-open"), "true", "connect reads data-open; it does not rewrite or remove it");
+  assert.equal(open.getAttribute("revealable-open"), "true", "connect reads revealable-open; it does not rewrite or remove it");
 
   const closed = hostElement("div", { implements: "revealable" });
   document.body.appendChild(closed);
@@ -373,7 +373,7 @@ test("a sibling whose phrase names a non-revealable id is skipped", async () => 
 
   interact(p1, "show", undefined, r1);
   assert.equal(p1.hidden, false);
-  assert.equal(plain.hasAttribute("data-open"), false);
+  assert.equal(plain.hasAttribute("revealable-open"), false);
 });
 
 test("a sibling with only show(false) targets closes nothing", async () => {
@@ -558,7 +558,7 @@ test("the sibling-closing no-source path refreshes button controllers and leaves
 test("radio-driven panels drift when another button shows one; nothing reconciles", async () => {
   const rA = hostElement("input", { type: "radio", name: "pm", id: "r-a", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
   const rB = hostElement("input", { type: "radio", name: "pm", id: "r-b", "on-change": "#b.show()" }) as HTMLInputElement;
-  const a = hostElement("div", { implements: "revealable", id: "a", "data-open": "true" });
+  const a = hostElement("div", { implements: "revealable", id: "a", "revealable-open": "true" });
   const b = hostElement("div", { implements: "revealable", id: "b" });
   const btn = hostElement("button", { id: "btn", "on-click": "#b.show()" });
   document.body.append(rA, rB, a, b, btn);
@@ -589,7 +589,7 @@ test("a panel that shows itself does not write back to a radio that also drives 
   const rA = hostElement("input", { type: "radio", name: "pm", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
   const rB = hostElement("input", { type: "radio", name: "pm", "on-change": "#b.show()" }) as HTMLInputElement;
   form.append(rA, rB);
-  const a = hostElement("div", { implements: "revealable", id: "a", "data-open": "true" });
+  const a = hostElement("div", { implements: "revealable", id: "a", "revealable-open": "true" });
   const b = hostElement("div", { implements: "revealable", id: "b" });
   const btn = hostElement("button", { "on-click": "#b.show()" });
   document.body.append(form, a, b, btn);

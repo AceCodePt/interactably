@@ -7,7 +7,7 @@ type Strategy =
   | { kind: "details" }
   | { kind: "dialog" }
   | { kind: "popover" }
-  | { kind: "data-open" };
+  | { kind: "attribute" };
 
 export const revealable = defineImplementation("revealable", {
   config: { modal: "boolean | undefined" },
@@ -22,7 +22,7 @@ export const revealable = defineImplementation("revealable", {
         return (el as HTMLDetailsElement | HTMLDialogElement).open;
       case "popover":
         return el.matches(":popover-open");
-      case "data-open":
+      case "attribute":
         return attrs.open === true;
     }
   };
@@ -47,12 +47,12 @@ export const revealable = defineImplementation("revealable", {
           el.hidePopover();
         }
         return;
-      case "data-open":
+      case "attribute":
         attrs.open = value ? true : undefined;
     }
   };
   const render = (): void => {
-    if (strategy.kind === "data-open") el.hidden = !(attrs.open === true);
+    if (strategy.kind === "attribute") el.hidden = !(attrs.open === true);
   };
   return {
     show: (e, value) => {
@@ -70,7 +70,7 @@ export const revealable = defineImplementation("revealable", {
       if (el.id !== "") wireControllers(el, isOpen());
     },
     attributeChangedCallback: (name: string): void => {
-      if (name === "data-open") render();
+      if (name === "revealable-open") render();
     },
   };
 });
@@ -79,7 +79,7 @@ function strategyOf(el: HTMLElement): Strategy {
   if (el instanceof HTMLDetailsElement) return { kind: "details" };
   if (el instanceof HTMLDialogElement) return { kind: "dialog" };
   if (el.hasAttribute("popover")) return { kind: "popover" };
-  return { kind: "data-open" };
+  return { kind: "attribute" };
 }
 
 function syncAria(el: HTMLElement, source: Element | undefined, open: boolean, control: boolean): void {

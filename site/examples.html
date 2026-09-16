@@ -54,7 +54,7 @@
                     on-click="#demo-auto.show(false); #demo-is.show()">Explicit is= &mdash; faster</button>
           </div>
 
-          <section is="interactable-section" id="demo-auto" implements="revealable" class="tabpanel" data-open="true">
+          <section is="interactable-section" id="demo-auto" implements="revealable" class="tabpanel" revealable-open="true">
             <div class="demo">
               <div class="row">
                 <button id="auto-demo-btn" type="button" on-click="#auto-demo-panel.toggle()"
@@ -69,7 +69,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                         on-click="this.copy(#code-ex-auto)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -101,7 +101,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                         on-click="this.copy(#code-ex-is)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -173,7 +173,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-calc)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -222,7 +222,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <p class="ex-note">
           One button, one phrase: <code class="inline-code">on-click="#panel.toggle()"</code>.
           <code class="inline-code">revealable</code> figures out the element on its own — it toggles a
-          <code class="inline-code">data-open</code> attribute here, <code class="inline-code">el.open</code> on a
+          <code class="inline-code">revealable-open</code> attribute here, <code class="inline-code">el.open</code> on a
           <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>, popover state on a
           <code class="inline-code">[popover]</code>. The button&rsquo;s <code class="inline-code">aria-expanded</code> stays in sync automatically.
         </p>
@@ -236,7 +236,7 @@ modifiable-formula="sum('#list .amount:valid')"
           <section is="interactable-section" id="panel" implements="revealable" hidden>
             <p>
               This panel is a <code class="inline-code">&lt;section is="interactable-section" implements="revealable"&gt;</code>.
-              <code class="inline-code">revealable</code> reads the element: <code class="inline-code">data-open</code> here,
+              <code class="inline-code">revealable</code> reads the element: <code class="inline-code">revealable-open</code> here,
               <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
               popover state on a <code class="inline-code">[popover]</code>. The trigger is
               <code class="inline-code">on-click="#panel.toggle()"</code>, and the implementation keeps the button&rsquo;s
@@ -250,7 +250,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-reveal)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -294,7 +294,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-grammar)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -344,7 +344,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-attr)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -388,7 +388,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-note)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -433,7 +433,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-age)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -484,7 +484,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-strat)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -529,7 +529,7 @@ modifiable-formula="sum('#list .amount:valid')"
             <button is="interactable-button" type="button"
                     on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()">Notes</button>
           </div>
-          <section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" data-open="true">
+          <section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true">
             <p><strong>Overview.</strong> A plain <code class="inline-code">&lt;section&gt;</code> whose visibility is driven by
             <code class="inline-code">revealable</code>. The other two panels stay <code class="inline-code">hidden</code> until you pick them.</p>
           </section>
@@ -547,7 +547,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-tabs)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -561,7 +561,7 @@ modifiable-formula="sum('#list .amount:valid')"
           on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()"&gt;Notes&lt;/button&gt;
 &lt;/div&gt;
 
-&lt;section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" data-open="true"&gt;
+&lt;section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true"&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;
 &lt;section is="interactable-section" id="tab-specs" implements="revealable" class="tabpanel" hidden&gt;
@@ -604,7 +604,7 @@ modifiable-formula="sum('#list .amount:valid')"
               <label for="pm-pnpm">pnpm</label>
               <label for="pm-bun">bun</label>
             </div>
-            <div is="interactable-div" id="install-npm" implements="revealable" class="tabpanel" data-open="true">
+            <div is="interactable-div" id="install-npm" implements="revealable" class="tabpanel" revealable-open="true">
               <p><code class="inline-code">npm install</code> ships with Node.</p>
             </div>
             <div is="interactable-div" id="install-pnpm" implements="revealable" class="tabpanel" hidden>
@@ -620,7 +620,7 @@ modifiable-formula="sum('#list .amount:valid')"
               <label for="pm-pnpm">pnpm</label>
               <label for="pm-bun">bun</label>
             </div>
-            <div is="interactable-div" id="config-npm" implements="revealable" class="tabpanel" data-open="true">
+            <div is="interactable-div" id="config-npm" implements="revealable" class="tabpanel" revealable-open="true">
               <p><code class="inline-code">npm config</code> &mdash; <code class="inline-code">.npmrc</code> lives in your home directory.</p>
             </div>
             <div is="interactable-div" id="config-pnpm" implements="revealable" class="tabpanel" hidden>
@@ -636,7 +636,7 @@ modifiable-formula="sum('#list .amount:valid')"
               <label for="pm-pnpm">pnpm</label>
               <label for="pm-bun">bun</label>
             </div>
-            <div is="interactable-div" id="trouble-npm" implements="revealable" class="tabpanel" data-open="true">
+            <div is="interactable-div" id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true">
               <p>npm troubleshooting &mdash; <code class="inline-code">npm cache clean --force</code> clears the cache.</p>
             </div>
             <div is="interactable-div" id="trouble-pnpm" implements="revealable" class="tabpanel" hidden>
@@ -653,7 +653,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-pkg)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -676,7 +676,7 @@ modifiable-formula="sum('#list .amount:valid')"
     &lt;label for="pm-pnpm"&gt;pnpm&lt;/label&gt;
     &lt;label for="pm-bun"&gt;bun&lt;/label&gt;
   &lt;/div&gt;
-  &lt;div is="interactable-div" id="install-npm" implements="revealable" class="tabpanel" data-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="install-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
   &lt;div is="interactable-div" id="install-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
   &lt;div is="interactable-div" id="install-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;
@@ -687,7 +687,7 @@ modifiable-formula="sum('#list .amount:valid')"
     &lt;label for="pm-pnpm"&gt;pnpm&lt;/label&gt;
     &lt;label for="pm-bun"&gt;bun&lt;/label&gt;
   &lt;/div&gt;
-  &lt;div is="interactable-div" id="config-npm" implements="revealable" class="tabpanel" data-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="config-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
   &lt;div is="interactable-div" id="config-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
   &lt;div is="interactable-div" id="config-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;
@@ -698,7 +698,7 @@ modifiable-formula="sum('#list .amount:valid')"
     &lt;label for="pm-pnpm"&gt;pnpm&lt;/label&gt;
     &lt;label for="pm-bun"&gt;bun&lt;/label&gt;
   &lt;/div&gt;
-  &lt;div is="interactable-div" id="trouble-npm" implements="revealable" class="tabpanel" data-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
   &lt;div is="interactable-div" id="trouble-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
   &lt;div is="interactable-div" id="trouble-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;</code></pre>
@@ -737,7 +737,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-valid)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -789,7 +789,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-json)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -841,7 +841,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-bubble)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -890,7 +890,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-order)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -938,7 +938,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-quote)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -957,8 +957,8 @@ modifiable-formula="sum('#list .amount:valid')"
         <h2 id="ex-copy">Copy a snippet &mdash; the flash is delayable</h2>
         <p class="ex-note">
           <code class="inline-code">copyable</code> copies a target's text and marks the button
-          <code class="inline-code">data-copied</code>. It never clears that state itself &mdash; the trigger attribute
-          decides. Here <code class="inline-code">on-copy="this.delay(1500).removeAttr('data-copied')"</code>
+          <code class="inline-code">copyable-copied</code>. It never clears that state itself &mdash; the trigger attribute
+          decides. Here <code class="inline-code">on-copy="this.delay(1500).removeAttr('copyable-copied')"</code>
           pauses the chain for 1.5&nbsp;s, then removes the attribute, so <em>Copied</em> reverts to <em>Copy</em>.
         </p>
       </div>
@@ -968,7 +968,7 @@ modifiable-formula="sum('#list .amount:valid')"
             <div class="codeblock-bar">
               <span class="codeblock-lang">text</span>
               <button is="interactable-button" class="copy-btn" implements="copyable attributable"
-                      on-copy="this.delay(1500).removeAttr('data-copied')"
+                      on-copy="this.delay(1500).removeAttr('copyable-copied')"
                       on-click="this.copy(#demo-snippet)" type="button">
                 <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
               </button>
@@ -982,13 +982,13 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                     on-click="this.copy(#code-ex-copy)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
           <pre class="code" id="code-ex-copy" data-lang="html"><code>&lt;button is="interactable-button" class="copy-btn" implements="copyable attributable"
-        on-copy="this.delay(1500).removeAttr('data-copied')"
+        on-copy="this.delay(1500).removeAttr('copyable-copied')"
         on-click="this.copy(#snippet)" type="button"&gt;
   &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;
 &lt;/button&gt;

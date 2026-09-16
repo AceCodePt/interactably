@@ -54,11 +54,11 @@
                     on-click="#quick-auto.show(false); #quick-is.show()">Explicit is= &mdash; faster</button>
           </div>
 
-          <section is="interactable-section" id="quick-auto" implements="revealable" class="tabpanel" data-open="true">
+          <section is="interactable-section" id="quick-auto" implements="revealable" class="tabpanel" revealable-open="true">
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                         on-click="this.copy(#code-quickstart-auto)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
@@ -78,7 +78,7 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                         on-click="this.copy(#code-quickstart-is)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>

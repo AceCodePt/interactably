@@ -343,7 +343,7 @@ test("a stored radio's restore opens its revealable panels through the on-change
     const el = document.createElement("div", { is: "interactable-div" }) as HTMLDivElement;
     el.id = id;
     el.setAttribute("implements", "revealable");
-    if (open) el.setAttribute("data-open", "true");
+    if (open) el.setAttribute("revealable-open", "true");
     else el.setAttribute("hidden", "");
     return el;
   };

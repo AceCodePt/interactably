@@ -143,7 +143,7 @@
       <article class="ref-card">
         <h3><code class="inline-code">revealable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">Strategies per element: <code class="inline-code">open</code> on details/dialog, popover state on <code class="inline-code">[popover]</code>, <code class="inline-code">data-open</code> otherwise. <code class="inline-code">show()</code> opens, <code class="inline-code">show(false)</code> closes, <code class="inline-code">toggle()</code> flips; a panel shown from a radio closes its siblings&rsquo; panels, and controllers are wired into <code class="inline-code">aria-controls</code> at connect.</p>
+        <p class="ref-desc">Strategies per element: <code class="inline-code">open</code> on details/dialog, popover state on <code class="inline-code">[popover]</code>, <code class="inline-code">revealable-open</code> otherwise. <code class="inline-code">show()</code> opens, <code class="inline-code">show(false)</code> closes, <code class="inline-code">toggle()</code> flips; a panel shown from a radio closes its siblings&rsquo; panels, and controllers are wired into <code class="inline-code">aria-controls</code> at connect.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">show</span><span class="verb-tag">toggle</span></div>
         <p class="ref-labels">Config / state</p>
@@ -203,7 +203,7 @@
       <article class="ref-card">
         <h3><code class="inline-code">copyable</code></h3>
         <p class="ref-tags">button</p>
-        <p class="ref-desc">Copies a target element&rsquo;s text to the clipboard: <code class="inline-code">on-click="this.copy(#id)"</code>. Sets <code class="inline-code">data-copied</code> on the button and fires <code class="inline-code">copy</code> on success.</p>
+        <p class="ref-desc">Copies a target element&rsquo;s text to the clipboard: <code class="inline-code">on-click="this.copy(#id)"</code>. Sets <code class="inline-code">copyable-copied</code> on the button and fires <code class="inline-code">copy</code> on success.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">copy</span></div>
         <p class="ref-labels">Config / state</p>
@@ -262,7 +262,7 @@
     <div class="codeblock">
       <div class="codeblock-bar">
         <span class="codeblock-lang">Text</span>
-        <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('data-copied')"
+        <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
                 on-click="this.copy(#code-reference-grammar)" type="button">
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>

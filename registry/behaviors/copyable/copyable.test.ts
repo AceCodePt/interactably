@@ -68,7 +68,7 @@ test("copy writes the target's text and marks the button copied", async () => {
   await flush();
   assert.equal(copied.length, 1);
   assert.equal(copied[0], "const x = 1;");
-  assert.equal(button.getAttribute("data-copied"), "true");
+  assert.equal(button.getAttribute("copyable-copied"), "true");
 });
 
 test("a rejected clipboard write falls back and warns, without marking copied", async (t) => {
@@ -84,7 +84,7 @@ test("a rejected clipboard write falls back and warns, without marking copied", 
   interact(button, "copy", code);
   await flush();
   assert.equal(warn.mock.callCount(), 1);
-  assert.equal(button.hasAttribute("data-copied"), false);
+  assert.equal(button.hasAttribute("copyable-copied"), false);
 });
 
 test("without a clipboard API it warns and never marks copied", async (t) => {
@@ -97,7 +97,7 @@ test("without a clipboard API it warns and never marks copied", async (t) => {
   interact(button, "copy", code);
   await flush();
   assert.equal(warn.mock.callCount(), 1);
-  assert.equal(button.hasAttribute("data-copied"), false);
+  assert.equal(button.hasAttribute("copyable-copied"), false);
 });
 
 test("an empty target warns without flashing", async (t) => {
@@ -108,7 +108,7 @@ test("an empty target warns without flashing", async (t) => {
   await flush();
   interact(button, "copy", code);
   assert.equal(warn.mock.callCount(), 1);
-  assert.equal(button.hasAttribute("data-copied"), false);
+  assert.equal(button.hasAttribute("copyable-copied"), false);
 });
 
 test("a successful copy runs on-copy", async () => {
@@ -126,7 +126,7 @@ test("a successful copy runs on-copy", async () => {
 
   interact(button, "copy", code);
   await flush();
-  assert.equal(receipt.getAttribute("data-open"), "true");
+  assert.equal(receipt.getAttribute("revealable-open"), "true");
 });
 
 test("a failed copy warns and never marks copied or fires on-copy", async () => {
@@ -147,7 +147,7 @@ test("a failed copy warns and never marks copied or fires on-copy", async () => 
   interact(button, "copy", code);
   await flush();
   assert.equal(alert.hidden, true);
-  assert.equal(button.hasAttribute("data-copied"), false);
+  assert.equal(button.hasAttribute("copyable-copied"), false);
 });
 
 test("a native copy event on a copyable element does not run on-copy", async (t) => {

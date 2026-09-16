@@ -18,7 +18,7 @@ export function bindAttributes(el: Element, name: string, def: AttributeBindings
       const config = def.config[key];
       if (config !== undefined) return readAttribute(el, `${name}-${key}`, config);
       const state = def.state[key];
-      if (state !== undefined) return readAttribute(el, `data-${key}`, state);
+      if (state !== undefined) return readAttribute(el, `${name}-${key}`, state);
       return undefined;
     },
     set(_target, key, value): boolean {
@@ -26,11 +26,11 @@ export function bindAttributes(el: Element, name: string, def: AttributeBindings
       const state = def.state[key];
       if (state !== undefined) {
         if (value === undefined || value === null) {
-          el.removeAttribute(`data-${key}`);
+          el.removeAttribute(`${name}-${key}`);
           return true;
         }
         state.sig.validate(value);
-        el.setAttribute(`data-${key}`, String(value));
+        el.setAttribute(`${name}-${key}`, String(value));
         return true;
       }
       if (key in def.config) {

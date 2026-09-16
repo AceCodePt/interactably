@@ -55,6 +55,14 @@ function validateSlots(
   state: Record<string, string>,
   verbs: Record<string, Sig>,
 ): void {
+  for (const key of Object.keys(state)) {
+    if (key in config) {
+      throw new Error(
+        `[Interactable] ${name}: "${key}" is declared as both config ("${config[key]}") and state ("${state[key]}"); ` +
+          `config and state share the <name>-<key> attribute namespace`,
+      );
+    }
+  }
   for (const [key, raw] of Object.entries(config)) validateScalar(name, `config "${key}"`, raw);
   for (const [key, raw] of Object.entries(state)) validateScalar(name, `state "${key}"`, raw);
   for (const [verb, sig] of Object.entries(verbs)) {

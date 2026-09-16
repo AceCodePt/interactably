@@ -113,7 +113,7 @@ test("default GET is latest-wins: a second send aborts the first", async () => {
   assert.equal(fetchCalls.length, 2);
   assert.equal(fetchCalls[0]!.signal?.aborted, true);
   assert.equal(fetchCalls[1]!.signal?.aborted, false);
-  assert.equal(el.getAttribute("data-status"), "loading");
+  assert.equal(el.getAttribute("requestable-status"), "loading");
 });
 
 test("a non-GET method is first-wins: a second send is refused while one is in flight", async () => {
@@ -174,7 +174,7 @@ test("requestable-concurrency=all applies every response, not just the last", as
   await flush();
   assert.equal(el.innerHTML, "<i>second</i>");
   assert.equal(el.hasAttribute("aria-busy"), false);
-  assert.equal(el.hasAttribute("data-status"), false);
+  assert.equal(el.hasAttribute("requestable-status"), false);
 });
 
 test("abort() under requestable-concurrency=all aborts every in-flight request", async () => {
@@ -187,7 +187,7 @@ test("abort() under requestable-concurrency=all aborts every in-flight request",
   interact(el, "abort");
   assert.equal(fetchCalls[0]!.signal?.aborted, true);
   assert.equal(fetchCalls[1]!.signal?.aborted, true);
-  assert.equal(el.hasAttribute("data-status"), false);
+  assert.equal(el.hasAttribute("requestable-status"), false);
   assert.equal(el.hasAttribute("aria-busy"), false);
   await flush();
 });
@@ -198,7 +198,7 @@ test("an out-of-set requestable-method is rejected before anything is sent", asy
   assert.ok(event.error instanceof Error);
   assert.equal(fetchCalls.length, 0);
   assert.equal(el.hasAttribute("aria-busy"), false);
-  assert.equal(el.hasAttribute("data-status"), false);
+  assert.equal(el.hasAttribute("requestable-status"), false);
 });
 
 test("send() and send({}) both use the config url and method", async () => {
@@ -264,12 +264,12 @@ test("send sets status=loading and aria-busy synchronously; success clears both 
   await flush();
 
   interact(el, "send");
-  assert.equal(el.getAttribute("data-status"), "loading");
+  assert.equal(el.getAttribute("requestable-status"), "loading");
   assert.equal(el.getAttribute("aria-busy"), "true");
 
   fetchCalls[0]!.resolve(response(true, 200, "<p>hi</p>"));
   await flush();
-  assert.equal(el.hasAttribute("data-status"), false);
+  assert.equal(el.hasAttribute("requestable-status"), false);
   assert.equal(el.hasAttribute("aria-busy"), false);
   assert.equal(receipt.innerHTML, "<p>hi</p>");
   assert.equal(receipt.hidden, false);
@@ -285,7 +285,7 @@ test("a non-ok response sets status=error and runs on-request-error", async () =
   interact(el, "send");
   fetchCalls[0]!.resolve(response(false, 500, "boom"));
   await flush();
-  assert.equal(el.getAttribute("data-status"), "error");
+  assert.equal(el.getAttribute("requestable-status"), "error");
   assert.equal(el.hasAttribute("aria-busy"), false);
   assert.equal(alert.hidden, false);
 });
@@ -299,7 +299,7 @@ test("a network failure sets status=error and fires on-request-error", async () 
   interact(el, "send");
   fetchCalls[0]!.reject(new Error("network down"));
   await flush();
-  assert.equal(el.getAttribute("data-status"), "error");
+  assert.equal(el.getAttribute("requestable-status"), "error");
   assert.equal(el.hasAttribute("aria-busy"), false);
   assert.equal(alert.hidden, false);
 });
@@ -314,7 +314,7 @@ test("abort() aborts the request and clears status and aria-busy without running
   assert.equal(el.getAttribute("aria-busy"), "true");
   interact(el, "abort");
   assert.equal(fetchCalls[0]!.signal?.aborted, true);
-  assert.equal(el.hasAttribute("data-status"), false);
+  assert.equal(el.hasAttribute("requestable-status"), false);
   assert.equal(el.hasAttribute("aria-busy"), false);
   await flush();
   assert.equal(receipt.hidden, true);

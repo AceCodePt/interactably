@@ -374,15 +374,15 @@ test("lifecycle callbacks are forwarded and state writes render through attribut
   calls.length = 0;
   let event = dispatchInteraction(receiver, "toggle");
   assert.equal(event.handled, true);
-  assert.equal(receiver.getAttribute("data-open"), "true");
-  assert.deepEqual(calls, ["stateful.attr:data-open"]);
+  assert.equal(receiver.getAttribute("stateful-open"), "true");
+  assert.deepEqual(calls, ["stateful.attr:stateful-open"]);
 
   event = dispatchInteraction(receiver, "peek");
   assert.equal(event.result, true);
 
   calls.length = 0;
   dispatchInteraction(receiver, "toggle");
-  assert.equal(receiver.hasAttribute("data-open"), false);
+  assert.equal(receiver.hasAttribute("stateful-open"), false);
 
   receiver.remove();
   assert.ok(calls.includes("stateful.disconnected"));

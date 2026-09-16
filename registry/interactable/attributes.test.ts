@@ -50,14 +50,14 @@ test("an absent config attribute reads undefined, not a string", () => {
   assert.equal(attrs.step, undefined);
 });
 
-test("state keys get and set over data-<key>, and undefined removes the attribute", () => {
+test("state keys get and set over <name>-<key>, and undefined removes the attribute", () => {
   const el = document.createElement("div");
   const attrs = bindAttributes(el, "demo", def({}, { open: "boolean | undefined" })) as WithOpen;
   attrs.open = true;
-  assert.equal(el.getAttribute("data-open"), "true");
+  assert.equal(el.getAttribute("demo-open"), "true");
   assert.equal(attrs.open, true);
   attrs.open = undefined;
-  assert.equal(el.hasAttribute("data-open"), false);
+  assert.equal(el.hasAttribute("demo-open"), false);
   assert.equal(attrs.open, undefined);
 });
 
@@ -75,7 +75,7 @@ test("a state write validates the value through the compiled slot", () => {
   assert.throws(() => {
     (attrs as unknown as { open?: string }).open = "maybe";
   });
-  assert.equal(el.hasAttribute("data-open"), false);
+  assert.equal(el.hasAttribute("demo-open"), false);
 });
 
 test("an invalid attribute value fails validation on read", () => {
@@ -116,11 +116,11 @@ test("boolean slots read presence as true and 'false' as false", () => {
   const el = document.createElement("div");
   const attrs = bindAttributes(el, "demo", def({}, { open: "boolean | undefined" })) as WithOpen;
   assert.equal(attrs.open, undefined);
-  el.setAttribute("data-open", "");
+  el.setAttribute("demo-open", "");
   assert.equal(attrs.open, true);
-  el.setAttribute("data-open", "true");
+  el.setAttribute("demo-open", "true");
   assert.equal(attrs.open, true);
-  el.setAttribute("data-open", "false");
+  el.setAttribute("demo-open", "false");
   assert.equal(attrs.open, false);
 });
 
@@ -145,10 +145,10 @@ test("unknown keys read undefined and writes are inert", () => {
   assert.equal(el.hasAttribute("data-unknown"), false);
 });
 
-test("the data-* write reflects live reads", () => {
+test("state writes reflect live reads", () => {
   const el = document.createElement("div");
   const attrs = bindAttributes(el, "demo", def({}, { count: "number | undefined" })) as WithCount;
   attrs.count = 7;
   assert.equal(attrs.count, 7);
-  assert.equal(el.getAttribute("data-count"), "7");
+  assert.equal(el.getAttribute("demo-count"), "7");
 });

@@ -29,15 +29,6 @@ export function registerImplementation(def: NormalizedImplementationDef): Normal
     throw new Error(`[Interactable] implementation "${def.name}" is already registered`);
   }
   for (const [otherName, other] of definitions) {
-    for (const key of Object.keys(def.state)) {
-      const existing = other.state[key];
-      if (existing !== undefined && existing.raw !== def.state[key]!.raw) {
-        throw new Error(
-          `[Interactable] state key "data-${key}" is registered by "${otherName}" as "${existing.raw}" ` +
-            `and by "${def.name}" as "${def.state[key]!.raw}"; two implementations inventing the same data-* must mean the same thing`,
-        );
-      }
-    }
     for (const event of def.events) {
       if (other.events.includes(event) && tagsOverlap(def.tags, other.tags)) {
         throw new Error(
@@ -70,10 +61,7 @@ function tagsOverlap(a: readonly Tag[] | undefined, b: readonly Tag[] | undefine
 }
 
 export function getObservedAttributes(def: NormalizedImplementationDef): string[] {
-  return [
-    ...Object.keys(def.config).map((key) => `${def.name}-${key}`),
-    ...Object.keys(def.state).map((key) => `data-${key}`),
-  ];
+  return Object.keys({ ...def.config, ...def.state }).map((key) => `${def.name}-${key}`);
 }
 
 export function allObservedAttributes(): string[] {

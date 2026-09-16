@@ -34,9 +34,9 @@ test("registration, lookup, and observed attributes", () => {
   );
   const def = getImplementationDef("registry-demo");
   assert.ok(def !== undefined);
-  assert.deepEqual(getObservedAttributes(def), ["registry-demo-step", "data-open"]);
+  assert.deepEqual(getObservedAttributes(def), ["registry-demo-step", "registry-demo-open"]);
   assert.ok(allObservedAttributes().includes("registry-demo-step"));
-  assert.ok(allObservedAttributes().includes("data-open"));
+  assert.ok(allObservedAttributes().includes("registry-demo-open"));
 });
 
 test("registration defines an interactable-<tag> host for each declared tag, idempotently", () => {
@@ -54,35 +54,35 @@ test("registration defines an interactable-<tag> host for each declared tag, ide
   assert.strictEqual(customElements.get("interactable-button"), customElements.get("interactable-button"));
 });
 
-test("throws when a state key is registered by two definitions with different signatures", () => {
+test("state keys are namespaced per implementation, so two definitions may reuse a key name", () => {
   defineImplementation(
     "registry-state-a",
     { state: { open: "boolean | undefined" }, verbs: {} },
     () => ({}),
   );
+  assert.doesNotThrow(() =>
+    defineImplementation(
+      "registry-state-b",
+      { state: { open: "string | undefined" }, verbs: {} },
+      () => ({}),
+    ),
+  );
+  const a = getImplementationDef("registry-state-a");
+  const b = getImplementationDef("registry-state-b");
+  assert.ok(a !== undefined && b !== undefined);
+  assert.deepEqual(getObservedAttributes(a), ["registry-state-a-open"]);
+  assert.deepEqual(getObservedAttributes(b), ["registry-state-b-open"]);
+});
+
+test("a definition cannot declare the same key as both config and state", () => {
   assert.throws(
     () =>
       defineImplementation(
-        "registry-state-b",
-        { state: { open: "string | undefined" }, verbs: {} },
+        "registry-collide",
+        { config: { open: "boolean | undefined" }, state: { open: "boolean | undefined" }, verbs: {} },
         () => ({}),
       ),
-    /data-open/,
-  );
-});
-
-test("allows the same state key when the signatures agree", () => {
-  defineImplementation(
-    "registry-state-c",
-    { state: { open: "boolean | undefined" }, verbs: {} },
-    () => ({}),
-  );
-  assert.doesNotThrow(() =>
-    defineImplementation(
-      "registry-state-d",
-      { state: { open: "boolean | undefined" }, verbs: {} },
-      () => ({}),
-    ),
+    /"open" is declared as both config \(/,
   );
 });
 

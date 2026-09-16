@@ -357,7 +357,7 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(fetchCalls.length, 1);
   assert.equal(fetchCalls[0]!.url, "/api/orders");
   assert.equal(fetchCalls[0]!.init.method, "POST");
-  assert.equal(form.getAttribute("data-status"), "loading");
+  assert.equal(form.getAttribute("requestable-status"), "loading");
 
   fetchCalls[0]!.resolve(fakeResponse(true, 200, "<p>placed</p>"));
   await flush();
@@ -366,7 +366,7 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(receipt.innerHTML, "<p>placed</p>");
   assert.equal(receipt.hidden, false);
   assert.equal(byId("alert").hidden, true);
-  assert.equal(form.hasAttribute("data-status"), false);
+  assert.equal(form.hasAttribute("requestable-status"), false);
 
   const tabAuto = byId("demo-auto").parentElement!.querySelector(".tabbar button[aria-controls='demo-auto']")!;
   const tabExplicit = document.querySelector(".tabbar button[aria-controls='demo-is']")!;

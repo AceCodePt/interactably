@@ -325,7 +325,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `auto-grow` | textarea | — | — | auto-height textarea |
 | `storable` | input, select, textarea | `save`, `load`, `clear` | `scope` (`local`/`session`), `key` | persist a field's value to storage; restores on connect and fires `change` |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
-| `copyable` | button | `copy` | `copied` state; event `copy` | copies a target element's text to the clipboard; sets `data-copied` and fires `copy` on success |
+| `copyable` | button | `copy` | `copied` state; event `copy` | copies a target element's text to the clipboard; sets `copyable-copied` and fires `copy` on success |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
 | `hashable` | any | `hash` | — | writes `#<id>` into the location hash with `replaceState` (no history entry); no-op when already set, warns once without an id |
 
@@ -338,7 +338,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
         on-click="this.delay(300).setAttr({name: 'aria-busy', value: 'true'})">…</button>
 ```
 
-The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms` later, and returns. A re-fire that reaches the same delay reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. The timer is keyed per element and dropped on disconnect. The copy-flash pattern is unchanged: `this.copy(#snippet).delay(1500).removeAttr('data-copied')` marks the button, pauses, and the reset runs 1.5 s later. A pause is a scheduling decision the executor owns — never an awaited interaction.
+The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms` later, and returns. A re-fire that reaches the same delay reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. The timer is keyed per element and dropped on disconnect. The copy-flash pattern is unchanged: `this.copy(#snippet).delay(1500).removeAttr('copyable-copied')` marks the button, pauses, and the reset runs 1.5 s later. A pause is a scheduling decision the executor owns — never an awaited interaction.
 
 ### `prevent-default` and `no-propagate`
 
@@ -377,7 +377,7 @@ A keyed `on-keydown` phrase that *replaces* a browser default should always carr
 | `<details>` | tag | `el.open = value` | `el.open` |
 | `<dialog>` | tag | `el.showModal()` (or `el.show()` with `revealable-modal="false"`); `show(false)` → `el.close()` | `el.open` |
 | popover | `el.hasAttribute("popover")` | `el.showPopover()` / `el.hidePopover()` | `el.matches(":popover-open")` |
-| anything else | fallback | `data-open` | `data-open` |
+| anything else | fallback | `revealable-open` | `revealable-open` |
 
 Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling come with the first three for free; the fourth row is the only one that invents anything.
 
@@ -457,7 +457,7 @@ export const modifiable = defineImplementation("modifiable", {
 | `name` | `string` | The `implements="…"` word |
 | `tags` | `string[]` (optional) | Tags the implementation attaches to; types `el` via `HTMLElementTagNameMap`. Omitted = any tag (`el` is `HTMLElement`) |
 | `config` | `Record<string, tsyntax-string>` | Authored input, read-only, stored as `<name>-<key>` (`modifiable-step`) |
-| `state` | `Record<string, tsyntax-string>` | Invented live state, read/write, stored as `data-<key>` (`data-open`) |
+| `state` | `Record<string, tsyntax-string>` | Invented live state, read/write, stored as `<name>-<key>` (`revealable-open`) |
 | `verbs` | `Record<verb, Sig>` | Public surface. `Sig` is a tsyntax string, an element constructor, or a record of those |
 | `events` | `string[]` (optional) | Events the implementation dispatches (`copy`, `response`, `request-error`); on the element, `on-<event>` fires only for the implementation's `ImplementationEvent` |
 | `factory` | `(el, attrs) => Implementation` | Returns the verb bodies and lifecycle/`on*` handlers |
@@ -503,7 +503,7 @@ export const attributable = defineImplementation("attributable", {
 An implementation never declares an attribute the platform already owns. `min`, `max`, `step`, `type`, `open`, `value`, `checked`, `popover` exist on the elements they belong to, typed and validated by the browser, reachable as properties: `modifiable` on `<input type="range">` reads `el.min`; `<textarea>` has no `min`, and inventing one would put a meaningless attribute on it. The narrowing is done by `tags` (and, where a tag is not enough, a connect-time `el.type === "range"` check), not by a schema entry. What is left to declare is exactly the information the implementation brings, in two tiers:
 
 - **`config`** — authored input, read on the way in, never written by a verb. Unique by construction (`<name>-<key>`), so two implementations on one element cannot collide.
-- **`state`** — live information the implementation holds because the platform holds nothing for it. Stored as `data-<key>`, read/write.
+- **`state`** — live information the implementation holds because the platform holds nothing for it. Stored as `<name>-<key>`, read/write.
 
 Most implementations declare no `state`: `dirtyable` compares `el.value` with a baseline in its closure, `revealable` on a `<dialog>` reads `el.open`, `modifiable` writes `el.value`. A `state` entry is the exception, and the smell to check is whether the platform already has the thing under another name.
 
@@ -512,8 +512,8 @@ Most implementations declare no `state`: `dirtyable` compares `el.value` with a 
 Built once per instance by `bindAttributes(el, name, def)`. Each getter reads the attribute live and validates it through the same compiled signature verbs use:
 
 - `config` keys are **getters only** — TypeScript rejects `attrs.step = 2` and the runtime proxy throws.
-- `state` keys also have **setters** that write the `data-*` attribute (`undefined` removes it); that is the sanctioned way for a verb to mutate invented state. The attribute change then reaches `attributeChangedCallback`, which renders.
-- `attrs.step` maps to `modifiable-step`, `attrs.open` maps to `data-open`; the body spells neither.
+- `state` keys also have **setters** that write the `<name>-<key>` attribute (`undefined` removes it); that is the sanctioned way for a verb to mutate invented state. The attribute change then reaches `attributeChangedCallback`, which renders.
+- `attrs.step` maps to `modifiable-step`, `attrs.open` maps to `revealable-open`; the body spells neither.
 
 ### Conventions
 
@@ -533,7 +533,7 @@ A verb's job is to **mutate state**; the reaction (text, classes, ARIA, `hidden`
 | Tier | What it is | Where it lives | Who writes it |
 | --- | --- | --- | --- |
 | **Authored** | What arrived in the markup: the server's answer, the reset baseline | Attributes: `value`, `min`, `checked`, and our `config` (`modifiable-step`) | The author / the server; implementations only read |
-| **Live** | Current state, which may have diverged from authored | Properties where the platform has them (`el.value`, `el.checked`, `el.open`, popover state); `data-*` from our `state` where it does not | Verbs, the user, the platform |
+| **Live** | Current state, which may have diverged from authored | Properties where the platform has them (`el.value`, `el.checked`, `el.open`, popover state); `<name>-<key>` from our `state` where it does not | Verbs, the user, the platform |
 | **Derived** | Presentation | Classes, ARIA, `textContent`, `hidden` | The render callback only |
 
 The `value` attribute / `value` property pair is the canonical case: `el.value = "x"` does not touch the attribute, and that is not an inconsistency — the attribute is what the author wrote, the property is the current value. This is what makes SSR trivial: the server writes `value="42"`, the browser parses it into both tiers, hydration adds nothing.
@@ -553,11 +553,11 @@ The `value` attribute / `value` property pair is the canonical case: `el.value =
 
 ```ts
 // revealable on a plain panel — the one case with invented state
-// state: { open: "boolean | undefined" } → data-open
+// state: { open: "boolean | undefined" } → revealable-open
 (el, attrs) => ({
   show:   (_e, value) => { attrs.open = value === false ? undefined : true; },
   toggle: () => { attrs.open = attrs.open ? undefined : true; },
-  attributeChangedCallback(name) { if (name === "data-open") el.hidden = !attrs.open; },   // renders
+  attributeChangedCallback(name) { if (name === "revealable-open") el.hidden = !attrs.open; },   // renders
 })
 ```
 
@@ -565,7 +565,7 @@ Rules:
 
 - **Read the platform before inventing.** `value`, `checked`, `open` on `<details>`/`<dialog>`, popover state, `min`/`max`/`step`. A `state` entry exists only when none of these hold the thing.
 - **`config` is read-only.** A verb that needs its own baseline keeps one in the closure, as `dirtyable`'s `markClean` does.
-- **Invented live state is `data-*`** — one namespace, reflected as `el.dataset`, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
+- **Invented live state is `<name>-<key>`** — one namespace, shared with config, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
 - **Closure state** for transient internals (in-flight request, timers).
 - **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string (an empty value stays the empty string). Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0). A verb reading a value tolerates the unreadable (`inc()` on an empty counter produces `1`); the formula reading one treats it as an error.
 
@@ -651,17 +651,17 @@ The executor does neither. Every `on-*` listener is passive; a phrase describes 
 
 **Verbs are synchronous and chains never await.** This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A `.` chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints — unless a `delay()` link splits it ([§ The pause mechanism](#the-pause-mechanism)). Work that finishes later belongs to an implementation that owns it — today `requestable` — and continues by dispatching an `ImplementationEvent` the author's `on-response` / `on-request-error` attributes turn into a new synchronous chain.
 
-A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain where it sits, and the executor runs the remainder of the chain `ms` later as its own scheduled step. That is the mechanism behind a "temporarily set attribute" — `copyable` marks `data-copied` on success and never clears it, so the *developer* decides whether the flash persists or disappears:
+A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain where it sits, and the executor runs the remainder of the chain `ms` later as its own scheduled step. That is the mechanism behind a "temporarily set attribute" — `copyable` marks `copyable-copied` on success and never clears it, so the *developer* decides whether the flash persists or disappears:
 
 ```html
 <button is="interactable-button" implements="copyable attributable"
         on-click="this.copy(#snippet)"
-        on-copy="this.delay(1500).removeAttr('data-copied')">
+        on-copy="this.delay(1500).removeAttr('copyable-copied')">
   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
 </button>
 ```
 
-`copy` fires its `copy` event on success (`this` is the button); `delay(1500)` pauses; `removeAttr('data-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
+`copy` fires its `copy` event on success (`this` is the button); `delay(1500)` pauses; `removeAttr('copyable-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
 
 ```html
 <input is="interactable-input" id="q" on-input="#results.debounce(300).send()">
@@ -817,10 +817,10 @@ The core of `requestable` (config and swap details elided):
 
 **What each failure path does:**
 
-- **Happy path.** `submit` → `validate` passes → `send` starts the POST (`data-status="loading"`, `aria-busy="true"`), returns. Chain complete, two dispatches, well under a frame. On 200, the response swaps into `#receipt`, then `#receipt.show(); #alert.show(false)` runs from `on-response`.
+- **Happy path.** `submit` → `validate` passes → `send` starts the POST (`requestable-status="loading"`, `aria-busy="true"`), returns. Chain complete, two dispatches, well under a frame. On 200, the response swaps into `#receipt`, then `#receipt.show(); #alert.show(false)` runs from `on-response`.
 - **Validation fails.** Because of `novalidate` the `submit` event fires anyway; `reportValidity()` shows the browser's bubble and returns false, the verb calls `e.preventDefault()`, the executor stops before `send` and runs the `||` branch instead: `#validate-alert.show()`. Nothing logged, no request.
 - **Double submit.** The second `submit` sees `inflight` and the POST policy is `first`, so `send` returns. The button was already inert from `form[aria-busy="true"] button { pointer-events: none }`.
-- **Server 500.** `settle("error")`, `data-status="error"`, `on-request-error` runs `#alert.show()`. Values kept, button re-enabled, the user retries.
+- **Server 500.** `settle("error")`, `requestable-status="error"`, `on-request-error` runs `#alert.show()`. Values kept, button re-enabled, the user retries.
 - **A verb throws.** The host catches, sets `e.error`, the executor logs once and stops that chain. `#alert.show(false)` is a separate `;` phrase and still runs — that is what `;` promises.
 - **Nobody handles it.** `on-response="#receipt.show(); this.reset()"`: `reset` dispatches to the form, none of its implementations owns it, `handled` stays false, and the executor logs `no implementation on form#order handles reset()`. A typo (`sned()`) takes the same path.
 - **Response replaces the form.** `requestable-swap="outerHTML"` with no `target`: the swap removes `#order`, its host disconnects, `el.isConnected` is false, `on-response` is skipped. The new form carries its own attributes and upgrades on insertion.
@@ -902,7 +902,7 @@ The short versions of the decisions behind the design. The full argument for eac
 - **Parse once, resolve per fire.** `#id` / `this` stay tokens in the cached AST; two identical rows share a parse and bind to different elements. Nothing is rewritten into the DOM.
 - **Nested triggers bubble** like inline handlers; `no-propagate` on the inner element is the explicit opt-out, not an implicit rule the executor enforces with a `closest()` walk per event.
 - **Signatures are tsyntax strings** — the same string is the TypeScript type and the runtime check, at 3.6 KB, with no second schema vocabulary. Elements are constructors because tsyntax's check is `typeof` and cannot tell a button from a template.
-- **Declare only what you invent.** Platform attributes are read off the element, never declared; `config` is read-only authored input; invented live state is `data-*`.
+- **Declare only what you invent.** Platform attributes are read off the element, never declared; `config` is read-only authored input; invented live state is `<name>-<key>`.
 - **Strategies are derived, not declared.** `revealable` picks its behavior from the element at connect instead of an author-written `strategy=` attribute.
 - **Default actions and propagation are implementations**, not executor rules or phrase modifiers — they are event-scoped facts and live on the element where a reader finds them. Only the *which* is derived, never the *whether*.
 - **Verbs are synchronous.** Every async question (second fire, removed receiver, `once` while pending, latest vs first) is a question only the implementation doing the work can answer. The network gap is a named attribute, not a disguised dot.
@@ -929,7 +929,7 @@ Input masks and format-as-you-type belong in a component library built on the sa
 
 Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `valueAsNumber` · dynamic `on-*` attribute *names* after connect · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1) · a CLI check that `is=` in markup matches the implementations' declared tags.
 
-`on-load`. Every trigger fires after the document is upgraded, so every `#id` resolves; a connect-time trigger is the one that couldn't make that promise. Author the initial state instead — `open`, `checked`, `data-open="true"`.
+`on-load`. Every trigger fires after the document is upgraded, so every `#id` resolves; a connect-time trigger is the one that couldn't make that promise. Author the initial state instead — `open`, `checked`, `revealable-open="true"`.
 
 ---
 
