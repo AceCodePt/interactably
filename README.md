@@ -35,6 +35,7 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
 - [Full examples](#full-examples)
 - [API reference](#api-reference)
 - [Why it is built this way](#why-it-is-built-this-way)
+- [When not to use this library](#when-not-to-use-this-library)
 - [Not supported](#not-supported)
 - [Appendix: reference grammar](#appendix-reference-grammar)
 - [Appendix: alternatives considered](#appendix-alternatives-considered)
@@ -332,9 +333,9 @@ A keyed `on-keydown` phrase that *replaces* a browser default should always carr
 
 Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling come with the first three for free; the fourth row is the only one that invents anything.
 
-**Controllers are wired at connect.** When a panel with an `id` connects, `revealable` scans the `is="interactable-…"` hosts, parses each one's `on-*` values through the same cached `parse()` the executor uses, and for every host that *controls* the panel — `#id.toggle()`, or `#id.show()` / `#id.show(true)` / `#id.show(this.checked)`; the literal `show(false)` is a side effect, not control — it appends the panel's id to the host's `aria-controls` (deduped, existing tokens preserved) and sets `aria-expanded` to the current state, skipped on radio and checkbox inputs where it is meaningless. The sync continues at fire time: every element whose `aria-controls` names the panel gets `aria-expanded` refreshed, and a bare trigger that declares none gets `aria-controls` added — unless the verb was `show(false)`, which only updates, never claims.
+**Controllers are wired at connect.** When a panel with an `id` connects, `revealable` scans the `is="interactable-…"` hosts, parses each one's `on-*` values through the same cached `parse()` the executor uses, and for every host that *controls* the panel — `#id.toggle()`, `#id.show()`, or `#id.show(true)`; the literal `show(false)` is a side effect, not control, and non-literal arguments such as `show(this.checked)` are not control either — it appends the panel's id to the host's `aria-controls` (deduped, existing tokens preserved) and sets `aria-expanded` to the current state, skipped on radio and checkbox inputs where it is meaningless. The sync continues at fire time: every element whose `aria-controls` names the panel gets `aria-expanded` refreshed, and a bare trigger that declares none gets `aria-controls` added — unless the verb was `show(false)`, which only updates, never claims.
 
-**Radio-derived exclusivity, no attribute.** A panel shown *from* an `<input type="radio">` closes the panels of that radio's siblings — the radios sharing its `name` and its form owner (`source.form`, else `document`). Each sibling's `on-*` phrases are parsed, and every panel the sibling controls, other than the one being opened, receives `show(false)`. The browser's radio group *is* the group: a package-manager tab set is three radios named `manager` plus three panels, nothing else. Checkbox and button sources close nothing.
+**Radio-derived exclusivity, no attribute.** A panel shown *from* an `<input type="radio">` closes the panels of that radio's siblings — the radios sharing its `name` and its form owner (`source.form`, else `document`). Each sibling's `on-*` phrases are parsed, and every panel the sibling controls, other than the one being opened, receives `show(false)` — dispatched with no interacting source, so nothing is written onto a source element; the closed panel's `aria-expanded` is still refreshed on its button controllers. The browser's radio group *is* the group: the package-manager example is three radios named `pm` plus a panel per section, nothing else. Checkbox and button sources close nothing.
 
 ### Hashable
 
@@ -831,6 +832,16 @@ The short versions of the decisions behind the design. The full argument for eac
 - **Three return channels on the event.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened"; the host is the last frame that can catch, so it reports `handled` / `error` / `result` on the event.
 - **Readiness is reported, never awaited.** A late-registered implementation re-runs every connected host's attach pass; markup may precede the imports.
 - **Report with `console.error`/`warn`, throw only at definition time.** Host code runs on the browser's stack, which owns its exceptions.
+
+---
+
+## When not to use this library
+
+**This is a push system, not a pull one.** An event on a trigger pushes a verb onto a named receiver, the DOM changes once, and the interaction is over — there is no subscription, no reactivity, and no derived state. Nothing watches a value and re-runs phrases when it changes.
+
+The tabs example is the honest boundary case. Each radio's `on-change` pushes `show()` onto its panels, and the exclusivity closes the rest; "which tab is visible" is never stored — every switch rewrites the panels' visibility by hand. Adding a fourth section means editing all three radio phrases, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.
+
+When the behaviour you need *pulls* — a value kept in sync with other values, recomputed on change, reactive by construction — a reactive/data-flow framework is the right tool. The one async seam this library does own is `requestable`: the trigger pushes `send()`, and `on-response` / `on-request-error` continue from the element that did the work.
 
 ---
 

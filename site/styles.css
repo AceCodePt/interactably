@@ -66,6 +66,16 @@
   text-box-edge: cap alphabetic;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -940,6 +950,14 @@ code, pre, kbd {
   flex-wrap: wrap;
   gap: 0.25rem;
   margin-bottom: 0.75rem;
+}
+
+.demo .demo-section {
+  margin-bottom: 1rem;
+}
+
+.demo .demo-section:last-child {
+  margin-bottom: 0;
 }
 
 .demo .tabpanel {

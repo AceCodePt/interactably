@@ -572,39 +572,72 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-pkg">Package-manager tabs from one radio group</h2>
+        <h2 id="ex-pkg">Three synchronized sections from one radio group</h2>
         <p class="ex-note">
-          Three radios named <code class="inline-code">manager</code>, three panels &mdash; no group attribute, no
-          <code class="inline-code">hide()</code> calls. <code class="inline-code">revealable</code> derives the
-          exclusivity from the browser&rsquo;s radio group: picking <em>pnpm</em> sends <code class="inline-code">show(false)</code>
-          to the other two panels, because their radios are that radio&rsquo;s siblings. Each panel&rsquo;s
-          <code class="inline-code">aria-controls</code> is wired onto its radio at connect.
+          One radio group named <code class="inline-code">pm</code>, three sections &mdash; install, config,
+          troubleshooting &mdash; each with its own tab bar. Every radio names the panels it opens by hand,
+          <code class="inline-code">on-change="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show()"</code>,
+          so the sections stay in step because the push is explicit. Adding a fourth section means editing all three
+          radio phrases; that is the price of push.
         </p>
       </div>
       <div class="example-body">
         <div class="demo">
-          <div class="row">
-            <label><input is="interactable-input" type="radio" name="manager" value="npm" checked
-                          implements="storable"
-                          on-change="#pm-1.show()"> npm</label>
-            <label><input is="interactable-input" type="radio" name="manager" value="pnpm"
-                          implements="storable"
-                          on-change="#pm-2.show()"> pnpm</label>
-            <label><input is="interactable-input" type="radio" name="manager" value="yarn"
-                          implements="storable"
-                          on-change="#pm-3.show()"> yarn</label>
+          <div role="radiogroup" aria-label="Package manager" class="visually-hidden">
+            <input is="interactable-input" type="radio" name="pm" value="npm" id="pm-npm" checked
+                   on-change="#install-npm.show(); #config-npm.show(); #trouble-npm.show()">
+            <input is="interactable-input" type="radio" name="pm" value="pnpm" id="pm-pnpm"
+                   on-change="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show()">
+            <input is="interactable-input" type="radio" name="pm" value="bun" id="pm-bun"
+                   on-change="#install-bun.show(); #config-bun.show(); #trouble-bun.show()">
           </div>
-          <div is="interactable-div" id="pm-1" implements="revealable" class="tabpanel" data-open="true">
-            <p>npm ships with Node. This panel&rsquo;s radio was given <code class="inline-code">aria-controls="pm-1"</code>
-            at connect &mdash; no attribute was written by hand.</p>
+          <div class="demo-section">
+            <div class="tabbar">
+              <label for="pm-npm">npm</label>
+              <label for="pm-pnpm">pnpm</label>
+              <label for="pm-bun">bun</label>
+            </div>
+            <div is="interactable-div" id="install-npm" implements="revealable" class="tabpanel" data-open="true">
+              <p><code class="inline-code">npm install</code> ships with Node.</p>
+            </div>
+            <div is="interactable-div" id="install-pnpm" implements="revealable" class="tabpanel" hidden>
+              <p><code class="inline-code">pnpm install</code> is the fast, disk-efficient one.</p>
+            </div>
+            <div is="interactable-div" id="install-bun" implements="revealable" class="tabpanel" hidden>
+              <p><code class="inline-code">bun install</code> is the all-in-one runtime.</p>
+            </div>
           </div>
-          <div is="interactable-div" id="pm-2" implements="revealable" class="tabpanel" hidden>
-            <p>pnpm is the fast, disk-efficient one. Selecting it closes the npm and yarn panels &mdash; the radio group
-            is the group.</p>
+          <div class="demo-section">
+            <div class="tabbar">
+              <label for="pm-npm">npm</label>
+              <label for="pm-pnpm">pnpm</label>
+              <label for="pm-bun">bun</label>
+            </div>
+            <div is="interactable-div" id="config-npm" implements="revealable" class="tabpanel" data-open="true">
+              <p><code class="inline-code">npm config</code> &mdash; <code class="inline-code">.npmrc</code> lives in your home directory.</p>
+            </div>
+            <div is="interactable-div" id="config-pnpm" implements="revealable" class="tabpanel" hidden>
+              <p><code class="inline-code">pnpm config</code> &mdash; the store lives outside each project.</p>
+            </div>
+            <div is="interactable-div" id="config-bun" implements="revealable" class="tabpanel" hidden>
+              <p><code class="inline-code">bunfig.toml</code> is where bun is configured.</p>
+            </div>
           </div>
-          <div is="interactable-div" id="pm-3" implements="revealable" class="tabpanel" hidden>
-            <p>yarn is the classic alternative. No <code class="inline-code">show(false)</code> phrase names it from the
-            npm or pnpm radios; the exclusivity does.</p>
+          <div class="demo-section">
+            <div class="tabbar">
+              <label for="pm-npm">npm</label>
+              <label for="pm-pnpm">pnpm</label>
+              <label for="pm-bun">bun</label>
+            </div>
+            <div is="interactable-div" id="trouble-npm" implements="revealable" class="tabpanel" data-open="true">
+              <p>npm troubleshooting &mdash; <code class="inline-code">npm cache clean --force</code> clears the cache.</p>
+            </div>
+            <div is="interactable-div" id="trouble-pnpm" implements="revealable" class="tabpanel" hidden>
+              <p>pnpm troubleshooting &mdash; <code class="inline-code">pnpm store prune</code> reclaims disk.</p>
+            </div>
+            <div is="interactable-div" id="trouble-bun" implements="revealable" class="tabpanel" hidden>
+              <p>bun troubleshooting &mdash; <code class="inline-code">bun pm cache rm</code> clears the cache.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -618,23 +651,46 @@
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-pkg" data-lang="html"><code>&lt;div class="row"&gt;
-  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager" value="npm" checked
-                implements="storable" on-change="#pm-1.show()"&gt; npm&lt;/label&gt;
-  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager" value="pnpm"
-                implements="storable" on-change="#pm-2.show()"&gt; pnpm&lt;/label&gt;
-  &lt;label&gt;&lt;input is="interactable-input" type="radio" name="manager" value="yarn"
-                implements="storable" on-change="#pm-3.show()"&gt; yarn&lt;/label&gt;
+          <pre class="code" id="code-ex-pkg" data-lang="html"><code>&lt;div role="radiogroup" aria-label="Package manager" class="visually-hidden"&gt;
+  &lt;input is="interactable-input" type="radio" name="pm" value="npm" id="pm-npm" checked
+         on-change="#install-npm.show(); #config-npm.show(); #trouble-npm.show()"&gt;
+  &lt;input is="interactable-input" type="radio" name="pm" value="pnpm" id="pm-pnpm"
+         on-change="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show()"&gt;
+  &lt;input is="interactable-input" type="radio" name="pm" value="bun" id="pm-bun"
+         on-change="#install-bun.show(); #config-bun.show(); #trouble-bun.show()"&gt;
 &lt;/div&gt;
 
-&lt;div is="interactable-div" id="pm-1" implements="revealable" class="tabpanel" data-open="true"&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
+&lt;div class="demo-section"&gt;
+  &lt;div class="tabbar"&gt;
+    &lt;label for="pm-npm"&gt;npm&lt;/label&gt;
+    &lt;label for="pm-pnpm"&gt;pnpm&lt;/label&gt;
+    &lt;label for="pm-bun"&gt;bun&lt;/label&gt;
+  &lt;/div&gt;
+  &lt;div is="interactable-div" id="install-npm" implements="revealable" class="tabpanel" data-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="install-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="install-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;
-&lt;div is="interactable-div" id="pm-2" implements="revealable" class="tabpanel" hidden&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
+
+&lt;div class="demo-section"&gt;
+  &lt;div class="tabbar"&gt;
+    &lt;label for="pm-npm"&gt;npm&lt;/label&gt;
+    &lt;label for="pm-pnpm"&gt;pnpm&lt;/label&gt;
+    &lt;label for="pm-bun"&gt;bun&lt;/label&gt;
+  &lt;/div&gt;
+  &lt;div is="interactable-div" id="config-npm" implements="revealable" class="tabpanel" data-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="config-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="config-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;
-&lt;div is="interactable-div" id="pm-3" implements="revealable" class="tabpanel" hidden&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
+
+&lt;div class="demo-section"&gt;
+  &lt;div class="tabbar"&gt;
+    &lt;label for="pm-npm"&gt;npm&lt;/label&gt;
+    &lt;label for="pm-pnpm"&gt;pnpm&lt;/label&gt;
+    &lt;label for="pm-bun"&gt;bun&lt;/label&gt;
+  &lt;/div&gt;
+  &lt;div is="interactable-div" id="trouble-npm" implements="revealable" class="tabpanel" data-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="trouble-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div is="interactable-div" id="trouble-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;</code></pre>
         </div>
       </details>

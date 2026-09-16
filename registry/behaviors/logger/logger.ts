@@ -10,7 +10,8 @@ export const logger = defineImplementation(
   }),
 );
 
-function describe(el: Element): string {
+function describe(el: Element | undefined): string {
+  if (el === undefined) return "?";
   const id = (el as HTMLElement).id;
   return id !== "" ? `${el.localName}#${id}` : el.localName;
 }

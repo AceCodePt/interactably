@@ -1,14 +1,14 @@
 export interface InteractionEventInit {
   verb: string;
   arg: unknown;
-  source: Element;
+  source?: Element;
   originalEvent: Event;
 }
 
 export class InteractionEvent extends Event {
   readonly verb: string;
   readonly arg: unknown;
-  readonly source: Element;
+  readonly source: Element | undefined;
   readonly originalEvent: Event;
   handled = false;
   error?: unknown;
