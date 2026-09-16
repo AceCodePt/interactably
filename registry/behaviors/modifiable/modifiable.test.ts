@@ -45,7 +45,7 @@ function interact(el: Element, verb: string, arg?: unknown): InteractionEvent {
   return event;
 }
 
-test("set writes the value property and dispatches a synthetic input event", async () => {
+test("set writes the value property and does not dispatch an input event", async () => {
   const input = hostElement("input", { implements: "modifiable" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
@@ -55,10 +55,10 @@ test("set writes the value property and dispatches a synthetic input event", asy
 
   interact(input, "set", "42");
   assert.equal(input.value, "42");
-  assert.equal(inputs, 1);
+  assert.equal(inputs, 0);
 });
 
-test("set does not dispatch when the value is unchanged", async () => {
+test("set never dispatches, even when the value changes", async () => {
   const input = hostElement("input", { implements: "modifiable", value: "7" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
@@ -70,7 +70,7 @@ test("set does not dispatch when the value is unchanged", async () => {
   assert.equal(inputs, 0);
 
   interact(input, "set", "8");
-  assert.equal(inputs, 1);
+  assert.equal(inputs, 0);
 });
 
 test("inc and dec step by 1 by default and accept an explicit amount", async () => {
@@ -232,12 +232,10 @@ test("modifiable-formula evaluates against #id references at fire time", async (
   await flush();
 
   assert.equal(total.textContent, "7");
-  assert.equal(total.dataset["value"], "7");
 
   price.value = "4";
   interact(total, "compute");
   assert.equal(total.textContent, "13");
-  assert.equal(total.dataset["value"], "13");
 });
 
 test("compute writes the derived value without dispatching a synthetic input event", async () => {
@@ -287,34 +285,7 @@ test("sum(selector) adds matched elements and count(selector) counts them", asyn
   await flush();
 
   assert.equal(total.textContent, "5.75");
-  assert.equal(total.dataset["value"], "5.75");
   assert.equal(tally.textContent, "2");
-});
-
-test("format(value, options) renders through Intl and keeps the raw number in data-value", async () => {
-  const root = document.createElement("div");
-  root.innerHTML = '<input class="amount" value="2.5"><input class="amount" value="3.25">';
-  const total = hostElement("output", {
-    implements: "modifiable",
-    "modifiable-formula": "format(sum('.amount'), { style: 'currency', currency: 'USD' })",
-  }) as HTMLOutputElement;
-  document.body.append(root, total);
-  await flush();
-
-  assert.equal(total.textContent, "$5.75");
-  assert.equal(total.dataset["value"], "5.75");
-});
-
-test("format(value, { type: 'date' }) parses the reference as a date", async () => {
-  const joined = dep("joined", "2024-01-02");
-  const out = hostElement("output", {
-    implements: "modifiable",
-    "modifiable-formula": "format(#joined.value, { type: 'date', dateStyle: 'medium' })",
-  }) as HTMLOutputElement;
-  document.body.append(joined, out);
-  await flush();
-
-  assert.equal(out.textContent, "Jan 2, 2024");
 });
 
 test("the formula supports parentheses, unary minus and min/max/floor/ceil/round", async () => {

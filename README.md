@@ -60,7 +60,7 @@ Load the core bundle plus the implementations you use. Each implementation bundl
   installAutoLoader();
 </script>
 
-<button id="inc" on-click="#qty.inc()">+</button>
+<button id="inc" on-click="#qty.inc(); #preview.compute()">+</button>
 
 <label>Qty
   <input id="qty" implements="modifiable"
@@ -68,7 +68,7 @@ Load the core bundle plus the implementations you use. Each implementation bundl
          on-input="#preview.set(this.value)">
 </label>
 
-<output id="preview" implements="modifiable">1</output>
+<output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
 ```
 
 **Option B — explicit `is=` (faster).** State the host name yourself; the element upgrades synchronously on insertion in Chrome and Firefox, with no observer and no node replacement:
@@ -81,7 +81,7 @@ Load the core bundle plus the implementations you use. Each implementation bundl
   defineInteractableHost("button");   // idempotent; a <button> trigger has no implementation declaring it
 </script>
 
-<button is="interactable-button" id="inc" on-click="#qty.inc()">+</button>
+<button is="interactable-button" id="inc" on-click="#qty.inc(); #preview.compute()">+</button>
 
 <label>Qty
   <input is="interactable-input" id="qty" implements="modifiable"
@@ -89,10 +89,10 @@ Load the core bundle plus the implementations you use. Each implementation bundl
          on-input="#preview.set(this.value)">
 </label>
 
-<output is="interactable-output" id="preview" implements="modifiable">1</output>
+<output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
 ```
 
-Every click on `+` calls `#qty.inc()`: the input clamps to `max`, dispatches a synthetic `input`, and the preview follows.
+Every click on `+` calls `#qty.inc()` (the input clamps to `max`) and then `#preview.compute()`, which re-reads `#qty.value`; typing in the field still pushes through `on-input`.
 
 Bundle files:
 
@@ -281,6 +281,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | --- | --- | --- | --- | --- |
 | `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute` | `step`, `formula`, `invalid-value` | typed writes with clamping; `set` takes a string or a number and `inc`/`dec` accept a number or a numeric string, throwing a named error when it cannot be read; evaluates a formula on `compute()` and on connect |
 | `dirtyable` | input, textarea, select, output | `markClean` | — | toggles `.is-dirty` while `el.value` differs from the connect-time baseline |
+| `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
 | `requestable` | any | `send`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
@@ -387,7 +388,6 @@ export const modifiable = defineImplementation("modifiable", {
     const text = String(v);
     if ("value" in el) { if (el.value === text) return; el.value = text; }
     else               { if (el.textContent === text) return; el.textContent = text; }
-    el.dispatchEvent(new Event("input", { bubbles: true }));   // so the element's own on-input fires
   };
   const bound = (k: "min" | "max") =>
     el instanceof HTMLInputElement && el[k] !== "" ? Number(el[k]) : undefined;
@@ -520,7 +520,7 @@ Rules:
 - **`config` is read-only.** A verb that needs its own baseline keeps one in the closure, as `dirtyable`'s `markClean` does.
 - **Invented live state is `data-*`** — one namespace, reflected as `el.dataset`, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
 - **Closure state** for transient internals (in-flight request, timers).
-- **Numbers written into text also go to `data-value`.** Every implementation reads a number through the `valueOf(el)` helper: `.value` → `data-value` → parsed `textContent` as a last resort.
+- **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string. Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0).
 
 There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.
 
@@ -663,14 +663,14 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
   <input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
-         on-keydown="escape: this.reset().markClean()">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
+         on-keydown="escape: this.reset().markClean(); #preview.compute()">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
 </label>
-<button is="interactable-button" on-click="#qty.dec()">−</button>
-<button is="interactable-button" on-click="#qty.inc()">+</button>
-<button is="interactable-button" on-click="#qty.inc(5)">+5</button>
-<button is="interactable-button" on-click="#qty.reset().markClean()">Reset</button>
+<button is="interactable-button" on-click="#qty.dec(); #preview.compute()">−</button>
+<button is="interactable-button" on-click="#qty.inc(); #preview.compute()">+</button>
+<button is="interactable-button" on-click="#qty.inc(5); #preview.compute()">+5</button>
+<button is="interactable-button" on-click="#qty.reset().markClean(); #preview.compute()">Reset</button>
 <!-- min/max are the input's own; modifiable reads el.min / el.max and declares nothing for them -->
-<output is="interactable-output" id="preview" implements="modifiable">1</output>
+<output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
 
 <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
   <li>
@@ -680,13 +680,14 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
 </ul>
 <button is="interactable-button" on-click="#list.adopt(#row-tpl)">Add row</button>
 <template id="row-tpl"><li>…</li></template>
-<output is="interactable-output" id="total" implements="modifiable"
-        modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })">0</output>
+<output is="interactable-output" id="total" implements="modifiable formattable"
+        modifiable-formula="sum('#list .amount')"
+        formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
 ```
 
 Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the buttons address it); the six buttons are trigger-only; `#preview`, `#list` and `#total` are receivers; the `<li>` is a plain element — the row is reached through `#list.removeRow(this)`, so it needs no implementation, no host and no id, and cloning it from `#row-tpl` produces nothing that has to be unique.
 
-**`+5` trace.** The button's host bound `click` in `connectedCallback` → `parse("#qty.inc(5)")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → host validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → synthetic `input` → `dirtyable.onInput` toggles `is-dirty` → the same `input` reaches `#qty`'s own `on-input` listener → `#preview.set(this.value)`.
+**`+5` trace.** The button's host bound `click` in `connectedCallback` → `parse("#qty.inc(5); #preview.compute()")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → host validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → the interaction event reaches `#qty`'s own `dirtyable` handler, which marks `is-dirty` → the second phrase resolves `#preview` → `#preview.compute()` re-evaluates `#qty.value` (6).
 
 **`×` trace.** Phrase 1 resolves `#list`, arg `this` is the button → `removeRow(e, button)` finds the row via `closest(":scope > *")` → phrase 2 (independent) resolves `#total` → `compute()` re-evaluates `sum('#list .amount')` over the remaining inputs.
 
@@ -816,9 +817,10 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
-| `valueOf(el)` / `writeValue(el, v)` | Number read (`value` → `data-value` → textContent) and write helpers |
+| `readValue(el)` | The element's value as text: `formattable-value` (the raw store) → `.value` → `textContent`, a number when the text parses else a string |
+| `valueOf(el)` / `writeValue(el, v)` | Number read (`toNumber(readValue(el))`, NaN → 0) and write helpers |
 | `NotReadyError` | Error set on `e.error` when a verb reaches a host that has never connected |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `hashable` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `hashable`, `formattable` |
 
 ---
 
@@ -857,6 +859,8 @@ The short versions of the decisions behind the design. The full argument for eac
 The tabs example is the honest boundary case. Each radio's `on-change` pushes `show()` onto its panels, and the exclusivity closes the rest; "which tab is visible" is never stored — every switch rewrites the panels' visibility by hand. Adding a fourth section means editing all three radio phrases, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.
 
 When the behaviour you need *pulls* — a value kept in sync with other values, recomputed on change, reactive by construction — a reactive/data-flow framework is the right tool. The one async seam this library does own is `requestable`: the trigger pushes `send()`, and `on-response` / `on-request-error` continue from the element that did the work.
+
+Input masks and format-as-you-type belong in a component library built on the same `is=` hosts: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw `<input>` pair, which needs markup of its own to fake. `formattable` is the whole declarative share — display elements only, formatted on connect and on each library write.
 
 ---
 

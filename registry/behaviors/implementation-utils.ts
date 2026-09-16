@@ -19,26 +19,29 @@ export function toNumber(value: string | number): number {
 }
 
 export function readValue(el: Element): number | string {
+  const stored = el.getAttribute("formattable-value");
   const value = (el as unknown as { value?: unknown }).value;
-  const text = typeof value === "string" ? value : el.textContent ?? "";
+  const text = stored !== null ? stored : typeof value === "string" ? value : el.textContent ?? "";
   const parsed = toNumber(text);
   return Number.isNaN(parsed) ? text : parsed;
 }
 
 export function valueOf(el: Element): number {
-  const value = (el as unknown as { value?: unknown }).value;
-  if (typeof value === "number") return value;
-  if (typeof value === "string" && value !== "") {
-    const parsed = toNumber(value);
-    if (!Number.isNaN(parsed)) return parsed;
-  }
-  const data = (el as unknown as { dataset?: { value?: string } }).dataset?.value;
-  if (data !== undefined && data !== "") {
-    const parsed = toNumber(data);
-    if (!Number.isNaN(parsed)) return parsed;
-  }
-  const parsed = toNumber((el.textContent ?? "").trim());
+  const parsed = toNumber(readValue(el));
   return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+const formatters = new WeakMap<Element, (raw: string) => string>();
+
+export function registerFormatter(el: Element, formatter: (raw: string) => string): void {
+  formatters.set(el, formatter);
+}
+
+export function formatWrite(el: Element, text: string): string {
+  const formatter = formatters.get(el);
+  if (formatter === undefined) return text;
+  el.setAttribute("formattable-value", text);
+  return formatter(text);
 }
 
 export function writeValue(el: HTMLElement, value: string): void {

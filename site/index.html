@@ -110,13 +110,13 @@
               <input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
                      type="number" value="1" min="1" max="10"
                      on-input="#preview.set(this.value)"
-                     on-keydown="escape: this.reset().markClean()">
+                     on-keydown="escape: this.reset().markClean(); #preview.compute()">
             </label>
-            <button is="interactable-button" id="dec" on-click="#qty.dec()" type="button">&minus;</button>
-            <button is="interactable-button" id="inc" on-click="#qty.inc()" type="button">+</button>
-            <button is="interactable-button" id="inc5" on-click="#qty.inc(5)" type="button">+5</button>
-            <button is="interactable-button" id="reset" on-click="#qty.reset().markClean()" type="button">Reset</button>
-            <output is="interactable-output" id="preview" implements="modifiable">1</output>
+            <button is="interactable-button" id="dec" on-click="#qty.dec(); #preview.compute()" type="button">&minus;</button>
+            <button is="interactable-button" id="inc" on-click="#qty.inc(); #preview.compute()" type="button">+</button>
+            <button is="interactable-button" id="inc5" on-click="#qty.inc(5); #preview.compute()" type="button">+5</button>
+            <button is="interactable-button" id="reset" on-click="#qty.reset().markClean(); #preview.compute()" type="button">Reset</button>
+            <output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
           </div>
 
           <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
@@ -134,8 +134,9 @@
           </template>
           <p class="total">
             Total:
-            <output is="interactable-output" id="total" implements="modifiable"
-                    modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })">0</output>
+            <output is="interactable-output" id="total" implements="modifiable formattable"
+                    modifiable-formula="sum('#list .amount')"
+                    formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
           </p>
         </div>
       </div>

@@ -124,7 +124,7 @@
   installAutoLoader();
 &lt;/script&gt;
 
-&lt;button id="inc" on-click="#qty.inc()"&gt;+&lt;/button&gt;
+&lt;button id="inc" on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
 
 &lt;label&gt;Qty
   &lt;input id="qty" implements="modifiable"
@@ -132,7 +132,7 @@
          on-input="#preview.set(this.value)"&gt;
 &lt;/label&gt;
 
-&lt;output id="preview" implements="modifiable"&gt;1&lt;/output&gt;</code></pre>
+&lt;output id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;</code></pre>
             </div>
             <p class="note">No <code class="inline-code">is=</code> anywhere: the auto-loader upgrades every element that has
               <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute, adding
@@ -155,7 +155,7 @@
   defineInteractableHost("button");   // idempotent; a &lt;button&gt; trigger has no implementation declaring it
 &lt;/script&gt;
 
-&lt;button is="interactable-button" id="inc" on-click="#qty.inc()"&gt;+&lt;/button&gt;
+&lt;button is="interactable-button" id="inc" on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
 
 &lt;label&gt;Qty
   &lt;input is="interactable-input" id="qty" implements="modifiable"
@@ -163,22 +163,23 @@
          on-input="#preview.set(this.value)"&gt;
 &lt;/label&gt;
 
-&lt;output is="interactable-output" id="preview" implements="modifiable"&gt;1&lt;/output&gt;</code></pre>
+&lt;output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;</code></pre>
             </div>
             <p class="note"><code class="inline-code">is=</code> is present at creation, so the element upgrades synchronously on
               insertion in Chrome and Firefox &mdash; the production choice when performance matters.</p>
           </section>
         </div>
-        <p>Every click on <code class="inline-code">+</code> calls <code class="inline-code">#qty.inc()</code>: the input clamps to
-          <code class="inline-code">max</code>, dispatches a synthetic <code class="inline-code">input</code>, and the preview follows.</p>
+        <p>Every click on <code class="inline-code">+</code> calls <code class="inline-code">#qty.inc()</code> (the input clamps to
+          <code class="inline-code">max</code>) and then <code class="inline-code">#preview.compute()</code>, which re-reads
+          <code class="inline-code">#qty.value</code>; typing in the field still pushes through <code class="inline-code">on-input</code>.</p>
 
         <p class="note" style="margin-top:1.5rem">Here is that exact markup, running live. No page JavaScript powers the button, the dialog, or the close button.</p>
         <div class="demo" style="padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)">
           <div class="row">
-            <button is="interactable-button" type="button" on-click="#qty.inc()">+</button>
+            <button is="interactable-button" type="button" on-click="#qty.inc(); #preview.compute()">+</button>
             <input is="interactable-input" id="qty" implements="modifiable" type="number" value="1" min="0" max="10"
                    on-input="#preview.set(this.value)">
-            <output is="interactable-output" id="preview" implements="modifiable">1</output>
+            <output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
           </div>
           <div class="row">
             <button is="interactable-button" type="button" on-click="#doc-modal.show()">Open a dialog</button>
@@ -445,6 +446,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
             <tbody>
               <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">inc</code>, <code class="inline-code">dec</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code>, <code class="inline-code">compute</code></td><td><code class="inline-code">step</code>, <code class="inline-code">formula</code>, <code class="inline-code">invalid-value</code></td><td>typed writes with clamping; evaluates a formula on <code class="inline-code">compute()</code> and on connect</td></tr>
               <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td><code class="inline-code">markClean</code></td><td>&mdash;</td><td>toggles <code class="inline-code">.is-dirty</code> while <code class="inline-code">el.value</code> differs from the connect-time baseline</td></tr>
+              <tr><td><code class="inline-code">formattable</code></td><td>output, span, div, td, p, li, dd, b, strong, em, small</td><td>&mdash;</td><td><code class="inline-code">format</code></td><td>renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write</td></tr>
               <tr><td><code class="inline-code">listable</code></td><td>ul, ol, tbody</td><td><code class="inline-code">removeRow</code>, <code class="inline-code">adopt</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">min-rows</code></td><td>row removal / template adoption / clear, keeping <code class="inline-code">min-rows</code></td></tr>
               <tr><td><code class="inline-code">requestable</code></td><td>any</td><td><code class="inline-code">send</code>, <code class="inline-code">abort</code></td><td><code class="inline-code">url</code>, <code class="inline-code">method</code>, <code class="inline-code">target</code>, <code class="inline-code">swap</code>, <code class="inline-code">include</code>, <code class="inline-code">concurrency</code> + <code class="inline-code">status</code> state; events <code class="inline-code">response</code>, <code class="inline-code">request-error</code></td><td>fetch, swap the response into the DOM, fire <code class="inline-code">response</code> / <code class="inline-code">request-error</code> events</td></tr>
               <tr><td><code class="inline-code">attributable</code></td><td>any</td><td><code class="inline-code">setAttr</code>, <code class="inline-code">toggleAttr</code>, <code class="inline-code">removeAttr</code></td><td>&mdash;</td><td>attribute writes (<code class="inline-code">setAttr({name, value})</code>)</td></tr>
@@ -562,7 +564,6 @@ export const modifiable = defineImplementation("modifiable", {
     const text = String(v);
     if ("value" in el) { if (el.value === text) return; el.value = text; }
     else               { if (el.textContent === text) return; el.textContent = text; }
-    el.dispatchEvent(new Event("input", { bubbles: true }));   // so the element's own on-input fires
   };
   const bound = (k: "min" | "max") =&gt;
     el instanceof HTMLInputElement &amp;&amp; el[k] !== "" ? Number(el[k]) : undefined;
@@ -727,7 +728,7 @@ export const attributable = defineImplementation("attributable", {
           <li><strong><code class="inline-code">config</code> is read-only.</strong> A verb that needs its own baseline keeps one in the closure, as <code class="inline-code">dirtyable</code>&rsquo;s <code class="inline-code">markClean</code> does.</li>
           <li><strong>Invented live state is <code class="inline-code">data-*</code></strong> — one namespace, reflected as <code class="inline-code">el.dataset</code>, visible in the inspector. Writes go through <code class="inline-code">attrs</code>, reads in <code class="inline-code">attributeChangedCallback</code>.</li>
           <li><strong>Closure state</strong> for transient internals (in-flight request, timers).</li>
-          <li><strong>Numbers written into text also go to <code class="inline-code">data-value</code>.</strong> Every implementation reads a number through the <code class="inline-code">valueOf(el)</code> helper: <code class="inline-code">.value</code> &rarr; <code class="inline-code">data-value</code> &rarr; parsed <code class="inline-code">textContent</code> as a last resort.</li>
+          <li><strong>One reader for an element&rsquo;s value.</strong> <code class="inline-code">readValue(el)</code> returns <code class="inline-code">formattable-value</code> when a <code class="inline-code">formattable</code> raw store is present, else <code class="inline-code">.value</code>, else <code class="inline-code">textContent</code> &mdash; a number when the text parses, else the string. Every implementation reads a number through <code class="inline-code">valueOf(el) = toNumber(readValue(el))</code> (NaN &rarr; 0).</li>
         </ul>
         <p>There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.</p>
 
@@ -859,12 +860,13 @@ export const attributable = defineImplementation("attributable", {
   &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
-         on-keydown="escape: this.reset().markClean()"&gt;
+         on-keydown="escape: this.reset().markClean(); #preview.compute()"&gt;
 &lt;/label&gt;
-&lt;button is="interactable-button" on-click="#qty.dec()"&gt;&minus;&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#qty.inc()"&gt;+&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#qty.reset().markClean()"&gt;Reset&lt;/button&gt;
-&lt;output is="interactable-output" id="preview" implements="modifiable"&gt;1&lt;/output&gt;
+&lt;button is="interactable-button" on-click="#qty.dec(); #preview.compute()"&gt;&minus;&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#qty.inc(5); #preview.compute()"&gt;+5&lt;/button&gt;
+&lt;button is="interactable-button" on-click="#qty.reset().markClean(); #preview.compute()"&gt;Reset&lt;/button&gt;
+&lt;output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;
 
 &lt;ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1"&gt;
   &lt;li&gt;
@@ -874,8 +876,9 @@ export const attributable = defineImplementation("attributable", {
 &lt;/ul&gt;
 &lt;button is="interactable-button" on-click="#list.adopt(#row-tpl)"&gt;Add row&lt;/button&gt;
 &lt;template id="row-tpl"&gt;&lt;li&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
-&lt;output is="interactable-output" id="total" implements="modifiable"
-        modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })"&gt;0&lt;/output&gt;</code></pre>
+&lt;output is="interactable-output" id="total" implements="modifiable formattable"
+        modifiable-formula="sum('#list .amount')"
+        formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;</code></pre>
         </div>
         <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers; the <code class="inline-code">&lt;li&gt;</code> is a plain element — the row is reached through <code class="inline-code">#list.removeRow(this)</code>, so it needs no implementation, no host and no id, and cloning it produces nothing that has to be unique.</p>
 
@@ -952,9 +955,10 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive) used by keys and event lists</td></tr>
               <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
-              <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">value</code> &rarr; <code class="inline-code">data-value</code> &rarr; textContent) and write helpers</td></tr>
+              <tr><td><code class="inline-code">readValue(el)</code></td><td>The element&rsquo;s value as text: <code class="inline-code">formattable-value</code> (the raw store) &rarr; <code class="inline-code">.value</code> &rarr; <code class="inline-code">textContent</code>, a number when the text parses else a string</td></tr>
+              <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">toNumber(readValue(el))</code>, NaN &rarr; 0) and write helpers</td></tr>
               <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
-              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code>, <code class="inline-code">hashable</code></td></tr>
+              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code>, <code class="inline-code">hashable</code>, <code class="inline-code">formattable</code></td></tr>
             </tbody>
           </table>
         </div>
@@ -988,6 +992,7 @@ export const attributable = defineImplementation("attributable", {
         <p><strong>This is a push system, not a pull one.</strong> An event on a trigger pushes a verb onto a named receiver, the DOM changes once, and the interaction is over &mdash; there is no subscription, no reactivity, and no derived state. Nothing watches a value and re-runs phrases when it changes.</p>
         <p>The tabs example is the honest boundary case. Each radio&rsquo;s <code class="inline-code">on-change</code> pushes <code class="inline-code">show()</code> onto its panels, and the exclusivity closes the rest; &ldquo;which tab is visible&rdquo; is never stored &mdash; every switch rewrites the panels&rsquo; visibility by hand. Adding a fourth section means editing all three radio phrases, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.</p>
         <p>When the behaviour you need <em>pulls</em> &mdash; a value kept in sync with other values, recomputed on change, reactive by construction &mdash; a reactive/data-flow framework is the right tool. The one async seam this library does own is <code class="inline-code">requestable</code>: the trigger pushes <code class="inline-code">send()</code>, and <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> continue from the element that did the work.</p>
+        <p>Input masks and format-as-you-type belong in a component library built on the same <code class="inline-code">is=</code> hosts: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw <code class="inline-code">&lt;input&gt;</code> pair, which needs markup of its own to fake. <code class="inline-code">formattable</code> is the whole declarative share &mdash; display elements only, formatted on connect and on each library write.</p>
 
         <h2 id="not-supported" is="interactable-h2" implements="attributable hashable" on-intersect-half="0px 0px -50% 0px: #toc.setAttr({name: 'data-current', value: 'not-supported'}); this.hash()">Not supported <a class="anchor" href="#not-supported">#</a></h2>
         <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; dynamic <code class="inline-code">on-*</code> attribute <em>names</em> after connect &middot; cross-element watching &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>

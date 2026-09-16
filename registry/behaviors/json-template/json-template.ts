@@ -1,5 +1,7 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 
+const LITERAL_PREFIX = "__LITERAL__:";
+
 type Operator = "||" | "??" | "&&";
 
 interface Interpolation {
@@ -146,8 +148,6 @@ function processInterpolation(element: Node, data: unknown): void {
 
   for (const child of Array.from(el.childNodes)) processInterpolation(child, data);
 }
-
-const LITERAL_PREFIX = "__LITERAL__:";
 
 function interpolateString(text: string, data: unknown): string {
   return text.replace(/\{([^}]+)\}/g, (_match, expr: string) => {

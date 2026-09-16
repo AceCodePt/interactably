@@ -11,6 +11,7 @@ before(async () => {
   await import("@behaviors/modifiable/modifiable.ts");
   await import("@behaviors/dirtyable/dirtyable.ts");
   await import("@behaviors/listable/listable.ts");
+  await import("@behaviors/formattable/formattable.ts");
   ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("button");
 });
@@ -28,13 +29,14 @@ const MARKUP = `
   <input is="interactable-input" id="qty" implements="modifiable dirtyable"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
-         on-keydown="escape: this.reset().markClean()">
+         on-keydown="escape: this.reset().markClean(); #preview.compute()">
 </label>
-<button id="dec" is="interactable-button" on-click="#qty.dec()">−</button>
-<button id="inc" is="interactable-button" on-click="#qty.inc()">+</button>
-<button id="inc5" is="interactable-button" on-click="#qty.inc(5)">+5</button>
-<button id="reset" is="interactable-button" on-click="#qty.reset().markClean()">Reset</button>
-<output is="interactable-output" id="preview" implements="modifiable">1</output>
+<button id="dec" is="interactable-button" on-click="#qty.dec(); #preview.compute()">−</button>
+<button id="inc" is="interactable-button" on-click="#qty.inc(); #preview.compute()">+</button>
+<button id="inc5" is="interactable-button" on-click="#qty.inc(5); #preview.compute()">+5</button>
+<button id="reset" is="interactable-button" on-click="#qty.reset().markClean(); #preview.compute()">Reset</button>
+<output is="interactable-output" id="preview" implements="modifiable"
+        modifiable-formula="#qty.value">1</output>
 
 <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
   <li>
@@ -44,8 +46,9 @@ const MARKUP = `
 </ul>
 <button id="add-row" is="interactable-button" on-click="#list.adopt(#row-tpl)">Add row</button>
 <template id="row-tpl"><li><input is="interactable-input" class="amount" type="number" value="3.25" on-input="#total.compute()"><button is="interactable-button" on-click="#list.removeRow(this); #total.compute()">×</button></li></template>
-<output is="interactable-output" id="total" implements="modifiable"
-        modifiable-formula="format(sum('#list .amount'), { style: 'currency', currency: 'USD' })">0</output>
+<output is="interactable-output" id="total" implements="modifiable formattable"
+        modifiable-formula="sum('#list .amount')"
+        formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
 `;
 
 function mount(): void {
@@ -62,7 +65,7 @@ function byId(id: string): HTMLElement {
   return document.getElementById(id)!;
 }
 
-test("the +5 trace: inc clamps, the synthetic input dirties and the preview follows", async () => {
+test("the +5 trace: inc clamps, dirties via the interaction event and the preview follows", async () => {
   mount();
   await flush();
 
@@ -160,7 +163,7 @@ test("the × trace: removeRow finds the row from the button, then compute re-rea
   click(firstRowRemove);
   assert.equal(list.children.length, 1);
   assert.equal(total.textContent, "$3.25");
-  assert.equal(total.dataset["value"], "3.25");
+  assert.equal(total.getAttribute("formattable-value"), "3.25");
 
   const lastRowRemove = (list.children[0] as HTMLElement).querySelector("button")!;
   click(lastRowRemove);
@@ -186,5 +189,5 @@ test("the Add row trace: adopt clones the template; typing in an amount recomput
   clonedAmount.value = "10";
   clonedAmount.dispatchEvent(new Event("input", { bubbles: true }));
   assert.equal(total.textContent, "$12.50");
-  assert.equal(total.dataset["value"], "12.5");
+  assert.equal(total.getAttribute("formattable-value"), "12.5");
 });

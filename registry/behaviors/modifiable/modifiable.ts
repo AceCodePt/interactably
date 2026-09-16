@@ -1,5 +1,5 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { toNumber, valueOf } from "@behaviors/implementation-utils.ts";
+import { formatWrite, toNumber, valueOf } from "@behaviors/implementation-utils.ts";
 import { evaluateFormula } from "@utils/formula.ts";
 
 export const modifiable = defineImplementation(
@@ -22,7 +22,7 @@ export const modifiable = defineImplementation(
   },
   (el, attrs) => {
     const write = (v: string | number): void => {
-      const text = String(v);
+      const text = formatWrite(el, String(v));
       const target: Element = el;
       if (hasValue(target)) {
         if (target.value === text) return;
@@ -31,26 +31,14 @@ export const modifiable = defineImplementation(
         if (target.textContent === text) return;
         target.textContent = text;
       }
-      target.dispatchEvent(new Event("input", { bubbles: true }));
-    };
-    const writeComputed = (text: string, value: number | string | null): void => {
-      const target: Element = el;
-      if (hasValue(target)) {
-        target.value = text;
-      } else {
-        target.textContent = text;
-      }
-      if (value === null) el.removeAttribute("data-value");
-      else el.setAttribute("data-value", String(value));
     };
     const compute = (): void => {
       const formula = attrs.formula;
       if (formula === undefined) return;
       try {
-        const result = evaluateFormula(formula);
-        writeComputed(result.text, result.value);
+        write(String(evaluateFormula(formula).value));
       } catch {
-        writeComputed(attrs["invalid-value"] ?? "Error", null);
+        write(attrs["invalid-value"] ?? "Error");
       }
     };
     const bound = (k: "min" | "max"): number | undefined =>

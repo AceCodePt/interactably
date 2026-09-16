@@ -14,18 +14,14 @@ after(() => {
   teardownJsdom(dom);
 });
 
-test("valueOf reads .value first, then data-value, then textContent", () => {
-  const byValue = document.createElement("div") as unknown as { value: number };
-  byValue.value = 5;
-  assert.equal(valueOf(byValue as unknown as Element), 5);
+test("valueOf reads through readValue: formattable-value first, then .value, then textContent", () => {
+  const byFormattable = document.createElement("div");
+  byFormattable.setAttribute("formattable-value", "7");
+  assert.equal(valueOf(byFormattable), 7);
 
   const byStringValue = document.createElement("div") as unknown as { value: string };
   byStringValue.value = "7";
   assert.equal(valueOf(byStringValue as unknown as Element), 7);
-
-  const byDataset = document.createElement("div");
-  byDataset.dataset["value"] = "11";
-  assert.equal(valueOf(byDataset), 11);
 
   const byText = document.createElement("div");
   byText.textContent = "42";
@@ -35,7 +31,17 @@ test("valueOf reads .value first, then data-value, then textContent", () => {
   assert.equal(valueOf(empty), 0);
 });
 
-test("readValue reads .value as a number when it parses, else as a string, falling back to textContent", () => {
+test("readValue reads formattable-value first, then .value as a number when it parses, else as a string, falling back to textContent", () => {
+  const formatted = document.createElement("div");
+  formatted.textContent = "$42.00";
+  formatted.setAttribute("formattable-value", "42");
+  assert.equal(readValue(formatted), 42);
+
+  const formattedWords = document.createElement("div");
+  formattedWords.textContent = "$42.00";
+  formattedWords.setAttribute("formattable-value", "forty-two");
+  assert.equal(readValue(formattedWords), "forty-two");
+
   const numeric = document.createElement("input");
   numeric.value = "42";
   assert.equal(readValue(numeric), 42);

@@ -4,7 +4,7 @@ export { defineInteractableHost } from "@behaviors/interactable-host.ts";
 export type { InteractableHost } from "@behaviors/interactable-host.ts";
 export { getImplementationDef, registerImplementation } from "@behaviors/implementation-registry.ts";
 export type { NormalizedImplementationDef } from "@behaviors/implementation-registry.ts";
-export { NotReadyError, bindEvents, toNumber, valueOf, writeValue } from "@behaviors/implementation-utils.ts";
+export { NotReadyError, bindEvents, formatWrite, readValue, registerFormatter, toNumber, valueOf, writeValue } from "@behaviors/implementation-utils.ts";
 export type { BindEventsOptions, BoundEvents, ImplementationInstance } from "@behaviors/implementation-utils.ts";
 export { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 export { parse } from "@interactable/parser.ts";

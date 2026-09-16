@@ -11,6 +11,7 @@ before(async () => {
   dom = setupJsdom();
   await import("@behaviors/no-propagate/no-propagate.ts");
   await import("@behaviors/dirtyable/dirtyable.ts");
+  await import("@behaviors/modifiable/modifiable.ts");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
 });
 
@@ -98,4 +99,23 @@ test("the baseline is the SSR'd value attribute, not the empty default", async (
   textarea.value = "edited";
   textarea.dispatchEvent(new Event("input", { bubbles: true }));
   assert.equal(textarea.classList.contains("is-dirty"), true);
+});
+
+test("a library write through modifiable dirties via the interaction event; reset clears it", async () => {
+  const input = hostElement("input", {
+    implements: "modifiable dirtyable",
+    value: "1",
+  }) as HTMLInputElement;
+  document.body.appendChild(input);
+  await flush();
+
+  assert.equal(input.classList.contains("is-dirty"), false);
+
+  interact(input, "inc");
+  assert.equal(input.value, "2");
+  assert.equal(input.classList.contains("is-dirty"), true);
+
+  interact(input, "reset");
+  assert.equal(input.value, "1");
+  assert.equal(input.classList.contains("is-dirty"), false);
 });

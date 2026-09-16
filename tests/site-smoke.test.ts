@@ -23,6 +23,7 @@ const KNOWN_BUNDLES = new Set([
   "auto-grow",
   "copyable",
   "dirtyable",
+  "formattable",
   "hashable",
   "json-template",
   "listable",
@@ -233,7 +234,7 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   amount.value = "10";
   amount.dispatchEvent(new Event("input", { bubbles: true }));
   assert.equal(total.textContent, "$10.00");
-  assert.equal(total.dataset["value"], "10");
+  assert.equal(total.getAttribute("formattable-value"), "10");
 
   click(byId("add-row"));
   assert.equal(list.children.length, 2);

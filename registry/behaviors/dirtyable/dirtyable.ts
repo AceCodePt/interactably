@@ -14,6 +14,7 @@ export const dirtyable = defineImplementation(
     render();
     return {
       onInput: render,
+      onInteraction: render,
       markClean: () => {
         baseline = el.value;
         render();

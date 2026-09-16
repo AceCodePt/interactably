@@ -59,6 +59,16 @@
       </article>
 
       <article class="ref-card">
+        <h3><code class="inline-code">formattable</code></h3>
+        <p class="ref-tags">output &middot; span &middot; div &middot; td &middot; p &middot; li &middot; dd &middot; b &middot; strong &middot; em &middot; small</p>
+        <p class="ref-desc">Renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write.</p>
+        <p class="ref-labels">Verbs</p>
+        <div><span class="verb-tag">&mdash;</span></div>
+        <p class="ref-labels">Config / state</p>
+        <div><span class="verb-tag">format</span></div>
+      </article>
+
+      <article class="ref-card">
         <h3><code class="inline-code">listable</code></h3>
         <p class="ref-tags">ul &middot; ol &middot; tbody</p>
         <p class="ref-desc">Row removal, template adoption and clear, keeping <code class="inline-code">min-rows</code>.</p>
@@ -228,7 +238,8 @@
           <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive)</td></tr>
           <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
           <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
-          <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read and write helpers</td></tr>
+          <tr><td><code class="inline-code">readValue(el)</code></td><td>The element&rsquo;s value as text: <code class="inline-code">formattable-value</code> (the raw store) &rarr; <code class="inline-code">.value</code> &rarr; <code class="inline-code">textContent</code>, a number when the text parses else a string</td></tr>
+          <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">toNumber(readValue(el))</code>, NaN &rarr; 0) and write helpers</td></tr>
           <tr><td><code class="inline-code">NotReadyError</code></td><td>Set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
         </tbody>
       </table>
