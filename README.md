@@ -142,7 +142,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | --- | --- | --- |
 | Trigger | `on-click="#pop.show()"` | On `click`, run the phrase |
 | Implementation event | `on-copy="#flash.show()"` | On a copyable element `on-copy` is copyable's event and the native clipboard event doesn't fire it. Continuations now share trigger-attribute `once`/`debounce` semantics |
-| Synthetic trigger | `on-intersect-half="0px 0px -50% 0px: #nav.bump()"` | `IntersectionObserver` thresholds against the viewport; the phrase key is the `rootMargin`, and each `;` phrase observes its own margin |
+| Synthetic trigger | `on-intersect-enter="#link.setAttr({name: 'data-visible', value: ''})"` | `IntersectionObserver` against the viewport: `enter`/`leave` are presence transitions, `half`/`full` are threshold crossings in either direction; the phrase key is the `rootMargin`, and each `;` phrase observes its own margin |
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from (the trigger for `on-*`) |
 | Chain | `#pop.show().focus()` | `.show()` then `.focus()` on the same receiver, in order |
@@ -160,14 +160,14 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Delay | `#note.delay(500).reset()` | Pauses the chain where it sits; downstream links — even past `&&` — wait |
 | Selector | `modifiable-formula="sum('#list .amount')"` | Selectors appear only inside string arguments |
 
-`<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions. Triggers are three kinds: **native DOM events**, **implementation events**, and **synthetic triggers**. An implementation may declare its own events (`copy`, `response`, `request-error`); on the element that implements it, `on-<event>` fires only for the implementation's `ImplementationEvent`, never for a same-named DOM event. The synthetic names `on-intersect-enter` / `on-intersect-half` / `on-intersect-full` map to `IntersectionObserver` thresholds 0, 0.5 and 1 with the viewport as root, so they need no `implements` and never warn about a missing event; the phrase key is the observer's `rootMargin` (a CSS length/percentage string, or nothing for `0px`), and each `;` phrase observes its own margin.
+`<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions. Triggers are three kinds: **native DOM events**, **implementation events**, and **synthetic triggers**. An implementation may declare its own events (`copy`, `response`, `request-error`); on the element that implements it, `on-<event>` fires only for the implementation's `ImplementationEvent`, never for a same-named DOM event. The synthetic names `on-intersect-enter` / `on-intersect-leave` / `on-intersect-half` / `on-intersect-full` map to `IntersectionObserver` thresholds 0, 0, 0.5 and 1 with the viewport as root, so they need no `implements` and never warn about a missing event; the phrase key is the observer's `rootMargin` (a CSS length/percentage string, or nothing for `0px`), and each `;` phrase observes its own margin. `enter` fires when the element becomes intersecting — including the observer's initial report for an element visible at load — and `leave` fires when it stops; both observe threshold 0 and share one observer per margin. `half` and `full` fire on every threshold crossing, in either direction.
 
 ### Rules
 
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`. Class or attribute selectors are never receivers.
 3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form: `#a.show(false); #b.show(false)` is still two phrases.
-4. **Keys are legal only under `on-keydown` / `on-keyup` and under the three intersect triggers**, one per phrase. Two keyboard keys is two phrases: `enter: #f.send(); numpadenter: #f.send()`. Keyboard names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under `on-intersect-enter` / `on-intersect-half` / `on-intersect-full` the key is that phrase's `rootMargin` — a CSS length/percentage string that selects which crossing fires it (a keyless phrase matches `0px`).
+4. **Keys are legal only under `on-keydown` / `on-keyup` and under the four intersect triggers**, one per phrase. Two keyboard keys is two phrases: `enter: #f.send(); numpadenter: #f.send()`. Keyboard names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under `on-intersect-enter` / `on-intersect-leave` / `on-intersect-half` / `on-intersect-full` the key is that phrase's `rootMargin` — a CSS length/percentage string that selects which crossing fires it (a keyless phrase matches `0px`).
 5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** `#a.once().x().y()` runs both once ever; `#a.x().once().y()` runs `x` every time and `y` once. It never crosses `&&`: each receiver carries its own modifiers, so `#a.once().x() && #b.y()` runs `#b.y()` every time the first half runs. `debounce`/`throttle` are legal only right after the ref (a timer mid-chain is a parse error); `once` and `delay` may sit anywhere. `once()` must be followed by a call — `#a.x().once()` is a parse error, since a gate over nothing governs the next receiver instead. Modifiers stack and repeat freely — the parser has no duplicate check.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops if a verb's event is `preventDefault()`-ed, if the verb threw, or if no implementation owns the verb. `&&` runs the next unit only if the previous one completed; `||` runs it only if the previous one was stopped by a guard's `preventDefault()`. An error or unowned verb stops both — `||` fires only on a guard abort. One phrase is all `&&` or all `||`; mixing is a parse error. Guards are verbs owned by an implementation that knows the rule; the grammar has no general comparison, by design.
 7. **`once()` spends on passing through, not on completion.** The gate is about entry: the moment the walk reaches the `once` it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.
@@ -256,7 +256,7 @@ A trigger is live the moment it connects. `disconnectedCallback` runs the cleanu
 
 **Receiver side.** Read `implements`; for each name, check the implementation's `tags` admits `this.localName`, instantiate the factory with `(this, attrs)`, wire the implementation's `on*` methods as listeners on itself, forward lifecycle callbacks, and route `onInteraction(e)` to the **first implementation in `implements` order** that declares `e.verb` — after validating `e.arg` against the verb's signature.
 
-**Readiness.** Implementations attach synchronously in `connectedCallback`, so an interaction dispatched immediately after insertion is answered in the same task. An `implements` name the registry does not know yet is skipped, and the report is deferred one turn so the imports that follow can register it first; only a name still missing when the current script settles is reported with `console.error`. When it registers later, the registry dispatches `interactably:register` and every connected host re-runs its attach pass. Markup may therefore precede the imports. Config and state attributes are delivered through the class's `observedAttributes` snapshot plus one `MutationObserver` per element (an implementation can register after the host was defined), never for `on-*` — the three intersect attributes are the one exception, observed statically so the host can rebuild their observers when they change.
+**Readiness.** Implementations attach synchronously in `connectedCallback`, so an interaction dispatched immediately after insertion is answered in the same task. An `implements` name the registry does not know yet is skipped, and the report is deferred one turn so the imports that follow can register it first; only a name still missing when the current script settles is reported with `console.error`. When it registers later, the registry dispatches `interactably:register` and every connected host re-runs its attach pass. Markup may therefore precede the imports. Config and state attributes are delivered through the class's `observedAttributes` snapshot plus one `MutationObserver` per element (an implementation can register after the host was defined), never for `on-*` — the four intersect attributes are the one exception, observed statically so the host can rebuild their observers when they change.
 
 ### Four kinds of element
 
@@ -782,17 +782,26 @@ The core of `requestable` (config and swap details elided):
 <script type="module">
   import "interactably/dist/cdn/attributable.js";
   import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
-  for (const tag of ["section", "aside"]) defineInteractableHost(tag);
+  for (const tag of ["section", "a"]) defineInteractableHost(tag);
 </script>
 
-<!-- the first time each section is half in view, mark it seen -->
-<section is="interactable-section" id="intro" implements="attributable"
-         on-intersect-half="this.once().setAttr({name: 'data-seen', value: 'true'})">…</section>
-<section is="interactable-section" id="guide" implements="attributable"
-         on-intersect-half="0px 0px -50% 0px: this.once().setAttr({name: 'data-seen', value: 'true'})">…</section>
+<nav id="toc">
+  <a id="toc-intro" is="interactable-a" implements="attributable" href="#intro">Intro</a>
+  <a id="toc-guide" is="interactable-a" implements="attributable" href="#guide">Guide</a>
+</nav>
+
+<!-- each section lights its own link while it is on screen -->
+<section is="interactable-section" id="sec-intro"
+         on-intersect-enter="#toc-intro.setAttr({name: 'data-visible', value: ''})"
+         on-intersect-leave="#toc-intro.removeAttr('data-visible')">…</section>
+<section is="interactable-section" id="sec-guide"
+         on-intersect-enter="#toc-guide.setAttr({name: 'data-visible', value: ''})"
+         on-intersect-leave="#toc-guide.removeAttr('data-visible')">…</section>
 ```
 
-`on-intersect-half` fires every time the section crosses the viewport's halfway threshold, in either direction — there is no entering/leaving distinction — so `once()` is the natural partner: the first half-in-view crossing is the only one that acts. A margin key narrows the window: `0px 0px -50% 0px` waits until the section is past the viewport's middle line, and each `;` phrase under one attribute observes its own margin, so `on-intersect-half="0px 0px -50% 0px: #a.mark(); 0px: #b.mark()"` is two observers on one attribute.
+`on-intersect-enter` fires when a section becomes intersecting and `on-intersect-leave` when it stops, so each section sets and clears its own link's `data-visible`; several links may be lit at once when several sections are visible — a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. `on-intersect-half` and `on-intersect-full` remain crossing markers in either direction, where `once()` is the natural partner: the first half-in-view crossing is the only one that acts. A margin key narrows the window: `0px 0px -50% 0px` waits until the section is past the viewport's middle line, and each `;` phrase under one attribute observes its own margin, so `on-intersect-half="0px 0px -50% 0px: #a.mark(); 0px: #b.mark()"` is two observers on one attribute.
+
+**Note.** `on-intersect-enter` no longer fires on leaving. It fires only when the element becomes intersecting; anyone relying on the old bidirectional `enter` should use `on-intersect-half` with a `0px` margin or the new `on-intersect-leave`.
 
 ---
 
@@ -816,7 +825,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per `(threshold, rootMargin)` |
 | `normaliseRootMargin(margin?)` | Normalise and validate a CSS root-margin string (`undefined`/empty → `"0px"`; throws otherwise) |
-| `INTERSECT_THRESHOLDS` | The intersect name → threshold table (`intersect-enter` 0, `intersect-half` 0.5, `intersect-full` 1) |
+| `INTERSECT_THRESHOLDS` | The intersect name → threshold table (`intersect-enter` 0, `intersect-leave` 0, `intersect-half` 0.5, `intersect-full` 1) |
 | `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |

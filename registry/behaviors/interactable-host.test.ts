@@ -519,17 +519,23 @@ test("an intersect crossing runs only the phrases whose margin matches", async (
   assert.deepEqual(calls, ["alpha.go"], "the 50px phrase runs on the 50px observer");
 });
 
-test("an intersect trigger fires on every crossing, both directions", async () => {
+test("enter fires on entering and leave on leaving from one observer", async () => {
   const receiver = hostElement("div", { id: "both", implements: "alpha" });
-  const trigger = hostElement("section", { "on-intersect-enter": "#both.go()" });
+  const trigger = hostElement("section", {
+    "on-intersect-enter": "#both.go()",
+    "on-intersect-leave": "#both.go()",
+  });
   document.body.append(trigger, receiver);
   await flush();
 
-  const observer = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px")!;
+  const observers = FakeIntersectionObserver.instances.filter((o) => o.observed.includes(trigger));
+  assert.equal(observers.length, 1, "enter and leave share one observer");
+  const observer = observers[0]!;
   observer.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 1 }]);
   observer.trigger([{ target: trigger, isIntersecting: false, intersectionRatio: 0 }]);
   observer.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 1 }]);
-  assert.deepEqual(calls, ["alpha.go", "alpha.go", "alpha.go"]);
+  observer.trigger([{ target: trigger, isIntersecting: false, intersectionRatio: 0 }]);
+  assert.deepEqual(calls, ["alpha.go", "alpha.go", "alpha.go", "alpha.go"]);
 });
 
 test("once() is the only filter for intersect crossings", async () => {

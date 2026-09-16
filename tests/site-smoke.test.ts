@@ -378,9 +378,26 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(tabExplicit.getAttribute("aria-expanded"), "false", "exactly one tab reads expanded");
 });
 
-test("site: docs.html sidebar is a push current-section marker", async (t) => {
+test("site: docs.html sidebar lights each section's own link", async (t) => {
   const html = readFileSync(fileURLToPath(docsUrl), "utf8");
+  const css = readFileSync(fileURLToPath(new URL("styles.css", siteDir)), "utf8");
   const demo = readFileSync(fileURLToPath(demoUrl), "utf8");
+
+  assert.equal(/data-current/.test(css), false, "styles.css contains no data-current");
+  assert.equal(/this\.hash\(\)/.test(html), false, "docs.html contains no this.hash()");
+
+  const navMatch = /<nav id="toc"[\s\S]*?<\/nav>/.exec(html);
+  assert.ok(navMatch !== null, "docs.html has the sidebar nav");
+  const navIds = new Set([...navMatch[0].matchAll(/id="(toc-[a-z0-9-]+)"/g)].map((match) => match[1]!));
+  const enterTargets = [...html.matchAll(/<section [^>]*on-intersect-enter="#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
+  const leaveTargets = [...html.matchAll(/<section [^>]*on-intersect-leave="#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
+  assert.ok(navIds.size > 0, "the sidebar has nav links");
+  for (const target of enterTargets) {
+    assert.ok(navIds.has(target), `#${target} exists in the nav`);
+  }
+  assert.equal(new Set(enterTargets).size, navIds.size, "every nav link has an enter trigger");
+  assert.deepEqual([...leaveTargets].sort(), [...enterTargets].sort(), "every enter has a matching leave");
+
   const coreUrl = new URL("interactably-core.js", cdnDir);
   if (!existsSync(fileURLToPath(coreUrl))) {
     t.skip("dist not built; run pnpm build first");
@@ -422,7 +439,7 @@ test("site: docs.html sidebar is a push current-section marker", async (t) => {
     if (name === "auto-loader.js") autoLoader = bundle as typeof autoLoader;
   }
   const extraTags = [...demo.matchAll(EXTRA_HOST)].map((match) => match[1]!);
-  assert.ok(extraTags.includes("h2") && extraTags.includes("h3"), "demo.js defines the h2 and h3 hosts");
+  assert.ok(extraTags.includes("a"), "demo.js defines the anchor host");
   for (const tag of extraTags) core.defineInteractableHost(tag);
 
   assert.ok(autoLoader !== undefined, "demo.js installs the auto-loader");
@@ -433,25 +450,19 @@ test("site: docs.html sidebar is a push current-section marker", async (t) => {
 
   const toc = byId("toc");
   assert.equal(toc.tagName.toLowerCase(), "nav", "the sidebar nav has id toc");
-  assert.equal(toc.getAttribute("implements"), "attributable", "the sidebar nav implements attributable");
+  assert.equal(toc.hasAttribute("implements"), false, "the nav itself is not an implementation");
 
-  const heading = document.querySelector<HTMLElement>("h2#quick-start");
-  assert.ok(heading !== null, "the docs body has an h2#quick-start heading");
-  const phrase = heading.getAttribute("on-intersect-half") ?? "";
-  assert.ok(phrase.includes("#toc"), "a heading's on-intersect-half names #toc");
-
-  const observer = FakeIntersectionObserver.instances.find(
-    (instance) => instance.rootMargin === "0px 0px -50% 0px" && instance.observed.includes(heading),
-  );
-  assert.ok(observer !== undefined, "a heading observes the middle-line margin");
-  observer.trigger([{ target: heading }]);
+  const section = byId("sec-quick-start");
+  const link = byId("toc-quick-start");
+  assert.equal(link.getAttribute("is"), "interactable-a", "the nav link is an addressable host");
+  const observer = FakeIntersectionObserver.instances.find((instance) => instance.observed.includes(section));
+  assert.ok(observer !== undefined, "the quick-start section observes itself");
+  observer.trigger([{ target: section, isIntersecting: true, intersectionRatio: 1 }]);
   await flush();
-
-  assert.equal(
-    toc.getAttribute("data-current"),
-    "quick-start",
-    "crossing the heading sets #toc data-current to the heading's id",
-  );
+  assert.equal(link.hasAttribute("data-visible"), true, "enter lights the section's link");
+  observer.trigger([{ target: section, isIntersecting: false, intersectionRatio: 0 }]);
+  await flush();
+  assert.equal(link.hasAttribute("data-visible"), false, "leave clears the section's link");
 
   assert.deepEqual(warns, [], "the docs body loads without console.warn");
   assert.deepEqual(errors, [], "the docs body loads without console.error");

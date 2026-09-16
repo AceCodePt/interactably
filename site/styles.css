@@ -258,38 +258,7 @@ code, pre, kbd {
   background: var(--surface-3);
 }
 
-.sidebar nav[data-current="quick-start"] a[href="#quick-start"],
-.sidebar nav[data-current="trigger-grammar"] a[href="#trigger-grammar"],
-.sidebar nav[data-current="grammar"] a[href="#grammar"],
-.sidebar nav[data-current="constructs"] a[href="#constructs"],
-.sidebar nav[data-current="rules"] a[href="#rules"],
-.sidebar nav[data-current="reserved-names"] a[href="#reserved-names"],
-.sidebar nav[data-current="interaction-event"] a[href="#interaction-event"],
-.sidebar nav[data-current="hosts"] a[href="#hosts"],
-.sidebar nav[data-current="four-kinds"] a[href="#four-kinds"],
-.sidebar nav[data-current="reporting"] a[href="#reporting"],
-.sidebar nav[data-current="implementations"] a[href="#implementations"],
-.sidebar nav[data-current="prevent-default"] a[href="#prevent-default"],
-.sidebar nav[data-current="revealable"] a[href="#revealable"],
-.sidebar nav[data-current="storable"] a[href="#storable"],
-.sidebar nav[data-current="writing-an-implementation"] a[href="#writing-an-implementation"],
-.sidebar nav[data-current="signatures"] a[href="#signatures"],
-.sidebar nav[data-current="declare-only"] a[href="#declare-only"],
-.sidebar nav[data-current="attrs"] a[href="#attrs"],
-.sidebar nav[data-current="conventions"] a[href="#conventions"],
-.sidebar nav[data-current="state"] a[href="#state"],
-.sidebar nav[data-current="dynamics"] a[href="#dynamics"],
-.sidebar nav[data-current="parser-and-executor"] a[href="#parser-and-executor"],
-.sidebar nav[data-current="pipeline"] a[href="#pipeline"],
-.sidebar nav[data-current="parse-cache"] a[href="#parse-cache"],
-.sidebar nav[data-current="native-defaults"] a[href="#native-defaults"],
-.sidebar nav[data-current="asynchrony"] a[href="#asynchrony"],
-.sidebar nav[data-current="full-examples"] a[href="#full-examples"],
-.sidebar nav[data-current="api-reference"] a[href="#api-reference"],
-.sidebar nav[data-current="why-built"] a[href="#why-built"],
-.sidebar nav[data-current="when-not-to-use"] a[href="#when-not-to-use"],
-.sidebar nav[data-current="not-supported"] a[href="#not-supported"],
-.sidebar nav[data-current="appendices"] a[href="#appendices"] {
+.sidebar nav a[data-visible] {
   color: var(--fg);
   background: var(--surface-3);
   border-left-color: var(--accent);
@@ -329,7 +298,7 @@ code, pre, kbd {
   scroll-margin-top: 5rem;
 }
 
-.content h2:first-of-type {
+.content > section:first-child h2 {
   border-top: 0;
   margin-top: 0;
   padding-top: 0;
@@ -366,10 +335,6 @@ code, pre, kbd {
 .content li > strong:first-child {
   display: block;
   margin-bottom: 0.25rem;
-}
-
-.content > p:first-of-type {
-  margin-top: 0;
 }
 
 .doc-title {

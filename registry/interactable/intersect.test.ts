@@ -63,14 +63,24 @@ function make(type: string, value: string): HTMLElement {
   return el;
 }
 
-test("the three intersect names map to thresholds 0, 0.5, 1", () => {
+function makeBoth(): HTMLElement {
+  const el = document.createElement("div");
+  el.setAttribute("on-intersect-enter", "#a.show()");
+  el.setAttribute("on-intersect-leave", "#b.show()");
+  document.body.append(el);
+  return el;
+}
+
+test("the four intersect names map to thresholds 0, 0, 0.5, 1", () => {
   assert.equal(INTERSECT_THRESHOLDS["intersect-enter"], 0);
+  assert.equal(INTERSECT_THRESHOLDS["intersect-leave"], 0);
   assert.equal(INTERSECT_THRESHOLDS["intersect-half"], 0.5);
   assert.equal(INTERSECT_THRESHOLDS["intersect-full"], 1);
   assert.deepEqual([...INTERSECT_EVENT_NAMES].sort(), [
     "intersect-enter",
     "intersect-full",
     "intersect-half",
+    "intersect-leave",
   ]);
 });
 
@@ -130,16 +140,71 @@ test("the viewport is the root: no root element is passed", () => {
   assert.equal(FakeIntersectionObserver.instances[0]!.root, null);
 });
 
-test("every threshold crossing fires the event, both directions", () => {
-  const el = make("intersect-enter", "#a.show()");
+test("threshold crossings fire in both directions for half/full", () => {
+  const el = make("intersect-half", "#a.show()");
   const seen: string[] = [];
-  el.addEventListener("intersect-enter", (ev) => seen.push((ev as Event & { key?: string }).key ?? ""));
+  el.addEventListener("intersect-half", (ev) => seen.push((ev as Event & { key?: string }).key ?? ""));
+  syncIntersect(el);
+  const observer = FakeIntersectionObserver.instances[0]!;
+  observer.trigger([{ target: el, isIntersecting: true, intersectionRatio: 0.6 }]);
+  observer.trigger([{ target: el, isIntersecting: false, intersectionRatio: 0 }]);
+  observer.trigger([{ target: el, isIntersecting: true, intersectionRatio: 0.6 }]);
+  assert.deepEqual(seen, ["0px", "0px", "0px"]);
+});
+
+test("enter fires on the initial intersecting report; leave never fires on the initial report", () => {
+  const el = makeBoth();
+  const seen: string[] = [];
+  el.addEventListener("intersect-enter", () => seen.push("enter"));
+  el.addEventListener("intersect-leave", () => seen.push("leave"));
+  syncIntersect(el);
+  const observer = FakeIntersectionObserver.instances[0]!;
+  observer.trigger([{ target: el, isIntersecting: true, intersectionRatio: 1 }]);
+  assert.deepEqual(seen, ["enter"]);
+});
+
+test("an initial non-intersecting report fires nothing", () => {
+  const el = makeBoth();
+  const seen: string[] = [];
+  el.addEventListener("intersect-enter", () => seen.push("enter"));
+  el.addEventListener("intersect-leave", () => seen.push("leave"));
+  syncIntersect(el);
+  FakeIntersectionObserver.instances[0]!.trigger([{ target: el, isIntersecting: false, intersectionRatio: 0 }]);
+  assert.deepEqual(seen, []);
+});
+
+test("a true then false report fires enter then leave", () => {
+  const el = makeBoth();
+  const seen: string[] = [];
+  el.addEventListener("intersect-enter", () => seen.push("enter"));
+  el.addEventListener("intersect-leave", () => seen.push("leave"));
   syncIntersect(el);
   const observer = FakeIntersectionObserver.instances[0]!;
   observer.trigger([{ target: el, isIntersecting: true, intersectionRatio: 1 }]);
   observer.trigger([{ target: el, isIntersecting: false, intersectionRatio: 0 }]);
+  assert.deepEqual(seen, ["enter", "leave"]);
+});
+
+test("false then true then false fires enter then leave, with no leave off the first false", () => {
+  const el = makeBoth();
+  const seen: string[] = [];
+  el.addEventListener("intersect-enter", () => seen.push("enter"));
+  el.addEventListener("intersect-leave", () => seen.push("leave"));
+  syncIntersect(el);
+  const observer = FakeIntersectionObserver.instances[0]!;
+  observer.trigger([{ target: el, isIntersecting: false, intersectionRatio: 0 }]);
   observer.trigger([{ target: el, isIntersecting: true, intersectionRatio: 1 }]);
-  assert.deepEqual(seen, ["0px", "0px", "0px"]);
+  observer.trigger([{ target: el, isIntersecting: false, intersectionRatio: 0 }]);
+  assert.deepEqual(seen, ["enter", "leave"]);
+});
+
+test("enter and leave on one element share a single observer", () => {
+  const el = makeBoth();
+  syncIntersect(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 1);
+  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "0px");
+  assert.deepEqual(FakeIntersectionObserver.instances[0]!.thresholds, [0]);
+  assert.ok(FakeIntersectionObserver.instances[0]!.observed.includes(el));
 });
 
 test("syncIntersect is idempotent and teardownIntersect disconnects", () => {
@@ -176,6 +241,32 @@ test("the margin key filter routes each crossing to its own observer", () => {
   assert.deepEqual(verbs, ["show", "show"]);
 });
 
+test("on-intersect-leave observes each margin and keys its phrases like the others", () => {
+  const el = make("intersect-leave", "10px: #a.show(); 20px: #b.show()");
+  const verbs: string[] = [];
+  const a = document.createElement("div");
+  a.id = "a";
+  const b = document.createElement("div");
+  b.id = "b";
+  document.body.append(a, b);
+  wireReceiver(a, verbs);
+  wireReceiver(b, verbs);
+  wireTrigger(el, "intersect-leave");
+
+  syncIntersect(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 2);
+  const ten = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "10px")!;
+  const twenty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "20px")!;
+  assert.deepEqual(ten.thresholds, [0]);
+  assert.deepEqual(twenty.thresholds, [0]);
+  ten.trigger([{ target: el, isIntersecting: true, intersectionRatio: 1 }]);
+  ten.trigger([{ target: el, isIntersecting: false, intersectionRatio: 0 }]);
+  assert.deepEqual(verbs, ["show"], "only the 10px phrase runs on the 10px observer's leave");
+  twenty.trigger([{ target: el, isIntersecting: true, intersectionRatio: 1 }]);
+  twenty.trigger([{ target: el, isIntersecting: false, intersectionRatio: 0 }]);
+  assert.deepEqual(verbs, ["show", "show"], "the 20px phrase runs on the 20px observer's leave");
+});
+
 test("once() is the only phrase-level gate for intersect crossings", () => {
   const el = make("intersect-half", "#probe.once().show()");
   const probe = document.createElement("div");
@@ -193,7 +284,7 @@ test("once() is the only phrase-level gate for intersect crossings", () => {
   assert.deepEqual(verbs, ["show"], "once() gates the phrase across every later crossing");
 });
 
-test("there is no bare on-intersect: only the three names are synthetic", () => {
+test("there is no bare on-intersect: only the four names are synthetic", () => {
   assert.equal(INTERSECT_EVENT_NAMES.has("intersect"), false);
   const el = document.createElement("div");
   assert.equal(isImplementationEvent(el, "intersect"), false);

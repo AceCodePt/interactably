@@ -31,6 +31,7 @@ defineInteractableHost("div");
 defineInteractableHost("details");
 defineInteractableHost("dialog");
 defineInteractableHost("nav");
+defineInteractableHost("a");
 defineInteractableHost("h2");
 defineInteractableHost("h3");
 
