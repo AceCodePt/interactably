@@ -17,7 +17,6 @@ export const storable = defineImplementation(
     events: ["restore"],
   },
   (el, attrs) => {
-    const doc = el.ownerDocument;
     const input = el as HTMLInputElement;
     const checkable = el instanceof HTMLInputElement && (input.type === "radio" || input.type === "checkbox");
 
@@ -114,8 +113,6 @@ export const storable = defineImplementation(
       dispatchRestore();
     };
 
-    let pendingReady: (() => void) | null = null;
-
     return {
       save: (): void => {
         const key = storageKey();
@@ -147,22 +144,7 @@ export const storable = defineImplementation(
       },
       connectedCallback: (): void => {
         warnIfNoValue();
-        if (doc.readyState === "loading") {
-          pendingReady = (): void => {
-            pendingReady = null;
-            if (!el.isConnected) return;
-            restore();
-          };
-          doc.addEventListener("DOMContentLoaded", pendingReady, { once: true });
-          return;
-        }
         restore();
-      },
-      disconnectedCallback: (): void => {
-        if (pendingReady !== null) {
-          doc.removeEventListener("DOMContentLoaded", pendingReady);
-          pendingReady = null;
-        }
       },
     };
   },
