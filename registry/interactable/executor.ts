@@ -153,11 +153,27 @@ function walkUnit(state: WalkState, unit: Unit): ChainResult {
     return { outcome: "failed" };
   }
   if (!isHost(receiver)) {
-    logOnce(
-      source,
-      `${describeRef(unit.ref)} is not an interactable host; ` +
-        `add is="interactable-${(receiver as { localName?: unknown }).localName}"`,
-    );
+    const is = receiver.getAttribute("is");
+    const localName = (receiver as { localName?: unknown }).localName;
+    const tag = typeof localName === "string" && localName !== "" ? localName : "element";
+    if (is === null) {
+      logOnce(
+        source,
+        `${describeRef(unit.ref)} is not an interactable host; ` +
+          `add is="interactable-${tag}"`,
+      );
+    } else if (is === `interactable-${tag}`) {
+      logOnce(
+        source,
+        `${describeRef(unit.ref)} has is="interactable-${tag}" but no host is defined for <${tag}>; ` +
+          `call defineInteractableHost("${tag}") (or import the auto-loader)`,
+      );
+    } else {
+      logOnce(
+        source,
+        `${describeRef(unit.ref)} has is="${is}"; interactable hosts are is="interactable-<tag>"`,
+      );
+    }
     return { outcome: "failed" };
   }
 

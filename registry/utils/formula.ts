@@ -216,8 +216,11 @@ class Formula {
     while (this.pos < this.source.length && /[A-Za-z]/.test(this.source[this.pos]!)) this.pos++;
     const prop = this.source.slice(propStart, this.pos);
     const element = this.context.document.getElementById(id);
-    if (prop === "value") return element === null ? "" : readValue(element);
-    if (prop === "checked") return element === null ? false : (element as unknown as { checked?: unknown }).checked === true;
+    if (element === null) {
+      throw new Error(`formula ${JSON.stringify(this.source)}: #${id} not found`);
+    }
+    if (prop === "value") return readValue(element);
+    if (prop === "checked") return (element as unknown as { checked?: unknown }).checked === true;
     throw new Error(`reference #${id} needs .value or .checked`);
   }
 

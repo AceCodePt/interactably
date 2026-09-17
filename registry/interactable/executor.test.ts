@@ -192,6 +192,36 @@ test("a non-host receiver is reported with the is= fix", (t) => {
   );
 });
 
+test("a non-host receiver with a matching is= but no host gets the define-host fix", (t) => {
+  const spy = t.mock.method(console, "error");
+  const plain = el("plain");
+  (plain as unknown as Record<PropertyKey, unknown>)[IS_HOST] = false;
+  plain.setAttribute("is", "interactable-div");
+
+  run(el(), "#plain.show()", new Event("click"));
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes(
+      '#plain has is="interactable-div" but no host is defined for <div>; call defineInteractableHost("div")',
+    ),
+  );
+});
+
+test("a non-host receiver with an unrelated is= value reports the interactable-<tag> convention", (t) => {
+  const spy = t.mock.method(console, "error");
+  const plain = el("plain");
+  (plain as unknown as Record<PropertyKey, unknown>)[IS_HOST] = false;
+  plain.setAttribute("is", "some-widget");
+
+  run(el(), "#plain.show()", new Event("click"));
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes(
+      '#plain has is="some-widget"; interactable hosts are is="interactable-<tag>"',
+    ),
+  );
+});
+
 test("a host no implementation handles reports the implements list", (t) => {
   const spy = t.mock.method(console, "error");
   const receiver = el("plain");

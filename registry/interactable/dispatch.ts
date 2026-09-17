@@ -1,5 +1,6 @@
 import { isHost } from "@interactable/host.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
+import { describeElement } from "@interactable/describe-element.ts";
 
 export interface DispatchInteractionOptions {
   source?: Element;
@@ -25,17 +26,11 @@ export function dispatchInteraction(
   });
   el.dispatchEvent(event);
   if (!event.handled) {
-    throw new Error(`no implementation on <${describe(el)}> handles ${verb}()`);
+    const implementsValue = el.getAttribute("implements");
+    const implementsSuffix =
+      implementsValue !== null && implementsValue !== "" ? ` implements="${implementsValue}"` : "";
+    throw new Error(`no implementation on <${describeElement(el)}${implementsSuffix}> handles ${verb}()`);
   }
   if (event.error !== undefined) throw event.error;
   return event.result;
-}
-
-function describe(el: Element): string {
-  const id = (el as { id?: unknown }).id;
-  const base = typeof id === "string" && id !== "" ? `${el.localName}#${id}` : el.localName;
-  const implementsValue = el.getAttribute("implements");
-  const implementsSuffix =
-    implementsValue !== null && implementsValue !== "" ? ` implements="${implementsValue}"` : "";
-  return `<${base}${implementsSuffix}>`;
 }

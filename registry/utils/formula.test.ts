@@ -36,9 +36,13 @@ test("#a.value is a number when the text parses, else a string; empty is the emp
   assert.equal(evaluateFormula("#empty.value").value, "");
 });
 
-test("a missing element referenced by .value is the empty string", () => {
-  const result = evaluateFormula("#ghost.value");
-  assert.equal(result.value, "");
+test("a missing element referenced by .value throws not-found", () => {
+  assert.throws(() => evaluateFormula("#ghost.value"), (err: unknown) => {
+    assert.ok(err instanceof Error);
+    assert.ok(err.message.includes("#ghost not found"), err.message);
+    assert.ok(!err.message.includes("(empty)"), err.message);
+    return true;
+  });
 });
 
 test("#a.checked is the element's checked boolean, false when there is none", () => {
@@ -186,7 +190,7 @@ test("an empty .value operand is an error marked (empty)", () => {
   });
 });
 
-test("an empty or missing .value is an empty-operand error under +, not a silent join", () => {
+test("an empty .value is an empty-operand error under +, not a silent join", () => {
   const a = document.createElement("input");
   a.id = "a";
   a.value = "";
@@ -195,7 +199,7 @@ test("an empty or missing .value is an empty-operand error under +, not a silent
   b.value = "3";
   document.body.append(a, b);
 
-  for (const source of ["#a.value + 1", "1 + #a.value + 3", "#a.value + #b.value", "#missing.value + 1"]) {
+  for (const source of ["#a.value + 1", "1 + #a.value + 3", "#a.value + #b.value"]) {
     assert.throws(() => evaluateFormula(source), (err: unknown) => {
       assert.ok(err instanceof FormulaError, `expected FormulaError for ${source}`);
       assert.ok(err.message.includes("(empty)"), err.message);
@@ -218,9 +222,36 @@ test("a literal string still forces a join, empty reference included", () => {
   assert.equal(evaluateFormula("'invoice-' + #slug.value + '.pdf'").value, "invoice-x.pdf");
 });
 
-test("a missing element reaches arithmetic as the empty string and errors, but joins fine", () => {
-  assert.throws(() => evaluateFormula("#gone.value * 2"), /\(empty\)/);
-  assert.equal(evaluateFormula("'' + #gone.value").value, "");
+test("a missing element is a not-found error for .value and .checked, even in a join", () => {
+  for (const source of ["#gone.value * 2", "#gone.value + 1", "'' + #gone.value", "#gone.checked"]) {
+    assert.throws(() => evaluateFormula(source), (err: unknown) => {
+      assert.ok(err instanceof Error, "expected an Error");
+      assert.ok(err.message.includes("#gone not found"), err.message);
+      assert.ok(!err.message.includes("(empty)"), err.message);
+      return true;
+    });
+  }
+});
+
+test("#typo.value + 1 and #typo.checked throw not-found, not the strict-arithmetic empty error", () => {
+  for (const source of ["#typo.value + 1", "#typo.checked"]) {
+    assert.throws(() => evaluateFormula(source), (err: unknown) => {
+      assert.ok(err instanceof Error, "expected an Error");
+      assert.ok(err.message.includes("formula"), err.message);
+      assert.ok(err.message.includes("#typo not found"), err.message);
+      assert.ok(!err.message.includes("(empty)"), err.message);
+      return true;
+    });
+  }
+});
+
+test("an existing element's value still reads and arithmetics", () => {
+  const present = document.createElement("input");
+  present.id = "present";
+  present.value = "2";
+  document.body.appendChild(present);
+
+  assert.equal(evaluateFormula("#present.value + 1").value, 3);
 });
 
 test("numeric functions require number arguments", () => {
