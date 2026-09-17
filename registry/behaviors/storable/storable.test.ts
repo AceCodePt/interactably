@@ -15,7 +15,6 @@ before(async () => {
   dom = setupJsdom();
   setReadyState("complete");
   await import("@behaviors/storable/storable.ts");
-  await import("@behaviors/revealable/revealable.ts");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
   ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
   defineInteractableHost("input");
@@ -170,25 +169,6 @@ test("three buttons sharing storable-key: the last save() wins", async () => {
   assert.equal(localStorage.getItem("interactable:pm"), "pnpm");
   b3.click();
   assert.equal(localStorage.getItem("interactable:pm"), "bun", "the last clicked button's value wins");
-});
-
-test("on-restore on a matching button opens its revealable panel after DOMContentLoaded", async () => {
-  setReadyState("loading");
-  localStorage.setItem("interactable:pm", "pnpm");
-  const panel = document.createElement("div", { is: "interactable-div" }) as HTMLDivElement;
-  panel.id = "p";
-  panel.setAttribute("implements", "revealable");
-  panel.setAttribute("hidden", "");
-  const btn = hostElement<HTMLButtonElement>("button", {
-    "storable-key": "pm",
-    "storable-value": "pnpm",
-    "on-restore": "#p.show()",
-  });
-  document.body.append(panel, btn);
-  assert.equal(panel.hidden, true, "restore waits while the document is still parsing");
-  document.dispatchEvent(new Event("DOMContentLoaded"));
-  await flush();
-  assert.equal(panel.hidden, false, "the on-restore phrase opens the panel");
 });
 
 test("a radio group of three restores exactly one restore on the stored radio", async () => {
@@ -393,24 +373,3 @@ test("authored checked is overridden by the stored value", async () => {
   assert.equal(el.checked, false, "the stored unchecked state overrides the authored checked attribute");
 });
 
-test("while readyState is loading, restore defers until DOMContentLoaded", async () => {
-  setReadyState("loading");
-  localStorage.setItem("interactable:draft", "saved");
-  const el = hostElement<HTMLInputElement>("input", { name: "draft", value: "initial" });
-  const seen = seenOf(el);
-  document.body.appendChild(el);
-  assert.equal(el.value, "initial", "restore waits while the document is still parsing");
-  document.dispatchEvent(new Event("DOMContentLoaded"));
-  assert.equal(el.value, "saved", "restore runs when the document finishes parsing");
-  assert.deepEqual(seen, ["restore"], "the deferred restore fires its restore");
-});
-
-test("the deferred restore skips when the element disconnects before DOMContentLoaded", async () => {
-  setReadyState("loading");
-  localStorage.setItem("interactable:draft", "saved");
-  const el = hostElement<HTMLInputElement>("input", { name: "draft" });
-  document.body.appendChild(el);
-  el.remove();
-  document.dispatchEvent(new Event("DOMContentLoaded"));
-  assert.equal(el.value, "", "a disconnected element is not restored");
-});

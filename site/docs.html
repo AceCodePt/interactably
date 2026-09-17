@@ -134,7 +134,9 @@
             </div>
             <p class="note">No <code class="inline-code">is=</code> anywhere: the auto-loader upgrades every element that has
               <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute, adding
-              <code class="inline-code">is="interactable-&lt;tag&gt;"</code> for you.</p>
+              <code class="inline-code">is="interactable-&lt;tag&gt;"</code> for you. A synchronous
+              <code class="inline-code">&lt;script&gt;</code> tag in <code class="inline-code">&lt;head&gt;</code> is fine because
+              connect-time work waits for the document.</p>
           </section>
 
           <section is="interactable-section" id="docs-quick-is" implements="revealable" class="tabpanel" hidden>

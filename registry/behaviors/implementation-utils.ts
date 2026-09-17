@@ -1,6 +1,7 @@
 import { matchesKey } from "@interactable/keys.ts";
 
 export interface ImplementationInstance {
+  // Runs once the document is parsed; #id references resolve.
   connectedCallback?(): void;
   disconnectedCallback?(): void;
   attributeChangedCallback?(name: string, oldValue: string | null, newValue: string | null): void;

@@ -109,6 +109,11 @@ before(async () => {
 
   defineImplementation("prevent-default", { verbs: {} }, () => ({}));
 
+  await import("@behaviors/modifiable/modifiable.ts");
+  await import("@behaviors/storable/storable.ts");
+  await import("@behaviors/revealable/revealable.ts");
+  setReadyState("complete");
+
   defineInteractableHost("button");
   defineInteractableHost("form");
   defineInteractableHost("section");
@@ -120,11 +125,18 @@ after(() => {
 
 beforeEach(() => {
   calls.length = 0;
+  setReadyState("complete");
+  localStorage.clear();
+  sessionStorage.clear();
   resetFakeIntersectionObserver();
 });
 
-function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+function setReadyState(state: DocumentReadyState): void {
+  Object.defineProperty(document, "readyState", { value: state, configurable: true });
+}
+
+function hostElement<T extends HTMLElement>(tag: string, attributes: Record<string, string>): T {
+  const el = document.createElement(tag, { is: `interactable-${tag}` }) as T;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
@@ -613,4 +625,102 @@ test("one registration refreshes each connected host once and skips disconnected
   }));
   assert.equal(refreshed.length, 49, "a disconnected host is not touched");
   assert.ok(!refreshed.includes(0), "the disconnected host's refresh is absent");
+});
+
+function seenOf(el: Element): string[] {
+  const seen: string[] = [];
+  el.addEventListener("change", () => seen.push("change"));
+  el.addEventListener("restore", () => seen.push("restore"));
+  return seen;
+}
+
+test("a modifiable connected before the document is parsed waits for its #id references", async (t) => {
+  const error = t.mock.method(console, "error");
+  setReadyState("loading");
+  const output = hostElement("output", {
+    id: "sum",
+    implements: "modifiable",
+    "modifiable-formula": "#a.value + 1",
+  });
+  document.body.appendChild(output);
+  assert.equal(error.mock.callCount(), 0, "no compute runs while #a is absent");
+  assert.equal(output.textContent, "", "the output is untouched while waiting");
+
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "1";
+  document.body.appendChild(a);
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+  assert.equal(error.mock.callCount(), 0, "the deferred compute resolves every reference");
+  assert.equal(output.textContent, "2", "the deferred compute reads #a");
+});
+
+test("connect-then-disconnect while pending runs nothing on DOMContentLoaded", async () => {
+  setReadyState("loading");
+  const receiver = hostElement("div", { id: "pending", implements: "stateful" });
+  document.body.appendChild(receiver);
+  receiver.remove();
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+  assert.ok(!calls.includes("stateful.connected"), "a disconnected host never runs its deferred connect");
+});
+
+test("connect-disconnect-reconnect while pending runs connectedCallback exactly once", async () => {
+  setReadyState("loading");
+  const receiver = hostElement("div", { id: "reconnect", implements: "stateful" });
+  document.body.appendChild(receiver);
+  receiver.remove();
+  document.body.appendChild(receiver);
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+  assert.equal(calls.filter((c) => c === "stateful.connected").length, 1);
+});
+
+test("an element connected when the document is ready runs connectedCallback synchronously", () => {
+  const receiver = hostElement("div", { id: "sync", implements: "stateful" });
+  document.body.appendChild(receiver);
+  assert.ok(calls.includes("stateful.connected"), "connectedCallback ran during append");
+});
+
+test("on-restore on a matching button opens its revealable panel after DOMContentLoaded", async () => {
+  setReadyState("loading");
+  localStorage.setItem("interactable:pm", "pnpm");
+  const panel = document.createElement("div", { is: "interactable-div" }) as HTMLDivElement;
+  panel.id = "p";
+  panel.setAttribute("implements", "revealable");
+  panel.setAttribute("hidden", "");
+  const btn = hostElement("button", {
+    implements: "storable",
+    "storable-key": "pm",
+    "storable-value": "pnpm",
+    "on-restore": "#p.show()",
+  });
+  document.body.append(panel, btn);
+  assert.equal(panel.hidden, true, "restore waits while the document is still parsing");
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+  assert.equal(panel.hidden, false, "the on-restore phrase opens the panel");
+});
+
+test("while readyState is loading, storable restore defers until DOMContentLoaded", async () => {
+  setReadyState("loading");
+  localStorage.setItem("interactable:draft", "saved");
+  const el = hostElement<HTMLInputElement>("input", { implements: "storable", name: "draft", value: "initial" });
+  const seen = seenOf(el);
+  document.body.appendChild(el);
+  assert.equal(el.value, "initial", "restore waits while the document is still parsing");
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  assert.equal(el.value, "saved", "restore runs when the document finishes parsing");
+  assert.deepEqual(seen, ["restore"], "the deferred restore fires its restore");
+});
+
+test("the deferred storable restore skips when the element disconnects before DOMContentLoaded", async () => {
+  setReadyState("loading");
+  localStorage.setItem("interactable:draft", "saved");
+  const el = hostElement<HTMLInputElement>("input", { implements: "storable", name: "draft" });
+  document.body.appendChild(el);
+  el.remove();
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  assert.equal(el.value, "", "a disconnected element is not restored");
 });

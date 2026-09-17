@@ -935,7 +935,7 @@ Input masks and format-as-you-type belong in a component library built on the sa
 
 Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `valueAsNumber` · dynamic `on-*` attribute *names* after connect · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1) · a CLI check that `is=` in markup matches the implementations' declared tags.
 
-`on-load`. Every trigger fires after the document is upgraded, so every `#id` resolves; a connect-time trigger is the one that couldn't make that promise. Author the initial state instead — `open`, `checked`, `revealable-open="true"`.
+`on-load`. Every trigger fires after the document is upgraded, so every `#id` resolves, and connect-time work such as modifiable's initial `compute()` waits for the document when the library is loaded synchronously; a connect-time trigger is the one that couldn't make that promise. Author the initial state instead — `open`, `checked`, `revealable-open="true"`.
 
 ---
 

@@ -43,21 +43,29 @@ export function defineInteractableHost(tag: Tag): void {
       _attributeObserver: MutationObserver | null = null;
       _pendingMissing = new Set<string>();
       _reportedMissing = new Set<string>();
+      _connectPending = false;
+      _readyHandler: (() => void) | null = null;
 
       override connectedCallback(): void {
         super.connectedCallback?.();
         this.wireTriggers();
         syncIntersect(this);
         this.wireAttributeObserver();
-        for (const implementation of this._implementations.values()) {
-          implementation.connectedCallback?.();
-          this.wireImplementationHandlers(implementation);
+        if (this.ownerDocument.readyState === "loading") {
+          this.deferConnect();
+        } else {
+          this.connectImplementations();
         }
         this.ensureImplementations();
         trackConnectedHost(this);
       }
 
       override disconnectedCallback(): void {
+        if (this._readyHandler !== null) {
+          this.ownerDocument.removeEventListener("DOMContentLoaded", this._readyHandler);
+          this._readyHandler = null;
+          this._connectPending = false;
+        }
         untrackConnectedHost(this);
         this._attributeObserver?.disconnect();
         this._attributeObserver = null;
@@ -77,6 +85,28 @@ export function defineInteractableHost(tag: Tag): void {
         }
         if (INTERSECT_ATTRIBUTES.includes(name)) syncIntersect(this);
         super.attributeChangedCallback?.(name, oldValue, newValue);
+      }
+
+      private deferConnect(): void {
+        if (this._connectPending) return;
+        this._connectPending = true;
+        const handler = (): void => {
+          this._readyHandler = null;
+          this._connectPending = false;
+          if (!this.isConnected) return;
+          this.connectImplementations();
+        };
+        this._readyHandler = handler;
+        this.ownerDocument.addEventListener("DOMContentLoaded", handler, { once: true });
+      }
+
+      private connectImplementations(): void {
+        // wireImplementationHandlers is deferred with connectedCallback: the only on<Event>
+        // handlers are paste/input/change/interaction, none of which can fire before DOMContentLoaded.
+        for (const implementation of this._implementations.values()) {
+          implementation.connectedCallback?.();
+          this.wireImplementationHandlers(implementation);
+        }
       }
 
       private wireAttributeObserver(): void {
@@ -185,8 +215,12 @@ export function defineInteractableHost(tag: Tag): void {
           try {
             const implementation = ensureImplementation(this, name, def);
             this._implementations.set(name, implementation);
-            implementation.connectedCallback?.();
-            this.wireImplementationHandlers(implementation);
+            if (this.ownerDocument.readyState === "loading") {
+              this.deferConnect();
+            } else {
+              implementation.connectedCallback?.();
+              this.wireImplementationHandlers(implementation);
+            }
           } catch (err) {
             console.error(`[Interactable] ${name} failed to attach on ${describeElement(this)}`, err);
           }
