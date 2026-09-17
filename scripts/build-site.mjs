@@ -3,6 +3,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHighlighter } from "shiki";
+import githubLight from "shiki/themes/github-light.mjs";
+import githubDark from "shiki/themes/github-dark.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const site = path.join(root, "site");
@@ -14,8 +16,23 @@ if (!existsSync(cdn)) {
   process.exit(1);
 }
 
+const COMMENT_LIGHT = "#59636e";
+const COMMENT_DARK = "#8b949e";
+
+function recolorComments(theme, foreground) {
+  const tokenColors = theme.tokenColors.map((token) => {
+    const scope = Array.isArray(token.scope) ? token.scope : token.scope ? [token.scope] : [];
+    if (!scope.includes("comment")) return token;
+    return { ...token, settings: { ...token.settings, foreground } };
+  });
+  return { ...theme, tokenColors };
+}
+
+const light = recolorComments(githubLight, COMMENT_LIGHT);
+const dark = recolorComments(githubDark, COMMENT_DARK);
+
 const highlighter = await createHighlighter({
-  themes: ["github-light", "github-dark"],
+  themes: [light, dark],
   langs: ["html", "typescript", "shellscript"],
 });
 
@@ -94,7 +111,7 @@ function highlightHtml(html) {
     const code = decodeEntities(codeInner(inner));
     const highlighted = highlighter.codeToHtml(code, {
       lang,
-      themes: { light: "github-light", dark: "github-dark" },
+      themes: { light, dark },
     });
     count += 1;
     return rebuildPre(highlighted, id, dataLang);
