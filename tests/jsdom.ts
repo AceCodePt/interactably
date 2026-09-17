@@ -27,6 +27,7 @@ const GLOBAL_KEYS = [
   "CustomEvent",
   "KeyboardEvent",
   "MouseEvent",
+  "InputEvent",
 ] as const;
 
 export function setupJsdom(html = "<!doctype html><html><body></body></html>"): JSDOM {

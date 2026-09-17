@@ -324,7 +324,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([below](#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script or restored by `storable` is sized on the next input |
 | `storable` | any | `save`, `load`, `clear` | `scope` (`local`/`session`), `key`, `value` | persist `storable-value ?? value` under `storable-key ?? name ?? id`; restores on connect and fires `restore` |
-| `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
+| `paste-transform` | input, textarea | — | `pattern`, `replace` | rewrite pasted text with a regex; fires `input` like a native paste |
 | `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
 | `hashable` | any | `hash` | — | writes `#<id>` into the location hash with `replaceState` (no history entry); no-op when already set, warns once without an id |

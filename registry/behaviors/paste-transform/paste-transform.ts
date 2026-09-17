@@ -3,40 +3,40 @@ import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 export const pasteTransform = defineImplementation("paste-transform", {
   tags: ["input", "textarea"],
   config: {
-    patterns: "string | undefined",
-    replaces: "string | undefined",
+    pattern: "string | undefined",
+    replace: "string | undefined",
   },
   verbs: {},
-}, (el, attrs) => ({
-  onPaste: (event: Event) => {
-    const clipboard = (event as ClipboardEvent).clipboardData;
-    if (!clipboard) return;
-    const pasted = clipboard.getData("text");
-    if (pasted === "") return;
-    const patterns = attrs.patterns;
-    const replaces = attrs.replaces;
-    if (patterns === undefined || replaces === undefined) return;
+}, (el, attrs) => {
+  const loggedInvalid: Set<string> = new Set();
+  return {
+    onPaste: (event: Event) => {
+      const clipboard = (event as ClipboardEvent).clipboardData;
+      if (!clipboard) return;
+      const pasted = clipboard.getData("text");
+      if (pasted === "") return;
+      const pattern = attrs.pattern;
+      const replace = attrs.replace;
+      if (pattern === undefined || replace === undefined) return;
 
-    let transformed = pasted;
-    let changed = false;
-    patterns.split(",").forEach((pattern, index) => {
-      const replacement = replaces.split(",")[index] ?? "";
+      let regex: RegExp;
       try {
-        const next = transformed.replace(new RegExp(pattern, "g"), replacement);
-        if (next !== transformed) {
-          transformed = next;
-          changed = true;
-        }
+        regex = new RegExp(pattern, "g");
       } catch {
-        console.error(`[Interactable] paste-transform invalid regex: ${pattern}`);
+        if (!loggedInvalid.has(pattern)) {
+          loggedInvalid.add(pattern);
+          console.error(`[Interactable] paste-transform invalid regex: ${pattern}`);
+        }
+        return;
       }
-    });
 
-    if (!changed) return;
-    event.preventDefault();
-    const start = el.selectionStart ?? el.value.length;
-    const end = el.selectionEnd ?? el.value.length;
-    el.setRangeText(transformed, start, end, "end");
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-  },
-}));
+      const transformed = pasted.replace(regex, replace);
+      if (transformed === pasted) return;
+      event.preventDefault();
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      el.setRangeText(transformed, start, end, "end");
+      el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertFromPaste", data: transformed }));
+    },
+  };
+});

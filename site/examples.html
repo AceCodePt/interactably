@@ -376,7 +376,7 @@ modifiable-formula="sum('#list .amount:valid')"
                     implements="auto-grow dirtyable storable paste-transform"
                     storable-key="interactably-demo-note" rows="2"
                     on-change="this.save()"
-                    paste-transform-patterns="\s+" paste-transform-replaces=" "
+paste-transform-pattern="\s+" paste-transform-replace=" "
                     placeholder="Type or paste some text&hellip;"></textarea>
           <div class="row">
             <button is="interactable-button" id="note-clean" type="button" on-click="#note.markClean()">Mark clean</button>
@@ -397,7 +397,7 @@ modifiable-formula="sum('#list .amount:valid')"
           implements="auto-grow dirtyable storable paste-transform"
           storable-key="interactably-demo-note" rows="2"
           on-change="this.save()"
-          paste-transform-patterns="\s+" paste-transform-replaces=" "
+          paste-transform-pattern="\s+" paste-transform-replace=" "
           placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;
 &lt;button is="interactable-button" on-click="#note.markClean()"&gt;Mark clean&lt;/button&gt;</code></pre>
         </div>
