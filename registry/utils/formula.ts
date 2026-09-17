@@ -1,4 +1,5 @@
 import { readValue } from "@behaviors/implementation-utils.ts";
+import { readMeasured } from "@interactable/measure.ts";
 
 export interface FormulaResult {
   value: number | string;
@@ -210,7 +211,7 @@ class Formula {
     const id = this.source.slice(start, this.pos);
     if (id === "") throw new Error("empty # reference");
     this.skipSpace();
-    if (this.source[this.pos] !== ".") throw new Error(`reference #${id} needs .value or .checked`);
+    if (this.source[this.pos] !== ".") throw new Error(`reference #${id} needs .value, .checked, .height or .width`);
     this.pos++;
     const propStart = this.pos;
     while (this.pos < this.source.length && /[A-Za-z]/.test(this.source[this.pos]!)) this.pos++;
@@ -221,7 +222,9 @@ class Formula {
     }
     if (prop === "value") return readValue(element);
     if (prop === "checked") return (element as unknown as { checked?: unknown }).checked === true;
-    throw new Error(`reference #${id} needs .value or .checked`);
+    if (prop === "height") return readMeasured(element, "height");
+    if (prop === "width") return readMeasured(element, "width");
+    throw new Error(`reference #${id} needs .value, .checked, .height or .width`);
   }
 
   private parseCall(): Value {

@@ -2,12 +2,18 @@ import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
+import {
+  FakeResizeObserver,
+  installFakeResizeObserver,
+  resetFakeResizeObserver,
+} from "@tests/resize-observer.ts";
 import { FormulaError, evaluateFormula } from "@utils/formula.ts";
 
 let dom: JSDOM;
 
 before(() => {
   dom = setupJsdom();
+  installFakeResizeObserver();
 });
 
 after(() => {
@@ -15,6 +21,7 @@ after(() => {
 });
 
 beforeEach(() => {
+  resetFakeResizeObserver();
   document.body.replaceChildren();
 });
 
@@ -68,9 +75,9 @@ test("a bare reference is a parse error naming the fix", () => {
   a.id = "a";
   document.body.appendChild(a);
 
-  assert.throws(() => evaluateFormula("#a"), /reference #a needs \.value or \.checked/);
-  assert.throws(() => evaluateFormula("#a + 1"), /needs \.value or \.checked/);
-  assert.throws(() => evaluateFormula("#a.textContent"), /needs \.value or \.checked/);
+  assert.throws(() => evaluateFormula("#a"), /needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => evaluateFormula("#a + 1"), /needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => evaluateFormula("#a.textContent"), /needs \.value, \.checked, \.height or \.width/);
 });
 
 test("+ joins when either side is a string and adds otherwise, left to right", () => {
@@ -374,4 +381,40 @@ test("a zero-valued reference divisor is a division error naming the reference",
     assert.ok(!err.message.includes("(literal)"), err.message);
     return true;
   });
+});
+
+test("#nav.height and #nav.width read the measured border-box size from the cache", () => {
+  const nav = document.createElement("header");
+  nav.id = "nav";
+  document.body.appendChild(nav);
+
+  assert.equal(evaluateFormula("#nav.height").value, 0, "before any report the fallback rect reads");
+
+  const observer = FakeResizeObserver.instances[0]!;
+  observer.trigger([{ target: nav, borderBoxSize: [{ blockSize: 74, inlineSize: 120 }] }]);
+  assert.equal(evaluateFormula("#nav.height").value, 74);
+  assert.equal(evaluateFormula("#nav.width").value, 120);
+  assert.equal(evaluateFormula("-#nav.height").value, -74, "a measured size arithmetic");
+
+  observer.trigger([{ target: nav, borderBoxSize: [{ blockSize: 80, inlineSize: 120 }] }]);
+  assert.equal(evaluateFormula("#nav.height").value, 80, "a later report refreshes the cache");
+});
+
+test("a .height/.width reference to a missing id throws not-found", () => {
+  for (const source of ["#ghost.height", "#ghost.width", "#ghost.height + 1"]) {
+    assert.throws(() => evaluateFormula(source), (err: unknown) => {
+      assert.ok(err instanceof Error, "expected an Error");
+      assert.ok(err.message.includes("#ghost not found"), err.message);
+      assert.ok(!err.message.includes("(empty)"), err.message);
+      return true;
+    });
+  }
+});
+
+test("an unknown reference property lists all four readable properties", () => {
+  const a = document.createElement("div");
+  a.id = "a";
+  document.body.appendChild(a);
+
+  assert.throws(() => evaluateFormula("#a.foo"), /needs \.value, \.checked, \.height or \.width/);
 });
