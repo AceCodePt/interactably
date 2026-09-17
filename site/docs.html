@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body data-page="docs">
-  <header class="topnav">
+  <header id="topnav" class="topnav">
     <div class="topnav-inner">
       <a class="brand" href="./" aria-label="Interactably home">
         <span class="brand-mark">&lt;/&gt;</span>
@@ -81,7 +81,7 @@
 
       <div class="content">
 
-        <section id="sec-quick-start" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-quick-start.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-quick-start.removeAttr('data-visible')">
+        <section id="sec-quick-start" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-quick-start.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-quick-start.removeAttr('data-visible')">
         <h2 id="quick-start">Quick start <a class="anchor" href="#quick-start">#</a></h2>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -207,7 +207,7 @@
         </div>
 
         </section>
-        <section id="sec-trigger-grammar" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-trigger-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-trigger-grammar.removeAttr('data-visible')">
+        <section id="sec-trigger-grammar" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-trigger-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-trigger-grammar.removeAttr('data-visible')">
         <h2 id="trigger-grammar">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
         <p>One attribute per interaction; the value is the phrase language.</p>
         <div class="codeblock">
@@ -230,7 +230,7 @@
         </div>
 
         </section>
-        <section id="sec-grammar" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-grammar.removeAttr('data-visible')">
+        <section id="sec-grammar" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-grammar.removeAttr('data-visible')">
         <h3 id="grammar">Grammar <a class="anchor" href="#grammar">#</a></h3>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -252,7 +252,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
 
         </section>
-        <section id="sec-constructs" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-constructs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-constructs.removeAttr('data-visible')">
+        <section id="sec-constructs" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-constructs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-constructs.removeAttr('data-visible')">
         <h3 id="constructs">Constructs <a class="anchor" href="#constructs">#</a></h3>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -260,7 +260,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
             <tbody>
               <tr><td>Trigger</td><td><code class="inline-code">on-click="#pop.show()"</code></td><td>On <code class="inline-code">click</code>, run the phrase</td></tr>
               <tr><td>Implementation event</td><td><code class="inline-code">on-copy="#flash.show()"</code></td><td>On a copyable element <code class="inline-code">on-copy</code> is copyable&rsquo;s event and the native clipboard event doesn&rsquo;t fire it. Continuations now share trigger-attribute <code class="inline-code">once</code>/<code class="inline-code">debounce</code> semantics.</td></tr>
-              <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect-enter="-74px 0px 0px 0px: #link.setAttr({name: 'data-visible', value: ''})"</code></td><td><code class="inline-code">IntersectionObserver</code> against the viewport: <code class="inline-code">enter</code> / <code class="inline-code">leave</code> fire on the element entering and leaving the box, <code class="inline-code">full</code> on the element becoming entirely inside the box or not; the phrase key is the <code class="inline-code">rootMargin</code>, and each <code class="inline-code">;</code> phrase observes its own margin</td></tr>
+              <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect-enter="-#topnav.height 0px 0px 0px: #link.setAttr({name: 'data-visible', value: ''})"</code></td><td><code class="inline-code">IntersectionObserver</code> against the viewport: <code class="inline-code">enter</code> / <code class="inline-code">leave</code> fire on the element entering and leaving the box, <code class="inline-code">full</code> on the element becoming entirely inside the box or not; the phrase key is the <code class="inline-code">rootMargin</code>, and each <code class="inline-code">;</code> phrase observes its own margin</td></tr>
               <tr><td>Receiver</td><td><code class="inline-code">#pop.show()</code></td><td>Send verb <code class="inline-code">show()</code> to the element with <code class="inline-code">id="pop"</code></td></tr>
               <tr><td>Self</td><td><code class="inline-code">this.reset()</code></td><td>The element the phrase was read from (the trigger for <code class="inline-code">on-*</code>)</td></tr>
               <tr><td>Chain</td><td><code class="inline-code">#pop.show().focus()</code></td><td><code class="inline-code">.show()</code> then <code class="inline-code">.focus()</code> on the same receiver, in order</td></tr>
@@ -319,7 +319,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           grammar, the same key twice is simply two phrases (<code class="inline-code">escape: this.reset(); escape: #other.show()</code>), and both run.</p>
 
         </section>
-        <section id="sec-rules" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-rules.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-rules.removeAttr('data-visible')">
+        <section id="sec-rules" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-rules.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-rules.removeAttr('data-visible')">
         <h3 id="rules">Rules <a class="anchor" href="#rules">#</a></h3>
         <ol>
           <li><strong>Parens are mandatory.</strong> <code class="inline-code">#pop.show</code> is a CSS selector; <code class="inline-code">#pop.show()</code> is a call.</li>
@@ -337,12 +337,12 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </ol>
 
         </section>
-        <section id="sec-reserved-names" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-reserved-names.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-reserved-names.removeAttr('data-visible')">
+        <section id="sec-reserved-names" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-reserved-names.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-reserved-names.removeAttr('data-visible')">
         <h3 id="reserved-names">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
         <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
 
         </section>
-        <section id="sec-formula" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-formula.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-formula.removeAttr('data-visible')">
+        <section id="sec-formula" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-formula.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-formula.removeAttr('data-visible')">
         <h3 id="formula">The formula <a class="anchor" href="#formula">#</a></h3>
         <p><code class="inline-code">modifiable-formula</code> is the second grammar an author meets on the same page as the trigger DSL, and it spells references the same way: the property is explicit, nothing is guessed from the tag.</p>
         <div class="codeblock">
@@ -368,7 +368,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <p>Sharp edge: two numeric-looking text inputs <em>add</em> — <code class="inline-code">#zip1.value + #zip2.value</code> sums them. Force a join with a literal on the left: <code class="inline-code">'' + #zip1.value + #zip2.value</code>.</p>
 
         </section>
-        <section id="sec-interaction-event" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-interaction-event.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-interaction-event.removeAttr('data-visible')">
+        <section id="sec-interaction-event" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-interaction-event.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-interaction-event.removeAttr('data-visible')">
         <h2 id="interaction-event">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
         <p>The host wraps every verb call in its own event, dispatched at the receiver:</p>
         <div class="codeblock">
@@ -399,7 +399,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </ul>
 
         </section>
-        <section id="sec-hosts" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-hosts.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-hosts.removeAttr('data-visible')">
+        <section id="sec-hosts" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-hosts.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-hosts.removeAttr('data-visible')">
         <h2 id="hosts">Hosts <a class="anchor" href="#hosts">#</a></h2>
         <p>
           One customized built-in per tag, defined with <a href="https://github.com/AceCodePt/auto-wc">auto-wc</a> via
@@ -452,7 +452,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </p>
 
         </section>
-        <section id="sec-four-kinds" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-four-kinds.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-four-kinds.removeAttr('data-visible')">
+        <section id="sec-four-kinds" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-four-kinds.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-four-kinds.removeAttr('data-visible')">
         <h3 id="four-kinds">Four kinds of element <a class="anchor" href="#four-kinds">#</a></h3>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -468,7 +468,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <p>The fourth kind is why <code class="inline-code">this</code> exists: <code class="inline-code">on-click="this.remove()"</code> works on every row cloned from a template, with no generated ids.</p>
 
         </section>
-        <section id="sec-reporting" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-reporting.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-reporting.removeAttr('data-visible')">
+        <section id="sec-reporting" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-reporting.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-reporting.removeAttr('data-visible')">
         <h3 id="reporting">Reporting <a class="anchor" href="#reporting">#</a></h3>
         <p>The host and executor report through <code class="inline-code">console.error</code> / <code class="inline-code">console.warn</code>; they do not throw (host methods run on the browser&rsquo;s stack, which owns their exceptions). <code class="inline-code">throw</code> is reserved for <code class="inline-code">defineImplementation</code> and the registry, where the exception reaches the developer who wrote the call.</p>
         <ul>
@@ -477,7 +477,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </ul>
 
         </section>
-        <section id="sec-implementations" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-implementations.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-implementations.removeAttr('data-visible')">
+        <section id="sec-implementations" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-implementations.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-implementations.removeAttr('data-visible')">
         <h2 id="implementations">The shipped implementations <a class="anchor" href="#implementations">#</a></h2>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -505,7 +505,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
 
         </section>
-        <section id="sec-prevent-default" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-prevent-default.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-prevent-default.removeAttr('data-visible')">
+        <section id="sec-prevent-default" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-prevent-default.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-prevent-default.removeAttr('data-visible')">
         <h3 id="prevent-default">prevent-default and no-propagate <a class="anchor" href="#prevent-default">#</a></h3>
         <p>
           The executor never calls <code class="inline-code">preventDefault()</code> or <code class="inline-code">stopPropagation()</code>
@@ -554,7 +554,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <p><code class="inline-code">no-propagate</code> is its twin: <code class="inline-code">no-propagate-events</code>, default <code class="inline-code">"click"</code>, handler is <code class="inline-code">stopPropagation</code>. Both listen on the element, so both also receive events bubbling up from descendants — put them on the element whose keys or actions are meant, not an ancestor.</p>
 
         </section>
-        <section id="sec-revealable" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-revealable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-revealable.removeAttr('data-visible')">
+        <section id="sec-revealable" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-revealable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-revealable.removeAttr('data-visible')">
         <h3 id="revealable">Revealable <a class="anchor" href="#revealable">#</a></h3>
         <p><code class="inline-code">revealable</code> is the model generic implementation: it declares nothing the platform already holds, derives its strategy from the element at connect, and invents state only where nothing exists. Two verbs and one boolean: <code class="inline-code">show()</code> opens, <code class="inline-code">show(false)</code> closes, <code class="inline-code">toggle()</code> flips.</p>
         <div class="tbl-wrap">
@@ -576,13 +576,13 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <p><code class="inline-code">hashable</code> records a user-chosen state — a selected tab, an open panel — by writing <code class="inline-code">#&lt;id&gt;</code> into the location hash; a phrase calls the <code class="inline-code">hash()</code> verb on the element whose state the author wants in the URL. <code class="inline-code">hash()</code> uses <code class="inline-code">history.replaceState</code>, so the change is not an extra history entry and fires no <code class="inline-code">hashchange</code>; nothing reads the hash back — that is <code class="inline-code">:target</code> and the browser&rsquo;s own navigation. Scroll position is not that kind of state: scrolling is not a choice worth a URL, and the browser already restores scroll on reload. An element without an <code class="inline-code">id</code> warns once and does nothing.</p>
 
         </section>
-        <section id="sec-storable" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-storable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-storable.removeAttr('data-visible')">
+        <section id="sec-storable" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-storable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-storable.removeAttr('data-visible')">
         <h3 id="storable">Storable <a class="anchor" href="#storable">#</a></h3>
         <p><code class="inline-code">storable</code> persists an element&rsquo;s value to storage through three verbs: <code class="inline-code">save()</code>, <code class="inline-code">load()</code> and <code class="inline-code">clear()</code>. Nothing is stored unless a phrase calls <code class="inline-code">save()</code> &mdash; saving is an act you can see in the markup. The value is <code class="inline-code">storable-value ?? value</code> (an authored <code class="inline-code">storable-value</code> outranks the element&rsquo;s own <code class="inline-code">.value</code>), the storage key is <code class="inline-code">interactable:&lt;storable-key ?? name ?? id&gt;</code>, and the default scope is <code class="inline-code">local</code>. Same-name checkboxes store as a list. An element with none of <code class="inline-code">storable-key</code>, <code class="inline-code">name</code> and <code class="inline-code">id</code> warns once on connect and stores nothing &mdash; as does one whose value resolves to nothing (no <code class="inline-code">storable-value</code>, no <code class="inline-code">.value</code>).</p>
         <p>Restore waits for the document to finish parsing, so initial-load markup works regardless of element order &mdash; elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (<code class="inline-code">NotReadyError</code>), logged against that open-list item, not solved here. Restore is quiet: it applies or matches the stored value and fires the <code class="inline-code">restore</code> event, never a native <code class="inline-code">change</code>, so nothing you didn&rsquo;t write runs on a reload &mdash; <code class="inline-code">dirtyable</code>, which listened for <code class="inline-code">change</code>, no longer sees a restore. The hook is <code class="inline-code">on-restore="&hellip;"</code> on the storable element, fired once at most, only when a stored value was applied or matched, never when <code class="inline-code">save()</code> runs. An authored <code class="inline-code">storable-value</code> matches rather than writes: it fires <code class="inline-code">restore</code> only when it equals what was stored, and a different stored value changes nothing. The package-manager example is nine buttons that each say everything they do &mdash; <code class="inline-code">storable-key="pm"</code>, <code class="inline-code">storable-value="pnpm"</code>, an <code class="inline-code">on-click</code> naming the three panels it opens, the six it closes and <code class="inline-code">this.save()</code>, and the same <code class="inline-code">on-restore</code> without the save. <code class="inline-code">load()</code> re-reads the stored value as a user action and fires <code class="inline-code">restore</code> when it changes; <code class="inline-code">clear()</code> removes the key.</p>
 
         </section>
-        <section id="sec-writing-an-implementation" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-writing-an-implementation.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-writing-an-implementation.removeAttr('data-visible')">
+        <section id="sec-writing-an-implementation" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-writing-an-implementation.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-writing-an-implementation.removeAttr('data-visible')">
         <h2 id="writing-an-implementation">Writing an implementation <a class="anchor" href="#writing-an-implementation">#</a></h2>
         <p>One call declares the name, the tags it may attach to, the config and state it brings, its verb signatures, and the factory — and the factory is type-checked against the signatures.</p>
         <div class="codeblock">
@@ -648,7 +648,7 @@ export const modifiable = defineImplementation("modifiable", {
         </div>
 
         </section>
-        <section id="sec-signatures" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-signatures.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-signatures.removeAttr('data-visible')">
+        <section id="sec-signatures" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-signatures.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-signatures.removeAttr('data-visible')">
         <h3 id="signatures">Signatures <a class="anchor" href="#signatures">#</a></h3>
         <p>
           Every <code class="inline-code">config</code>, <code class="inline-code">state</code> and verb scalar signature is a
@@ -696,7 +696,7 @@ export const attributable = defineImplementation("attributable", {
         </div>
 
         </section>
-        <section id="sec-declare-only" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-declare-only.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-declare-only.removeAttr('data-visible')">
+        <section id="sec-declare-only" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-declare-only.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-declare-only.removeAttr('data-visible')">
         <h3 id="declare-only">Declare only what you invent <a class="anchor" href="#declare-only">#</a></h3>
         <p>
           An implementation never declares an attribute the platform already owns. <code class="inline-code">min</code>, <code class="inline-code">max</code>,
@@ -715,7 +715,7 @@ export const attributable = defineImplementation("attributable", {
         <p>Most implementations declare no <code class="inline-code">state</code>: <code class="inline-code">dirtyable</code> compares <code class="inline-code">el.value</code> with a baseline in its closure, <code class="inline-code">revealable</code> on a <code class="inline-code">&lt;dialog&gt;</code> reads <code class="inline-code">el.open</code>, <code class="inline-code">modifiable</code> writes <code class="inline-code">el.value</code>. A <code class="inline-code">state</code> entry is the exception, and the smell to check is whether the platform already has the thing under another name.</p>
 
         </section>
-        <section id="sec-attrs" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-attrs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-attrs.removeAttr('data-visible')">
+        <section id="sec-attrs" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-attrs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-attrs.removeAttr('data-visible')">
         <h3 id="attrs">attrs is a typed proxy <a class="anchor" href="#attrs">#</a></h3>
         <p>Built once per instance by <code class="inline-code">bindAttributes(el, name, def)</code>. Each getter reads the attribute live and validates it through the same compiled signature verbs use:</p>
         <ul>
@@ -725,7 +725,7 @@ export const attributable = defineImplementation("attributable", {
         </ul>
 
         </section>
-        <section id="sec-conventions" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-conventions.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-conventions.removeAttr('data-visible')">
+        <section id="sec-conventions" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-conventions.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-conventions.removeAttr('data-visible')">
         <h3 id="conventions">Conventions <a class="anchor" href="#conventions">#</a></h3>
         <ul>
           <li><strong><code class="inline-code">on*</code> methods are event handlers</strong> on the host element (auto-wc semantics; <code class="inline-code">auto-grow</code>&rsquo;s <code class="inline-code">onInput</code> still works). <strong>Every other method is a verb</strong> and must appear in <code class="inline-code">verbs</code>.</li>
@@ -737,7 +737,7 @@ export const attributable = defineImplementation("attributable", {
         </ul>
 
         </section>
-        <section id="sec-state" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-state.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-state.removeAttr('data-visible')">
+        <section id="sec-state" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-state.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-state.removeAttr('data-visible')">
         <h2 id="state">State: three tiers <a class="anchor" href="#state">#</a></h2>
         <p>A verb&rsquo;s job is to <strong>mutate state</strong>; the reaction (text, classes, ARIA, <code class="inline-code">hidden</code>) happens in <code class="inline-code">attributeChangedCallback</code> or in response to the platform&rsquo;s own events. Verbs do not render.</p>
         <div class="tbl-wrap">
@@ -796,7 +796,7 @@ export const attributable = defineImplementation("attributable", {
         <p>There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.</p>
 
         </section>
-        <section id="sec-dynamics" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-dynamics.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-dynamics.removeAttr('data-visible')">
+        <section id="sec-dynamics" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-dynamics.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-dynamics.removeAttr('data-visible')">
         <h2 id="dynamics">Dynamics <a class="anchor" href="#dynamics">#</a></h2>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -818,12 +818,12 @@ export const attributable = defineImplementation("attributable", {
         <p>Selector rule: <strong>selectors may appear in arguments, never as receivers.</strong> The dispatch graph stays 1:1 — every interaction goes to one element with one <code class="inline-code">implements</code>, so completion, grep (<code class="inline-code">#pop.</code> finds every writer) and error rules stay exact.</p>
 
         </section>
-        <section id="sec-parser-and-executor" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-parser-and-executor.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-parser-and-executor.removeAttr('data-visible')">
+        <section id="sec-parser-and-executor" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-parser-and-executor.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-parser-and-executor.removeAttr('data-visible')">
         <h2 id="parser-and-executor">Parser and executor <a class="anchor" href="#parser-and-executor">#</a></h2>
         <p>There is no engine. Two pure functions, both called from the host.</p>
 
         </section>
-        <section id="sec-pipeline" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-pipeline.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-pipeline.removeAttr('data-visible')">
+        <section id="sec-pipeline" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-pipeline.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-pipeline.removeAttr('data-visible')">
         <h3 id="pipeline">Pipeline <a class="anchor" href="#pipeline">#</a></h3>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -858,13 +858,13 @@ export const attributable = defineImplementation("attributable", {
         </ul>
 
         </section>
-        <section id="sec-parse-cache" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-parse-cache.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-parse-cache.removeAttr('data-visible')">
+        <section id="sec-parse-cache" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-parse-cache.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-parse-cache.removeAttr('data-visible')">
         <h3 id="parse-cache">Parse cache and resolution <a class="anchor" href="#parse-cache">#</a></h3>
         <p><code class="inline-code">parse</code> caches by attribute string; the cached value is an AST in which <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads are <strong>tokens</strong>, not elements or values. Resolution happens per fire, inside <code class="inline-code">runPhrases</code>; two identical rows share one parse and resolve to two different elements. <code class="inline-code">this</code> is resolved as <code class="inline-code">token === "this" ? source : document.getElementById(id)</code> — never rewritten into the attribute, never stamped into an id, never consulted from <code class="inline-code">event.currentTarget</code>.</p>
         <p><strong>Argument validation is the receiver&rsquo;s job, not the parser&rsquo;s.</strong> The parser knows every literal&rsquo;s kind from syntax (bare <code class="inline-code">5</code> is a number, <code class="inline-code">'5'</code> is a string, <code class="inline-code">#id</code> / <code class="inline-code">this</code> are elements). Scalars go through <code class="inline-code">parseValueAgainstDSL</code> against the slot&rsquo;s tsyntax string; resolved elements go through <code class="inline-code">instanceof</code> against the slot&rsquo;s constructor. The only runtime-typed values are reads, and they carry the platform&rsquo;s type: <code class="inline-code">this.value</code> is a string, <code class="inline-code">#qty.valueAsNumber</code> is a number, <code class="inline-code">#agree.checked</code> is a boolean. There is no coercion — <code class="inline-code">#total.add(this.value)</code> with <code class="inline-code">add: "number"</code> fails and the message says so.</p>
 
         </section>
-        <section id="sec-native-defaults" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-native-defaults.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-native-defaults.removeAttr('data-visible')">
+        <section id="sec-native-defaults" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-native-defaults.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-native-defaults.removeAttr('data-visible')">
         <h3 id="native-defaults">Native default actions and propagation <a class="anchor" href="#native-defaults">#</a></h3>
         <p>The executor does neither. Every <code class="inline-code">on-*</code> listener is passive; a phrase describes what happens, not what the browser is allowed to do.</p>
         <div class="codeblock">
@@ -883,7 +883,7 @@ export const attributable = defineImplementation("attributable", {
         <p><code class="inline-code">prevent-default</code> binds its own listeners with <code class="inline-code">passive: false</code>, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying <code class="inline-code">on-submit</code> on a <code class="inline-code">&lt;form&gt;</code> (or <code class="inline-code">on-click</code> on an <code class="inline-code">&lt;a href&gt;</code>, or <code class="inline-code">on-keydown</code> on a <code class="inline-code">&lt;button&gt;</code>) without <code class="inline-code">prevent-default</code> logs one <code class="inline-code">console.warn</code>. A pre-existing <code class="inline-code">defaultPrevented</code> does <strong>not</strong> suppress dispatch.</p>
 
         </section>
-        <section id="sec-asynchrony" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-asynchrony.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-asynchrony.removeAttr('data-visible')">
+        <section id="sec-asynchrony" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-asynchrony.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-asynchrony.removeAttr('data-visible')">
         <h2 id="asynchrony">Asynchrony <a class="anchor" href="#asynchrony">#</a></h2>
         <p><strong>Verbs are synchronous and chains never await.</strong> This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A <code class="inline-code">.</code> chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints &mdash; unless a <code class="inline-code">delay()</code> link splits it. Work that finishes later belongs to an implementation that owns it — today <code class="inline-code">requestable</code> — and continues by dispatching an <code class="inline-code">ImplementationEvent</code> the author&rsquo;s <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> attributes turn into a new synchronous chain.</p>
         <div class="codeblock">
@@ -921,7 +921,7 @@ export const attributable = defineImplementation("attributable", {
         <p><strong>Continuations run only if the element is still connected.</strong> A response that replaces the requestable element itself (<code class="inline-code">requestable-swap="outerHTML"</code>) disconnects its host; the <code class="inline-code">on-response</code> event is skipped. Cancellation is <code class="inline-code">AbortError</code>, which runs neither event and logs nothing.</p>
 
         </section>
-        <section id="sec-full-examples" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-full-examples.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-full-examples.removeAttr('data-visible')">
+        <section id="sec-full-examples" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-full-examples.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-full-examples.removeAttr('data-visible')">
         <h2 id="full-examples">Full examples <a class="anchor" href="#full-examples">#</a></h2>
         <p>The examples below are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
 
@@ -1008,16 +1008,16 @@ modifiable-formula="sum('#list .amount:valid')"
 
 &lt;!-- each section lights its own link while it is on screen --&gt;
 &lt;section is="interactable-section" id="sec-intro"
-         on-intersect-enter="-74px 0px 0px 0px: #toc-intro.setAttr({name: 'data-visible', value: ''})"
-         on-intersect-leave="-74px 0px 0px 0px: #toc-intro.removeAttr('data-visible')"&gt;&hellip;&lt;/section&gt;
+         on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-intro.setAttr({name: 'data-visible', value: ''})"
+         on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-intro.removeAttr('data-visible')"&gt;&hellip;&lt;/section&gt;
 &lt;section is="interactable-section" id="sec-guide"
-         on-intersect-enter="-74px 0px 0px 0px: #toc-guide.setAttr({name: 'data-visible', value: ''})"
-         on-intersect-leave="-74px 0px 0px 0px: #toc-guide.removeAttr('data-visible')"&gt;&hellip;&lt;/section&gt;</code></pre>
+         on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-guide.setAttr({name: 'data-visible', value: ''})"
+         on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-guide.removeAttr('data-visible')"&gt;&hellip;&lt;/section&gt;</code></pre>
         </div>
-        <p><code class="inline-code">on-intersect-enter</code> fires when a section becomes intersecting and <code class="inline-code">on-intersect-leave</code> when it stops, so each section sets and clears its own link&rsquo;s <code class="inline-code">data-visible</code>; several links may be lit at once when several sections are visible &mdash; a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. A margin key narrows the window: <code class="inline-code">on-intersect-enter="-50% 0px 0px 0px: #a.mark()"</code> fires when the section&rsquo;s leading edge reaches the viewport&rsquo;s vertical centre, and each <code class="inline-code">;</code> phrase under one attribute observes its own margin, so <code class="inline-code">on-intersect-enter="-50% 0px 0px 0px: #a.mark(); 0px: #b.mark()"</code> is two observers on one attribute. The live sidebar of this page is exactly this shape: each section lights its own nav link.</p>
+        <p><code class="inline-code">on-intersect-enter</code> fires when a section becomes intersecting and <code class="inline-code">on-intersect-leave</code> when it stops, so each section sets and clears its own link&rsquo;s <code class="inline-code">data-visible</code>; several links may be lit at once when several sections are visible &mdash; a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. A margin key narrows the window: <code class="inline-code">on-intersect-enter="-50% 0px 0px 0px: #a.mark()"</code> fires when the section&rsquo;s leading edge reaches the viewport&rsquo;s vertical centre, and each <code class="inline-code">;</code> phrase under one attribute observes its own margin, so <code class="inline-code">on-intersect-enter="-50% 0px 0px 0px: #a.mark(); 0px: #b.mark()"</code> is two observers on one attribute. The live sidebar of this page is exactly this shape, and the key reads the sticky header&rsquo;s height instead of restating it: the header carries <code class="inline-code">id="topnav"</code> and every section uses the same key <code class="inline-code">-#topnav.height 0px 0px 0px:</code> on both its phrases, so the box is shrunk by whatever the header actually measures, and a style change to the header rebuilds the observers on resize.</p>
 
         </section>
-        <section id="sec-api-reference" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-api-reference.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-api-reference.removeAttr('data-visible')">
+        <section id="sec-api-reference" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-api-reference.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-api-reference.removeAttr('data-visible')">
         <h2 id="api-reference">API reference <a class="anchor" href="#api-reference">#</a></h2>
         <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset). <code class="inline-code">installAutoLoader</code> ships in the full package and as <code class="inline-code">interactably/dist/cdn/auto-loader.js</code>.</p>
         <div class="tbl-wrap">
@@ -1038,6 +1038,7 @@ modifiable-formula="sum('#list .amount:valid')"
               <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
               <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s <code class="inline-code">IntersectionObserver</code>s, one per <code class="inline-code">rootMargin</code></td></tr>
               <tr><td><code class="inline-code">normaliseRootMargin(margin?)</code></td><td>Normalise and validate a CSS root-margin string: <code class="inline-code">px</code>/<code class="inline-code">%</code> lengths or <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code> references, 1&ndash;4 tokens (<code class="inline-code">undefined</code>/empty &rarr; <code class="inline-code">"0px"</code>; throws otherwise)</td></tr>
+              <tr><td><code class="inline-code">readMeasured(el, dim)</code></td><td>The element&rsquo;s border-box <code class="inline-code">height</code>/<code class="inline-code">width</code> in CSS pixels as of the last layout the browser reported &mdash; the cache behind <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code></td></tr>
               <tr><td><code class="inline-code">INTERSECT_EVENT_NAMES</code></td><td>The synthetic intersect names (<code class="inline-code">intersect-enter</code>, <code class="inline-code">intersect-leave</code>, <code class="inline-code">intersect-full</code>)</td></tr>
               <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive) used by keys and event lists</td></tr>
               <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
@@ -1051,7 +1052,7 @@ modifiable-formula="sum('#list .amount:valid')"
         </div>
 
         </section>
-        <section id="sec-why-built" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-why-built.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-why-built.removeAttr('data-visible')">
+        <section id="sec-why-built" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-why-built.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-why-built.removeAttr('data-visible')">
         <h2 id="why-built">Why it is built this way <a class="anchor" href="#why-built">#</a></h2>
         <p>The short versions of the decisions behind the design.</p>
         <ul>
@@ -1078,7 +1079,7 @@ modifiable-formula="sum('#list .amount:valid')"
         </ul>
 
         </section>
-        <section id="sec-when-not-to-use" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-when-not-to-use.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-when-not-to-use.removeAttr('data-visible')">
+        <section id="sec-when-not-to-use" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-when-not-to-use.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-when-not-to-use.removeAttr('data-visible')">
         <h2 id="when-not-to-use">When not to use this library <a class="anchor" href="#when-not-to-use">#</a></h2>
         <p><strong>This is a push system, not a pull one.</strong> An event on a trigger pushes a verb onto a named receiver, the DOM changes once, and the interaction is over &mdash; there is no subscription, no reactivity, and no derived state. Nothing watches a value and re-runs phrases when it changes.</p>
         <p>The tabs example is the honest boundary case. Each button&rsquo;s <code class="inline-code">on-click</code> pushes <code class="inline-code">show()</code> onto its panels, and the six it closes; &ldquo;which tab is visible&rdquo; is never stored &mdash; every switch rewrites the panels&rsquo; visibility by hand. Adding a fourth section means editing every phrase, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.</p>
@@ -1086,13 +1087,13 @@ modifiable-formula="sum('#list .amount:valid')"
         <p>Input masks and format-as-you-type belong in a component library built on the same <code class="inline-code">is=</code> hosts: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw <code class="inline-code">&lt;input&gt;</code> pair, which needs markup of its own to fake. <code class="inline-code">formattable</code> is the whole declarative share &mdash; display elements only, formatted on connect and on each library write.</p>
 
         </section>
-        <section id="sec-not-supported" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-not-supported.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-not-supported.removeAttr('data-visible')">
+        <section id="sec-not-supported" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-not-supported.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-not-supported.removeAttr('data-visible')">
         <h2 id="not-supported">Not supported <a class="anchor" href="#not-supported">#</a></h2>
         <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; dynamic <code class="inline-code">on-*</code> attribute <em>names</em> after connect &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
         <p><code class="inline-code">on-load</code>. Every trigger fires after the document is upgraded, so every <code class="inline-code">#id</code> resolves; a connect-time trigger is the one that couldn&rsquo;t make that promise. Author the initial state instead &mdash; <code class="inline-code">open</code>, <code class="inline-code">checked</code>, <code class="inline-code">revealable-open="true"</code>.</p>
 
         </section>
-        <section id="sec-appendices" is="interactable-section" on-intersect-enter="-74px 0px 0px 0px: #toc-appendices.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-74px 0px 0px 0px: #toc-appendices.removeAttr('data-visible')">
+        <section id="sec-appendices" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-appendices.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-appendices.removeAttr('data-visible')">
         <h2 id="appendices">Appendices <a class="anchor" href="#appendices">#</a></h2>
         <h3>Reference grammar</h3>
         <div class="codeblock">

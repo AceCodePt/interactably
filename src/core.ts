@@ -14,6 +14,7 @@ export {
   syncIntersect,
   teardownIntersect,
 } from "@interactable/intersect.ts";
+export { readMeasured } from "@interactable/measure.ts";
 export { dispatchInteraction } from "@interactable/dispatch.ts";
 export type { DispatchInteractionOptions } from "@interactable/dispatch.ts";
 export { InteractionEvent } from "@interactable/interaction-event.ts";

@@ -846,15 +846,16 @@ The core of `requestable` (config and swap details elided):
 </nav>
 
 <!-- each section lights its own link while it is on screen -->
+<header id="topnav">…sticky header…</header>
 <section is="interactable-section" id="sec-intro"
-         on-intersect-enter="#toc-intro.setAttr({name: 'data-visible', value: ''})"
-         on-intersect-leave="#toc-intro.removeAttr('data-visible')">…</section>
+         on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-intro.setAttr({name: 'data-visible', value: ''})"
+         on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-intro.removeAttr('data-visible')">…</section>
 <section is="interactable-section" id="sec-guide"
-         on-intersect-enter="#toc-guide.setAttr({name: 'data-visible', value: ''})"
-         on-intersect-leave="#toc-guide.removeAttr('data-visible')">…</section>
+         on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-guide.setAttr({name: 'data-visible', value: ''})"
+         on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-guide.removeAttr('data-visible')">…</section>
 ```
 
-`on-intersect-enter` fires when a section becomes intersecting and `on-intersect-leave` when it stops, so each section sets and clears its own link's `data-visible`; several links may be lit at once when several sections are visible — a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. A margin key narrows the window: `on-intersect-enter="-50% 0px 0px 0px: #a.mark()"` fires when the section's leading edge reaches the viewport's vertical centre, and each `;` phrase under one attribute observes its own margin, so `on-intersect-enter="-50% 0px 0px 0px: #a.mark(); 0px: #b.mark()"` is two observers on one attribute.
+`on-intersect-enter` fires when a section becomes intersecting and `on-intersect-leave` when it stops, so each section sets and clears its own link's `data-visible`; several links may be lit at once when several sections are visible — a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. A margin key narrows the window: `on-intersect-enter="-50% 0px 0px 0px: #a.mark()"` fires when the section's leading edge reaches the viewport's vertical centre, and each `;` phrase under one attribute observes its own margin, so `on-intersect-enter="-50% 0px 0px 0px: #a.mark(); 0px: #b.mark()"` is two observers on one attribute. A margin may also read a measured element: the key `-#topnav.height 0px 0px 0px:` shrinks the box by the sticky header's height, read from the header itself instead of restating the number, so a style change to the header rebuilds the observers on resize.
 
 **Note.** `on-intersect-enter` no longer fires on leaving. It fires only when the element becomes intersecting; use `on-intersect-leave` for the other direction.
 
@@ -880,6 +881,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per `rootMargin` |
 | `normaliseRootMargin(margin?)` | Normalise and validate a CSS root-margin string: `px`/`%` lengths or `#id.height`/`#id.width` references, 1–4 tokens (`undefined`/empty → `"0px"`; throws otherwise) |
+| `readMeasured(el, dim)` | The element's border-box `height`/`width` in CSS pixels as of the last layout the browser reported — the cache behind `#id.height`/`#id.width` |
 | `INTERSECT_EVENT_NAMES` | The synthetic intersect names (`intersect-enter`, `intersect-leave`, `intersect-full`) |
 | `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
