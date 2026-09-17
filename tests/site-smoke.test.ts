@@ -385,8 +385,8 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
   const navMatch = /<nav id="toc"[\s\S]*?<\/nav>/.exec(html);
   assert.ok(navMatch !== null, "docs.html has the sidebar nav");
   const navIds = new Set([...navMatch[0].matchAll(/id="(toc-[a-z0-9-]+)"/g)].map((match) => match[1]!));
-  const enterTargets = [...html.matchAll(/<section [^>]*on-intersect-enter="#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
-  const leaveTargets = [...html.matchAll(/<section [^>]*on-intersect-leave="#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
+  const enterTargets = [...html.matchAll(/<section [^>]*on-intersect-enter="[^"]*#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
+  const leaveTargets = [...html.matchAll(/<section [^>]*on-intersect-leave="[^"]*#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
   assert.ok(navIds.size > 0, "the sidebar has nav links");
   for (const target of enterTargets) {
     assert.ok(navIds.has(target), `#${target} exists in the nav`);
