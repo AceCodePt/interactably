@@ -132,12 +132,37 @@ function collectFields(el: HTMLElement, include: string | undefined): Array<[str
   }
   if (include !== undefined) {
     for (const node of document.querySelectorAll(include)) {
-      if (node instanceof HTMLInputElement || node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement) {
-        if (node.name !== "") fields.push([node.name, node.value]);
+      if (node instanceof HTMLFormElement) {
+        for (const [name, value] of new FormData(node)) fields.push([name, value]);
+      } else if (node instanceof HTMLInputElement) {
+        collectInputField(node, fields);
+      } else if (node instanceof HTMLSelectElement) {
+        if (node.disabled || node.name === "") continue;
+        for (const option of node.selectedOptions) fields.push([node.name, option.value]);
+      } else if (node instanceof HTMLTextAreaElement) {
+        if (node.disabled || node.name === "") continue;
+        fields.push([node.name, node.value]);
       }
     }
   }
   return fields;
+}
+
+function collectInputField(node: HTMLInputElement, fields: Array<[string, FormDataEntryValue]>): void {
+  if (node.disabled || node.name === "") return;
+  const type = node.type;
+  if (type === "checkbox" || type === "radio") {
+    if (node.checked) fields.push([node.name, node.value]);
+    return;
+  }
+  if (type === "file") {
+    if (node.files !== null) {
+      for (const file of node.files) fields.push([node.name, file]);
+    }
+    return;
+  }
+  if (type === "submit" || type === "button" || type === "reset" || type === "image") return;
+  fields.push([node.name, node.value]);
 }
 
 function applySwap(

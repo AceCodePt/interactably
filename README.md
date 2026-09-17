@@ -680,6 +680,8 @@ A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain whe
 
 The trigger's chain is one synchronous link: `send()` aborts the previous in-flight request for `#results`, starts a new one, and returns. When the response lands, `requestable` swaps its children and dispatches `new ImplementationEvent("response", { originalEvent: e.originalEvent })`; the element's own `on-response` attribute runs a second synchronous chain in which `this` is `#results`. The network gap sits between two chains and has a name and a place in the markup.
 
+`requestable-include` adds matched controls to the request collected as `FormData` would: disabled, unchecked and unselected controls are not sent, a multi-select contributes one entry per selected option, a file input one entry per file, and a matched `<form>` is spread whole. A matched control that already lives inside the requestable form itself is sent twice — the same as two `<input name=x>` in one form.
+
 What this rules out, and why it is the right trade:
 
 | Not possible | Because | Instead |

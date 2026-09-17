@@ -349,3 +349,60 @@ test("GET serialises requestable-include into the query string", async () => {
   interact(el, "send");
   assert.equal(fetchCalls[0]!.url, "/api/search?q=hello+world");
 });
+
+test("requestable-include mirrors FormData: unchecked, disabled and button controls are skipped", async () => {
+  const el = await mount({ "requestable-url": "/api/search", "requestable-include": "#wrap input" });
+  const wrap = document.createElement("div");
+  wrap.id = "wrap";
+  wrap.innerHTML = `
+    <input name="box" type="checkbox" value="yes" checked>
+    <input name="offbox" type="checkbox" value="no">
+    <input name="dead" value="x" disabled>
+    <input name="q" value="hello">
+    <input name="send" type="submit" value="go">`;
+  document.body.appendChild(wrap);
+
+  interact(el, "send");
+  assert.equal(fetchCalls[0]!.url, "/api/search?box=yes&q=hello");
+});
+
+test("requestable-include sends each selected option of a multiple select", async () => {
+  const el = await mount({ "requestable-url": "/api/search", "requestable-include": "#tags" });
+  const tags = document.createElement("select");
+  tags.id = "tags";
+  tags.name = "tags";
+  tags.multiple = true;
+  tags.innerHTML = '<option value="a" selected>A</option><option value="b" selected>B</option><option value="c">C</option>';
+  document.body.appendChild(tags);
+
+  interact(el, "send");
+  assert.equal(fetchCalls[0]!.url, "/api/search?tags=a&tags=b");
+});
+
+test("requestable-include sends only the checked radio of a group", async () => {
+  const el = await mount({ "requestable-url": "/api/search", "requestable-include": "#group input" });
+  const group = document.createElement("div");
+  group.id = "group";
+  group.innerHTML = `
+    <input type="radio" name="pick" value="1">
+    <input type="radio" name="pick" value="2" checked>
+    <input type="radio" name="pick" value="3">`;
+  document.body.appendChild(group);
+
+  interact(el, "send");
+  assert.equal(fetchCalls[0]!.url, "/api/search?pick=2");
+});
+
+test("requestable-include spreads a matched form's fields as FormData would", async () => {
+  const el = await mount({ "requestable-url": "/api/search", "requestable-include": "#extra" });
+  const extra = document.createElement("form");
+  extra.id = "extra";
+  extra.innerHTML = `
+    <input name="a" value="1">
+    <input name="b" type="checkbox" value="2" checked>
+    <input name="c" value="3" disabled>`;
+  document.body.appendChild(extra);
+
+  interact(el, "send");
+  assert.equal(fetchCalls[0]!.url, "/api/search?a=1&b=2");
+});

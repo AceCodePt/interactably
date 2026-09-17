@@ -175,7 +175,7 @@
         <div class="demo" style="padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)">
           <div class="row">
             <button is="interactable-button" type="button" on-click="#qty.inc(); #preview.compute()">+</button>
-            <input is="interactable-input" id="qty" implements="modifiable" type="number" value="1" min="0" max="10"
+            <input is="interactable-input" id="qty" implements="modifiable" aria-label="Qty" type="number" value="1" min="0" max="10"
                    on-input="#preview.set(this.value)">
             <output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
           </div>
@@ -900,6 +900,7 @@ export const attributable = defineImplementation("attributable", {
         modifiable-formula="count('#results &gt; li')"&gt;&lt;/output&gt;</code></pre>
         </div>
         <p>The trigger&rsquo;s chain is one synchronous link: <code class="inline-code">send()</code> aborts the previous in-flight request for <code class="inline-code">#results</code>, starts a new one, and returns. When the response lands, <code class="inline-code">requestable</code> swaps its children and dispatches <code class="inline-code">new ImplementationEvent("response", { originalEvent })</code>; the element&rsquo;s own <code class="inline-code">on-response</code> attribute runs a second synchronous chain in which <code class="inline-code">this</code> is <code class="inline-code">#results</code>. The network gap sits between two chains and has a name and a place in the markup.</p>
+        <p><code class="inline-code">requestable-include</code> adds matched controls to the request collected as <code class="inline-code">FormData</code> would: disabled, unchecked and unselected controls are not sent, a multi-select contributes one entry per selected option, a file input one entry per file, and a matched <code class="inline-code">&lt;form&gt;</code> is spread whole. A matched control that already lives inside the requestable form itself is sent twice &mdash; the same as two <code class="inline-code">&lt;input name=x&gt;</code> in one form.</p>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Not possible</th><th>Because</th><th>Instead</th></tr></thead>
