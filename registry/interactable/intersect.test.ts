@@ -8,6 +8,11 @@ import {
   resetFakeIntersectionObserver,
 } from "@tests/intersection-observer.ts";
 import type { FakeEntry, RectLike } from "@tests/intersection-observer.ts";
+import {
+  FakeResizeObserver,
+  installFakeResizeObserver,
+  resetFakeResizeObserver,
+} from "@tests/resize-observer.ts";
 
 let dom: JSDOM;
 let INTERSECT_EVENT_NAMES: ReadonlySet<string>;
@@ -23,6 +28,8 @@ const { IS_HOST } = await import("@interactable/host.ts");
 before(async () => {
   dom = setupJsdom();
   installFakeIntersectionObserver();
+  installFakeResizeObserver();
+  resetFakeResizeObserver();
   ({ INTERSECT_EVENT_NAMES } = await import("@interactable/intersect.ts"));
   ({ normaliseRootMargin } = await import("@interactable/intersect.ts"));
   ({ syncIntersect } = await import("@interactable/intersect.ts"));
@@ -454,4 +461,77 @@ test("there is no bare on-intersect: only the three names are synthetic", () => 
   const el = document.createElement("div");
   assert.equal(isImplementationEvent(el, "intersect"), false);
   assert.deepEqual(parse("10px 20px: #a.show()", "intersect"), []);
+});
+
+test("normaliseRootMargin accepts a #id.height/#id.width reference token", () => {
+  assert.equal(normaliseRootMargin("-#nav.height 0px 0px 0px"), "-#nav.height 0px 0px 0px");
+  assert.equal(normaliseRootMargin("#nav.width"), "#nav.width");
+  assert.equal(normaliseRootMargin("-#topnav.height 0px 0px 0px"), "-#topnav.height 0px 0px 0px");
+  assert.throws(() => normaliseRootMargin("-#topnav.height 0px 0px 0px 1px"), /at most 4 values/);
+});
+
+test("a #id.height margin resolves to the measured height and rebuilds on resize", () => {
+  const nav = document.createElement("header");
+  nav.id = "nav";
+  document.body.append(nav);
+  const el = make("intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
+  syncIntersect(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 1);
+  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "0px 0px 0px 0px", "unmeasured resolves to 0");
+  const resize = FakeResizeObserver.instances[0]!;
+  assert.ok(resize.observed.includes(nav), "the referenced element is observed");
+
+  resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 74, inlineSize: 100 }] }]);
+  assert.equal(FakeIntersectionObserver.instances.length, 2, "a resize rebuilt the observers");
+  assert.equal(FakeIntersectionObserver.instances[1]!.rootMargin, "-74px 0px 0px 0px");
+
+  resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 80, inlineSize: 100 }] }]);
+  assert.equal(FakeIntersectionObserver.instances.length, 3, "a different rounded height rebuilds");
+  assert.equal(FakeIntersectionObserver.instances[2]!.rootMargin, "-80px 0px 0px 0px");
+
+  resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 80.4, inlineSize: 100 }] }]);
+  assert.equal(FakeIntersectionObserver.instances.length, 3, "sub-pixel churn is a no-op");
+});
+
+test("phrases sharing a referenced margin share one observer", () => {
+  const nav = document.createElement("header");
+  nav.id = "nav";
+  document.body.append(nav);
+  const el = make("intersect-enter", "-#nav.height 0px 0px 0px: #a.show(); -#nav.height 0px 0px 0px: #b.show()");
+  syncIntersect(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 1);
+  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "0px 0px 0px 0px");
+});
+
+test("two sections referencing #nav share one observation; the last teardown unobserves", () => {
+  const nav = document.createElement("header");
+  nav.id = "nav";
+  document.body.append(nav);
+  const one = make("intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
+  const two = make("intersect-enter", "-#nav.height 0px 0px 0px: #b.show()");
+  syncIntersect(one);
+  syncIntersect(two);
+  const resize = FakeResizeObserver.instances[0]!;
+  assert.equal(
+    resize.observed.filter((target) => target === nav).length,
+    1,
+    "observe() is idempotent, so two referrers share one observation",
+  );
+
+  teardownIntersect(one);
+  assert.ok(resize.observed.includes(nav), "one referrer left: still observed");
+  teardownIntersect(two);
+  assert.equal(resize.observed.includes(nav), false, "last referrer torn down: unobserved");
+});
+
+test("a referenced margin whose id is missing drops the phrase and logs once", (t) => {
+  const spy = t.mock.method(console, "error");
+  const el = make("intersect-enter", "-#ghost.height 0px 0px 0px: #a.show(); 10px: #b.show()");
+  syncIntersect(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 1, "only the literal-margin phrase survives");
+  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "10px");
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("#ghost"), spy.mock.calls[0]!.arguments[0] as string);
+  syncIntersect(el);
+  assert.equal(spy.mock.callCount(), 1, "the report is logged once");
 });
