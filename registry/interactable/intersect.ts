@@ -48,11 +48,17 @@ interface ResolvedSpec {
   referenced: readonly Element[];
 }
 
+interface IntersectState {
+  wasOverlapping: boolean;
+  wasFull: boolean;
+}
+
 interface ManagedObserver {
   observer: IntersectionObserver;
   types: ReadonlySet<string>;
   resolvedRootMargin: string;
   refListeners: ReadonlyArray<{ ref: Element; listener: () => void }>;
+  state: IntersectState;
 }
 
 const observersByElement = new WeakMap<Element, Map<string, ManagedObserver>>();
@@ -65,23 +71,25 @@ export function syncIntersect(el: Element): void {
   teardownIntersect(el);
   const map = new Map<string, ManagedObserver>();
   for (const [key, spec] of desired) {
-    let wasOverlapping = false;
-    let wasFull = false;
+    const state: IntersectState = existing?.get(key)?.state ?? {
+      wasOverlapping: false,
+      wasFull: false,
+    };
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.target !== el) continue;
           const inter = entry.intersectionRect;
           const overlapping = inter !== null && inter.width > 0 && inter.height > 0;
-          const entered = !wasOverlapping && overlapping;
-          const left = wasOverlapping && !overlapping;
-          wasOverlapping = overlapping;
+          const entered = !state.wasOverlapping && overlapping;
+          const left = state.wasOverlapping && !overlapping;
+          state.wasOverlapping = overlapping;
           const box = entry.rootBounds;
           const elRect = entry.boundingClientRect;
           const isFull =
             box !== null && elRect !== null && elRect.top >= box.top && elRect.bottom <= box.bottom;
-          const fullChanged = isFull !== wasFull;
-          wasFull = isFull;
+          const fullChanged = isFull !== state.wasFull;
+          state.wasFull = isFull;
           for (const type of spec.types) {
             if (type === "intersect-enter" && !entered) continue;
             if (type === "intersect-leave" && !left) continue;
@@ -103,6 +111,7 @@ export function syncIntersect(el: Element): void {
       types: spec.types,
       resolvedRootMargin: spec.resolvedRootMargin,
       refListeners,
+      state,
     });
   }
   if (map.size > 0) observersByElement.set(el, map);

@@ -524,6 +524,112 @@ test("two sections referencing #nav share one observation; the last teardown uno
   assert.equal(resize.observed.includes(nav), false, "last referrer torn down: unobserved");
 });
 
+test("a rebuild keeps entered state: the rebuilt observer's first non-overlap leaves once", () => {
+  const nav = document.createElement("header");
+  nav.id = "nav";
+  document.body.append(nav);
+  const el = document.createElement("div");
+  el.setAttribute("on-intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
+  el.setAttribute("on-intersect-leave", "-#nav.height 0px 0px 0px: #b.show()");
+  document.body.append(el);
+  const seen: string[] = [];
+  el.addEventListener("intersect-enter", () => seen.push("enter"));
+  el.addEventListener("intersect-leave", () => seen.push("leave"));
+  syncIntersect(el);
+  const first = FakeIntersectionObserver.instances[0]!;
+  assert.equal(first.rootMargin, "0px 0px 0px 0px", "unmeasured resolves to 0");
+  first.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["enter"]);
+
+  const resize = FakeResizeObserver.instances[0]!;
+  resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 74, inlineSize: 100 }] }]);
+  assert.deepEqual(seen, ["enter"], "teardown fires no event; only the new report knows");
+  assert.equal(FakeIntersectionObserver.instances.length, 2, "the resize rebuilt the observer");
+  const rebuilt = FakeIntersectionObserver.instances[1]!;
+  assert.equal(rebuilt.rootMargin, "-74px 0px 0px 0px");
+
+  rebuilt.trigger([seenAt(el, 700, 100)]);
+  assert.deepEqual(seen, ["enter", "leave"], "the rebuilt observer's first report leaves once");
+  rebuilt.trigger([seenAt(el, 700, 100)]);
+  assert.deepEqual(seen, ["enter", "leave"], "and never repeats");
+});
+
+test("a rebuild while the element still overlaps emits no event", () => {
+  const nav = document.createElement("header");
+  nav.id = "nav";
+  document.body.append(nav);
+  const el = document.createElement("div");
+  el.setAttribute("on-intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
+  el.setAttribute("on-intersect-leave", "-#nav.height 0px 0px 0px: #b.show()");
+  document.body.append(el);
+  const seen: string[] = [];
+  el.addEventListener("intersect-enter", () => seen.push("enter"));
+  el.addEventListener("intersect-leave", () => seen.push("leave"));
+  syncIntersect(el);
+  FakeIntersectionObserver.instances[0]!.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["enter"]);
+
+  const resize = FakeResizeObserver.instances[0]!;
+  resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 74, inlineSize: 100 }] }]);
+  const rebuilt = FakeIntersectionObserver.instances[1]!;
+  rebuilt.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["enter"], "still overlapping: no leave and no second enter");
+});
+
+test("a rebuild preserves full state: a full that becomes false emits one full transition", () => {
+  const nav = document.createElement("header");
+  nav.id = "nav";
+  document.body.append(nav);
+  const el = document.createElement("div");
+  el.setAttribute("on-intersect-full", "-#nav.height 0px 0px 0px: #a.show()");
+  document.body.append(el);
+  const seen: string[] = [];
+  el.addEventListener("intersect-full", () => seen.push("full"));
+  syncIntersect(el);
+  FakeIntersectionObserver.instances[0]!.trigger([seenAt(el, 0, 100)]);
+  assert.deepEqual(seen, ["full"], "entirely inside: full becomes true");
+
+  const resize = FakeResizeObserver.instances[0]!;
+  resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 74, inlineSize: 100 }] }]);
+  const rebuilt = FakeIntersectionObserver.instances[1]!;
+  assert.equal(rebuilt.rootMargin, "-74px 0px 0px 0px");
+
+  rebuilt.trigger([seenAt(el, 300, 400)]);
+  assert.deepEqual(seen, ["full", "full"], "no longer full: exactly one transition");
+  rebuilt.trigger([seenAt(el, 300, 400)]);
+  assert.deepEqual(seen, ["full", "full"], "and no repeat");
+});
+
+test("a rebuild that adds a margin key keeps the survivor's state and starts the new key fresh", () => {
+  const nav = document.createElement("header");
+  nav.id = "nav";
+  document.body.append(nav);
+  const el = document.createElement("div");
+  el.setAttribute("on-intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
+  el.setAttribute("on-intersect-leave", "-#nav.height 0px 0px 0px: #b.show()");
+  document.body.append(el);
+  const seen: string[] = [];
+  el.addEventListener("intersect-enter", () => seen.push("enter"));
+  el.addEventListener("intersect-leave", () => seen.push("leave"));
+  syncIntersect(el);
+  FakeIntersectionObserver.instances[0]!.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["enter"]);
+
+  el.setAttribute("on-intersect-enter", "-#nav.height 0px 0px 0px: #a.show(); 20px: #c.show()");
+  syncIntersect(el);
+  const rebuilt = FakeIntersectionObserver.instances.slice(1);
+  assert.equal(rebuilt.length, 2, "both keys observe after the edit");
+  const survivor = rebuilt.find((o) => o.rootMargin === "0px 0px 0px 0px")!;
+  const added = rebuilt.find((o) => o.rootMargin === "20px")!;
+  assert.ok(survivor !== undefined && added !== undefined, "both keys observe after the edit");
+
+  survivor.trigger([seenAt(el, 700, 100)]);
+  assert.deepEqual(seen, ["enter", "leave"], "the surviving key remembered it had entered");
+
+  added.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["enter", "leave", "enter"], "the added key starts unentered");
+});
+
 test("a referenced margin whose id is missing drops the phrase and logs once", (t) => {
   const spy = t.mock.method(console, "error");
   const el = make("intersect-enter", "-#ghost.height 0px 0px 0px: #a.show(); 10px: #b.show()");
