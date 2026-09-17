@@ -51,11 +51,11 @@
       <article class="ref-card">
         <h3><code class="inline-code">dirtyable</code></h3>
         <p class="ref-tags">input &middot; textarea &middot; select &middot; output</p>
-        <p class="ref-desc">Toggles <code class="inline-code">.is-dirty</code> while <code class="inline-code">el.value</code> differs from the connect-time baseline.</p>
+        <p class="ref-desc">Fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">markClean</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">dirty-on</span><span class="verb-tag">events: dirty, clean</span></div>
       </article>
 
       <article class="ref-card">

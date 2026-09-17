@@ -486,7 +486,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
             <thead><tr><th>Implementation</th><th>Tags</th><th>Verbs</th><th>Config / state</th><th>What it does</th></tr></thead>
             <tbody>
               <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">inc</code>, <code class="inline-code">dec</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code>, <code class="inline-code">compute</code></td><td><code class="inline-code">step</code>, <code class="inline-code">formula</code>, <code class="inline-code">invalid-value</code></td><td>typed writes with clamping; evaluates a formula on <code class="inline-code">compute()</code> and on connect</td></tr>
-              <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td><code class="inline-code">markClean</code></td><td>&mdash;</td><td>toggles <code class="inline-code">.is-dirty</code> while <code class="inline-code">el.value</code> differs from the connect-time baseline</td></tr>
+              <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td><code class="inline-code">markClean</code></td><td><code class="inline-code">dirty-on</code>; events <code class="inline-code">dirty</code>, <code class="inline-code">clean</code></td><td>fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing</td></tr>
               <tr><td><code class="inline-code">formattable</code></td><td>output, span, div, td, p, li, dd, b, strong, em, small</td><td>&mdash;</td><td><code class="inline-code">format</code></td><td>renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write</td></tr>
               <tr><td><code class="inline-code">listable</code></td><td>ul, ol, tbody</td><td><code class="inline-code">removeRow</code>, <code class="inline-code">adopt</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">min-rows</code></td><td>row removal / template adoption / clear, keeping <code class="inline-code">min-rows</code></td></tr>
               <tr><td><code class="inline-code">requestable</code></td><td>any</td><td><code class="inline-code">send</code>, <code class="inline-code">abort</code></td><td><code class="inline-code">url</code>, <code class="inline-code">method</code>, <code class="inline-code">target</code>, <code class="inline-code">swap</code>, <code class="inline-code">include</code>, <code class="inline-code">concurrency</code> + <code class="inline-code">status</code> state; events <code class="inline-code">response</code>, <code class="inline-code">request-error</code></td><td>fetch, swap the response into the DOM, fire <code class="inline-code">response</code> / <code class="inline-code">request-error</code> events</td></tr>
@@ -581,7 +581,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <section id="sec-storable" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-storable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-storable.removeAttr('data-visible')">
         <h3 id="storable">Storable <a class="anchor" href="#storable">#</a></h3>
         <p><code class="inline-code">storable</code> persists an element&rsquo;s value to storage through three verbs: <code class="inline-code">save()</code>, <code class="inline-code">load()</code> and <code class="inline-code">clear()</code>. Nothing is stored unless a phrase calls <code class="inline-code">save()</code> &mdash; saving is an act you can see in the markup. The value is <code class="inline-code">storable-value ?? value</code> (an authored <code class="inline-code">storable-value</code> outranks the element&rsquo;s own <code class="inline-code">.value</code>), the storage key is <code class="inline-code">interactable:&lt;storable-key ?? name ?? id&gt;</code>, and the default scope is <code class="inline-code">local</code>. Same-name checkboxes store as a list. An element with none of <code class="inline-code">storable-key</code>, <code class="inline-code">name</code> and <code class="inline-code">id</code> warns once on connect and stores nothing &mdash; as does one whose value resolves to nothing (no <code class="inline-code">storable-value</code>, no <code class="inline-code">.value</code>).</p>
-        <p>Restore waits for the document to finish parsing, so initial-load markup works regardless of element order &mdash; elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (<code class="inline-code">NotReadyError</code>), logged against that open-list item, not solved here. Restore is quiet: it applies or matches the stored value and fires the <code class="inline-code">restore</code> event, never a native <code class="inline-code">change</code>, so nothing you didn&rsquo;t write runs on a reload &mdash; <code class="inline-code">dirtyable</code>, which listened for <code class="inline-code">change</code>, no longer sees a restore. The hook is <code class="inline-code">on-restore="&hellip;"</code> on the storable element, fired once at most, only when a stored value was applied or matched, never when <code class="inline-code">save()</code> runs. An authored <code class="inline-code">storable-value</code> matches rather than writes: it fires <code class="inline-code">restore</code> only when it equals what was stored, and a different stored value changes nothing. The package-manager example is nine buttons that each say everything they do &mdash; <code class="inline-code">storable-key="pm"</code>, <code class="inline-code">storable-value="pnpm"</code>, an <code class="inline-code">on-click</code> naming the three panels it opens, the six it closes and <code class="inline-code">this.save()</code>, and the same <code class="inline-code">on-restore</code> without the save. <code class="inline-code">load()</code> re-reads the stored value as a user action and fires <code class="inline-code">restore</code> when it changes; <code class="inline-code">clear()</code> removes the key.</p>
+        <p>Restore waits for the document to finish parsing, so initial-load markup works regardless of element order &mdash; elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (<code class="inline-code">NotReadyError</code>), logged against that open-list item, not solved here. Restore is quiet: it applies or matches the stored value and fires the <code class="inline-code">restore</code> event, never a native <code class="inline-code">change</code>, so nothing you didn&rsquo;t write runs on a reload &mdash; <code class="inline-code">dirtyable</code> subscribes to <code class="inline-code">restore</code> and re-evaluates, so a restore that writes a differing value flips the field dirty immediately; <code class="inline-code">on-restore="this.markClean()"</code> commits the restored value as the new clean baseline. The hook is <code class="inline-code">on-restore="&hellip;"</code> on the storable element, fired once at most, only when a stored value was applied or matched, never when <code class="inline-code">save()</code> runs. An authored <code class="inline-code">storable-value</code> matches rather than writes: it fires <code class="inline-code">restore</code> only when it equals what was stored, and a different stored value changes nothing. The package-manager example is nine buttons that each say everything they do &mdash; <code class="inline-code">storable-key="pm"</code>, <code class="inline-code">storable-value="pnpm"</code>, an <code class="inline-code">on-click</code> naming the three panels it opens, the six it closes and <code class="inline-code">this.save()</code>, and the same <code class="inline-code">on-restore</code> without the save. <code class="inline-code">load()</code> re-reads the stored value as a user action and fires <code class="inline-code">restore</code> when it changes; <code class="inline-code">clear()</code> removes the key.</p>
 
         </section>
         <section id="sec-writing-an-implementation" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-writing-an-implementation.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-writing-an-implementation.removeAttr('data-visible')">
@@ -714,7 +714,7 @@ export const attributable = defineImplementation("attributable", {
           <li><strong><code class="inline-code">config</code></strong> — authored input, read on the way in, never written by a verb. Unique by construction (<code class="inline-code">&lt;name&gt;-&lt;key&gt;</code>), so two implementations on one element cannot collide.</li>
           <li><strong><code class="inline-code">state</code></strong> — live information the implementation holds because the platform holds nothing for it. Stored as <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code>, read/write.</li>
         </ul>
-        <p>Most implementations declare no <code class="inline-code">state</code>: <code class="inline-code">dirtyable</code> compares <code class="inline-code">el.value</code> with a baseline in its closure, <code class="inline-code">revealable</code> on a <code class="inline-code">&lt;dialog&gt;</code> reads <code class="inline-code">el.open</code>, <code class="inline-code">modifiable</code> writes <code class="inline-code">el.value</code>. A <code class="inline-code">state</code> entry is the exception, and the smell to check is whether the platform already has the thing under another name.</p>
+        <p>Most implementations declare no <code class="inline-code">state</code>: <code class="inline-code">dirtyable</code>&rsquo;s closure holds one boolean, the last-reported dirtiness, and its baseline is the platform default &mdash; by element kind, <code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code> or <code class="inline-code">defaultSelected</code> (<code class="inline-code">defaultValue</code> is live, so a script writing the <code class="inline-code">value</code> attribute moves the baseline); <code class="inline-code">revealable</code> on a <code class="inline-code">&lt;dialog&gt;</code> reads <code class="inline-code">el.open</code>, <code class="inline-code">modifiable</code> writes <code class="inline-code">el.value</code>. A <code class="inline-code">state</code> entry is the exception, and the smell to check is whether the platform already has the thing under another name.</p>
 
         </section>
         <section id="sec-attrs" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-attrs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-attrs.removeAttr('data-visible')">
@@ -761,16 +761,42 @@ export const attributable = defineImplementation("attributable", {
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-dirtyable" data-lang="ts"><code>// dirtyable — no attributes written; the baseline lives in the closure
-(el) =&gt; {
-  let baseline = el.value;                                 // what the field held when it connected (SSR'd value included)
-  const render = () =&gt; el.classList.toggle("is-dirty", el.value !== baseline);
-  render();
+          <pre class="code" id="code-docs-dirtyable" data-lang="ts"><code>// dirtyable — reports one decision as events; the baseline is the platform default
+(el, attrs) =&gt; {
+  const isDirty = () =&gt;
+    el instanceof HTMLSelectElement
+      ? [...el.options].some((option) =&gt; option.selected !== option.defaultSelected)
+      : el instanceof HTMLInputElement &amp;&amp; (el.type === "checkbox" || el.type === "radio")
+        ? el.checked !== el.defaultChecked
+        : el.value !== el.defaultValue;
+  let dirty = isDirty();                          // the one boolean in the closure; fires nothing at connect
+  const evaluate = () =&gt; {
+    const next = isDirty();
+    if (next === dirty) return;
+    dirty = next;
+    el.dispatchEvent(new ImplementationEvent(next ? "dirty" : "clean"));
+  };
   return {
-    onInput:   render,
-    markClean: () =&gt; { baseline = el.value; render(); },
+    onInteraction: evaluate,
+    onRestore: evaluate,                          // storable's restore is seen directly
+    ...(attrs["dirty-on"] === "change" ? { onChange: evaluate } : { onInput: evaluate }),
+    markClean: () =&gt; {
+      if (el instanceof HTMLSelectElement) for (const option of el.options) option.defaultSelected = option.selected;
+      else if (el instanceof HTMLInputElement &amp;&amp; (el.type === "checkbox" || el.type === "radio")) el.defaultChecked = el.checked;
+      else el.defaultValue = el.value;
+      evaluate();
+    },
   };
 }</code></pre>
+        </div>
+        <p>The implementation writes nothing; the author paints the effect with the events, two lines of markup:</p>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+          </div>
+          <pre class="code" data-lang="html"><code>&lt;input is="interactable-input" implements="dirtyable attributable"
+       on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+       on-clean="this.removeAttr('data-dirty')"&gt;</code></pre>
         </div>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -790,7 +816,7 @@ export const attributable = defineImplementation("attributable", {
         </div>
         <ul>
           <li><strong>Read the platform before inventing.</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">open</code> on <code class="inline-code">&lt;details&gt;</code>/<code class="inline-code">&lt;dialog&gt;</code>, popover state, <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">step</code>. A <code class="inline-code">state</code> entry exists only when none of these hold the thing.</li>
-          <li><strong><code class="inline-code">config</code> is read-only.</strong> A verb that needs its own baseline keeps one in the closure, as <code class="inline-code">dirtyable</code>&rsquo;s <code class="inline-code">markClean</code> does.</li>
+          <li><strong><code class="inline-code">config</code> is read-only.</strong> A verb that needs its own baseline commits one by writing the platform&rsquo;s own default property &mdash; <code class="inline-code">dirtyable</code>&rsquo;s <code class="inline-code">markClean</code> sets <code class="inline-code">defaultValue</code> / <code class="inline-code">defaultChecked</code> / <code class="inline-code">defaultSelected</code> &mdash; never a <code class="inline-code">config</code> key.</li>
           <li><strong>Invented live state is <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code></strong> — one namespace, shared with config, visible in the inspector. Writes go through <code class="inline-code">attrs</code>, reads in <code class="inline-code">attributeChangedCallback</code>.</li>
           <li><strong>Closure state</strong> for transient internals (in-flight request, timers).</li>
           <li><strong>One reader for an element&rsquo;s value.</strong> <code class="inline-code">readValue(el)</code> returns <code class="inline-code">formattable-value</code> when a <code class="inline-code">formattable</code> raw store is present, else <code class="inline-code">.value</code>, else <code class="inline-code">textContent</code> &mdash; a number when the text parses, else the string. Every implementation reads a number through <code class="inline-code">valueOf(el) = toNumber(readValue(el))</code> (NaN &rarr; 0).</li>
@@ -937,9 +963,11 @@ export const attributable = defineImplementation("attributable", {
             </button>
           </div>
           <pre class="code" id="code-docs-full-calc" data-lang="html"><code>&lt;label&gt;Qty
-  &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
+  &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
+         on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+         on-clean="this.removeAttr('data-dirty')"
          on-keydown="escape: this.reset().markClean(); #preview.compute()"&gt;
 &lt;/label&gt;
 &lt;button is="interactable-button" on-click="#qty.dec(); #preview.compute()"&gt;&minus;&lt;/button&gt;

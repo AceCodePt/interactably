@@ -10,6 +10,7 @@ before(async () => {
   dom = setupJsdom();
   await import("@behaviors/modifiable/modifiable.ts");
   await import("@behaviors/dirtyable/dirtyable.ts");
+  await import("@behaviors/attributable/attributable.ts");
   await import("@behaviors/listable/listable.ts");
   await import("@behaviors/formattable/formattable.ts");
   ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
@@ -26,9 +27,11 @@ beforeEach(() => {
 
 const MARKUP = `
 <label>Qty
-  <input is="interactable-input" id="qty" implements="modifiable dirtyable"
+  <input is="interactable-input" id="qty" implements="modifiable dirtyable attributable"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
+         on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+         on-clean="this.removeAttr('data-dirty')"
          on-keydown="escape: this.reset().markClean(); #preview.compute()">
 </label>
 <button id="dec" is="interactable-button" on-click="#qty.dec(); #preview.compute()">−</button>
@@ -73,12 +76,12 @@ test("the +5 trace: inc clamps, dirties via the interaction event and the previe
   const preview = byId("preview") as HTMLOutputElement;
 
   assert.equal(qty.value, "1");
-  assert.equal(qty.classList.contains("is-dirty"), false);
+  assert.equal(qty.hasAttribute("data-dirty"), false);
   assert.equal(preview.textContent, "1");
 
   click(byId("inc5"));
   assert.equal(qty.value, "6");
-  assert.equal(qty.classList.contains("is-dirty"), true);
+  assert.equal(qty.hasAttribute("data-dirty"), true);
   assert.equal(preview.textContent, "6");
 
   click(byId("inc5"));
@@ -122,12 +125,12 @@ test("Reset runs this.reset().markClean(): back to the authored value, clean", a
 
   click(byId("inc5"));
   assert.equal(qty.value, "6");
-  assert.equal(qty.classList.contains("is-dirty"), true);
+  assert.equal(qty.hasAttribute("data-dirty"), true);
 
   click(byId("reset"));
   assert.equal(qty.value, "1");
   assert.equal(preview.textContent, "1");
-  assert.equal(qty.classList.contains("is-dirty"), false);
+  assert.equal(qty.hasAttribute("data-dirty"), false);
 });
 
 test("Escape on #qty runs the keyed this.reset().markClean()", async () => {
@@ -139,13 +142,13 @@ test("Escape on #qty runs the keyed this.reset().markClean()", async () => {
 
   qty.value = "8";
   qty.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.equal(qty.classList.contains("is-dirty"), true);
+  assert.equal(qty.hasAttribute("data-dirty"), true);
   assert.equal(preview.textContent, "8");
 
   qty.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
   assert.equal(qty.value, "1");
   assert.equal(preview.textContent, "1");
-  assert.equal(qty.classList.contains("is-dirty"), false);
+  assert.equal(qty.hasAttribute("data-dirty"), false);
 });
 
 test("the × trace: removeRow finds the row from the button, then compute re-reads the remaining amounts", async () => {

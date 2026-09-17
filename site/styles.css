@@ -915,7 +915,7 @@ code, pre, kbd {
   color: var(--accent);
 }
 
-.demo .is-dirty {
+.demo [data-dirty] {
   outline: 2px solid var(--warn);
   outline-offset: 2px;
 }

@@ -211,19 +211,19 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   click(byId("inc"));
   assert.equal(qty.value, "2");
   assert.equal(preview.textContent, "2");
-  assert.equal(qty.classList.contains("is-dirty"), true, "dirtyable is attached to #qty");
+  assert.equal(qty.hasAttribute("data-dirty"), true, "dirtyable is attached to #qty");
 
   const escKeydown = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
   qty.dispatchEvent(escKeydown);
   assert.equal(escKeydown.defaultPrevented, true, "prevent-default derives keydown:escape and cancels the browser's native Escape default");
   assert.equal(qty.value, "1", "Escape runs this.reset()");
   assert.equal(preview.textContent, "1");
-  assert.equal(qty.classList.contains("is-dirty"), false, "Escape runs markClean()");
+  assert.equal(qty.hasAttribute("data-dirty"), false, "Escape runs markClean()");
 
   click(byId("reset"));
   assert.equal(qty.value, "1");
   assert.equal(preview.textContent, "1");
-  assert.equal(qty.classList.contains("is-dirty"), false, "reset().markClean() clears the dirty state");
+  assert.equal(qty.hasAttribute("data-dirty"), false, "reset().markClean() clears the dirty state");
 
   const list = byId("list") as HTMLUListElement;
   const amount = list.querySelector(".amount") as HTMLInputElement;
@@ -299,12 +299,12 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(note.style.overflowY, "hidden", "auto-grow manages the overflow");
   note.value = "typed note";
   note.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.equal(note.classList.contains("is-dirty"), true, "dirtyable marks the edited field");
+  assert.equal(note.hasAttribute("data-dirty"), true, "dirtyable marks the edited field");
   note.dispatchEvent(new Event("change", { bubbles: true }));
   assert.equal(localStorage.getItem("interactable:interactably-demo-note"), "typed note", "storable saves via the this.save() phrase");
   note.value = "clean";
   click(byId("note-clean"));
-  assert.equal(note.classList.contains("is-dirty"), false, "markClean() re-baselines the dirty state");
+  assert.equal(note.hasAttribute("data-dirty"), false, "markClean() re-baselines the dirty state");
 
   const consent = byId("consent");
   assert.equal(consent.hidden, true, "the age gate starts closed");

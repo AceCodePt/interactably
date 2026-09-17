@@ -107,9 +107,11 @@
         <div class="demo">
           <div class="row">
             <label>Qty
-              <input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
+              <input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
                      type="number" value="1" min="1" max="10"
                      on-input="#preview.set(this.value)"
+                     on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+                     on-clean="this.removeAttr('data-dirty')"
                      on-keydown="escape: this.reset().markClean(); #preview.compute()">
             </label>
             <button is="interactable-button" id="dec" on-click="#qty.dec(); #preview.compute()" type="button">&minus;</button>
