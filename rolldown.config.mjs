@@ -13,7 +13,6 @@ const implementations = [
   "copyable",
   "dirtyable",
   "formattable",
-  "hashable",
   "json-template",
   "listable",
   "logger",

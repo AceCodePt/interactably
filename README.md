@@ -37,7 +37,6 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
   - [The pause mechanism](#the-pause-mechanism)
   - [`prevent-default` and `no-propagate`](#prevent-default)
   - [Revealable](#revealable)
-  - [Hashable](#hashable)
   - [Storable](#storable)
   - [json-template](#json-template)
 - [Writing an implementation](#writing-an-implementation)
@@ -327,7 +326,6 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `paste-transform` | input, textarea | — | `pattern`, `replace` | rewrite pasted text with a regex; fires `input` like a native paste |
 | `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
-| `hashable` | any | `hash` | — | writes `#<id>` into the location hash with `replaceState` (no history entry); no-op when already set, warns once without an id |
 
 ### The pause mechanism
 
@@ -384,10 +382,6 @@ Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling c
 **Controllers are wired at connect.** When a panel with an `id` connects, `revealable` scans the `is="interactable-…"` hosts, parses each one's `on-*` values through the same cached `parse()` the executor uses, and for every host that *controls* the panel — `#id.toggle()`, `#id.show()`, or `#id.show(true)`; the literal `show(false)` is a side effect, not control, and non-literal arguments such as `show(this.checked)` are not control either — it appends the panel's id to the host's `aria-controls` (deduped, existing tokens preserved) and sets `aria-expanded` to the current state, skipped on radio and checkbox inputs where it is meaningless. The sync continues at fire time: every element whose `aria-controls` names the panel gets `aria-expanded` refreshed, and a bare trigger that declares none gets `aria-controls` added — unless the verb was `show(false)`, which only updates, never claims.
 
 Nothing closes a panel unless a phrase says `show(false)`. Mutually exclusive panels are written out: each trigger names what it opens and what it closes.
-
-### Hashable
-
-`hashable` records a user-chosen state — a selected tab, an open panel — by writing `#<id>` into the location hash; a phrase calls the `hash()` verb on the element whose state the author wants in the URL. `hash()` uses `history.replaceState`, so the change is not an extra history entry and fires no `hashchange`; nothing reads the hash back — that is `:target` and the browser's own navigation. Scroll position is not that kind of state: scrolling is not a choice worth a URL, and the browser already restores scroll on reload. An element without an `id` warns once and does nothing.
 
 ### Storable
 
@@ -909,7 +903,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `readValue(el)` | The element's value as text: `formattable-value` (the raw store) → `.value` → `textContent`, a number when the text parses else a string |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`toNumber(readValue(el))`, NaN → 0) and write helpers |
 | `NotReadyError` | Error set on `e.error` when a verb reaches a host whose implementations have not attached — the host's connect-time attach pass has not run. With the auto-loader in the page it is practically unreachable; without it, any phrase fired before the implementation's script loads can land on it |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `hashable`, `formattable` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `formattable` |
 
 ---
 
