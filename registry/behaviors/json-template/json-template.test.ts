@@ -81,6 +81,17 @@ test("json-template interpolates attribute values", async () => {
   assert.equal(div.className, "user-admin");
 });
 
+test("json-template leaves on-* command attributes verbatim", async () => {
+  source("data-source", { id: 7 });
+  const el = await container(
+    { "json-template-for": "data-source" },
+    `<template><button on-click="#api.send({method: 'delete', id})">Delete</button></template>`,
+  );
+
+  const button = rendered(el, "button");
+  assert.equal(button.getAttribute("on-click"), "#api.send({method: 'delete', id})");
+});
+
 test("json-template resolves nested dot paths", async () => {
   source("data-source", { user: { profile: { email: "test@example.com" } } });
   const el = await container(
@@ -212,7 +223,7 @@ test("&& uses the fallback when the value is truthy", async () => {
   assert.equal(rendered(el, ".active").textContent, "Active user");
 });
 
-test("&& keeps falsy values", async () => {
+test("&& renders nothing for falsy values", async () => {
   source("data-source", { count: 0, active: false, message: "" });
   const el = await container(
     { "json-template-for": "data-source" },
@@ -225,8 +236,8 @@ test("&& keeps falsy values", async () => {
     </template>`,
   );
 
-  assert.equal(rendered(el, ".count").textContent, "0");
-  assert.equal(rendered(el, ".active").textContent, "false");
+  assert.equal(rendered(el, ".count").textContent, "");
+  assert.equal(rendered(el, ".active").textContent, "");
   assert.equal(rendered(el, ".message").textContent, "");
 });
 
@@ -300,15 +311,14 @@ test("root arrays render the template once per item", async () => {
   assert.equal(todos[1]!.textContent, "Walk dog");
 });
 
-test("empty root arrays render once with an empty context", async () => {
+test("empty root arrays render nothing", async () => {
   source("data-source", []);
   const el = await container(
     { "json-template-for": "data-source" },
     `<template><div class="item">{name || "Empty"}</div></template>`,
   );
 
-  assert.equal(el.querySelectorAll(".item").length, 1);
-  assert.equal(rendered(el, ".item").textContent, "Empty");
+  assert.equal(el.querySelectorAll(".item").length, 0);
   assert.ok(el.querySelector("template"));
 });
 
@@ -422,8 +432,7 @@ test("root arrays re-render on empty -> populated -> empty transitions", async (
     `<template><div class="item">{name || "Empty"}</div></template>`,
   );
 
-  assert.equal(el.querySelectorAll(".item").length, 1);
-  assert.equal(rendered(el, ".item").textContent, "Empty");
+  assert.equal(el.querySelectorAll(".item").length, 0);
 
   script.textContent = JSON.stringify([{ name: "Alice" }, { name: "Bob" }]);
   await flush();
@@ -433,8 +442,7 @@ test("root arrays re-render on empty -> populated -> empty transitions", async (
 
   script.textContent = JSON.stringify([]);
   await flush();
-  assert.equal(el.querySelectorAll(".item").length, 1);
-  assert.equal(rendered(el, ".item").textContent, "Empty");
+  assert.equal(el.querySelectorAll(".item").length, 0);
   assert.ok(el.querySelector("template"));
 });
 

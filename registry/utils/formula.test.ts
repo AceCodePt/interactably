@@ -186,6 +186,38 @@ test("an empty .value operand is an error marked (empty)", () => {
   });
 });
 
+test("an empty or missing .value is an empty-operand error under +, not a silent join", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "";
+  const b = document.createElement("input");
+  b.id = "b";
+  b.value = "3";
+  document.body.append(a, b);
+
+  for (const source of ["#a.value + 1", "1 + #a.value + 3", "#a.value + #b.value", "#missing.value + 1"]) {
+    assert.throws(() => evaluateFormula(source), (err: unknown) => {
+      assert.ok(err instanceof FormulaError, `expected FormulaError for ${source}`);
+      assert.ok(err.message.includes("(empty)"), err.message);
+      assert.ok(err.message.includes('"+"'), err.message);
+      return true;
+    });
+  }
+});
+
+test("a literal string still forces a join, empty reference included", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "";
+  const slug = document.createElement("input");
+  slug.id = "slug";
+  slug.value = "x";
+  document.body.append(a, slug);
+
+  assert.equal(evaluateFormula("'' + #a.value").value, "");
+  assert.equal(evaluateFormula("'invoice-' + #slug.value + '.pdf'").value, "invoice-x.pdf");
+});
+
 test("a missing element reaches arithmetic as the empty string and errors, but joins fine", () => {
   assert.throws(() => evaluateFormula("#gone.value * 2"), /\(empty\)/);
   assert.equal(evaluateFormula("'' + #gone.value").value, "");

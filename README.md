@@ -219,9 +219,9 @@ reference := '#' id '.' ('value' | 'checked')
 | Construct | Example | Meaning |
 | --- | --- | --- |
 | Reference | `#qty.value`, `#agree.checked` | `.value` reads the element's text — a number when it parses, else a string; an empty or missing value is `""`. `.checked` is the boolean `el.checked === true`, `false` on an element without one. A bare `#id` is a parse error: `reference #qty needs .value or .checked` |
-| Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"3a"`. `-`, `*`, `/`, unary `-` are always arithmetic; `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers |
+| Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"3a"`. An empty `.value` operand is an empty-operand error, not a silent `""` join — unless a string literal makes the join explicit (`'' + #a.value` stays a join, `#a.value + 1` errors). `-`, `*`, `/`, unary `-` are always arithmetic; `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers |
 | Boolean in arithmetic | `#item1.value * #item1.checked` | `true` is `1`, `false` is `0` — the line-item pattern: price when ticked, `0` when not |
-| Arithmetic is strict | `#qty.value * #price.value` | `-`, `*`, `/`, unary `-`, and `+` between numbers require number or boolean operands. An empty or non-numeric operand is an error, and so is division by zero; both are written to the console and shown as `modifiable-invalid-value` — no `NaN`, no `Infinity`, no silent zero |
+| Arithmetic is strict | `#qty.value * #price.value` | `-`, `*`, `/`, unary `-`, and `+` between numbers require number or boolean operands; an empty `.value` operand under `+` is the same empty-operand error, never a silent join. An empty or non-numeric operand is an error, and so is division by zero; both are written to the console and shown as `modifiable-invalid-value` — no `NaN`, no `Infinity`, no silent zero |
 
 `#id` references and `sum(...)`/`count(...)` selectors resolve against the whole document — scope a set by putting its container's id in the selector (`sum('#list .amount')`).
 
@@ -408,7 +408,7 @@ path          := segment ('.' segment | '[' (index | "'" key "'" | '"' key '"') 
 fallback      := quoted | number | true | false | bare
 ```
 
-`path` is dot and bracket notation — `name`, `user.profile.email`, `items[1].title`, `obj["first-name"]`, `items[-1]` (from the end). A path that does not resolve interpolates to the empty string. `path || fallback` substitutes the fallback when the value is falsy (`""`, `0`, `false`, `null`, `undefined`); `path ?? fallback` only when it is `null` or `undefined`, so `0` and `""` survive; `path && fallback` substitutes when the value is truthy. A fallback may be a quoted string, a number, `true`/`false`, or a bare word. Whitespace around the operator is ignored, and operators inside a quoted fallback are literal. There is no escaping — every `{`…`}` pair is an interpolation — and there is no `{{#each}}`-style directive; a nested `<template data-array="path">` repeats per item, and `json-template-slice="start:end"` trims a root array (`1:3`, or a bare `2`).
+`path` is dot and bracket notation — `name`, `user.profile.email`, `items[1].title`, `obj["first-name"]`, `items[-1]` (from the end). A path that does not resolve interpolates to the empty string. `path || fallback` substitutes the fallback when the value is falsy (`""`, `0`, `false`, `null`, `undefined`); `path ?? fallback` only when it is `null` or `undefined`, so `0` and `""` survive; `path && fallback` renders the fallback when the value is truthy and nothing when it is falsy. A fallback may be a quoted string, a number, `true`/`false`, or a bare word. Whitespace around the operator is ignored, and operators inside a quoted fallback are literal. Every `{`…`}` pair is an interpolation, except inside `on-*` attributes, which carry the command grammar and are preserved verbatim. There is no `{{#each}}`-style directive; a nested `<template data-array="path">` repeats per item, an empty array renders nothing (root or nested), and `json-template-slice="start:end"` trims a root array (`1:3`, or a bare `2`).
 
 ---
 
@@ -445,7 +445,13 @@ export const modifiable = defineImplementation("modifiable", {
     inc:   (_e, n = attrs.step ?? 1)  => write(clamp(valueOf(el) + n)),
     dec:   (_e, n = attrs.step ?? 1)  => write(clamp(valueOf(el) - n)),
     clear: ()                         => write(""),
-    reset: ()                         => write(el.getAttribute("value") ?? ""),   // back to what the author wrote
+    reset: () => {
+      if (el instanceof HTMLSelectElement) {
+        for (const option of Array.from(el.options)) option.selected = option.defaultSelected;
+        return;
+      }
+      write(el.defaultValue);                             // back to what the author wrote
+    },
   };
 });
 ```

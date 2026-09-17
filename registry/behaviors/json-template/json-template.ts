@@ -90,13 +90,6 @@ function renderObject(el: HTMLElement, template: HTMLTemplateElement, data: unkn
 
 function renderRootArray(el: HTMLElement, template: HTMLTemplateElement, items: unknown[]): void {
   const fragment = document.createDocumentFragment();
-  if (items.length === 0) {
-    const itemClone = template.content.cloneNode(true) as DocumentFragment;
-    for (const child of Array.from(itemClone.childNodes)) processInterpolation(child, {});
-    fragment.appendChild(itemClone);
-    replaceContent(el, template, fragment);
-    return;
-  }
   for (const item of items) {
     const itemClone = template.content.cloneNode(true) as DocumentFragment;
     for (const child of Array.from(itemClone.childNodes)) processInterpolation(child, item);
@@ -143,6 +136,7 @@ function processInterpolation(element: Node, data: unknown): void {
   }
 
   for (const attr of Array.from(el.attributes)) {
+    if (attr.name.startsWith("on-")) continue;
     if (attr.value.includes("{")) attr.value = interpolateString(attr.value, data);
   }
 
@@ -166,7 +160,7 @@ function interpolateString(text: string, data: unknown): string {
     } else if (operator === "??") {
       if (value === null || value === undefined) finalValue = fallback;
     } else if (operator === "&&") {
-      if (value) finalValue = fallback;
+      finalValue = value ? fallback : "";
     } else {
       if (value === undefined || value === null) return "";
     }

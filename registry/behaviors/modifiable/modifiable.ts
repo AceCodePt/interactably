@@ -58,7 +58,13 @@ export const modifiable = defineImplementation(
       inc: (_e, n = attrs.step ?? 1) => write(clamp(valueOf(el) + numberArg("inc", n))),
       dec: (_e, n = attrs.step ?? 1) => write(clamp(valueOf(el) - numberArg("dec", n))),
       clear: () => write(""),
-      reset: () => write(el.getAttribute("value") ?? ""),
+      reset: () => {
+        if (el instanceof HTMLSelectElement) {
+          for (const option of Array.from(el.options)) option.selected = option.defaultSelected;
+          return;
+        }
+        write(el.defaultValue);
+      },
       compute: () => compute(),
       connectedCallback: () => compute(),
     };

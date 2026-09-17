@@ -355,8 +355,8 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <table class="tbl">
             <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
             <tbody>
-              <tr><td>Reference</td><td><code class="inline-code">#qty.value</code>, <code class="inline-code">#agree.checked</code></td><td><code class="inline-code">.value</code> reads the element&rsquo;s text — a number when it parses (an empty string is <code class="inline-code">0</code>), else a string; <code class="inline-code">.checked</code> is the boolean <code class="inline-code">el.checked === true</code>, <code class="inline-code">false</code> on an element without one. A missing element is <code class="inline-code">""</code> / <code class="inline-code">false</code>. A bare <code class="inline-code">#id</code> is a parse error: <code class="inline-code">reference #qty needs .value or .checked</code></td></tr>
-              <tr><td>Typed <code class="inline-code">+</code></td><td><code class="inline-code">'invoice-' + #slug.value + '.pdf'</code></td><td>Joins when either side is a string, adds otherwise, left to right: <code class="inline-code">'a' + 1 + 2</code> is <code class="inline-code">"a12"</code>, <code class="inline-code">1 + 2 + 'a'</code> is <code class="inline-code">"3a"</code>. <code class="inline-code">-</code>, <code class="inline-code">*</code>, <code class="inline-code">/</code>, unary <code class="inline-code">-</code> are always arithmetic; <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">floor</code>/<code class="inline-code">ceil</code>/<code class="inline-code">round</code>/<code class="inline-code">sum</code>/<code class="inline-code">count</code> return numbers</td></tr>
+              <tr><td>Reference</td><td><code class="inline-code">#qty.value</code>, <code class="inline-code">#agree.checked</code></td><td><code class="inline-code">.value</code> reads the element&rsquo;s text — a number when it parses, else a string; an empty or missing value is <code class="inline-code">""</code>. <code class="inline-code">.checked</code> is the boolean <code class="inline-code">el.checked === true</code>, <code class="inline-code">false</code> on an element without one. A bare <code class="inline-code">#id</code> is a parse error: <code class="inline-code">reference #qty needs .value or .checked</code></td></tr>
+              <tr><td>Typed <code class="inline-code">+</code></td><td><code class="inline-code">'invoice-' + #slug.value + '.pdf'</code></td><td>Joins when either side is a string, adds otherwise, left to right: <code class="inline-code">'a' + 1 + 2</code> is <code class="inline-code">"a12"</code>, <code class="inline-code">1 + 2 + 'a'</code> is <code class="inline-code">"3a"</code>. An empty <code class="inline-code">.value</code> operand is an empty-operand error, not a silent <code class="inline-code">""</code> join — unless a string literal makes the join explicit (<code class="inline-code">'' + #a.value</code> stays a join, <code class="inline-code">#a.value + 1</code> errors). <code class="inline-code">-</code>, <code class="inline-code">*</code>, <code class="inline-code">/</code>, unary <code class="inline-code">-</code> are always arithmetic; <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">floor</code>/<code class="inline-code">ceil</code>/<code class="inline-code">round</code>/<code class="inline-code">sum</code>/<code class="inline-code">count</code> return numbers</td></tr>
               <tr><td>Boolean in arithmetic</td><td><code class="inline-code">#item1.value * #item1.checked</code></td><td><code class="inline-code">true</code> is <code class="inline-code">1</code>, <code class="inline-code">false</code> is <code class="inline-code">0</code> — the line-item pattern: price when ticked, <code class="inline-code">0</code> when not</td></tr>
             </tbody>
           </table>
@@ -617,7 +617,13 @@ export const modifiable = defineImplementation("modifiable", {
     inc:   (_e, n = attrs.step ?? 1)  =&gt; write(clamp(valueOf(el) + n)),
     dec:   (_e, n = attrs.step ?? 1)  =&gt; write(clamp(valueOf(el) - n)),
     clear: ()                         =&gt; write(""),
-    reset: ()                         =&gt; write(el.getAttribute("value") ?? ""),   // back to what the author wrote
+    reset: () =&gt; {
+      if (el instanceof HTMLSelectElement) {
+        for (const option of Array.from(el.options)) option.selected = option.defaultSelected;
+        return;
+      }
+      write(el.defaultValue);                            // back to what the author wrote
+    },
   };
 });</code></pre>
         </div>

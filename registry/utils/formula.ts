@@ -106,15 +106,22 @@ class Formula {
       this.pos++;
       const rhs = this.parseTerm();
       if (op === "+") {
-        node =
-          typeof node.value === "string" || typeof rhs.value === "string"
-            ? { value: String(node.value) + String(rhs.value), origin: this.source.slice(start, this.pos).trim() }
-            : {
-                value:
-                  requireNumber(node, operatorMeta(this.source, op)) +
-                  requireNumber(rhs, operatorMeta(this.source, op)),
-                origin: this.source.slice(start, this.pos).trim(),
-              };
+        const nodeValue = node.value;
+        const rhsValue = rhs.value;
+        const nodeString = typeof nodeValue === "string";
+        const rhsString = typeof rhsValue === "string";
+        const joining =
+          (node.literal === true && nodeString) ||
+          (rhs.literal === true && rhsString) ||
+          ((nodeString || rhsString) && nodeValue !== "" && rhsValue !== "");
+        node = joining
+          ? { value: String(nodeValue) + String(rhsValue), origin: this.source.slice(start, this.pos).trim() }
+          : {
+              value:
+                requireNumber(node, operatorMeta(this.source, op)) +
+                requireNumber(rhs, operatorMeta(this.source, op)),
+              origin: this.source.slice(start, this.pos).trim(),
+            };
       } else {
         node = {
           value:
@@ -184,6 +191,7 @@ class Formula {
       value = this.parseReference();
     } else if (ch === "'" || ch === '"') {
       value = this.parseString(ch);
+      literal = true;
     } else if (ch !== undefined && /[0-9.]/.test(ch)) {
       value = this.parseNumber();
       literal = true;

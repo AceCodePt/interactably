@@ -185,6 +185,62 @@ test("reset with no value attribute writes an empty string", async () => {
   assert.equal(input.value, "");
 });
 
+test("reset on a textarea returns to its authored text", async () => {
+  const textarea = hostElement("textarea", { implements: "modifiable" }) as HTMLTextAreaElement;
+  textarea.textContent = "hello";
+  document.body.appendChild(textarea);
+  await flush();
+
+  interact(textarea, "set", "bye");
+  assert.equal(textarea.value, "bye");
+  interact(textarea, "reset");
+  assert.equal(textarea.value, "hello");
+});
+
+test("reset on a select returns to the option carrying the selected attribute", async () => {
+  const select = hostElement("select", { implements: "modifiable" }) as HTMLSelectElement;
+  const a = document.createElement("option");
+  a.value = "a";
+  const b = document.createElement("option");
+  b.value = "b";
+  b.setAttribute("selected", "");
+  select.append(a, b);
+  document.body.appendChild(select);
+  await flush();
+
+  interact(select, "set", "a");
+  assert.equal(select.value, "a");
+  interact(select, "reset");
+  assert.equal(select.value, "b");
+});
+
+test("reset on a select with no selected attribute returns to the first option", async () => {
+  const select = hostElement("select", { implements: "modifiable" }) as HTMLSelectElement;
+  const a = document.createElement("option");
+  a.value = "a";
+  const b = document.createElement("option");
+  b.value = "b";
+  select.append(a, b);
+  document.body.appendChild(select);
+  await flush();
+
+  select.value = "b";
+  interact(select, "reset");
+  assert.equal(select.value, "a");
+});
+
+test("reset on an output returns to its authored text", async () => {
+  const output = hostElement("output", { implements: "modifiable" }) as HTMLOutputElement;
+  output.textContent = "42";
+  document.body.appendChild(output);
+  await flush();
+
+  interact(output, "set", "6");
+  interact(output, "reset");
+  assert.equal(output.value, "42");
+  assert.equal(output.textContent, "42");
+});
+
 test("works on textarea, select and output", async () => {
   const textarea = hostElement("textarea", { implements: "modifiable" }) as HTMLTextAreaElement;
   textarea.textContent = "hello";
@@ -309,14 +365,15 @@ test("the formula supports parentheses, unary minus and min/max/floor/ceil/round
   assert.equal(neg.textContent, "9");
 });
 
-test("a missing #id dependency joins as the empty string", async () => {
+test("a missing #id dependency is an empty-operand error under +, writing invalid-value", async () => {
   const out = hostElement("output", {
     implements: "modifiable",
     "modifiable-formula": "#ghost.value + 5",
+    "modifiable-invalid-value": "0",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
   await flush();
-  assert.equal(out.textContent, "5");
+  assert.equal(out.textContent, "0");
 });
 
 test("compute() on a throwing formula writes invalid-value and logs the formula source", async (t) => {
