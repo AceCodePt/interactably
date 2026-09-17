@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { defineInteractableHost } from "@behaviors/interactable-host.ts";
 import { getImplementationDef } from "@behaviors/implementation-registry.ts";
 
 let dom: JSDOM;
@@ -16,13 +15,12 @@ after(() => {
   teardownJsdom(dom);
 });
 
-test("defines a tags-bearing implementation's host even when the observed-attribute union is empty", () => {
+test("registers a tags-bearing definition even when the observed-attribute union is empty", () => {
   const def = defineImplementation("empty-union", { tags: ["section"], verbs: { go: "undefined" } }, () => ({
     go: () => undefined,
   }));
   assert.equal(def.name, "empty-union");
   assert.equal(getImplementationDef("empty-union")?.name, "empty-union");
-  assert.notEqual(customElements.get("interactable-section"), undefined);
 });
 
 test("registers a definition that the registry can look up", () => {
@@ -101,20 +99,4 @@ test("a record signature compiles field by field", () => {
   assert.ok(verb !== undefined);
   assert.doesNotThrow(() => verb.validate({ root: document.createElement("div"), select: ".amount" }));
   assert.throws(() => verb.validate({ root: document.createElement("div") }));
-});
-
-test("defineImplementation ensures the host for every declared tag", () => {
-  defineImplementation(
-    "hosted",
-    { tags: ["input", "textarea"], config: { step: "number | undefined" }, verbs: { set: "string" } },
-    (_el) => ({ set: () => undefined }),
-  );
-  assert.ok(customElements.get("interactable-input") !== undefined);
-  assert.ok(customElements.get("interactable-textarea") !== undefined);
-});
-
-test("defineInteractableHost is idempotent per tag", () => {
-  const before = customElements.get("interactable-input");
-  defineInteractableHost("input");
-  assert.strictEqual(customElements.get("interactable-input"), before);
 });

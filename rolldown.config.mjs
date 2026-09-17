@@ -27,6 +27,7 @@ const implementations = [
 ];
 
 const coreFiles = [
+  "registry/interactable/attachment.ts",
   "registry/interactable/attributes.ts",
   "registry/interactable/dispatch.ts",
   "registry/interactable/events.ts",
@@ -38,10 +39,10 @@ const coreFiles = [
   "registry/interactable/keys.ts",
   "registry/interactable/parser.ts",
   "registry/interactable/signature.ts",
+  "registry/interactable/start.ts",
   "registry/behaviors/_implementation-definition.ts",
   "registry/behaviors/implementation-registry.ts",
   "registry/behaviors/implementation-utils.ts",
-  "registry/behaviors/interactable-host.ts",
 ];
 
 const coreModuleIds = new Set(coreFiles.map((file) => path.join(root, file)));
@@ -83,7 +84,7 @@ function externalizeCore() {
   };
 }
 
-const externals = ["auto-wc", "tsyntax"];
+const externals = ["tsyntax"];
 
 const implementationInputs = {};
 for (const name of implementations) {
@@ -116,15 +117,6 @@ export default defineConfig([
       format: "esm",
       dir: "dist/cdn",
       entryFileNames: "[name].js",
-    },
-  },
-  {
-    tsconfig: "./tsconfig.json",
-    input: path.join(root, "registry", "utils", "auto-loader.ts"),
-    plugins: [externalizeCore()],
-    output: {
-      format: "esm",
-      file: "dist/cdn/auto-loader.js",
     },
   },
 ]);

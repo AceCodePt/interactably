@@ -18,7 +18,6 @@ const cdnDir = new URL("../dist/cdn/", import.meta.url);
 
 const KNOWN_BUNDLES = new Set([
   "interactably-core",
-  "auto-loader",
   "attributable",
   "auto-grow",
   "copyable",
@@ -38,7 +37,6 @@ const KNOWN_BUNDLES = new Set([
 ]);
 
 const VENDOR_REF = /vendor\/([\w.-]+\.js)/g;
-const EXTRA_HOST = /defineInteractableHost\("([^"]+)"\)/g;
 
 function vendorRefs(...sources: string[]): string[] {
   const names = new Set<string>();
@@ -73,8 +71,9 @@ function byId(id: string): HTMLElement {
   return element;
 }
 
-function click(el: Element): void {
+async function click(el: Element): Promise<void> {
   el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  await flush();
 }
 
 interface FakeResponse {
@@ -93,11 +92,24 @@ function fakeResponse(ok: boolean, status: number, body: string): FakeResponse {
   return { ok, status, text: () => Promise.resolve(body) };
 }
 
-test("site: referenced vendor bundles are built and the demo interacts under jsdom", async (t) => {
-  const html = readFileSync(fileURLToPath(examplesUrl), "utf8");
-  const demo = readFileSync(fileURLToPath(demoUrl), "utf8");
-  const names = vendorRefs(html, demo);
+function setReadyState(state: DocumentReadyState): void {
+  Object.defineProperty(document, "readyState", { value: state, configurable: true });
+}
 
+test("site: no is= anywhere, referenced bundles are built, and the demo interacts under jsdom", async (t) => {
+  const examples = readFileSync(fileURLToPath(examplesUrl), "utf8");
+  const demo = readFileSync(fileURLToPath(demoUrl), "utf8");
+
+  for (const file of ["docs.html", "examples.html", "index.html", "reference.html"]) {
+    const html = readFileSync(fileURLToPath(new URL(file, siteDir)), "utf8");
+    assert.equal(html.includes('is="interactable-'), false, `${file} carries no is="interactable-`);
+    assert.equal(html.includes("interactable-"), false, `${file} carries no interactable- mentions`);
+  }
+  assert.equal(examples.includes('is="interactable-'), false, "examples.html carries no is= in samples");
+  assert.equal(examples.includes("installAutoLoader"), false, "examples.html carries no auto-loader reference");
+  assert.equal(demo.includes("installAutoLoader"), false, "demo.js carries no auto-loader reference");
+
+  const names = vendorRefs(examples, demo);
   assert.ok(names.includes("interactably-core.js"), "the site imports the core bundle");
   assert.ok(names.length > 0, "the site references at least one vendor bundle");
 
@@ -141,28 +153,22 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
 
   // Mirror the deployed page-load sequence: the markup is already being parsed
   // (readyState "loading") when demo.js imports the bundles (which register the
-  // implementations and define their hosts), the auto-loader runs, and
-  // DOMContentLoaded fires - which is when storable restores the stored value and
-  // the matching buttons' on-restore phrases flip the panels.
-  localStorage.setItem("interactable:pm", "pnpm");
-  Object.defineProperty(document, "readyState", { value: "loading", configurable: true });
+  // implementations) and start() runs. start() defers the initial scan to
+  // DOMContentLoaded, which is when on-load="this.restore()" replays the stored
+  // selection and the matching buttons' on-restore phrases flip the panels.
+  localStorage.setItem("pm", "pnpm");
+  setReadyState("loading");
   const holder = document.createElement("div");
-  holder.innerHTML = bodyMarkup(html);
+  holder.innerHTML = bodyMarkup(examples);
   document.body.appendChild(holder);
 
   const core = await import(coreUrl.href);
-  let autoLoader: { installAutoLoader(): () => void } | undefined;
   for (const name of names) {
     if (name === "interactably-core.js") continue;
-    const bundle = await import(new URL(name, cdnDir).href);
-    if (name === "auto-loader.js") autoLoader = bundle as typeof autoLoader;
+    await import(new URL(name, cdnDir).href);
   }
-  const extraTags = [...demo.matchAll(EXTRA_HOST)].map((match) => match[1]!);
-  assert.ok(extraTags.length > 0, "demo.js defines the extra hosts");
-  for (const tag of extraTags) core.defineInteractableHost(tag);
-
-  assert.ok(autoLoader !== undefined, "demo.js installs the auto-loader");
-  autoLoader.installAutoLoader();
+  setReadyState("loading");
+  core.start();
 
   await flush();
   document.dispatchEvent(new Event("DOMContentLoaded"));
@@ -170,14 +176,14 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
 
   const pmNpm = document.querySelector('button[storable-value="npm"]') as HTMLButtonElement;
   const pmBun = document.querySelector('button[storable-value="bun"]') as HTMLButtonElement;
-  assert.equal(byId("install-pnpm").hidden, false, "the stored pnpm buttons' on-restore opens the pnpm install panel");
-  assert.equal(byId("config-pnpm").hidden, false, "the stored pnpm buttons' on-restore opens the pnpm config panel");
-  assert.equal(byId("trouble-pnpm").hidden, false, "the stored pnpm buttons' on-restore opens the pnpm trouble panel");
+  assert.equal(byId("install-pnpm").hidden, false, "the stored pnpm buttons' on-load restore opens the pnpm install panel");
+  assert.equal(byId("config-pnpm").hidden, false, "the stored pnpm buttons' on-load restore opens the pnpm config panel");
+  assert.equal(byId("trouble-pnpm").hidden, false, "the stored pnpm buttons' on-load restore opens the pnpm trouble panel");
   assert.equal(byId("install-npm").hidden, true, "and closes the authored-open npm install panel");
   assert.equal(byId("config-npm").hidden, true, "and closes the authored-open npm config panel");
   assert.equal(byId("trouble-npm").hidden, true, "and closes the authored-open npm trouble panel");
   assert.equal(byId("install-bun").hidden, true, "the bun install panel stays closed");
-  click(pmNpm);
+  await click(pmNpm);
   assert.equal(byId("install-npm").hidden, false, "the npm button opens its three install panels");
   assert.equal(byId("config-npm").hidden, false, "and its three config panels");
   assert.equal(byId("trouble-npm").hidden, false, "and its three trouble panels");
@@ -185,29 +191,27 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(byId("config-pnpm").hidden, true, "the pnpm config panel closes");
   assert.equal(byId("trouble-pnpm").hidden, true, "the pnpm trouble panel closes");
   assert.equal(byId("install-bun").hidden, true, "the bun install panel stays closed");
-  assert.equal(localStorage.getItem("interactable:pm"), "npm", "clicking stores the new selection");
-  click(pmBun);
+  assert.equal(localStorage.getItem("pm"), "npm", "clicking stores the new selection");
+  await click(pmBun);
   assert.equal(byId("install-bun").hidden, false, "the bun button opens all three bun panels");
   assert.equal(byId("config-bun").hidden, false);
   assert.equal(byId("trouble-bun").hidden, false);
   assert.equal(byId("install-pnpm").hidden, true, "the pnpm panels close when bun is picked");
-  assert.equal(localStorage.getItem("interactable:pm"), "bun", "the bun selection is stored");
+  assert.equal(localStorage.getItem("pm"), "bun", "the bun selection is stored");
 
   const autoPanel = byId("auto-demo-panel");
-  assert.equal(autoPanel.getAttribute("is"), "interactable-section", "the auto-loader adds is= to the no-is= demo");
-  assert.equal(autoPanel.hidden, true, "the no-is= panel starts closed");
-  click(byId("auto-demo-btn"));
-  assert.equal(autoPanel.hidden, false, "the no-is= demo runs through the auto-loader");
-  click(byId("auto-demo-btn"));
-  assert.equal(autoPanel.hidden, true, "the no-is= demo toggles back");
+  assert.equal(autoPanel.hidden, true, "the plain panel starts closed");
+  await click(byId("auto-demo-btn"));
+  assert.equal(autoPanel.hidden, false, "a plain on-click trigger toggles the panel open");
+  await click(byId("auto-demo-btn"));
+  assert.equal(autoPanel.hidden, true, "the same trigger toggles it back");
 
-  const total = byId("total") as HTMLOutputElement & { didEnsure: boolean };
-  assert.equal(total.didEnsure, true, "#total upgraded into the interactable host");
+  const total = byId("total") as HTMLOutputElement;
   assert.equal(total.textContent, "$2.50");
 
   const qty = byId("qty") as HTMLInputElement;
   const preview = byId("preview") as HTMLOutputElement;
-  click(byId("inc"));
+  await click(byId("inc"));
   assert.equal(qty.value, "2");
   assert.equal(preview.textContent, "2");
   assert.equal(qty.hasAttribute("data-dirty"), true, "dirtyable is attached to #qty");
@@ -217,12 +221,12 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(escKeydown.defaultPrevented, true, "prevent-default derives keydown:escape and cancels the browser's native Escape default");
   assert.equal(qty.value, "1", "Escape runs this.reset()");
   assert.equal(preview.textContent, "1");
-  assert.equal(qty.hasAttribute("data-dirty"), false, "Escape runs markClean()");
+  assert.equal(qty.hasAttribute("data-dirty"), false, "reset returns to the baseline, so dirtyable fires clean");
 
-  click(byId("reset"));
+  await click(byId("reset"));
   assert.equal(qty.value, "1");
   assert.equal(preview.textContent, "1");
-  assert.equal(qty.hasAttribute("data-dirty"), false, "reset().markClean() clears the dirty state");
+  assert.equal(qty.hasAttribute("data-dirty"), false, "the Reset button stays clean");
 
   const list = byId("list") as HTMLUListElement;
   const amount = list.querySelector(".amount") as HTMLInputElement;
@@ -231,7 +235,7 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(total.textContent, "$10.00");
   assert.equal(total.getAttribute("formattable-value"), "10");
 
-  click(byId("add-row"));
+  await click(byId("add-row"));
   assert.equal(list.children.length, 2);
   assert.equal(total.textContent, "$13.25");
   const cloned = list.querySelectorAll(".amount")[1] as HTMLInputElement;
@@ -239,17 +243,17 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   cloned.dispatchEvent(new Event("input", { bubbles: true }));
   assert.equal(total.textContent, "$13.00");
 
-  click(list.querySelectorAll("li button")[1]!);
+  await click(list.querySelectorAll("li button")[1]!);
   assert.equal(list.children.length, 1);
   assert.equal(total.textContent, "$10.00");
 
   const panel = byId("panel");
   assert.equal(panel.hidden, true);
   const toggle = byId("panel-toggle");
-  click(toggle);
+  await click(toggle);
   assert.equal(panel.hidden, false);
   assert.equal(toggle.getAttribute("aria-expanded"), "true");
-  click(toggle);
+  await click(toggle);
   assert.equal(panel.hidden, true);
 
   const consoleLogs: string[] = [];
@@ -277,21 +281,21 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   const tip = byId("tip");
   const tipButton = byId("tip-button");
   assert.equal(tip.hidden, true);
-  click(tipButton);
+  await click(tipButton);
   assert.equal(tip.hidden, false, "first click toggles the tip open");
-  click(tipButton);
+  await click(tipButton);
   assert.equal(tip.hidden, false, "once() is spent: the second click is a no-op");
 
   const swatch = byId("swatch") as HTMLElement;
-  click(byId("swatch-dark"));
+  await click(byId("swatch-dark"));
   assert.equal(swatch.dataset["theme"], "dark", "setAttr({name, value}) writes the attribute");
-  click(byId("swatch-border"));
+  await click(byId("swatch-border"));
   assert.equal(swatch.hasAttribute("data-bordered"), true, "toggleAttr flips the attribute on");
-  click(byId("swatch-border"));
+  await click(byId("swatch-border"));
   assert.equal(swatch.hasAttribute("data-bordered"), false, "toggleAttr flips the attribute off");
-  click(byId("swatch-clear"));
+  await click(byId("swatch-clear"));
   assert.equal(swatch.hasAttribute("data-theme"), false, "removeAttr removes the attribute");
-  click(byId("swatch-log"));
+  await click(byId("swatch-log"));
   assert.ok(consoleLogs.some((line) => line.includes("button clicked")), "logger prints from a phrase");
 
   const note = byId("note") as HTMLTextAreaElement;
@@ -299,40 +303,38 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   note.value = "typed note";
   note.dispatchEvent(new Event("input", { bubbles: true }));
   assert.equal(note.hasAttribute("data-dirty"), true, "dirtyable marks the edited field");
-  note.dispatchEvent(new Event("change", { bubbles: true }));
-  assert.equal(localStorage.getItem("interactable:interactably-demo-note"), "typed note", "storable saves via the this.save() phrase");
-  note.value = "clean";
-  click(byId("note-clean"));
-  assert.equal(note.hasAttribute("data-dirty"), false, "markClean() re-baselines the dirty state");
 
   const consent = byId("consent");
   assert.equal(consent.hidden, true, "the age gate starts closed");
   const age = byId("age") as HTMLInputElement;
   age.value = "18";
   age.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
   assert.equal(consent.hidden, false, "validate() passes the min=18 constraint and show() opens the consent panel");
 
   const faq = byId("faq") as HTMLDetailsElement;
   assert.equal(faq.open, false);
-  click(byId("faq-toggle"));
+  await click(byId("faq-toggle"));
   assert.equal(faq.open, true, "revealable drives <details>.open");
   assert.equal(byId("faq-toggle").getAttribute("aria-expanded"), "true");
 
-  const signed = byId("signup");
-  assert.equal(signed.hasAttribute("data-signed"), false);
   const signup = byId("signup") as HTMLFormElement;
   const signupAlert = byId("signup-alert");
+  assert.equal(signup.hasAttribute("data-signed"), false);
   assert.equal(signupAlert.hidden, true, "the validation-failure alert starts hidden");
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
   assert.equal(signup.hasAttribute("data-signed"), false, "validate() stops the chain when the form is invalid");
   assert.equal(signupAlert.hidden, false, "the || branch shows the alert on an invalid submit");
   const email = signup.querySelector("input") as HTMLInputElement;
   email.value = "not-an-email";
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
   assert.equal(signup.hasAttribute("data-signed"), false, "a value that fails the pattern also stops the chain");
   assert.equal(signupAlert.hidden, false, "the || branch shows the alert for a pattern failure");
   email.value = "you@example.com";
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
   assert.equal(signup.getAttribute("data-signed"), "true", "validate() passes and setAttr() runs");
   assert.equal(signupAlert.hidden, true, "the || branch does not run on a valid submit");
 
@@ -341,10 +343,10 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(members[0]!.querySelector("h3")!.textContent, "Ada");
 
   consoleLogs.length = 0;
-  click(byId("bubbles-btn"));
+  await click(byId("bubbles-btn"));
   assert.equal(consoleLogs.length, 2, "a plain inner click bubbles to the outer trigger");
   consoleLogs.length = 0;
-  click(byId("no-propagate-btn"));
+  await click(byId("no-propagate-btn"));
   assert.equal(consoleLogs.length, 1, "no-propagate stops the inner click from reaching the outer trigger");
 
   const form = byId("order") as HTMLFormElement;
@@ -362,15 +364,6 @@ test("site: referenced vendor bundles are built and the demo interacts under jsd
   assert.equal(receipt.hidden, false);
   assert.equal(byId("alert").hidden, true);
   assert.equal(form.hasAttribute("requestable-status"), false);
-
-  const tabAuto = byId("demo-auto").parentElement!.querySelector(".tabbar button[aria-controls='demo-auto']")!;
-  const tabExplicit = document.querySelector(".tabbar button[aria-controls='demo-is']")!;
-  click(tabExplicit);
-  assert.equal(tabAuto.getAttribute("aria-expanded"), "false", "hiding the sibling panel collapses its controller");
-  assert.equal(tabExplicit.getAttribute("aria-expanded"), "true");
-  click(tabAuto);
-  assert.equal(tabAuto.getAttribute("aria-expanded"), "true");
-  assert.equal(tabExplicit.getAttribute("aria-expanded"), "false", "exactly one tab reads expanded");
 });
 
 test("site: docs.html sidebar lights each section's own link", async (t) => {
@@ -427,20 +420,11 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
 
   const core = await import(coreUrl.href);
   const names = vendorRefs(html, demo);
-  let autoLoader: { installAutoLoader(): () => void } | undefined;
   for (const name of names) {
     if (name === "interactably-core.js") continue;
-    const bundle = await import(new URL(name, cdnDir).href);
-    if (name === "auto-loader.js") autoLoader = bundle as typeof autoLoader;
+    await import(new URL(name, cdnDir).href);
   }
-  const extraTags = [...demo.matchAll(EXTRA_HOST)].map((match) => match[1]!);
-  assert.ok(extraTags.includes("a"), "demo.js defines the anchor host");
-  for (const tag of extraTags) core.defineInteractableHost(tag);
-
-  assert.ok(autoLoader !== undefined, "demo.js installs the auto-loader");
-  autoLoader.installAutoLoader();
-  await flush();
-  document.dispatchEvent(new Event("DOMContentLoaded"));
+  core.start();
   await flush();
 
   const toc = byId("toc");
@@ -449,7 +433,6 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
 
   const section = byId("sec-quick-start");
   const link = byId("toc-quick-start");
-  assert.equal(link.getAttribute("is"), "interactable-a", "the nav link is an addressable host");
   const observer = FakeIntersectionObserver.instances.find((instance) => instance.observed.includes(section));
   assert.ok(observer !== undefined, "the quick-start section observes itself");
   observer.trigger([{ target: section, isIntersecting: true, intersectionRatio: 1 }]);

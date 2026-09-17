@@ -19,8 +19,9 @@ interface FetchCall {
 }
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
-let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 const fetchCalls: FetchCall[] = [];
 
@@ -30,12 +31,12 @@ before(async () => {
   await import("@behaviors/requestable/requestable.ts");
   await import("@behaviors/revealable/revealable.ts");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
-  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
-  defineInteractableHost("div");
-  defineInteractableHost("section");
+        ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -75,13 +76,13 @@ function response(ok: boolean, status: number, body: string): FakeResponse {
 }
 
 function hostElement(attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement("div", { is: "interactable-div" }) as HTMLElement;
+  const el = document.createElement("div") as HTMLElement;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
 
 function revealable(tag: string, id: string): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   el.id = id;
   el.setAttribute("implements", "revealable");
   el.hidden = true;

@@ -1,44 +1,69 @@
-import { afterEach, beforeEach, test } from "node:test";
+import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
-import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
-import { IS_HOST } from "@interactable/host.ts";
-import { InteractionEvent } from "@interactable/interaction-event.ts";
-import { ImplementationEvent } from "@interactable/implementation-event.ts";
+import type { JSDOM } from "jsdom";
+import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
-class FakeElement extends EventTarget {
-  id: string;
-  localName = "div";
-  value = "";
-  checked = false;
-  valueAsNumber = NaN;
-  private attrs = new Map<string, string>();
+let dom: JSDOM;
+let clearPhraseState: typeof import("@interactable/executor.ts").clearPhraseState;
+let runPhrases: typeof import("@interactable/executor.ts").runPhrases;
+let attach: typeof import("@interactable/attachment.ts").attach;
+let detach: typeof import("@interactable/attachment.ts").detach;
+let ImplementationEventClass: typeof import("@interactable/implementation-event.ts").ImplementationEvent;
 
-  constructor(id = "") {
-    super();
-    this.id = id;
-  }
+before(async () => {
+  dom = setupJsdom();
+  ({ clearPhraseState, runPhrases } = await import("@interactable/executor.ts"));
+  ({ attach, detach } = await import("@interactable/attachment.ts"));
+  ({ ImplementationEvent: ImplementationEventClass } = await import("@interactable/implementation-event.ts"));
+  const { defineImplementation } = await import("@behaviors/_implementation-definition.ts");
+  defineImplementation("executor-fake", { verbs: {} }, () => ({}));
+});
 
-  getAttribute(name: string): string | null {
-    return this.attrs.get(name) ?? null;
-  }
+after(() => {
+  teardownJsdom(dom);
+});
 
-  setAttribute(name: string, value: string): void {
-    this.attrs.set(name, value);
-  }
+beforeEach(() => {
+  for (const element of [...document.body.querySelectorAll("*")]) detach(element);
+  document.body.replaceChildren();
+});
+
+function el(id = ""): HTMLElement {
+  const element = document.createElement("div");
+  if (id !== "") element.id = id;
+  document.body.appendChild(element);
+  attach(element);
+  return element;
 }
 
-(FakeElement.prototype as unknown as Record<PropertyKey, unknown>)[IS_HOST] = true;
+function plainEl(id = ""): HTMLElement {
+  const element = document.createElement("div");
+  if (id !== "") element.id = id;
+  document.body.appendChild(element);
+  return element;
+}
 
-const byId = new Map<string, FakeElement>();
-const created: FakeElement[] = [];
+function inputEl(id = ""): HTMLInputElement {
+  const element = document.createElement("input");
+  if (id !== "") element.id = id;
+  document.body.appendChild(element);
+  attach(element);
+  return element;
+}
 
-const documentStub = {
-  getElementById: (id: string): FakeElement | null => byId.get(id) ?? null,
-} as unknown as Document;
+function numberEl(id = ""): HTMLInputElement {
+  const element = document.createElement("input");
+  element.type = "number";
+  if (id !== "") element.id = id;
+  document.body.appendChild(element);
+  attach(element);
+  return element;
+}
 
 type Handler = (e: InteractionEvent, arg: unknown) => unknown;
 
-function wireHost(receiver: FakeElement, verbs: Record<string, Handler>): void {
+function wireHost(receiver: Element, verbs: Record<string, Handler>): void {
   receiver.addEventListener("interaction", (raw) => {
     const e = raw as InteractionEvent;
     const impl = verbs[e.verb];
@@ -52,19 +77,12 @@ function wireHost(receiver: FakeElement, verbs: Record<string, Handler>): void {
   });
 }
 
-function observe(receiver: FakeElement, into: InteractionEvent[]): void {
+function observe(receiver: Element, into: InteractionEvent[]): void {
   receiver.addEventListener("interaction", (raw) => into.push(raw as InteractionEvent));
 }
 
-function el(id = ""): FakeElement {
-  const element = new FakeElement(id);
-  if (id !== "") byId.set(id, element);
-  created.push(element);
-  return element;
-}
-
-function run(source: FakeElement, value: string, ev: Event): void {
-  runPhrases(source as unknown as Element, value, ev);
+function run(source: Element, value: string, ev: Event): void {
+  runPhrases(source, value, ev);
 }
 
 function keyEvent(key: string, type = "keydown"): Event {
@@ -75,24 +93,13 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-beforeEach(() => {
-  byId.clear();
-  created.length = 0;
-  globalThis.document = documentStub;
-});
-
-afterEach(() => {
-  for (const element of created) clearPhraseState(element as unknown as Element);
-  Reflect.deleteProperty(globalThis, "document");
-});
-
 test("dispatches an InteractionEvent at the receiver with verb, arg, source", () => {
   const receiver = el("modal");
   const seen: InteractionEvent[] = [];
   wireHost(receiver, { show: () => undefined });
   observe(receiver, seen);
 
-  const trigger = el();
+  const trigger = inputEl();
   trigger.value = "hi";
   run(trigger, "#modal.show()", new Event("click"));
 
@@ -178,46 +185,16 @@ test("an unowned verb aborts the chain and is logged", (t) => {
   assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("no implementation on <div#m> handles missing()"));
 });
 
-test("a non-host receiver is reported with the is= fix", (t) => {
+test("a non-attached receiver is reported with the one not-attached message", (t) => {
   const spy = t.mock.method(console, "error");
-  const plain = el("plain");
-  (plain as unknown as Record<PropertyKey, unknown>)[IS_HOST] = false;
+  const plain = plainEl("plain");
+  void plain;
 
   run(el(), "#plain.show()", new Event("click"));
   assert.equal(spy.mock.callCount(), 1);
   assert.ok(
     String(spy.mock.calls[0]!.arguments[0]).includes(
-      '#plain is not an interactable host; add is="interactable-div"',
-    ),
-  );
-});
-
-test("a non-host receiver with a matching is= but no host gets the define-host fix", (t) => {
-  const spy = t.mock.method(console, "error");
-  const plain = el("plain");
-  (plain as unknown as Record<PropertyKey, unknown>)[IS_HOST] = false;
-  plain.setAttribute("is", "interactable-div");
-
-  run(el(), "#plain.show()", new Event("click"));
-  assert.equal(spy.mock.callCount(), 1);
-  assert.ok(
-    String(spy.mock.calls[0]!.arguments[0]).includes(
-      '#plain has is="interactable-div" but no host is defined for <div>; call defineInteractableHost("div")',
-    ),
-  );
-});
-
-test("a non-host receiver with an unrelated is= value reports the interactable-<tag> convention", (t) => {
-  const spy = t.mock.method(console, "error");
-  const plain = el("plain");
-  (plain as unknown as Record<PropertyKey, unknown>)[IS_HOST] = false;
-  plain.setAttribute("is", "some-widget");
-
-  run(el(), "#plain.show()", new Event("click"));
-  assert.equal(spy.mock.callCount(), 1);
-  assert.ok(
-    String(spy.mock.calls[0]!.arguments[0]).includes(
-      '#plain has is="some-widget"; interactable hosts are is="interactable-<tag>"',
+      "#plain is not attached: it has no implements or on-* attribute, or start() has not run",
     ),
   );
 });
@@ -443,7 +420,7 @@ test("a missing receiver fails only its phrase and is logged once per element", 
 });
 
 test("property reads resolve to the platform value at fire time", () => {
-  const qty = el("qty");
+  const qty = numberEl("qty");
   qty.valueAsNumber = 5;
   const receiver = el("total");
   const seen: InteractionEvent[] = [];
@@ -453,7 +430,7 @@ test("property reads resolve to the platform value at fire time", () => {
   run(el(), "#total.add(#qty.valueAsNumber)", new Event("click"));
   assert.equal(seen[0]!.arg, 5);
 
-  const trigger = el();
+  const trigger = inputEl();
   trigger.value = "abc";
   run(trigger, "#total.add(this.value)", new Event("click"));
   assert.equal(seen[1]!.arg, "abc");
@@ -932,9 +909,9 @@ test("an intersect event's key is the margin: only matching phrases run", () => 
   wireHost(receiver, { bump: () => void bumpCalls++ });
 
   const trigger = el();
-  run(trigger, "0px: #nav.bump()", new ImplementationEvent("intersect-enter", { key: "0px" }));
+  run(trigger, "0px: #nav.bump()", new ImplementationEventClass("intersect-enter", { key: "0px" }));
   assert.equal(bumpCalls, 1);
-  run(trigger, "0px: #nav.bump()", new ImplementationEvent("intersect-enter", { key: "10px" }));
+  run(trigger, "0px: #nav.bump()", new ImplementationEventClass("intersect-enter", { key: "10px" }));
   assert.equal(bumpCalls, 1, "a non-matching margin is skipped quietly");
 });
 
@@ -945,9 +922,9 @@ test("a keyless intersect phrase only reacts to its 0px observer", () => {
 
   const trigger = el();
   const value = "#nav.bump()";
-  run(trigger, value, new ImplementationEvent("intersect-full", { key: "0px" }));
+  run(trigger, value, new ImplementationEventClass("intersect-full", { key: "0px" }));
   assert.equal(bumpCalls, 1);
-  run(trigger, value, new ImplementationEvent("intersect-full", { key: "10px" }));
+  run(trigger, value, new ImplementationEventClass("intersect-full", { key: "10px" }));
   assert.equal(bumpCalls, 1, "a keyless phrase matches only the 0px observer");
 });
 
@@ -958,8 +935,8 @@ test("a keyed phrase on a non-matching synthetic event is skipped quietly", (t) 
   wireHost(receiver, { send: () => void sendCalls++ });
 
   const trigger = el();
-  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-enter", { key: "0px" }));
-  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-enter", { key: "0px" }));
+  run(trigger, "10px: #f.send()", new ImplementationEventClass("intersect-enter", { key: "0px" }));
+  run(trigger, "10px: #f.send()", new ImplementationEventClass("intersect-enter", { key: "0px" }));
   assert.equal(sendCalls, 0);
   assert.equal(spy.mock.callCount(), 0, "non-matching synthetic keys log nothing");
 });
@@ -971,7 +948,7 @@ test("an intersect event with a keyed phrase does not fall into the skip-and-log
   wireHost(receiver, { send: () => void sendCalls++ });
 
   const trigger = el();
-  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-enter", { key: "10px" }));
+  run(trigger, "10px: #f.send()", new ImplementationEventClass("intersect-enter", { key: "10px" }));
   assert.equal(sendCalls, 1);
   assert.equal(spy.mock.callCount(), 0);
 });
@@ -982,6 +959,6 @@ test("keyless phrases on keyless implementation events keep running", () => {
   wireHost(receiver, { flash: () => void copyCalls++ });
 
   const trigger = el();
-  run(trigger, "#copier.flash()", new ImplementationEvent("copy", {}));
+  run(trigger, "#copier.flash()", new ImplementationEventClass("copy", {}));
   assert.equal(copyCalls, 1, "a keyless on-copy phrase is not gated by the key guard");
 });

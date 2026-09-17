@@ -15,23 +15,9 @@ import "./vendor/auto-grow.js";
 import "./vendor/paste-transform.js";
 import "./vendor/json-template.js";
 import "./vendor/formattable.js";
-import { defineInteractableHost } from "./vendor/interactably-core.js";
-import { installAutoLoader } from "./vendor/auto-loader.js";
+import { start } from "./vendor/interactably-core.js";
 
 // The demo markup is already in the document. Importing the bundles registers
-// the implementations and defines the hosts for their tags, so the elements
-// upgrade in place; a name that registers after an element connected attaches
-// through the registry-changed re-check. Tag-less implementations (revealable,
-// attributable, logger, …) declare no tags, so their hosts are defined here.
-defineInteractableHost("button");
-defineInteractableHost("form");
-defineInteractableHost("section");
-defineInteractableHost("div");
-defineInteractableHost("details");
-defineInteractableHost("dialog");
-defineInteractableHost("nav");
-defineInteractableHost("a");
-defineInteractableHost("h2");
-defineInteractableHost("h3");
-
-installAutoLoader();
+// the implementations, and start() attaches every participant — anything with an
+// implements or on-* attribute — through one document-level observer.
+start();

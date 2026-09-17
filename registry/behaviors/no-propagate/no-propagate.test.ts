@@ -2,23 +2,25 @@ import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
-import "@behaviors/no-propagate/no-propagate.ts";
-import { defineInteractableHost } from "@behaviors/interactable-host.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 
-before(() => {
+before(async () => {
   dom = setupJsdom();
-  defineInteractableHost("div");
-  defineInteractableHost("button");
+  await import("@behaviors/no-propagate/no-propagate.ts");
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
@@ -89,10 +91,12 @@ test("the event list is re-read when no-propagate-events changes", async () => {
   assert.equal(clicks, 0);
 
   child.setAttribute("no-propagate-events", "");
+  await flush();
   child.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   assert.equal(clicks, 1);
 
   child.setAttribute("no-propagate-events", "click");
+  await flush();
   child.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   assert.equal(clicks, 1);
 });

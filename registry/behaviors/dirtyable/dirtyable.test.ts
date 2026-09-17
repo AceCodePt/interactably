@@ -9,7 +9,6 @@ let InteractionEventClass: typeof import("@interactable/interaction-event.ts").I
 
 before(async () => {
   dom = setupJsdom();
-  await import("@behaviors/no-propagate/no-propagate.ts");
   await import("@behaviors/dirtyable/dirtyable.ts");
   await import("@behaviors/modifiable/modifiable.ts");
   await import("@behaviors/storable/storable.ts");
@@ -27,7 +26,7 @@ beforeEach(() => {
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
@@ -51,6 +50,7 @@ function track(el: Element): string[] {
 }
 
 test("a text input fires exactly one dirty, one clean and one dirty across char/delete/two-chars", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", { implements: "dirtyable", value: "a" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
@@ -72,9 +72,11 @@ test("a text input fires exactly one dirty, one clean and one dirty across char/
 
   input.dispatchEvent(new Event("input", { bubbles: true }));
   assert.deepEqual(events, ["dirty", "clean", "dirty"]);
+  dispose();
 });
 
 test("dirty-on=\"change\" evaluates on change, not input", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
     implements: "dirtyable",
     value: "a",
@@ -91,9 +93,11 @@ test("dirty-on=\"change\" evaluates on change, not input", async () => {
 
   input.dispatchEvent(new Event("change", { bubbles: true }));
   assert.deepEqual(events, ["dirty"]);
+  dispose();
 });
 
 test("a checkbox toggles against its defaultChecked", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const box = hostElement("input", {
     implements: "dirtyable",
     type: "checkbox",
@@ -111,9 +115,11 @@ test("a checkbox toggles against its defaultChecked", async () => {
   box.checked = true;
   box.dispatchEvent(new Event("input", { bubbles: true }));
   assert.deepEqual(events, ["dirty", "clean"]);
+  dispose();
 });
 
 test("radio: only the radio whose checked diverges from its default fires", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const a = hostElement("input", {
     implements: "dirtyable",
     type: "radio",
@@ -135,9 +141,11 @@ test("radio: only the radio whose checked diverges from its default fires", asyn
   b.dispatchEvent(new Event("input", { bubbles: true }));
   assert.deepEqual(eventsA, [], "the still-selected radio stays clean");
   assert.deepEqual(eventsB, ["dirty"]);
+  dispose();
 });
 
 test("a single select is dirty when its selection diverges from defaultSelected", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const select = hostElement("select", { implements: "dirtyable" }) as HTMLSelectElement;
   select.innerHTML = "<option value='a' selected>A</option><option value='b'>B</option>";
   document.body.appendChild(select);
@@ -152,9 +160,11 @@ test("a single select is dirty when its selection diverges from defaultSelected"
   select.value = "a";
   select.dispatchEvent(new Event("input", { bubbles: true }));
   assert.deepEqual(events, ["dirty", "clean"]);
+  dispose();
 });
 
 test("a multi select is dirty when only the second option differs from its default", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const select = hostElement("select", { implements: "dirtyable", multiple: "" }) as HTMLSelectElement;
   select.innerHTML = "<option value='a' selected>A</option><option value='b'>B</option>";
   document.body.appendChild(select);
@@ -169,39 +179,11 @@ test("a multi select is dirty when only the second option differs from its defau
   select.options[1]!.selected = false;
   select.dispatchEvent(new Event("input", { bubbles: true }));
   assert.deepEqual(events, ["dirty", "clean"]);
+  dispose();
 });
 
-test("defaultValue is live: a script writing the value attribute moves the baseline", async () => {
-  const input = hostElement("input", { implements: "dirtyable", value: "a" }) as HTMLInputElement;
-  document.body.appendChild(input);
-  await flush();
-
-  const events = track(input);
-
-  input.setAttribute("value", "a");
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, [], "matching the live defaultValue stays clean");
-
-  input.value = "b";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, ["dirty"], "diverging from the moved baseline fires dirty");
-});
-
-test("a restore event from storable re-evaluates without any input", async () => {
-  localStorage.setItem("interactable:note", "restored");
-  const textarea = hostElement("textarea", {
-    implements: "dirtyable storable",
-    name: "note",
-  }) as HTMLTextAreaElement;
-  const events = track(textarea);
-  document.body.appendChild(textarea);
-  await flush();
-
-  assert.equal(textarea.value, "restored");
-  assert.deepEqual(events, ["dirty"], "restoring a differing value fires dirty with no keystroke");
-});
-
-test("markClean commits the current state and fires clean exactly once", async () => {
+test("a script moving the value attribute re-evaluates via the attribute observer", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", { implements: "dirtyable", value: "a" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
@@ -210,20 +192,72 @@ test("markClean commits the current state and fires clean exactly once", async (
 
   input.value = "b";
   input.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, ["dirty"]);
+  assert.deepEqual(events, ["dirty"], "a user edit diverges from the authored baseline");
 
-  interact(input, "markClean");
-  assert.deepEqual(events, ["dirty", "clean"]);
+  input.setAttribute("value", "b");
+  await flush();
+  assert.deepEqual(events, ["dirty", "clean"], "the attribute observer re-baselines against the new default");
+  dispose();
+});
 
-  interact(input, "markClean");
-  assert.deepEqual(events, ["dirty", "clean"], "a second markClean fires nothing");
+test("moving the baseline via setAttr commits the current state and fires clean", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
+  const input = hostElement("input", {
+    implements: "dirtyable attributable",
+    value: "a",
+    "on-dirty": "this.setAttr({name: 'value', value: this.value})",
+  }) as HTMLInputElement;
+  document.body.appendChild(input);
+  await flush();
+
+  const events = track(input);
+
+  input.value = "b";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
+  assert.deepEqual(events.slice().sort(), ["clean", "dirty"], "typing dirties and the on-dirty baseline move commits it");
+
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
+  assert.equal(events.length, 2, "an unchanged input fires nothing once committed");
 
   input.value = "c";
   input.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, ["dirty", "clean", "dirty"]);
+  await flush();
+  assert.deepEqual(
+    events.slice().sort(),
+    ["clean", "clean", "dirty", "dirty"],
+    "diverging from the moved baseline dirties and the phrase commits again",
+  );
+  dispose();
+});
+
+test("an on-restore baseline move after a matching restore counts as pristine", async () => {
+  localStorage.setItem("draft", "initial");
+  const dispose = (await import("@interactable/start.ts")).start();
+  const input = hostElement("input", {
+    implements: "dirtyable storable attributable",
+    "storable-key": "draft",
+    "storable-value": "initial",
+    "on-restore": "this.setAttr({name: 'value', value: this.value})",
+  }) as HTMLInputElement;
+  document.body.appendChild(input);
+  await flush();
+
+  const events = track(input);
+
+  input.value = "edited";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.deepEqual(events, ["dirty"]);
+
+  interact(input, "restore");
+  await flush();
+  assert.deepEqual(events, ["dirty", "clean"], "a restore that re-baselines counts as pristine");
+  dispose();
 });
 
 test("no class or attribute is ever written to the element", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
     implements: "dirtyable attributable",
     value: "a",
@@ -248,9 +282,11 @@ test("no class or attribute is ever written to the element", async () => {
   assert.deepEqual(events, ["dirty", "clean"], "on-clean is a recognised trigger attribute");
   assert.equal(input.hasAttribute("data-dirty"), false);
   assert.equal(input.getAttribute("class"), null);
+  dispose();
 });
 
 test("an authored-dirty connect fires nothing; the first flip fires clean", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
     implements: "dirtyable attributable",
     value: "a",
@@ -269,9 +305,11 @@ test("an authored-dirty connect fires nothing; the first flip fires clean", asyn
   input.dispatchEvent(new Event("input", { bubbles: true }));
   assert.deepEqual(events, ["clean"], "the first transition is dirty→clean");
   assert.equal(input.hasAttribute("data-dirty"), false);
+  dispose();
 });
 
 test("a file input with a value reads as dirty", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const file = hostElement("input", { implements: "dirtyable", type: "file" }) as HTMLInputElement;
   document.body.appendChild(file);
   await flush();
@@ -284,9 +322,11 @@ test("a file input with a value reads as dirty", async () => {
   });
   file.dispatchEvent(new Event("input", { bubbles: true }));
   assert.deepEqual(events, ["dirty"]);
+  dispose();
 });
 
 test("a library write through modifiable dirties via the interaction event; reset clears it", async () => {
+  const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
     implements: "modifiable dirtyable",
     value: "1",
@@ -303,4 +343,5 @@ test("a library write through modifiable dirties via the interaction event; rese
   interact(input, "reset");
   assert.equal(input.value, "1");
   assert.deepEqual(events, ["dirty", "clean"]);
+  dispose();
 });

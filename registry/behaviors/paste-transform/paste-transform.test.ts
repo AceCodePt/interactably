@@ -4,13 +4,18 @@ import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 
 before(async () => {
   dom = setupJsdom();
   await import("@behaviors/paste-transform/paste-transform.ts");
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -19,7 +24,7 @@ beforeEach(() => {
 });
 
 function pasteInput(): HTMLInputElement {
-  const el = document.createElement("input", { is: "interactable-input" }) as HTMLInputElement;
+  const el = document.createElement("input") as HTMLInputElement;
   el.setAttribute("implements", "paste-transform");
   return el;
 }
@@ -61,7 +66,7 @@ test("paste-transform replaces only the selected range", async () => {
 });
 
 test("paste-transform works on a textarea", async () => {
-  const el = document.createElement("textarea", { is: "interactable-textarea" }) as HTMLTextAreaElement;
+  const el = document.createElement("textarea") as HTMLTextAreaElement;
   el.setAttribute("implements", "paste-transform");
   el.setAttribute("paste-transform-pattern", "\\n");
   el.setAttribute("paste-transform-replace", " ");

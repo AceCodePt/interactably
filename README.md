@@ -1,12 +1,18 @@
 # Interactably
 
-A declarative interaction language for **customized built-in web components**, and the host that runs it.
+A declarative interaction language for plain HTML elements.
 
-You write plain HTML. `is="interactable-<tag>"` turns an element into a **host**. An `on-*` attribute makes it a **trigger**; `implements="…"` makes it a **receiver**. The auto-loader can add `is=` for you, so the markup can stay plain HTML ([§ Quick start](#quick-start)).
+You write plain HTML. An `on-*` attribute makes a **trigger**; `implements="…"` makes a **receiver**; one `start()` call finds them all ([§ Quick start](#quick-start)).
 
 ```html
-<button is="interactable-button" on-click="#modal.show()">Open</button>
-<dialog is="interactable-dialog" id="modal" implements="revealable">…</dialog>
+<script type="module">
+  import { start } from "interactably/dist/cdn/interactably-core.js";
+  import "interactably/dist/cdn/revealable.js";
+  start();
+</script>
+
+<button on-click="#modal.show()">Open</button>
+<dialog id="modal" implements="revealable">…</dialog>
 ```
 
 Clicking the button sends the verb `show()` to `#modal`, which implements `revealable`. No page JavaScript.
@@ -15,8 +21,8 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
 
 - **Triggers** carry `on-<event>` attributes whose value is a tiny DSL: `#id.verb(arg)`.
 - **Receivers** `implements` named capabilities (`revealable`, `modifiable`, `listable`, …).
-- **Every participating element is a host.** The host binds trigger listeners, instantiates implementations, and routes interactions between them.
-- **No engine.** A pure parser turns attribute strings into phrases; an executor runs them. Both are functions the host calls.
+- **Every participating element is attached.** One `start()` call binds trigger listeners, instantiates implementations, and routes interactions between them.
+- **No engine, one observer.** A pure parser turns attribute strings into phrases; an executor runs them. One document-level `MutationObserver` (`start()`) decides what participates and when.
 
 ---
 
@@ -30,7 +36,7 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
   - [Reserved names](#reserved-names)
   - [The formula](#formula)
 - [The `interaction` event](#interaction-event)
-- [Hosts](#hosts)
+- [Attachment](#attachment)
   - [Four kinds of element](#four-kinds)
   - [Reporting](#reporting)
 - [The shipped implementations](#implementations)
@@ -70,16 +76,14 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
 npm install interactably
 ```
 
-Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the core's registry on import, and defines the hosts for its declared tags. There are two ways to write the markup; both produce the same page.
-
-**Option A — the auto-loader (simplest).** Import `installAutoLoader()` and omit `is=` entirely. It upgrades every element that has `implements` or an `on-*` attribute:
+Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the core's registry on import. Then call `start()` once — the single attachment point that wires up everything already in the document.
 
 ```html
 <script type="module">
+  import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/modifiable.js";
   import "interactably/dist/cdn/revealable.js";
-  import { installAutoLoader } from "interactably/dist/cdn/auto-loader.js";
-  installAutoLoader();
+  start();
 </script>
 
 <button id="inc" on-click="#qty.inc(); #preview.compute()">+</button>
@@ -93,38 +97,16 @@ Load the core bundle plus the implementations you use. Each implementation bundl
 <output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
 ```
 
-**Option B — explicit `is=` (faster).** State the host name yourself; the element upgrades synchronously on insertion in Chrome and Firefox, with no observer and no node replacement:
-
-```html
-<script type="module">
-  import "interactably/dist/cdn/modifiable.js";
-  import "interactably/dist/cdn/revealable.js";
-  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
-  defineInteractableHost("button");   // idempotent; a <button> trigger has no implementation declaring it
-</script>
-
-<button is="interactable-button" id="inc" on-click="#qty.inc(); #preview.compute()">+</button>
-
-<label>Qty
-  <input is="interactable-input" id="qty" implements="modifiable"
-         type="number" value="1" min="0" max="10"
-         on-input="#preview.set(this.value)">
-</label>
-
-<output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
-```
-
 Every click on `+` calls `#qty.inc()` (the input clamps to `max`) and then `#preview.compute()`, which re-reads `#qty.value`; typing in the field still pushes through `on-input`.
 
 Bundle files:
 
 | Bundle | Contents |
 | --- | --- |
-| `interactably-core.js` | parser, executor, event, host, registry. No implementations. |
+| `interactably-core.js` | parser, executor, event, attachment, registry. No implementations. |
 | `modifiable.js`, `dirtyable.js`, `listable.js`, … | one implementation per file, registering into the core's registry on import |
-| `auto-loader.js` | optional: watches the DOM and adds `is=` to any element with `implements` or an `on-*` attribute |
 
-> **`is=` rule.** An element carries `is="interactable-<tag>"` when it has `implements`, any `on-*` attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. The auto-loader fills `is=` in at runtime so you can omit it; writing it yourself is the synchronous, production form.
+> **The participation rule.** An element is a participant — something `start()` attaches — when it has `implements`, any `on-*` attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new `implements` or `on-*` attribute to an element after insertion does not attach it; re-insert the element.
 
 ---
 
@@ -165,6 +147,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Trigger | `on-click="#pop.show()"` | On `click`, run the phrase |
 | Implementation event | `on-copy="#flash.show()"` | On a copyable element `on-copy` is copyable's event and the native clipboard event doesn't fire it. Continuations now share trigger-attribute `once`/`debounce` semantics |
 | Synthetic trigger | `on-intersect-enter="#link.setAttr({name: 'data-visible', value: ''})"` | `IntersectionObserver` against the viewport: `enter`/`leave` fire on the element entering and leaving the box, `full` on the element becoming entirely inside the box or not; the phrase key is the `rootMargin`, and each `;` phrase observes its own margin |
+| On-load | `on-load="#panel.open()"` | Runs once at attach, after the element's implementations are instantiated; not a DOM listener |
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from (the trigger for `on-*`) |
 | Chain | `#pop.show().focus()` | `.show()` then `.focus()` on the same receiver, in order |
@@ -232,7 +215,7 @@ Division by zero is an error, not `Infinity`: `1 / 0` and `0 / 0` throw a `Formu
 
 ## The `interaction` event
 
-The host wraps every verb call in its own event, dispatched at the receiver:
+The attachment wraps every verb call in its own event, dispatched at the receiver:
 
 ```ts
 class InteractionEvent extends Event {
@@ -247,59 +230,61 @@ class InteractionEvent extends Event {
 }
 ```
 
-- **Non-bubbling.** A host receives interactions aimed at itself and nothing else — no `if (e.target !== el)` guards.
+- **Non-bubbling.** An attached element receives interactions aimed at itself and nothing else — no `if (e.target !== el)` guards.
 - **`preventDefault()` aborts the rest of the chain.** This is the guard-verb mechanism: `validate().send()`, with `||` as the failure branch.
-- **Four return channels, because a DOM event has none.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened". So the host writes `handled` (an implementation owned the verb), `error` (validation or the verb body threw), `result` (the return value) and `pauseMs` (a verb paused the chain) onto the event, and the executor reads them after dispatch.
+- **Four return channels, because a DOM event has none.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened". So the attachment writes `handled` (an implementation owned the verb), `error` (validation or the verb body threw), `result` (the return value) and `pauseMs` (a verb paused the chain) onto the event, and the executor reads them after dispatch.
 - **`pauseMs` defers the chain, it does not abort it.** The `delay(ms)` modifier — and any verb that sets `e.pauseMs = N` — stops the chain where it is, schedules the remainder to run N ms later, and returns. A re-fire that reaches the same pause reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. Disconnecting the element drops it — the timer lives in the same per-element state as `debounce`.
 - **No `isTrusted` gate.** Tests dispatch real DOM events on triggers.
 - **The browser's `command` event plays no part.** A page can also use native invokers; an implementation may listen to `command` like any other DOM event.
 
 ---
 
-## Hosts
+## Attachment
 
-One customized built-in per tag, defined with [`auto-wc`](https://github.com/AceCodePt/auto-wc) via `defineInteractableHost("input")` → `interactable-input`. The host does two independent jobs.
+`start()` attaches every participant — any element with an `implements` or `on-*` attribute — through one document-level `MutationObserver`: the initial document is live at `DOMContentLoaded`, and anything inserted later is live one microtask after insertion. Attach is atomic: the trigger side, the receiver side and on-load all come from one pass, in document order.
 
-**Trigger side.** In `connectedCallback` it scans its `on-*` attributes and binds one listener per attribute on itself:
+**On-load.** `on-load` fires once per attach, after that element's implementations are instantiated. The batch is attached first and its on-load phrases run afterwards in document order, so `<button on-load="#panel.open()">` before `#panel` resolves. A move does not re-fire. A `<template>` is inert — a clone's `on-load` fires once on insertion. The native `load` event is unreachable through the DSL.
+
+**Trigger side.** `attach()` scans the element's `on-*` attributes and binds one listener per attribute on the element:
 
 ```ts
-for (const name of this.getAttributeNames()) {
-  if (!name.startsWith("on-")) continue;
-  const type = name.slice(3);
+for (const attribute of el.getAttributeNames()) {
+  if (!attribute.startsWith("on-")) continue;
+  const type = attribute.slice(3);
   const handler = (ev: Event) => {
-    if (!(ev instanceof ImplementationEvent) && isImplementationEvent(this, type)) return;
-    runPhrases(this, this.getAttribute(name)!, ev);   // value read at event time
+    if (!(ev instanceof ImplementationEvent) && isImplementationEvent(el, type)) return;
+    runPhrases(el, el.getAttribute(attribute) ?? "", ev);   // value read at event time
   };
-  this.addEventListener(type, handler, { passive: true });                          // the DSL never cancels
-  if (!isImplementationEvent(this, type)) {                                          // declared events never warn
-    if (!(("on" + type) in this) && !LEGACY_EVENTS_WITHOUT_IDL.has(type))
-      console.warn(`[Interactable] on-${type} on ${describe(this)}: <${this.localName}> has no "${type}" event; custom events are fine, but check the spelling and case`);
-    warnIfNativeActionLikelyUnwanted(this, type);                                     // <form on-submit>, <a href on-click> without prevent-default
+  el.addEventListener(type, handler, { passive: true });                          // the DSL never cancels
+  if (!isImplementationEvent(el, type)) {                                          // declared events never warn
+    if (!(("on" + type) in el) && !LEGACY_EVENTS_WITHOUT_IDL.has(type))
+      console.warn(`[Interactable] on-${type} on ${describe(el)}: <${el.localName}> has no "${type}" event; custom events are fine, but check the spelling and case`);
+    warnIfNativeActionLikelyUnwanted(el, type);                                     // <form on-submit>, <a href on-click> without prevent-default
   }
-  this._interactionCleanup.push(() => this.removeEventListener(type, handler));
+  attachment.triggers.set(attribute, () => el.removeEventListener(type, handler));
 }
 ```
 
-A trigger is live the moment it connects. `disconnectedCallback` runs the cleanup list. The `on-*` **value** is read at event time, so editing `on-click="#a.show()"` to `"#b.show()"` takes effect on the next click. Adding a brand-new `on-*` attribute after connect requires re-inserting the element. Whether a name is an implementation event is also read at event time, from the element's current `implements` — not baked in when the listener binds.
+A trigger is live one microtask after insertion, or at `DOMContentLoaded` for the initial document. Detach runs the cleanup list. The `on-*` **value** is read at event time, so editing `on-click="#a.show()"` to `"#b.show()"` takes effect on the next click. Whether a name is an implementation event is also read at event time, from the element's current `implements` — not baked in when the listener binds. An element that gains `implements` or an `on-*` attribute after insertion is not a participant yet — re-insert it.
 
-**Receiver side.** Read `implements`; for each name, check the implementation's `tags` admits `this.localName`, instantiate the factory with `(this, attrs)`, wire the implementation's `on*` methods as listeners on itself, forward lifecycle callbacks, and route `onInteraction(e)` to the **first implementation in `implements` order** that declares `e.verb` — after validating `e.arg` against the verb's signature.
+**Receiver side.** Read `implements`; for each name, check the implementation's `tags` admits `el.localName`, instantiate the factory with `(el, attrs)`, wire the implementation's `on*` methods as listeners on itself, forward lifecycle callbacks, and route `onInteraction(e)` to the **first implementation in `implements` order** that declares `e.verb` — after validating `e.arg` against the verb's signature.
 
-**Readiness.** Implementations attach synchronously in `connectedCallback`, so an interaction dispatched immediately after insertion is answered in the same task. An `implements` name the registry does not know yet is skipped, and the report is deferred one turn so the imports that follow can register it first; only a name still missing when the current script settles is reported with `console.error`. When it registers later, the registry dispatches `interactably:register` and every connected host re-runs its attach pass. Markup may therefore precede the imports. Config and state attributes are delivered through the class's `observedAttributes` snapshot plus one `MutationObserver` per element (an implementation can register after the host was defined), never for `on-*` — the three intersect attributes are the one exception, observed statically so the host can rebuild their observers when they change.
+**Readiness.** An `implements` name the registry does not know yet is skipped, and the report is deferred one turn so the imports that follow can register it first; only a name still missing when the current script settles is reported with `console.error`. When it registers later, the registry re-runs the attach pass on every attached element. Markup may therefore precede the imports. Config and state attributes are delivered through one `MutationObserver` per element, never for `on-*` — the three intersect attributes are the one exception, observed statically so the attach pass can rebuild their observers when they change.
 
 ### Four kinds of element
 
 | Kind | Has | Example |
 | --- | --- | --- |
-| **Self-contained** | `implements` | `<textarea is="interactable-textarea" implements="autogrowable">` — everything inside via the implementation's own `on*` handlers |
-| **Trigger-only** | `on-*` | `<button is="interactable-button" on-click="#modal.show()">` — causes things elsewhere, never a receiver |
-| **Receiver** | `implements` + `id` | `<dialog is="interactable-dialog" id="modal" implements="revealable">` — the id exists so others can address it |
-| **Self-acting** | `implements` + `on-*` | `<input is="interactable-input" implements="modifiable" on-keydown="escape: this.reset()">` — triggers on itself |
+| **Self-contained** | `implements` | `<textarea implements="autogrowable">` — everything inside via the implementation's own `on*` handlers |
+| **Trigger-only** | `on-*` | `<button on-click="#modal.show()">` — causes things elsewhere, never a receiver |
+| **Receiver** | `implements` + `id` | `<dialog id="modal" implements="revealable">` — the id exists so others can address it |
+| **Self-acting** | `implements` + `on-*` | `<input implements="modifiable" on-keydown="escape: this.reset()">` — triggers on itself |
 
 The fourth kind is why `this` exists: `on-click="this.remove()"` works on every row cloned from a template, with no generated ids.
 
 ### Reporting
 
-The host and executor report through `console.error` / `console.warn`; they do not throw (host methods run on the browser's stack, which owns their exceptions). `throw` is reserved for `defineImplementation` and the registry, where the exception reaches the developer who wrote the call.
+The attachment and executor report through `console.error` / `console.warn`; they do not throw (attach-time code runs on the browser's stack, which owns its exceptions). `throw` is reserved for `defineImplementation` and the registry, where the exception reaches the developer who wrote the call.
 
 - `console.error` when there is no legitimate reading: unknown `implements` name, tag outside the implementation's `tags`, receiver `#id` not in the document, verb no implementation owns, verb that threw, implementation that failed to attach.
 - `console.warn` when the code may well be right but the author should look: `on-<type>` the element has no event for, `<form on-submit>` without `prevent-default`, a verb that returned a promise, `prevent-default` with nothing derived.
@@ -311,7 +296,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | Implementation | Tags | Verbs | Config / state | What it does |
 | --- | --- | --- | --- | --- |
 | `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute` | `step`, `formula`, `invalid-value` | typed writes with clamping; `set` takes a string or a number and `inc`/`dec` accept a number or a numeric string, throwing a named error when it cannot be read; evaluates a formula on `compute()` and on connect |
-| `dirtyable` | input, textarea, select, output | `markClean` | `dirty-on`; events `dirty`, `clean` | fires `dirty` / `clean` as the element diverges from / returns to the platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); writes nothing |
+| `dirtyable` | input, textarea, select, output | — | `dirty-on`; events `dirty`, `clean` | compares the element's current value with its platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); fires `dirty` / `clean` on transition; writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
 | `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events |
@@ -322,7 +307,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `prevent-default` | any | — | `events` (derived, see below) | `preventDefault` on listed events |
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([below](#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script or restored by `storable` is sized on the next input |
-| `storable` | any | `save`, `load`, `clear` | `scope` (`local`/`session`), `key`, `value` | persist `storable-value ?? value` under `storable-key ?? name ?? id`; restores on connect and fires `restore` |
+| `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key; `restore()` reads it back and fires `restore` only when it matches |
 | `paste-transform` | input, textarea | — | `pattern`, `replace` | rewrite pasted text with a regex; fires `input` like a native paste |
 | `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
@@ -332,7 +317,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 `delay` is a phrase modifier, not a verb — it pauses the chain where it sits, and everything downstream, including past `&&`, waits, because `&&` is sequential:
 
 ```html
-<button is="interactable-button" implements="attributable"
+<button implements="attributable"
         on-click="this.delay(300).setAttr({name: 'aria-busy', value: 'true'})">…</button>
 ```
 
@@ -343,20 +328,20 @@ The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms`
 The executor never calls `preventDefault()` or `stopPropagation()` (every `on-*` listener is passive). Both facts are said on the element, by name — they are implementations, not grammar.
 
 ```html
-<form is="interactable-form" implements="prevent-default no-propagate" no-propagate-events="submit"
+<form implements="prevent-default no-propagate" no-propagate-events="submit"
       on-submit="#api.send(); #status.set('Saving…')">                                  <!-- derived from on-submit: submit -->
 
-<div is="interactable-div" implements="prevent-default" prevent-default-events="contextmenu"
+<div implements="prevent-default" prevent-default-events="contextmenu"
      on-contextmenu="#menu.showAt(this)">                                                <!-- not derivable: stated -->
 
-<input is="interactable-input" implements="prevent-default"
+<input implements="prevent-default"
        on-keydown="enter: #search.run(this.value)">                                      <!-- derived from the keyed phrase: keydown:enter -->
 
-<section is="interactable-section" implements="prevent-default no-propagate"
+<section implements="prevent-default no-propagate"
          prevent-default-events="dragover,drop" no-propagate-events="drop"
          on-drop="#uploads.accept(this)">                                                <!-- not derivable; dragover must be cancelled or drop never fires -->
 
-<canvas is="interactable-canvas" implements="prevent-default" prevent-default-events="wheel"
+<canvas implements="prevent-default" prevent-default-events="wheel"
         on-wheel="#viewport.throttle(16).zoom(this)">                                    <!-- never derived: blocks scrolling, always stated -->
 ```
 
@@ -379,15 +364,15 @@ A keyed `on-keydown` phrase that *replaces* a browser default should always carr
 
 Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling come with the first three for free; the fourth row is the only one that invents anything.
 
-**Controllers are wired at connect.** When a panel with an `id` connects, `revealable` scans the `is="interactable-…"` hosts, parses each one's `on-*` values through the same cached `parse()` the executor uses, and for every host that *controls* the panel — `#id.toggle()`, `#id.show()`, or `#id.show(true)`; the literal `show(false)` is a side effect, not control, and non-literal arguments such as `show(this.checked)` are not control either — it appends the panel's id to the host's `aria-controls` (deduped, existing tokens preserved) and sets `aria-expanded` to the current state, skipped on radio and checkbox inputs where it is meaningless. The sync continues at fire time: every element whose `aria-controls` names the panel gets `aria-expanded` refreshed, and a bare trigger that declares none gets `aria-controls` added — unless the verb was `show(false)`, which only updates, never claims.
+**Controllers are wired at connect.** When a panel with an `id` connects, `revealable` scans the attached elements — anything carrying an `on-*` attribute — parses each one's `on-*` values through the same cached `parse()` the executor uses, and for every element that *controls* the panel — `#id.toggle()`, `#id.show()`, or `#id.show(true)`; the literal `show(false)` is a side effect, not control, and non-literal arguments such as `show(this.checked)` are not control either — it appends the panel's id to the element's `aria-controls` (deduped, existing tokens preserved) and sets `aria-expanded` to the current state, skipped on radio and checkbox inputs where it is meaningless. The sync continues at fire time: every element whose `aria-controls` names the panel gets `aria-expanded` refreshed, and a bare trigger that declares none gets `aria-controls` added — unless the verb was `show(false)`, which only updates, never claims.
 
 Nothing closes a panel unless a phrase says `show(false)`. Mutually exclusive panels are written out: each trigger names what it opens and what it closes.
 
 ### Storable
 
-`storable` persists an element's value to storage through three verbs: `save()`, `load()` and `clear()`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup. The value is `storable-value ?? value` (an authored `storable-value` outranks the element's own `.value`), the storage key is `interactable:<storable-key ?? name ?? id>`, and the default scope is `local`. Same-name checkboxes store as a list: `save()` on either writes the JSON array of every checked control sharing that `name` and form owner. An element with none of `storable-key`, `name` and `id` warns once on connect and stores nothing — as does one whose value resolves to nothing (no `storable-value`, no `.value`).
+`storable` persists a declared slot under a declared key through three verbs: `save()`, `restore()` and `clear()`. `storable-key` names the key and `storable-value` the slot that is stored — both are required, and an element missing either is a signature error at attach that names the attribute. The default scope is `local`; `storable-scope="session"` uses `sessionStorage`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup.
 
-Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here. Restore is quiet: it applies or matches the stored value and fires the `restore` event, never a native `change`, so nothing you didn't write runs on a reload — `dirtyable` subscribes to `restore` and re-evaluates, so a restore that writes a differing value flips the field dirty immediately; `on-restore="this.markClean()"` commits the restored value as the new clean baseline. The hook is `on-restore="…"` on the storable element, fired once at most, only when a stored value was applied or matched, never when `save()` runs. An authored `storable-value` matches rather than writes: it fires `restore` only when it equals what was stored, and a different stored value changes nothing. The package-manager example is nine buttons that each say everything they do — `storable-key="pm"`, `storable-value="pnpm"`, an `on-click` naming the three panels it opens, the six it closes and `this.save()`, and the same `on-restore` without the save. `load()` re-reads the stored value as a user action and fires `restore` when it changes; `clear()` removes the key.
+Nothing is restored without `on-load="this.restore()"` on the element. `restore()` reads the slot under the key back and fires the `restore` event only when it matches — the stored value equals the authored `storable-value` — at most once per `restore()` call, never from `save()`; a different stored value changes nothing. `save()` writes the slot under the key; `clear()` removes it. The package-manager example is nine buttons that each say everything they do — `storable-key="pm"`, `storable-value="pnpm"`, an `on-click` naming the three panels it opens, the six it closes and `this.save()`, and `on-load="this.restore()"`.
 
 ### json-template
 
@@ -515,12 +500,12 @@ Built once per instance by `bindAttributes(el, name, def)`. Each getter reads th
 
 ### Conventions
 
-- **`on*` methods are event handlers** on the host element (auto-wc semantics; `auto-grow`'s `onInput` still works). **Every other method is a verb** and must appear in `verbs`.
+- **`on*` methods are event handlers** on the element (`auto-grow`'s `onInput` still works). **Every other method is a verb** and must appear in `verbs`.
 - **Verbs receive `(e, arg)`.** `arg` is already validated against the signature. Inputs come from `arg`; `e.source` and `e.originalEvent` are *context*, not input — metadata about the trigger (`aria-expanded` on the button that opened a dialog), not what to act on.
-- **Verbs are synchronous.** Do the work, return; the host stores the return value on `e.result`. A verb that returns a promise gets a console warning.
+- **Verbs are synchronous.** Do the work, return; the attachment stores the return value on `e.result`. A verb that returns a promise gets a console warning.
 - **Lifecycle:** `connectedCallback`, `disconnectedCallback`, `attributeChangedCallback(name, old, new)` may be returned from the factory alongside the verbs.
 - **Implementations never call verbs on other elements.** Work that completes later declares **its own events** (`copyable` declares `"copy"`; `requestable` declares `"response"` and `"request-error"`; `storable` declares `"restore"`) and dispatches an `ImplementationEvent` when the moment arrives; the follow-up is a plain `on-<event>` trigger attribute on that element, so `this` in the continuation is the element that did the work.
-- **Registering an implementation ensures its hosts.** The registry calls `defineInteractableHost(tag)` for every tag in `tags`; tag-less implementations ensure nothing. `defineInteractableHost` is idempotent, so two implementations sharing a tag share one host class.
+- **Registering an implementation is idempotent.** The registry records the name once; `defineImplementation` refuses a duplicate. An element whose `implements` names a registered implementation gets it at attach, or when the name registers later.
 
 ---
 
@@ -556,15 +541,11 @@ The `value` attribute / `value` property pair is the canonical case: `el.value =
     onInteraction: evaluate,
     onRestore: evaluate,                          // storable's restore is seen directly
     ...(attrs["dirty-on"] === "change" ? { onChange: evaluate } : { onInput: evaluate }),
-    markClean: () => {
-      if (el instanceof HTMLSelectElement) for (const option of el.options) option.defaultSelected = option.selected;
-      else if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) el.defaultChecked = el.checked;
-      else el.defaultValue = el.value;
-      evaluate();
-    },
   };
 }
 ```
+
+`dirtyable` declares no verb; its one closure boolean is the last-reported dirtiness, and the baseline is a platform property, so moving it is a phrase, not a method: on an input, `setAttr({name: 'value', value: this.value})` rewrites the `value` attribute so the live `defaultValue` follows the current value, and after a restore `on-restore="this.setAttr({name: 'value', value: this.value})"` commits the restored value the same way.
 
 ```ts
 // revealable on a plain panel — the one case with invented state
@@ -579,7 +560,7 @@ The `value` attribute / `value` property pair is the canonical case: `el.value =
 Rules:
 
 - **Read the platform before inventing.** `value`, `checked`, `open` on `<details>`/`<dialog>`, popover state, `min`/`max`/`step`. A `state` entry exists only when none of these hold the thing.
-- **`config` is read-only.** A verb that needs its own baseline commits one by writing the platform's own default property — `dirtyable`'s `markClean` sets `defaultValue` / `defaultChecked` / `defaultSelected` — never a `config` key.
+- **`config` is read-only.** A baseline is moved by writing the platform's own default property — on an input, `setAttr({name: 'value', value: this.value})` makes the live `defaultValue` follow the current value — never a `config` key.
 - **Invented live state is `<name>-<key>`** — one namespace, shared with config, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
 - **Closure state** for transient internals (in-flight request, timers).
 - **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string (an empty value stays the empty string). Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0). A verb reading a value tolerates the unreadable (`inc()` on an empty counter produces `1`); the formula reading one treats it as an error.
@@ -592,17 +573,12 @@ There is no store, no signals, no cross-element watching. The DOM is the store; 
 
 | Case | Answer |
 | --- | --- |
-| **Dynamic triggers** (rows cloned from a template) | Put `is="interactable-<tag>"` in the template. On Chrome and Firefox the clone upgrades synchronously on insertion; `on-click="this.remove()"` / `#list.removeRow(this)` works on every clone with no generated ids. On Safari, and when the auto-loader adds `is=` for you, the upgrade is deferred ([below](#upgrade-timing)) |
+| **Dynamic triggers** (rows cloned from a template) | Rows cloned from a template are attached one microtask after insertion; `on-click="this.remove()"` / `#list.removeRow(this)` works on every clone with no generated ids |
 | **Dynamic receivers** (a row's own subtotal) | Receivers stay ids or `this`. Either address a stable ancestor and let the implementation find the relative element from `e.source` (`closest("li")`), or stamp ids in the template |
 | **Dynamic data sources** (sum whatever inputs exist) | Formula with a selector: `#total implements="modifiable" modifiable-formula="sum('#list .amount:valid')"`, recomputed by `#total.compute()`. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time. `sum` is strict; filter blanks in the selector — `sum('#list .amount:valid')` (blank `required` inputs are `:invalid`), `sum('#list .amount:not(:placeholder-shown)')` (blank inputs carrying a `placeholder`, even `placeholder=" "`), `sum('#list .amount:checked')` sums only ticked checkboxes |
 | **Change without interaction** (server swap, external mutation) | The implementation that performed the change fires its own event (`on-response="#count.compute()"`), a new synchronous chain with `this` bound to that element |
 
-<a name="upgrade-timing"></a>**Upgrade timing is not uniform.** `is=` written in the markup (server-rendered or in a `<template>`) upgrades synchronously on insertion in Chrome and Firefox. Two paths are asynchronous:
-
-- **The auto-loader** (`installAutoLoader()`). Customized built-ins only upgrade when `is` is present at *creation*, so the loader watches with a `MutationObserver`, then **replaces the node**: `createElement(tag, { is })`, copy attributes, move children. Between insertion and the swap the element has no listeners — a programmatic `.click()` in that gap is lost, focus is dropped, and JS references captured before the swap point at a detached node. `getElementById` and the DSL's late-bound `#id` are unaffected. It is the simplest way to write markup — no `is=` anywhere — at the cost of a document-wide observer and a microtask-late upgrade. Use it to start; switch to explicit `is=` for production.
-- **Safari.** Needs the [`@ungap/custom-elements`](https://github.com/ungap/custom-elements) polyfill; even explicit `is=` upgrades a tick late there (it is itself a MutationObserver).
-
-Consequence: the auto-loader is a supported convenience, but explicit `is=` is the faster, synchronous form — prefer it in templates and server output. If code inserts a trigger and drives it immediately, await `customElements.whenDefined()` plus a microtask — or drive the receiver directly with `dispatchInteraction`.
+**Timing is uniform.** Every element — in the initial document or inserted later, server-rendered or cloned from a template — attaches one microtask after insertion, or at `DOMContentLoaded` for the initial document. The microtask gap is the one price of the model: a programmatic `.click()` in the gap runs nothing — await a microtask or use `dispatchInteraction`. Moving an element around the document is a no-op: it stays attached, its instance survives. An element that gains `implements` or an `on-*` attribute after insertion is not attached by that attribute alone — re-insert it.
 
 Selector rule: **selectors may appear in arguments, never as receivers.** The dispatch graph stays 1:1 — every interaction goes to one element with one `implements`, so completion, grep (`#pop.` finds every writer) and error rules stay exact.
 
@@ -610,32 +586,31 @@ Selector rule: **selectors may appear in arguments, never as receivers.** The di
 
 ## Parser and executor
 
-There is no engine. Two pure functions, both called from the host.
+There is no engine. Two pure functions, both called from the attachment.
 
 ### Pipeline
 
 ```
-DOM event on the trigger (passive listener bound in connectedCallback)
+DOM event on the trigger (passive listener bound at attach)
   → parse(attributeValue)          cached by string → Phrase[] with unresolved refs
   → runPhrases(this, phrases, ev)
 → key filter
   → run the units in order (one unit, or all `&&` / all `||`)
 leading debounce/throttle first (timer keyed by element + attribute + phrase + unit)
       resolve the unit's receiver (#id → getElementById, this → the source); missing → console.error, stop
-      receiver is not a host (no is=) → console.error "#plain is not an interactable host; add is=\"interactable-div\"", stop
       for each link in order, modifiers where they sit:
           once() → spent when the walk passes it; a spent gate cuts the chain from there
           delay(ms) → pause the chain; the remainder runs ms later
           resolve arg (scalar, or object literal field by field) → dispatch InteractionEvent
-            · host: find the implementation owning the verb → e.handled = true
-            · host: validate arg against the signature, call the verb — both inside try/catch → e.error on throw
+            · attachment: find the implementation owning the verb → e.handled = true
+            · attachment: validate arg against the signature, call the verb — both inside try/catch → e.error on throw
             · executor, after dispatch:  !e.handled → console.error "no implementation on <receiver implements=\"…\"> handles verb()", stop
                                           e.error    → console.error once with receiver and verb, stop
                                           e.defaultPrevented → stop the unit, quiet
           `&&`: next unit only if this one completed; `||`: next unit only if this one was guard-aborted
 ```
 
-Every receiver must be a host — `#id` and `this` resolve to elements carrying `is="interactable-<tag>"`, and a phrase aimed at a plain element is reported as `#plain is not an interactable host; add is="interactable-div"`.
+Every receiver must be a participant — `#id` and `this` resolve to elements carrying `implements`, and a phrase aimed at an element that owns no such verb is reported as `no implementation on <receiver implements="…"> handles verb()`.
 
 - **Nested triggers behave like nested `onclick`.** A click on a button inside a `<div on-click>` fires the button's phrase, then bubbles and fires the div's. No implicit innermost-wins; suppression is explicit via `no-propagate` on the inner element.
 - **Timers and `once` state are keyed per element, per receiver-chain** (in a `WeakMap`) and cleared on disconnect via `clearPhraseState`.
@@ -652,13 +627,13 @@ Every receiver must be a host — `#id` and `this` resolve to elements carrying 
 The executor does neither. Every `on-*` listener is passive; a phrase describes what happens, not what the browser is allowed to do.
 
 ```html
-<form is="interactable-form" implements="prevent-default" on-submit="#api.send()">          <!-- submit cancelled -->
-<a    is="interactable-a"    href="/docs"                  on-click="#log.track('docs')">Docs</a>   <!-- navigates and tracks -->
-<a    is="interactable-a"    href="#p" implements="prevent-default" on-click="#p.show()">…</a>   <!-- in-page action -->
-<button is="interactable-button" implements="no-propagate" on-click="#list.removeRow(this)">×</button>  <!-- row's on-click untouched -->
+<form implements="prevent-default" on-submit="#api.send()">          <!-- submit cancelled -->
+<a    href="/docs"                  on-click="#log.track('docs')">Docs</a>   <!-- navigates and tracks -->
+<a    href="#p" implements="prevent-default" on-click="#p.show()">…</a>   <!-- in-page action -->
+<button implements="no-propagate" on-click="#list.removeRow(this)">×</button>  <!-- row's on-click untouched -->
 ```
 
-`prevent-default` binds its own listeners with `passive: false`, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying `on-submit` on a `<form>` (or `on-click` on an `<a href>`, or an **unkeyed** `on-keydown`/`on-keyup` on a `<button>`) without `prevent-default` logs one `console.warn`. A keyed `on-keydown` phrase (`escape: this.reset()`) does not conflict with the button's Enter/Space activation, so it never warns. A pre-existing `defaultPrevented` does **not** suppress dispatch.
+`prevent-default` binds its own listeners with `passive: false`, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at attach, an element carrying `on-submit` on a `<form>` (or `on-click` on an `<a href>`, or an **unkeyed** `on-keydown`/`on-keyup` on a `<button>`) without `prevent-default` logs one `console.warn`. A keyed `on-keydown` phrase (`escape: this.reset()`) does not conflict with the button's Enter/Space activation, so it never warns. A pre-existing `defaultPrevented` does **not** suppress dispatch.
 
 ---
 
@@ -669,7 +644,7 @@ The executor does neither. Every `on-*` listener is passive; a phrase describes 
 A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain where it sits, and the executor runs the remainder of the chain `ms` later as its own scheduled step. That is the mechanism behind a "temporarily set attribute" — `copyable` copies and fires `copy` on success; it never touches attributes, so the flash is entirely the author's, in the trigger attribute:
 
 ```html
-<button is="interactable-button" implements="copyable attributable"
+<button implements="copyable attributable"
         on-click="this.copy(#snippet)"
         on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')">
   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
@@ -679,13 +654,13 @@ A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain whe
 `copy` fires its `copy` event on success (`this` is the button); `setAttr` marks the button; `delay(1500)` pauses; `removeAttr('data-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
 
 ```html
-<input is="interactable-input" id="q" on-input="#results.debounce(300).send()">
+<input id="q" on-input="#results.debounce(300).send()">
 
-<ul is="interactable-ul" id="results" implements="requestable"
+<ul id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
     on-response="#count.compute(); #status.show(false)"
     on-request-error="#status.show()"></ul>
-<output is="interactable-output" id="count" implements="modifiable"
+<output id="count" implements="modifiable"
         modifiable-formula="count('#results > li')"></output>
 ```
 
@@ -698,75 +673,84 @@ What this rules out, and why it is the right trade:
 | Not possible | Because | Instead |
 | --- | --- | --- |
 | `#results.send().highlight()` — a link after the response | The chain would have to await, and every question about what happens while it waits (a second fire, a removed receiver, a swapped `#results`) needs an executor answer | `on-response="this.highlight()"` |
-| A verb returning a promise | The host ignores the value and warns; the chain has already moved on | Start the work in the verb; consume it in the closure; dispatch your own `ImplementationEvent` |
+| A verb returning a promise | The attachment ignores the value and warns; the chain has already moved on | Start the work in the verb; consume it in the closure; dispatch your own `ImplementationEvent` |
 | A guard that asks the server | A guard is a synchronous yes/no; a round trip is a request | `send()` with the check server-side, and `on-request-error` for the no |
 | `once()` as a double-submit guard for a request | It spends when the walk passes it, before the request returns, so a failed request leaves a dead trigger | `requestable`'s concurrency policy, below |
-| An interaction queued until an implementation arrives | A queued interaction is a chain that waits; the host would answer after `dispatchEvent` returned, to nobody | Implementations attach synchronously; a late registration re-runs the attach pass |
+| An interaction queued until an implementation arrives | A queued interaction is a chain that waits; the attachment would answer after `dispatchEvent` returned, to nobody | Implementations attach synchronously; a late registration re-runs the attach pass |
 | A value comparison in the attribute (`is`, `if`, `==`) | The rule belongs to an implementation | `validatable`'s constraints, or write a verb |
 
 **Concurrency policy belongs to the implementation that owns the I/O.** `requestable` derives it from the method, the way `revealable` derives its strategy from the tag: a GET is idempotent, so a new send aborts the previous one (**latest wins**); anything else may already have happened on the server, so a new send while one is in flight is refused (**first wins**). `requestable-concurrency="latest | first | all"` overrides. Under `all`, every send starts its own request; `abort()` cancels every request in flight. Because `send()` sets `aria-busy="true"` synchronously and clears it when the last in-flight request settles, `form[aria-busy="true"] button { pointer-events: none }` disables the trigger with no JavaScript.
 
-**Continuations run only if the element is still connected.** A response that replaces the requestable element itself (`requestable-swap="outerHTML"`) disconnects its host; the `on-response` event is skipped. Cancellation is `AbortError`, which runs neither event and logs nothing.
+**Continuations run only if the element is still connected.** A response that replaces the requestable element itself (`requestable-swap="outerHTML"`) disconnects it; the `on-response` event is skipped. Cancellation is `AbortError`, which runs neither event and logs nothing.
 
 ---
 
 ## Full examples
 
-Each example imports the CDN bundles from the package. The core bundle ships inside `interactably-core.js`; per-implementation bundles (`modifiable.js`, `dirtyable.js`, …) register their implementation into the core's registry on import, so importing them is the whole setup.
+Each example imports the CDN bundles from the package. The core bundle ships inside `interactably-core.js`; per-implementation bundles (`modifiable.js`, `dirtyable.js`, …) register their implementation into the core's registry on import, and `start()` attaches them — importing is the whole setup.
 
 ### Price calculator
 
 ```html
 <script type="module">
+  import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/modifiable.js";
   import "interactably/dist/cdn/dirtyable.js";
   import "interactably/dist/cdn/attributable.js";
   import "interactably/dist/cdn/listable.js";
   import "interactably/dist/cdn/prevent-default.js";
-  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
-  for (const tag of ["input", "output", "button", "ul"]) defineInteractableHost(tag);   // idempotent
+  start();
 </script>
 
 <label>Qty
-  <input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
+  <input id="qty" implements="modifiable dirtyable attributable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
          on-clean="this.removeAttr('data-dirty')"
-         on-keydown="escape: this.reset().markClean(); #preview.compute()">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
+         on-keydown="escape: this.reset(); #preview.compute()">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
 </label>
-<button is="interactable-button" on-click="#qty.dec(); #preview.compute()">−</button>
-<button is="interactable-button" on-click="#qty.inc(); #preview.compute()">+</button>
-<button is="interactable-button" on-click="#qty.inc(5); #preview.compute()">+5</button>
-<button is="interactable-button" on-click="#qty.reset().markClean(); #preview.compute()">Reset</button>
+<button on-click="#qty.dec(); #preview.compute()">−</button>
+<button on-click="#qty.inc(); #preview.compute()">+</button>
+<button on-click="#qty.inc(5); #preview.compute()">+5</button>
+<button on-click="#qty.reset(); #preview.compute()">Reset</button>
 <!-- min/max are the input's own; modifiable reads el.min / el.max and declares nothing for them -->
-<output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
+<output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
 
-<ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
+<ul id="list" implements="listable" listable-min-rows="1">
   <li>
-    <input is="interactable-input" class="amount" type="number" on-input="#total.compute()">
-    <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()">×</button>
+    <input class="amount" type="number" on-input="#total.compute()">
+    <button on-click="#list.removeRow(this); #total.compute()">×</button>
   </li>
 </ul>
-<button is="interactable-button" on-click="#list.adopt(#row-tpl)">Add row</button>
+<button on-click="#list.adopt(#row-tpl)">Add row</button>
 <template id="row-tpl"><li>…</li></template>
-<output is="interactable-output" id="total" implements="modifiable formattable"
+<output id="total" implements="modifiable formattable"
         modifiable-formula="sum('#list .amount')"
         formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
 ```
 
-Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the buttons address it); the six buttons are trigger-only; `#preview`, `#list` and `#total` are receivers; the `<li>` is a plain element — the row is reached through `#list.removeRow(this)`, so it needs no implementation, no host and no id, and cloning it from `#row-tpl` produces nothing that has to be unique.
+Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the buttons address it); the six buttons are trigger-only; `#preview`, `#list` and `#total` are receivers; the `<li>` is a plain element — the row is reached through `#list.removeRow(this)`, so it needs no implementation and no id, and cloning it from `#row-tpl` produces nothing that has to be unique.
 
-**`+5` trace.** The button's host bound `click` in `connectedCallback` → `parse("#qty.inc(5); #preview.compute()")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → host validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → the interaction event reaches `#qty`'s own `dirtyable` handler, which fires `dirty` if `#qty` was clean → the second phrase resolves `#preview` → `#preview.compute()` re-evaluates `#qty.value` (6).
+**`+5` trace.** The button's `on-click` listener (bound at attach) → `parse("#qty.inc(5); #preview.compute()")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → the attachment validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → the interaction event reaches `#qty`'s own `dirtyable` handler, which fires `dirty` if `#qty` was clean → the second phrase resolves `#preview` → `#preview.compute()` re-evaluates `#qty.value` (6).
 
 **`×` trace.** Phrase 1 resolves `#list`, arg `this` is the button → `removeRow(e, button)` finds the row via `closest(":scope > *")` → phrase 2 (independent) resolves `#total` → `compute()` re-evaluates `sum('#list .amount')` over the remaining inputs.
 
-**`Add row` trace.** `#row-tpl` is a bare ref → resolved to the `<template>` → host checks `tpl instanceof HTMLTemplateElement` (the `adopt` slot) → `listable.adopt(e, tpl)` clones the content. Point it at a `<div>` and the host logs `expected HTMLTemplateElement, got HTMLDivElement` and aborts the chain; write `'#row-tpl'` in quotes and it is a string, rejected the same way.
+**`Add row` trace.** `#row-tpl` is a bare ref → resolved to the `<template>` → the attachment checks `tpl instanceof HTMLTemplateElement` (the `adopt` slot) → `listable.adopt(e, tpl)` clones the content. Point it at a `<div>` and the attachment logs `expected HTMLTemplateElement, got HTMLDivElement` and aborts the chain; write `'#row-tpl'` in quotes and it is a string, rejected the same way.
 
 ### Order form — the asynchronous seam
 
 ```html
-<form is="interactable-form" id="order" novalidate
+<script type="module">
+  import { start } from "interactably/dist/cdn/interactably-core.js";
+  import "interactably/dist/cdn/prevent-default.js";
+  import "interactably/dist/cdn/validatable.js";
+  import "interactably/dist/cdn/requestable.js";
+  import "interactably/dist/cdn/revealable.js";
+  start();
+</script>
+
+<form id="order" novalidate
       implements="prevent-default validatable requestable"
       requestable-url="/api/orders" requestable-method="post"
       requestable-target="#receipt"
@@ -777,9 +761,9 @@ Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the 
   <button>Place order</button>
 </form>
 
-<section is="interactable-section" id="receipt" implements="revealable" hidden></section>
-<div     is="interactable-div"     id="alert"   implements="revealable" hidden role="alert">Couldn't place the order.</div>
-<div     is="interactable-div"     id="validate-alert" implements="revealable" hidden role="alert">Please check the quantity.</div>
+<section id="receipt" implements="revealable" hidden></section>
+<div     id="alert"   implements="revealable" hidden role="alert">Couldn't place the order.</div>
+<div     id="validate-alert" implements="revealable" hidden role="alert">Please check the quantity.</div>
 ```
 
 The form is the receiver of both `validate()` and `send()` in the first unit; `||` switches to `#validate-alert` only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (`new FormData(el)`). The trigger is `on-submit`, not a click on the button, so Enter in the field and the button produce the same one event. `prevent-default` with no config derives `submit` from `<form>`.
@@ -841,30 +825,30 @@ The core of `requestable` (config and swap details elided):
 - **Validation fails.** Because of `novalidate` the `submit` event fires anyway; `reportValidity()` shows the browser's bubble and returns false, the verb calls `e.preventDefault()`, the executor stops before `send` and runs the `||` branch instead: `#validate-alert.show()`. Nothing logged, no request.
 - **Double submit.** The second `submit` sees `inflight` and the POST policy is `first`, so `send` returns. The button was already inert from `form[aria-busy="true"] button { pointer-events: none }`.
 - **Server 500.** `settle("error")`, `requestable-status="error"`, `on-request-error` runs `#alert.show()`. Values kept, button re-enabled, the user retries.
-- **A verb throws.** The host catches, sets `e.error`, the executor logs once and stops that chain. `#alert.show(false)` is a separate `;` phrase and still runs — that is what `;` promises.
+- **A verb throws.** The attachment catches, sets `e.error`, the executor logs once and stops that chain. `#alert.show(false)` is a separate `;` phrase and still runs — that is what `;` promises.
 - **Nobody handles it.** `on-response="#receipt.show(); this.reset()"`: `reset` dispatches to the form, none of its implementations owns it, `handled` stays false, and the executor logs `no implementation on form#order handles reset()`. A typo (`sned()`) takes the same path.
-- **Response replaces the form.** `requestable-swap="outerHTML"` with no `target`: the swap removes `#order`, its host disconnects, `el.isConnected` is false, `on-response` is skipped. The new form carries its own attributes and upgrades on insertion.
+- **Response replaces the form.** `requestable-swap="outerHTML"` with no `target`: the swap removes `#order`, the element detaches, `el.isConnected` is false, `on-response` is skipped. The new form carries its own attributes and attaches on insertion.
 
 ### Scroll-spy — synthetic triggers
 
 ```html
 <script type="module">
+  import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/attributable.js";
-  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
-  for (const tag of ["section", "a"]) defineInteractableHost(tag);
+  start();
 </script>
 
 <nav id="toc">
-  <a id="toc-intro" is="interactable-a" implements="attributable" href="#intro">Intro</a>
-  <a id="toc-guide" is="interactable-a" implements="attributable" href="#guide">Guide</a>
+  <a id="toc-intro" implements="attributable" href="#intro">Intro</a>
+  <a id="toc-guide" implements="attributable" href="#guide">Guide</a>
 </nav>
 
 <!-- each section lights its own link while it is on screen -->
 <header id="topnav">…sticky header…</header>
-<section is="interactable-section" id="sec-intro"
+<section id="sec-intro"
          on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-intro.setAttr({name: 'data-visible', value: ''})"
          on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-intro.removeAttr('data-visible')">…</section>
-<section is="interactable-section" id="sec-guide"
+<section id="sec-guide"
          on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-guide.setAttr({name: 'data-visible', value: ''})"
          on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-guide.removeAttr('data-visible')">…</section>
 ```
@@ -877,13 +861,12 @@ The core of `requestable` (config and swap details elided):
 
 ## API reference
 
-All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the core subset). `installAutoLoader` also ships as `interactably/dist/cdn/auto-loader.js`.
+All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the core subset).
 
 | Export | What it is |
 | --- | --- |
 | `defineImplementation(name, decl, factory)` | Declare an implementation ([§ Writing an implementation](#writing-an-implementation)) |
-| `defineInteractableHost(tag)` | Define `interactable-<tag>`; idempotent, returns nothing |
-| `installAutoLoader()` | Opt in to the auto-loader: watch the DOM and add `is=` to any element with `implements` or `on-*`; returns a dispose function ([§ Dynamics](#dynamics)) |
+| `start(root = document)` | Attach every participant under root and watch it for insertions and removals; idempotent per root; returns a dispose function. Defers the initial scan to `DOMContentLoaded` when called during parse ([§ Attachment](#attachment)) |
 | `registerImplementation(def)` | Register a normalized definition (used by `defineImplementation`) |
 | `getImplementationDef(name)` | Look up a registered definition |
 | `runPhrases(el, value, ev)` | Run an attribute string against an element and a DOM event; the one entry point |
@@ -902,7 +885,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `readValue(el)` | The element's value as text: `formattable-value` (the raw store) → `.value` → `textContent`, a number when the text parses else a string |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`toNumber(readValue(el))`, NaN → 0) and write helpers |
-| `NotReadyError` | Error set on `e.error` when a verb reaches a host whose implementations have not attached — the host's connect-time attach pass has not run. With the auto-loader in the page it is practically unreachable; without it, any phrase fired before the implementation's script loads can land on it |
+| `NotReadyError` | Error set on `e.error` when a dispatch reaches an attached element whose `implements` names an implementation that has not registered yet |
 | Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `formattable` |
 
 ---
@@ -919,7 +902,8 @@ The short versions of the decisions behind the design. The full argument for eac
 - **`&&` / `||` continue across receivers, and `||` is guard-only.** A guard's `preventDefault()` is the one stop the phrase can observe synchronously, so it is the only stop `||` reacts to; errors and unowned verbs are bugs and stay loud. `&&` is the success branch. They exist because validation failure was otherwise a dead end — sibling `;` phrases run regardless and no verb can observe another's abort. One operator per phrase keeps precedence and associativity out of the grammar.
 - **`once()` spends on passing through** so `#a.once().x().y()` means "x and y run once ever, together"; the gate is about entry, and an abort or pause after it never refunds it.
 - **No class or selector receivers.** Classes are global; scoping is a selector language; a selector language is jQuery. Containers + scoped selector *arguments* cover the dynamic-set case with a 1:1 receiver graph.
-- **Triggers are hosts, not delegated.** One place decides anything about an element. Cost: `is=` on every trigger (or the auto-loader), and the Safari polyfill covers more elements.
+- **Triggers are attached, not delegated.** One place decides anything about an element. Cost: one `MutationObserver` on the document and a microtask between insertion and liveness.
+- **Uniform timing over synchronous-somewhere.** One attachment path for every element — initial scan and later insertions alike — instead of a fast synchronous path somewhere and a slow deferred one elsewhere.
 - **`this` for the trigger** — the word inline handlers have bound to the element for thirty years.
 - **Parse once, resolve per fire.** `#id` / `this` stay tokens in the cached AST; two identical rows share a parse and bind to different elements. Nothing is rewritten into the DOM.
 - **Nested triggers bubble** like inline handlers; `no-propagate` on the inner element is the explicit opt-out, not an implicit rule the executor enforces with a `closest()` walk per event.
@@ -929,9 +913,9 @@ The short versions of the decisions behind the design. The full argument for eac
 - **Default actions and propagation are implementations**, not executor rules or phrase modifiers — they are event-scoped facts and live on the element where a reader finds them. Only the *which* is derived, never the *whether*.
 - **Verbs are synchronous.** Every async question (second fire, removed receiver, `once` while pending, latest vs first) is a question only the implementation doing the work can answer. The network gap is a named attribute, not a disguised dot.
 - **Pauses are modifiers, not verbs.** `delay` sits in the chain like `once` and pauses where it sits — `this.delay(300).setAttr(...)` reads forward, and everything downstream, including past `&&`, waits. The executor owns the pause timer exactly like the debounce timer, so a pause never becomes an awaited interaction.
-- **Four return channels on the event.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened"; the host is the last frame that can catch, so it reports `handled` / `error` / `result` and `pauseMs` (a verb paused the chain) on the event.
-- **Readiness is reported, never awaited.** A late-registered implementation re-runs every connected host's attach pass; markup may precede the imports.
-- **Report with `console.error`/`warn`, throw only at definition time.** Host code runs on the browser's stack, which owns its exceptions.
+- **Four return channels on the event.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened"; the attachment is the last frame that can catch, so it reports `handled` / `error` / `result` and `pauseMs` (a verb paused the chain) on the event.
+- **Readiness is reported, never awaited.** A late-registered implementation re-runs every attached element's attach pass; markup may precede the imports.
+- **Report with `console.error`/`warn`, throw only at definition time.** Attachment code runs on the browser's stack, which owns its exceptions.
 
 ---
 
@@ -943,15 +927,15 @@ The tabs example is the honest boundary case. Each button's `on-click` pushes `s
 
 When the behaviour you need *pulls* — a value kept in sync with other values, recomputed on change, reactive by construction — a reactive/data-flow framework is the right tool. The one async seam this library does own is `requestable`: the trigger pushes `send()`, and `on-response` / `on-request-error` continue from the element that did the work.
 
-Input masks and format-as-you-type belong in a component library built on the same `is=` hosts: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw `<input>` pair, which needs markup of its own to fake. `formattable` is the whole declarative share — display elements only, formatted on connect and on each library write.
+Input masks and format-as-you-type belong in a component library built on the same elements: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw `<input>` pair, which needs markup of its own to fake. `formattable` is the whole declarative share — display elements only, formatted on connect and on each library write.
 
 ---
 
 ## Not supported
 
-Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `valueAsNumber` · dynamic `on-*` attribute *names* after connect · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1) · a CLI check that `is=` in markup matches the implementations' declared tags.
+Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `valueAsNumber` · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1).
 
-`on-load`. Every trigger fires after the document is upgraded, so every `#id` resolves, and connect-time work such as modifiable's initial `compute()` waits for the document when the library is loaded synchronously; a connect-time trigger is the one that couldn't make that promise. Author the initial state instead — `open`, `checked`, `revealable-open="true"`.
+`on-load` always means attach, including on `<img>`, `<iframe>`, `<body>`, `<link>`, `<script>`; it is never the native `load` event — bytes-arrived is `addEventListener('load', …)`.
 
 ---
 
@@ -981,7 +965,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 
 Questions a reader may ask, with the answer they got. Each is the decision the body summarizes; the long form was settled and set aside.
 
-**Why not delegate `on-*` from a document-level engine, so triggers need no `is=`?** It buys "works before any script defines a host" and costs a supported-events list, an ancestor walk per event, a MutationObserver for non-passive listeners, a `register()` API, and an unknown-event error class. Binding in `connectedCallback` deletes all of it.
+**Why not delegate `on-*` from a document-level engine?** The observer is now paid for either way; the question is what sits behind it. Delegation costs a supported-events list, an ancestor walk per event, a non-passive-listener problem (a delegated listener cannot decide `passive` per event), and an unknown-event error class — and `this` in a phrase would resolve to the event's current target, not the element that declared it. Binding on the element keeps `this`, passive listeners, and one place deciding anything about an element.
 
 **Why re-read the `on-*` value at fire time instead of parsing once at connect?** Server swaps are a new node either way. They differ for in-place edits: re-reading makes the edit take effect on the next fire; parsing at connect makes the DOM lie unless per-element observers are added.
 
@@ -999,7 +983,7 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 
 **Why not positional argument lists, `transform('upper', 2)`?** The binding between position and meaning lives in schema order, which nothing in HTML can see. One scalar or one object literal makes a signature change a loud parse error instead.
 
-**Why not declare signatures inside the factory, `set: verb("string", fn)`?** One site, but the host must run the factory against a detached element at registration just to learn the verbs. A static `verbs` table is pure data: serialisable for tooling, checked against the factory in both directions by TypeScript.
+**Why not declare signatures inside the factory, `set: verb("string", fn)`?** One site, but the factory would have to run against a detached element at registration just to learn the verbs. A static `verbs` table is pure data: serialisable for tooling, checked against the factory in both directions by TypeScript.
 
 **Why not `element` and `selector` as tsyntax keywords?** tsyntax validates keywords with `typeof`, which cannot distinguish a button from a template; an element slot needs `instanceof`. And nothing makes a string a selector except that an implementation feeds it to `querySelectorAll` — that is documented by the record key, not a type.
 
@@ -1011,9 +995,11 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 
 **Why not extend the native Invoker Commands API?** Sharing the attribute and event with the browser forces a `--` prefix negotiation for custom verbs, a native-default deferral table, an `originalEvent`-presence convention, and a double-dispatch risk on `<dialog>`. An attribute and event the browser does not know about have none of these problems.
 
-**Why not two repositories, engine and implementations?** The parser and executor are imported by the host and ship in the same bundle; a second repo is a second release cadence for one consumer.
+**Why not two repositories, engine and implementations?** The parser and executor are imported by the attachment and ship in the same bundle; a second repo is a second release cadence for one consumer.
 
-**Why not autonomous wrapper elements instead of `is=`?** They would fix Safari's asynchronous upgrade at the price of form participation, native semantics and existing CSS on every element, for every engine.
+**Why not customized built-in elements (`is=`)?** That was the first design. WebKit's position makes them permanently polyfilled on one engine, and a polyfilled foundation is disqualifying for a library whose premise is that generators recommend it. The observer gives one timing rule instead of two.
+
+The platform direction that matches this design is custom attributes for all elements (WICG/webcomponents#1029); when it ships, `start()` becomes a shim.
 
 **Why don't chains await a verb's promise?** Every question it raises (a second fire mid-flight, a removed receiver while awaiting, `once()` while pending, latest vs first) is answerable only by the implementation doing the work. Verbs are synchronous; the implementation dispatches its own `ImplementationEvent` when the work finishes.
 
@@ -1021,4 +1007,4 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 
 **Why not a general `<name>-after` convention for every implementation?** The word is shared, the event is not: a request failing and an upload failing call for different follow-ups. Each implementation names the moments it exposes as events (`copy`, `response`, `request-error`, `restore`); the phrase for each is a plain `on-<event>` trigger attribute, and only dispatch is shared.
 
-**Why not queue an interaction until the lazily loaded implementation arrives?** A queue is a waiting chain, and the host would answer the event after `dispatchEvent` returned, when the executor had already read the channels. With implementations imported before the markup, the case never occurs.
+**Why not queue an interaction until the lazily loaded implementation arrives?** A queue is a waiting chain, and the attachment would answer the event after `dispatchEvent` returned, when the executor had already read the channels. With implementations imported before the markup, the case never occurs.

@@ -4,7 +4,8 @@ import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
-let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 
 before(async () => {
   dom = setupJsdom();
@@ -13,11 +14,12 @@ before(async () => {
   await import("@behaviors/attributable/attributable.ts");
   await import("@behaviors/listable/listable.ts");
   await import("@behaviors/formattable/formattable.ts");
-  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
-  defineInteractableHost("button");
+      ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -27,29 +29,29 @@ beforeEach(() => {
 
 const MARKUP = `
 <label>Qty
-  <input is="interactable-input" id="qty" implements="modifiable dirtyable attributable"
+  <input id="qty" implements="modifiable dirtyable attributable"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
          on-clean="this.removeAttr('data-dirty')"
-         on-keydown="escape: this.reset().markClean(); #preview.compute()">
+         on-keydown="escape: this.reset(); #preview.compute()">
 </label>
-<button id="dec" is="interactable-button" on-click="#qty.dec(); #preview.compute()">−</button>
-<button id="inc" is="interactable-button" on-click="#qty.inc(); #preview.compute()">+</button>
-<button id="inc5" is="interactable-button" on-click="#qty.inc(5); #preview.compute()">+5</button>
-<button id="reset" is="interactable-button" on-click="#qty.reset().markClean(); #preview.compute()">Reset</button>
-<output is="interactable-output" id="preview" implements="modifiable"
+<button id="dec" on-click="#qty.dec(); #preview.compute()">−</button>
+<button id="inc" on-click="#qty.inc(); #preview.compute()">+</button>
+<button id="inc5" on-click="#qty.inc(5); #preview.compute()">+5</button>
+<button id="reset" on-click="#qty.reset(); #preview.compute()">Reset</button>
+<output id="preview" implements="modifiable"
         modifiable-formula="#qty.value">1</output>
 
-<ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
+<ul id="list" implements="listable" listable-min-rows="1">
   <li>
-    <input is="interactable-input" class="amount" type="number" value="2.5" on-input="#total.compute()">
-    <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()">×</button>
+    <input class="amount" type="number" value="2.5" on-input="#total.compute()">
+    <button on-click="#list.removeRow(this); #total.compute()">×</button>
   </li>
 </ul>
-<button id="add-row" is="interactable-button" on-click="#list.adopt(#row-tpl)">Add row</button>
-<template id="row-tpl"><li><input is="interactable-input" class="amount" type="number" value="3.25" on-input="#total.compute()"><button is="interactable-button" on-click="#list.removeRow(this); #total.compute()">×</button></li></template>
-<output is="interactable-output" id="total" implements="modifiable formattable"
+<button id="add-row" on-click="#list.adopt(#row-tpl)">Add row</button>
+<template id="row-tpl"><li><input class="amount" type="number" value="3.25" on-input="#total.compute()"><button on-click="#list.removeRow(this); #total.compute()">×</button></li></template>
+<output id="total" implements="modifiable formattable"
         modifiable-formula="sum('#list .amount')"
         formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
 `;
@@ -116,7 +118,7 @@ test("dec clamps at the min", async () => {
   assert.equal(preview.textContent, "0");
 });
 
-test("Reset runs this.reset().markClean(): back to the authored value, clean", async () => {
+test("Reset runs this.reset(): back to the authored value, clean", async () => {
   mount();
   await flush();
 
@@ -133,7 +135,7 @@ test("Reset runs this.reset().markClean(): back to the authored value, clean", a
   assert.equal(qty.hasAttribute("data-dirty"), false);
 });
 
-test("Escape on #qty runs the keyed this.reset().markClean()", async () => {
+test("Escape on #qty runs the keyed this.reset()", async () => {
   mount();
   await flush();
 
@@ -186,6 +188,7 @@ test("the Add row trace: adopt clones the template; typing in an amount recomput
 
   click(byId("add-row"));
   assert.equal(list.children.length, 2);
+  await flush();
 
   const clonedAmount = list.querySelectorAll(".amount")[1] as HTMLInputElement;
   assert.equal(clonedAmount.value, "3.25");

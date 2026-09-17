@@ -18,11 +18,12 @@ interface FetchCall {
 }
 
 let dom: JSDOM;
-let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 
 const fetchCalls: FetchCall[] = [];
 
-const FORM_OPEN = `<form is="interactable-form" id="order" novalidate
+const FORM_OPEN = `<form id="order" novalidate
       implements="prevent-default validatable requestable"
       requestable-url="/api/orders" requestable-method="post"`;
 
@@ -34,8 +35,8 @@ const HAPPY = `${FORM_OPEN}
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
-<section is="interactable-section" id="receipt" implements="revealable" hidden></section>
-<div is="interactable-div" id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
+<section id="receipt" implements="revealable" hidden></section>
+<div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
 
 const UNOWNED = `${FORM_OPEN}
       requestable-target="#receipt"
@@ -45,8 +46,8 @@ const UNOWNED = `${FORM_OPEN}
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
-<section is="interactable-section" id="receipt" implements="revealable" hidden></section>
-<div is="interactable-div" id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
+<section id="receipt" implements="revealable" hidden></section>
+<div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
 
 const OUTER = `${FORM_OPEN}
       requestable-swap="outerHTML"
@@ -56,8 +57,8 @@ const OUTER = `${FORM_OPEN}
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
-<section is="interactable-section" id="receipt" implements="revealable" hidden></section>
-<div is="interactable-div" id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
+<section id="receipt" implements="revealable" hidden></section>
+<div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
 
 before(async () => {
   dom = setupJsdom();
@@ -66,12 +67,12 @@ before(async () => {
   await import("@behaviors/validatable/validatable.ts");
   await import("@behaviors/revealable/revealable.ts");
   await import("@behaviors/prevent-default/prevent-default.ts");
-  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
-  defineInteractableHost("section");
-  defineInteractableHost("div");
+        ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 

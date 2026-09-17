@@ -6,6 +6,8 @@ dependencies: []
 
 # Task: One document-readiness rule, in the host
 
+> **Superseded.** The customized-built-in host (and this deferral rule) was removed in the `drop-customized-builtins` change: `start()` defers the initial scan to `DOMContentLoaded` while `document.readyState === "loading"`, and the observer installs immediately so nothing inserted during parse is missed. See `tasks/drop-customized-builtins/task.md`.
+
 ## Metadata
 
 - **Complexity:** Medium

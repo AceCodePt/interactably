@@ -5,6 +5,8 @@ import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
 
 before(async () => {
@@ -12,9 +14,12 @@ before(async () => {
   await import("@behaviors/requestable/requestable.ts");
   await import("@behaviors/validatable/validatable.ts");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -34,7 +39,7 @@ function interact(el: Element, verb: string): InteractionEvent {
 }
 
 function mountForm(): HTMLFormElement {
-  const form = document.createElement("form", { is: "interactable-form" }) as HTMLFormElement;
+  const form = document.createElement("form") as HTMLFormElement;
   form.setAttribute("implements", "validatable");
   const qty = document.createElement("input");
   qty.name = "qty";
@@ -63,7 +68,7 @@ test("validate() calls preventDefault when reportValidity() is false", async () 
 });
 
 test("validate() on an input uses the platform's own reportValidity", async () => {
-  const input = document.createElement("input", { is: "interactable-input" }) as HTMLInputElement;
+  const input = document.createElement("input") as HTMLInputElement;
   input.setAttribute("implements", "validatable");
   input.required = true;
   document.body.appendChild(input);

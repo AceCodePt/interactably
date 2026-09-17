@@ -5,23 +5,22 @@ import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
-let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
-let RegistryChangedEvent: string;
 
 before(async () => {
   dom = setupJsdom();
   await import("@behaviors/copyable/copyable.ts");
   await import("@behaviors/attributable/attributable.ts");
   await import("@behaviors/revealable/revealable.ts");
-  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
-  defineInteractableHost("button");
-  defineInteractableHost("section");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
-  ({ REGISTRY_CHANGED_EVENT: RegistryChangedEvent } = await import("@behaviors/implementation-registry.ts"));
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -31,7 +30,7 @@ beforeEach(() => {
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
@@ -196,6 +195,7 @@ test("a native copy event on a non-copyable element does run on-copy", async () 
   await flush();
 
   button.dispatchEvent(new Event("copy"));
+  await flush();
   assert.equal(receipt.hidden, false, "without copyable the plain DOM copy event fires the phrase");
 });
 
@@ -209,14 +209,15 @@ test("implements added after wiring is respected at dispatch time", async () => 
   await flush();
 
   button.dispatchEvent(new Event("copy"));
+  await flush();
   assert.equal(receipt.hidden, false, "before copyable attaches, the native copy event fires the phrase");
 
   button.setAttribute("implements", "copyable");
-  document.dispatchEvent(new Event(RegistryChangedEvent));
   await flush();
   receipt.hidden = true;
 
   button.dispatchEvent(new Event("copy"));
+  await flush();
   assert.equal(receipt.hidden, true, "once copyable declares copy, the native event no longer fires on-copy");
 });
 

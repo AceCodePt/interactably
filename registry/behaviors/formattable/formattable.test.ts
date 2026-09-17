@@ -5,6 +5,8 @@ import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
 
 before(async () => {
@@ -12,9 +14,12 @@ before(async () => {
   await import("@behaviors/formattable/formattable.ts");
   await import("@behaviors/modifiable/modifiable.ts");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -23,7 +28,7 @@ beforeEach(() => {
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
@@ -123,7 +128,7 @@ test("invalid text passes through unchanged and formattable-value stays equal to
   assert.equal(total.getAttribute("formattable-value"), "nope");
 });
 
-test("formattable creates no MutationObserver of its own", () => {
+test("formattable creates no MutationObserver of its own", async () => {
   const Original = dom.window.MutationObserver;
   let created = 0;
   const Spy = class extends Original {
@@ -140,6 +145,7 @@ test("formattable creates no MutationObserver of its own", () => {
     }) as HTMLOutputElement;
     el.textContent = "42";
     document.body.appendChild(el);
+    await flush();
     assert.equal(created, 1, "only the host's attribute observer is created");
   } finally {
     dom.window.MutationObserver = Original;

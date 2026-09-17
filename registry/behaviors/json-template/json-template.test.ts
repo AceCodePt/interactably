@@ -4,17 +4,18 @@ import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 
 before(async () => {
   dom = setupJsdom();
   await import("@behaviors/json-template/json-template.ts");
-  const host = await import("@behaviors/interactable-host.ts");
-  host.defineInteractableHost("div");
-  host.defineInteractableHost("button");
-  host.defineInteractableHost("ul");
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -32,7 +33,7 @@ function source(id: string, json: unknown): HTMLScriptElement {
 }
 
 async function container(attributes: Record<string, string>, innerHTML: string): Promise<HTMLElement> {
-  const el = document.createElement("div", { is: "interactable-div" }) as HTMLElement;
+  const el = document.createElement("div") as HTMLElement;
   el.setAttribute("implements", "json-template");
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   el.innerHTML = innerHTML;
@@ -399,15 +400,15 @@ test("deeply nested arrays render recursively", async () => {
   assert.equal(names[1]!.textContent, "Bob");
 });
 
-test("is= attributes inside the template are preserved on render", async () => {
+test("attributes inside the template are preserved on render", async () => {
   source("data-source", { label: "Save" });
   const el = await container(
     { "json-template-for": "data-source" },
-    `<template><button is="interactable-button">{label}</button></template>`,
+    `<template><button data-kind="save">{label}</button></template>`,
   );
 
   const button = rendered(el, "button");
-  assert.equal(button.getAttribute("is"), "interactable-button");
+  assert.equal(button.getAttribute("data-kind"), "save");
   assert.equal(button.textContent, "Save");
 });
 

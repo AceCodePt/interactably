@@ -39,19 +39,30 @@ test("registration, lookup, and observed attributes", () => {
   assert.ok(allObservedAttributes().includes("registry-demo-open"));
 });
 
-test("registration defines an interactable-<tag> host for each declared tag, idempotently", () => {
+test("registration re-runs the ensure pass on the attached set and defines no custom element", async () => {
+  const { start } = await import("@interactable/start.ts");
+  const { isAttached } = await import("@interactable/attachment.ts");
+  const dispose = start();
+  const el = document.createElement("div");
+  el.setAttribute("implements", "registry-live");
+  document.body.appendChild(el);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(isAttached(el), true, "a participant attaches even before its implementation is registered");
+  assert.equal(getImplementationDef("registry-live"), undefined, "the name is genuinely unregistered");
+
   defineImplementation(
-    "registry-host-a",
-    { tags: ["button"], config: { a: "string | undefined" }, verbs: {} },
-    () => ({}),
+    "registry-late",
+    { tags: ["div"], verbs: { ping: "undefined" } },
+    () => ({ ping: () => undefined }),
   );
-  defineImplementation(
-    "registry-host-b",
-    { tags: ["button"], config: { b: "string | undefined" }, verbs: {} },
-    () => ({}),
-  );
-  assert.ok(customElements.get("interactable-button") !== undefined);
-  assert.strictEqual(customElements.get("interactable-button"), customElements.get("interactable-button"));
+  const late = document.createElement("div");
+  late.setAttribute("implements", "registry-late");
+  document.body.appendChild(late);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const { getAttachment } = await import("@interactable/attachment.ts");
+  assert.ok(getAttachment(late)?.implementations.has("registry-late"), "a later registration attaches to an element that was pending");
+  assert.equal(customElements.get("interactable-div"), undefined, "registration defines no custom element");
+  dispose();
 });
 
 test("state keys are namespaced per implementation, so two definitions may reuse a key name", () => {

@@ -1,7 +1,7 @@
 {
   "name": "interactably",
   "version": "0.1.0",
-  "description": "A trigger grammar and host for customized built-in web components.",
+  "description": "A declarative interaction language for plain HTML elements.",
   "type": "module",
   "main": "./dist/interactably.js",
   "module": "./dist/interactably.js",
@@ -47,15 +47,12 @@
   },
   "keywords": [
     "web-components",
-    "custom-elements",
-    "customized-built-ins",
     "interaction",
     "declarative",
     "headless"
   ],
   "license": "MIT",
   "dependencies": {
-    "auto-wc": "^0.1.6",
     "tsyntax": "^0.1.4"
   },
   "devDependencies": {
