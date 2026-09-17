@@ -7,7 +7,7 @@
   --surface-3: #f1efe9;
   --fg: #1a1a1f;
   --muted: #5c5966;
-  --faint: #86838f;
+  --faint: #6e6b77;
   --accent: #6d28d9;
   --accent-strong: #5b21b6;
   --accent-ink: #ffffff;
@@ -38,7 +38,7 @@
     --surface-3: #24242c;
     --fg: #ececf1;
     --muted: #a09dab;
-    --faint: #7c7986;
+    --faint: #9b98a3;
     --accent: #a78bfa;
     --accent-strong: #c4b5fd;
     --accent-ink: #17121f;
@@ -96,11 +96,22 @@ h1, h2, h3, h4 {
 
 a {
   color: var(--accent);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
 }
 
 a:hover {
   color: var(--accent-strong);
+  text-decoration-color: currentColor;
+}
+
+.nav-links a,
+.sidebar nav a,
+.gh-link,
+.chip {
+  text-decoration: none;
 }
 
 code, pre, kbd {
@@ -139,6 +150,7 @@ code, pre, kbd {
   color: var(--fg);
   font-weight: 650;
   letter-spacing: -0.01em;
+  text-decoration: none;
 }
 
 .brand:hover {
@@ -469,8 +481,7 @@ code, pre, kbd {
 /* ---------- callouts ---------- */
 
 .note {
-  display: flex;
-  gap: 0.6rem;
+  display: block;
   padding: 0.75rem 1rem;
   border-radius: 10px;
   background: var(--surface-3);
@@ -484,6 +495,8 @@ code, pre, kbd {
   content: "\2192";
   color: var(--accent);
   font-weight: 700;
+  display: inline-block;
+  margin-right: 0.6rem;
 }
 
 .note strong {

@@ -121,14 +121,14 @@
 
           <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
             <li>
-              <input is="interactable-input" class="amount" type="number" value="2.5" step="any" required on-input="#total.compute()">
+              <input is="interactable-input" class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.compute()">
               <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
             </li>
           </ul>
           <button is="interactable-button" id="add-row" on-click="#list.adopt(#row-tpl); #total.compute()" type="button">Add row</button>
           <template id="row-tpl">
             <li>
-              <input is="interactable-input" class="amount" type="number" value="3.25" step="any" required on-input="#total.compute()">
+              <input is="interactable-input" class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.compute()">
               <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
             </li>
           </template>
