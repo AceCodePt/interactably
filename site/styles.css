@@ -7,7 +7,7 @@
   --surface-3: #f1efe9;
   --fg: #1a1a1f;
   --muted: #5c5966;
-  --faint: #6e6b77;
+  --faint: #5f5b6a;
   --accent: #6d28d9;
   --accent-strong: #5b21b6;
   --accent-ink: #ffffff;
@@ -37,8 +37,8 @@
     --surface-2: #1f1f25;
     --surface-3: #24242c;
     --fg: #ececf1;
-    --muted: #a09dab;
-    --faint: #9b98a3;
+    --muted: #b3b0bd;
+    --faint: #a8a5b1;
     --accent: #a78bfa;
     --accent-strong: #c4b5fd;
     --accent-ink: #17121f;
@@ -54,7 +54,7 @@
     --code-bg: #0f0f14;
     --code-fg: #e1e4e8;
     --code-border: #262630;
-    --code-label: #6f6b7a;
+    --code-label: #8a8694;
 
     color-scheme: dark;
   }
@@ -322,11 +322,6 @@ code, pre, kbd {
   scroll-margin-top: 5rem;
 }
 
-.content h4 {
-  font-size: 1rem;
-  margin: 1.5rem 0 0.65rem;
-}
-
 .content p {
   margin: 0.6rem 0;
 }
@@ -511,7 +506,7 @@ code, pre, kbd {
   background: var(--accent-soft);
 }
 
-.callout h4 {
+.callout h3 {
   margin: 0 0 0.6rem;
   color: var(--accent-strong);
   font-size: 0.95rem;
@@ -616,6 +611,10 @@ code, pre, kbd {
   color: var(--muted);
   max-width: 44rem;
   margin: 0 0 1.6rem;
+}
+
+.card h2 {
+  font-size: 1.17rem;
 }
 
 .hero-grid {
