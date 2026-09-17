@@ -151,7 +151,7 @@ test("a programmatic click() in the microtask gap runs nothing", async () => {
   document.body.appendChild(reinserted);
   const pinged: string[] = [];
   receiver.addEventListener("interaction", (raw) => {
-    if ((raw as { verb: string }).verb === "go") pinged.push("go");
+    if ((raw as unknown as { verb: string }).verb === "go") pinged.push("go");
   });
   reinserted.click();
   assert.deepEqual(pinged, [], "a click in the gap between insertion and attach runs nothing");
@@ -228,7 +228,7 @@ test("an on-click attribute added to an attached element binds on the next click
   await flush();
   const pinged: string[] = [];
   receiver.addEventListener("interaction", (raw) => {
-    if ((raw as { verb: string }).verb === "go") pinged.push("go");
+    if ((raw as unknown as { verb: string }).verb === "go") pinged.push("go");
   });
   click(trigger);
   assert.deepEqual(pinged, ["go"], "the newly added attribute runs on the next click");

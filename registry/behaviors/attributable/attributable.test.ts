@@ -5,20 +5,21 @@ import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
-let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 before(async () => {
   dom = setupJsdom();
   await import("@behaviors/attributable/attributable.ts");
   await import("@behaviors/no-propagate/no-propagate.ts");
-  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
-  defineInteractableHost("div");
-  defineInteractableHost("section");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -27,7 +28,7 @@ beforeEach(() => {
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }

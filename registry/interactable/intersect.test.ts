@@ -23,7 +23,7 @@ let isImplementationEvent: (el: Element, type: string) => boolean;
 let parse: (value: string, eventName?: string) => import("@interactable/parser.ts").Phrase[];
 let runPhrases: (source: Element, value: string, ev: Event) => void;
 let InteractionEvent: typeof import("@interactable/interaction-event.ts").InteractionEvent;
-const { IS_HOST } = await import("@interactable/host.ts");
+let attach: (el: Element) => void;
 
 before(async () => {
   dom = setupJsdom();
@@ -38,6 +38,7 @@ before(async () => {
   ({ parse } = await import("@interactable/parser.ts"));
   ({ runPhrases } = await import("@interactable/executor.ts"));
   ({ InteractionEvent } = await import("@interactable/interaction-event.ts"));
+  ({ attach } = await import("@interactable/attachment.ts"));
 });
 
 after(() => {
@@ -56,7 +57,7 @@ function wireTrigger(el: Element, type: string): void {
 }
 
 function wireReceiver(el: Element, into: string[]): void {
-  (el as unknown as Record<PropertyKey, unknown>)[IS_HOST] = true;
+  attach(el);
   el.addEventListener("interaction", (raw) => {
     const event = raw as InstanceType<typeof InteractionEvent>;
     event.handled = true;

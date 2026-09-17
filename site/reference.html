@@ -51,9 +51,9 @@
       <article class="ref-card">
         <h3><code class="inline-code">dirtyable</code></h3>
         <p class="ref-tags">input &middot; textarea &middot; select &middot; output</p>
-        <p class="ref-desc">Fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing.</p>
+        <p class="ref-desc">Fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing. Move the baseline with <code class="inline-code">setAttr({name: 'value', value: this.value})</code> on an input.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">markClean</span></div>
+        <div><span class="verb-tag">&mdash;</span></div>
         <p class="ref-labels">Config / state</p>
         <div><span class="verb-tag">dirty-on</span><span class="verb-tag">events: dirty, clean</span></div>
       </article>
@@ -163,11 +163,11 @@
       <article class="ref-card">
         <h3><code class="inline-code">storable</code></h3>
         <p class="ref-tags">input &middot; select &middot; textarea</p>
-        <p class="ref-desc">Persists a field&rsquo;s value to <code class="inline-code">local</code> or <code class="inline-code">session</code> storage &mdash; nothing is stored unless a phrase calls <code class="inline-code">save()</code>. Restores on connect (firing a native <code class="inline-code">change</code>); <code class="inline-code">load()</code> re-reads and <code class="inline-code">clear()</code> removes. Same-name checkboxes store as a list.</p>
+        <p class="ref-desc">Persists a declared slot under a declared key to <code class="inline-code">local</code> or <code class="inline-code">session</code> storage &mdash; nothing is stored unless a phrase calls <code class="inline-code">save()</code>. <code class="inline-code">restore()</code> reads the key back and fires <code class="inline-code">restore</code> only when it matches the authored <code class="inline-code">storable-value</code>; nothing restores without <code class="inline-code">on-load="this.restore()"</code>. <code class="inline-code">clear()</code> removes the key.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">save</span><span class="verb-tag">load</span><span class="verb-tag">clear</span></div>
+        <div><span class="verb-tag">save</span><span class="verb-tag">restore</span><span class="verb-tag">clear</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">scope</span><span class="verb-tag">key</span></div>
+        <div><span class="verb-tag">scope</span><span class="verb-tag">key</span><span class="verb-tag">value</span></div>
       </article>
 
       <article class="ref-card">
@@ -205,14 +205,13 @@
     </div>
 
     <h2 id="api">The public API</h2>
-    <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset). <code class="inline-code">installAutoLoader</code> also ships as <code class="inline-code">interactably/dist/cdn/auto-loader.js</code>.</p>
+    <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset).</p>
     <div class="tbl-wrap">
       <table class="tbl">
         <thead><tr><th>Export</th><th>What it is</th></tr></thead>
         <tbody>
           <tr><td><code class="inline-code">defineImplementation(name, decl, factory)</code></td><td>Declare an implementation</td></tr>
-          <tr><td><code class="inline-code">defineInteractableHost(tag)</code></td><td>Define <code class="inline-code">interactable-&lt;tag&gt;</code>; idempotent</td></tr>
-          <tr><td><code class="inline-code">installAutoLoader()</code></td><td>Watch the DOM and add <code class="inline-code">is=</code> to any element with <code class="inline-code">implements</code> or <code class="inline-code">on-*</code>; returns a dispose function</td></tr>
+          <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant under the root through one observer; returns a dispose function</td></tr>
           <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition</td></tr>
           <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
           <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
@@ -231,7 +230,7 @@
           <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
           <tr><td><code class="inline-code">readValue(el)</code></td><td>The element&rsquo;s value as text: <code class="inline-code">formattable-value</code> (the raw store) &rarr; <code class="inline-code">.value</code> &rarr; <code class="inline-code">textContent</code>, a number when the text parses else a string</td></tr>
           <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">toNumber(readValue(el))</code>, NaN &rarr; 0) and write helpers</td></tr>
-          <tr><td><code class="inline-code">NotReadyError</code></td><td>Set on <code class="inline-code">e.error</code> when a verb reaches a host that has never connected</td></tr>
+          <tr><td><code class="inline-code">NotReadyError</code></td><td>Set on <code class="inline-code">e.error</code> when a dispatch reaches an attached element whose <code class="inline-code">implements</code> names an implementation still pending registration</td></tr>
         </tbody>
       </table>
     </div>
@@ -253,7 +252,7 @@
     <div class="codeblock">
       <div class="codeblock-bar">
         <span class="codeblock-lang">Text</span>
-        <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+        <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                 on-click="this.copy(#code-reference-grammar)" type="button">
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>

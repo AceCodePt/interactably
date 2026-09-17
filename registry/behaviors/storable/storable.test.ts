@@ -4,8 +4,8 @@ import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
+let start: typeof import("@interactable/start.ts").start;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
-let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 function setReadyState(state: DocumentReadyState): void {
   Object.defineProperty(document, "readyState", { value: state, configurable: true });
@@ -13,15 +13,10 @@ function setReadyState(state: DocumentReadyState): void {
 
 before(async () => {
   dom = setupJsdom();
-  setReadyState("complete");
   await import("@behaviors/storable/storable.ts");
+  await import("@behaviors/attributable/attributable.ts");
+  ({ start } = await import("@interactable/start.ts"));
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
-  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
-  defineInteractableHost("input");
-  defineInteractableHost("select");
-  defineInteractableHost("textarea");
-  defineInteractableHost("div");
-  defineInteractableHost("button");
 });
 
 after(() => {
@@ -29,23 +24,21 @@ after(() => {
 });
 
 beforeEach(() => {
-  setReadyState("complete");
   document.body.replaceChildren();
   localStorage.clear();
   sessionStorage.clear();
+  setReadyState("complete");
 });
 
 function hostElement<T extends HTMLElement>(tag: string, attributes: Record<string, string>): T {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as T;
-  el.setAttribute("is", `interactable-${tag}`);
+  const el = document.createElement(tag) as T;
   el.setAttribute("implements", "storable");
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
 
-function seenOf(el: Element): string[] {
+function restoreCalls(el: Element): string[] {
   const seen: string[] = [];
-  el.addEventListener("change", () => seen.push("change"));
   el.addEventListener("restore", () => seen.push("restore"));
   return seen;
 }
@@ -65,268 +58,275 @@ function interact(
   return event;
 }
 
-test("a text field restores from localStorage: one restore, never a change", async () => {
-  localStorage.setItem("interactable:draft", "saved");
-  const el = hostElement<HTMLInputElement>("input", { name: "draft", value: "initial" });
-  const seen = seenOf(el);
+test("an element in the initial scan restores on-load after DOMContentLoaded", async () => {
+  setReadyState("loading");
+  const dispose = start();
+  localStorage.setItem("draft", "saved");
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "saved",
+    "on-load": "this.restore()",
+  });
+  const seen = restoreCalls(el);
   document.body.appendChild(el);
-  assert.equal(el.value, "saved", "restores immediately when the document is ready");
-  assert.deepEqual(seen, ["restore"], "the restore fires one restore and no native change");
-});
+  assert.deepEqual(seen, [], "nothing restores while the document is still loading");
 
-test("an unchanged value restores matching and fires restore without writing", async () => {
-  localStorage.setItem("interactable:draft", "same");
-  const el = hostElement<HTMLInputElement>("input", { name: "draft", value: "same" });
-  const seen = seenOf(el);
-  document.body.appendChild(el);
+  document.dispatchEvent(new Event("DOMContentLoaded"));
   await flush();
-  assert.equal(el.value, "same");
-  assert.deepEqual(seen, ["restore"], "a matched value fires restore");
+  assert.deepEqual(seen, ["restore"], "on-load restores once after the initial scan");
+  dispose();
 });
 
-test("no stored value restores nothing and leaves the authored value", async () => {
-  const el = hostElement<HTMLInputElement>("input", { name: "draft", value: "initial" });
-  const seen = seenOf(el);
-  document.body.appendChild(el);
-  await flush();
-  assert.equal(el.value, "initial", "the authored value is untouched");
-  assert.deepEqual(seen, [], "no restore fires without a stored value");
-});
-
-test("storable-value outranks a text input's own value", async () => {
-  localStorage.setItem("interactable:pm", "pnpm");
-  const el = hostElement<HTMLInputElement>("input", { name: "pm", value: "typed", "storable-value": "pnpm" });
-  const seen = seenOf(el);
+test("an inserted clone with on-load=\"this.restore()\" restores once", async () => {
+  const dispose = start();
+  localStorage.setItem("clone", "c");
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "clone",
+    "storable-value": "c",
+    "on-load": "this.restore()",
+  });
+  const seen = restoreCalls(el);
   document.body.appendChild(el);
   await flush();
-  assert.deepEqual(seen, ["restore"], "the authored storable-value matched");
-  assert.equal(el.value, "typed", "the input's own value is untouched");
+  assert.deepEqual(seen, ["restore"], "an inserted clone restores exactly once");
+  dispose();
 });
 
-test("an authored storable-value matches rather than writes: on a button and on a div", async () => {
-  const make = (tag: "button" | "div"): HTMLElement =>
-    hostElement(tag, { "storable-key": "pm", "storable-value": "pnpm" });
-
-  localStorage.setItem("interactable:pm", "pnpm");
-  const button = make("button");
-  const div = make("div");
-  const seen: string[] = [];
-  button.addEventListener("restore", () => seen.push("button"));
-  div.addEventListener("restore", () => seen.push("div"));
-  document.body.append(button, div);
-  await flush();
-  assert.deepEqual(seen, ["button", "div"], "both match the stored value and fire restore");
-  assert.equal(button.getAttribute("storable-value"), "pnpm", "the authored attribute is untouched");
-  assert.equal(div.getAttribute("storable-value"), "pnpm");
-
-  localStorage.setItem("interactable:pm", "npm");
-  const mismatch = make("button");
-  const mismatchSeen: string[] = [];
-  mismatch.addEventListener("restore", () => mismatchSeen.push("restore"));
-  document.body.appendChild(mismatch);
-  await flush();
-  assert.deepEqual(mismatchSeen, [], "a different stored value changes nothing: authored values are read-only");
-
-  localStorage.removeItem("interactable:pm");
-  const empty = make("button");
-  const emptySeen: string[] = [];
-  empty.addEventListener("restore", () => emptySeen.push("restore"));
-  document.body.appendChild(empty);
-  await flush();
-  assert.deepEqual(emptySeen, [], "nothing stored restores nothing");
-});
-
-test("an element with no storable-value and no value warns once, save() writes nothing and nothing restores", async () => {
-  const warnings: string[] = [];
-  const originalWarn = console.warn;
-  console.warn = (...args: unknown[]) => warnings.push(args.map(String).join(" "));
-  try {
-    const el = hostElement<HTMLDivElement>("div", { "storable-key": "pm" });
-    const seen = seenOf(el);
-    document.body.appendChild(el);
-    await flush();
-    assert.equal(warnings.length, 1, "warns once on connect");
-    assert.match(warnings[0]!, /storable/);
-    assert.match(warnings[0]!, /storable-value/);
-    interact(el, "save");
-    assert.equal(localStorage.getItem("interactable:pm"), null, "save() writes nothing");
-    assert.deepEqual(seen, [], "no restore");
-  } finally {
-    console.warn = originalWarn;
-  }
-});
-
-test("three buttons sharing storable-key: the last save() wins", async () => {
-  const b1 = hostElement<HTMLButtonElement>("button", { "storable-key": "pm", "storable-value": "npm", "on-click": "this.save()" });
-  const b2 = hostElement<HTMLButtonElement>("button", { "storable-key": "pm", "storable-value": "pnpm", "on-click": "this.save()" });
-  const b3 = hostElement<HTMLButtonElement>("button", { "storable-key": "pm", "storable-value": "bun", "on-click": "this.save()" });
-  document.body.append(b1, b2, b3);
-  await flush();
-
-  b1.click();
-  assert.equal(localStorage.getItem("interactable:pm"), "npm");
-  b2.click();
-  assert.equal(localStorage.getItem("interactable:pm"), "pnpm");
-  b3.click();
-  assert.equal(localStorage.getItem("interactable:pm"), "bun", "the last clicked button's value wins");
-});
-
-test("a radio group of three restores exactly one restore on the stored radio", async () => {
-  localStorage.setItem("interactable:manager", JSON.stringify(["pnpm"]));
-  const r1 = hostElement<HTMLInputElement>("input", { type: "radio", name: "manager", value: "npm", checked: "" });
-  const r2 = hostElement<HTMLInputElement>("input", { type: "radio", name: "manager", value: "pnpm" });
-  const r3 = hostElement<HTMLInputElement>("input", { type: "radio", name: "manager", value: "yarn" });
-  const seen: string[] = [];
-  for (const r of [r1, r2, r3]) r.addEventListener("restore", () => seen.push(r.value));
-  document.body.append(r1, r2, r3);
-  await flush();
-  assert.equal(r2.checked, true, "the stored radio is checked");
-  assert.equal(r1.checked, false, "the authored checked is overridden");
-  assert.equal(r3.checked, false);
-  assert.deepEqual(seen, ["pnpm"], "exactly one restore, on the stored radio");
-});
-
-test("two same-name checkboxes save() as a list and restore both", async () => {
-  const c1 = hostElement<HTMLInputElement>("input", { type: "checkbox", name: "tags", value: "a" });
-  const c2 = hostElement<HTMLInputElement>("input", { type: "checkbox", name: "tags", value: "b" });
-  document.body.append(c1, c2);
-  await flush();
-
-  c1.checked = true;
-  c2.checked = true;
-  interact(c1, "save");
-  assert.equal(localStorage.getItem("interactable:tags"), JSON.stringify(["a", "b"]), "save() on either writes the list");
-
-  const d1 = hostElement<HTMLInputElement>("input", { type: "checkbox", name: "tags", value: "a" });
-  const d2 = hostElement<HTMLInputElement>("input", { type: "checkbox", name: "tags", value: "b" });
-  document.body.append(d1, d2);
-  await flush();
-  assert.equal(d1.checked, true, "the stored checked box restores checked");
-  assert.equal(d2.checked, true);
-});
-
-test("a same-name radio in a different form is excluded from the saved array", async () => {
-  const form1 = document.createElement("form");
-  const form2 = document.createElement("form");
-  const r1 = hostElement<HTMLInputElement>("input", { type: "radio", name: "g", value: "a" });
-  const r2 = hostElement<HTMLInputElement>("input", { type: "radio", name: "g", value: "b" });
-  form1.appendChild(r1);
-  form2.appendChild(r2);
-  document.body.append(form1, form2);
-  await flush();
-
-  r1.checked = true;
-  r2.checked = true;
-  interact(r1, "save");
-  assert.equal(localStorage.getItem("interactable:g"), JSON.stringify(["a"]), "only the form-owner radio is stored");
-});
-
-test("session scope uses sessionStorage and the default uses localStorage", async () => {
-  sessionStorage.setItem("interactable:draft", "secret");
-  const el = hostElement<HTMLInputElement>("input", { name: "draft", "storable-scope": "session" });
+test("nothing is restored without on-load=\"this.restore()\"", async () => {
+  const dispose = start();
+  localStorage.setItem("draft", "saved");
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "saved",
+  });
+  const seen = restoreCalls(el);
   document.body.appendChild(el);
   await flush();
-  assert.equal(el.value, "secret", "restores from sessionStorage");
-
-  el.value = "other";
-  interact(el, "save");
-  assert.equal(sessionStorage.getItem("interactable:draft"), "other");
-  assert.equal(localStorage.getItem("interactable:draft"), null, "localStorage is untouched");
+  assert.deepEqual(seen, [], "connect alone restores nothing; the author opts in via on-load");
+  dispose();
 });
 
-test("storable-key overrides name and name overrides id", async () => {
-  localStorage.setItem("interactable:custom", "keyed");
-  const el = hostElement<HTMLInputElement>("input", { id: "by-id", name: "real-name", "storable-key": "custom" });
-  document.body.appendChild(el);
-  await flush();
-  assert.equal(el.value, "keyed", "restores from the keyed storage slot");
-  assert.equal(localStorage.getItem("interactable:real-name"), null, "the name is not used");
-  assert.equal(localStorage.getItem("interactable:by-id"), null, "the id is not used");
-
-  el.value = "typed";
-  interact(el, "save");
-  assert.equal(localStorage.getItem("interactable:custom"), "typed");
-
-  localStorage.setItem("interactable:real-name", "name-keyed");
-  const viaName = hostElement<HTMLInputElement>("input", { id: "by-id", name: "real-name" });
-  document.body.appendChild(viaName);
-  await flush();
-  assert.equal(viaName.value, "name-keyed", "name beats id");
-
-  localStorage.setItem("interactable:by-id", "id-keyed");
-  const viaId = hostElement<HTMLInputElement>("input", { id: "by-id" });
-  document.body.appendChild(viaId);
-  await flush();
-  assert.equal(viaId.value, "id-keyed", "id is the fallback when name is absent");
-});
-
-test("an element with no storable-key, no name and no id warns once and stores nothing", async () => {
-  const warnings: string[] = [];
-  const originalWarn = console.warn;
-  console.warn = (...args: unknown[]) => warnings.push(args.map(String).join(" "));
-  try {
-    const el = hostElement<HTMLInputElement>("input", {});
-    document.body.appendChild(el);
-    await flush();
-    interact(el, "save");
-    assert.equal(localStorage.length, 0, "nothing is stored");
-    assert.equal(warnings.length, 1, "warns once");
-    assert.match(warnings[0]!, /storable/);
-    assert.match(warnings[0]!, /storable-key/);
-    assert.match(warnings[0]!, /name/);
-    assert.match(warnings[0]!, /id/);
-  } finally {
-    console.warn = originalWarn;
-  }
-});
-
-test("typing does not persist; save() does", async () => {
-  const el = hostElement<HTMLInputElement>("input", { name: "draft" });
+test("save() writes the slot under the key; typing does not persist", async () => {
+  const dispose = start();
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "initial",
+  });
   document.body.appendChild(el);
   await flush();
 
   el.value = "typed";
   el.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.equal(localStorage.getItem("interactable:draft"), null, "an input event does not persist");
+  assert.equal(localStorage.getItem("draft"), null, "an input event does not persist");
 
   interact(el, "save");
-  assert.equal(localStorage.getItem("interactable:draft"), "typed", "save() writes the value");
+  assert.equal(localStorage.getItem("draft"), "initial", "save() writes the slot");
+  dispose();
 });
 
-test("load() after typing reverts to the stored value and fires restore, never change", async () => {
-  localStorage.setItem("interactable:draft", "saved");
-  const el = hostElement<HTMLInputElement>("input", { name: "draft", value: "initial" });
+test("save() never fires restore", async () => {
+  const dispose = start();
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "initial",
+  });
   document.body.appendChild(el);
   await flush();
-  assert.equal(el.value, "saved");
-
-  el.value = "edited";
-  const seen = seenOf(el);
-  interact(el, "load");
-  assert.equal(el.value, "saved", "load() reverts the edit");
-  assert.deepEqual(seen, ["restore"], "the load fires one restore and no change");
+  const seen = restoreCalls(el);
+  interact(el, "save");
+  assert.deepEqual(seen, [], "save() writes without firing restore");
+  dispose();
 });
 
-test("clear() removes the key and a subsequent connect restores nothing", async () => {
-  localStorage.setItem("interactable:draft", "saved");
-  const el = hostElement<HTMLInputElement>("input", { name: "draft" });
+test("restore() fires the restore event only when the stored value matches", async () => {
+  const dispose = start();
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "initial",
+  });
   document.body.appendChild(el);
   await flush();
-  assert.equal(el.value, "saved");
+  const seen = restoreCalls(el);
+
+  interact(el, "restore");
+  assert.deepEqual(seen, [], "no stored value fires nothing");
+
+  localStorage.setItem("draft", "other");
+  interact(el, "restore");
+  assert.deepEqual(seen, [], "a different stored value fires nothing");
+
+  localStorage.setItem("draft", "initial");
+  interact(el, "restore");
+  assert.deepEqual(seen, ["restore"], "a matching stored value fires restore once");
+  dispose();
+});
+
+test("restore() fires at most one event per call", async () => {
+  const dispose = start();
+  localStorage.setItem("draft", "initial");
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "initial",
+  });
+  document.body.appendChild(el);
+  await flush();
+  const seen = restoreCalls(el);
+  interact(el, "restore");
+  assert.deepEqual(seen, ["restore"], "exactly one event per restore() call");
+  dispose();
+});
+
+test("the authored storable-value matches rather than writes, on a div", async () => {
+  const dispose = start();
+  localStorage.setItem("pm", "pnpm");
+  const div = hostElement<HTMLDivElement>("div", {
+    "storable-key": "pm",
+    "storable-value": "pnpm",
+  });
+  const seen = restoreCalls(div);
+  document.body.appendChild(div);
+  await flush();
+  interact(div, "restore");
+  assert.deepEqual(seen, ["restore"], "a matching stored value fires restore");
+  assert.equal(div.getAttribute("storable-value"), "pnpm", "the authored attribute is untouched");
+
+  localStorage.setItem("pm", "npm");
+  const mismatch = hostElement<HTMLDivElement>("div", {
+    "storable-key": "pm",
+    "storable-value": "pnpm",
+  });
+  const mismatchSeen = restoreCalls(mismatch);
+  document.body.appendChild(mismatch);
+  await flush();
+  interact(mismatch, "restore");
+  assert.deepEqual(mismatchSeen, [], "a different stored value changes nothing: authored values are read-only");
+  dispose();
+});
+
+test("two elements may share one slot: restore matches each authored value", async () => {
+  const dispose = start();
+  localStorage.setItem("pm", "pnpm");
+  const a = hostElement<HTMLButtonElement>("button", {
+    "storable-key": "pm",
+    "storable-value": "pnpm",
+    "on-click": "this.restore()",
+  });
+  const b = hostElement<HTMLButtonElement>("button", {
+    "storable-key": "pm",
+    "storable-value": "yarn",
+    "on-click": "this.restore()",
+  });
+  const seenA = restoreCalls(a);
+  const seenB = restoreCalls(b);
+  document.body.append(a, b);
+  await flush();
+
+  a.click();
+  assert.deepEqual(seenA, ["restore"], "the matching button restores");
+  b.click();
+  assert.deepEqual(seenB, [], "the non-matching button restores nothing");
+  dispose();
+});
+
+test("clear() removes the key; the next restore fires nothing", async () => {
+  const dispose = start();
+  localStorage.setItem("draft", "saved");
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "saved",
+    "on-load": "this.restore()",
+  });
+  const seen = restoreCalls(el);
+  document.body.appendChild(el);
+  await flush();
+  assert.deepEqual(seen, ["restore"]);
 
   interact(el, "clear");
-  assert.equal(localStorage.getItem("interactable:draft"), null, "clear() removes the key");
+  assert.equal(localStorage.getItem("draft"), null, "clear() removes the key");
 
-  el.remove();
-  const fresh = hostElement<HTMLInputElement>("input", { name: "draft" });
-  const seen = seenOf(fresh);
-  document.body.appendChild(fresh);
-  await flush();
-  assert.equal(fresh.value, "", "a cleared key restores nothing");
-  assert.deepEqual(seen, [], "no restore fires");
+  interact(el, "restore");
+  assert.deepEqual(seen, ["restore"], "a cleared key restores nothing further");
+  dispose();
 });
 
-test("storage throwing does not break connect or save", async () => {
+test("session scope uses sessionStorage; the default uses localStorage", async () => {
+  const dispose = start();
+  sessionStorage.setItem("secret", "sessioned");
+  const session = hostElement<HTMLInputElement>("input", {
+    "storable-scope": "session",
+    "storable-key": "secret",
+    "storable-value": "sessioned",
+  });
+  document.body.appendChild(session);
+  await flush();
+  const sessionSeen = restoreCalls(session);
+  interact(session, "restore");
+  assert.deepEqual(sessionSeen, ["restore"], "the session scope reads sessionStorage");
+
+  interact(session, "save");
+  assert.equal(sessionStorage.getItem("secret"), "sessioned");
+  assert.equal(localStorage.getItem("secret"), null, "localStorage is untouched");
+
+  localStorage.setItem("secret", "localed");
+  const local = hostElement<HTMLInputElement>("input", {
+    "storable-key": "secret",
+    "storable-value": "localed",
+  });
+  document.body.appendChild(local);
+  await flush();
+  const localSeen = restoreCalls(local);
+  interact(local, "restore");
+  assert.deepEqual(localSeen, ["restore"], "the default scope reads localStorage");
+  dispose();
+});
+
+test("missing storable-key is a signature error at attach naming the attribute", async () => {
+  const dispose = start();
+  const errors: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+    original(...args);
+  };
+  try {
+    const el = hostElement<HTMLDivElement>("div", {
+      implements: "storable",
+      "storable-value": "v",
+    });
+    document.body.appendChild(el);
+    await flush();
+  } finally {
+    console.error = original;
+  }
+  assert.ok(errors.length >= 1, "attach reports a signature error");
+  assert.ok(errors.some((m) => m.includes("storable-key")), "the error names the attribute");
+  dispose();
+});
+
+test("missing storable-value is a signature error at attach naming the attribute", async () => {
+  const dispose = start();
+  const errors: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+    original(...args);
+  };
+  try {
+    const el = hostElement<HTMLDivElement>("div", {
+      implements: "storable",
+      "storable-key": "k",
+    });
+    document.body.appendChild(el);
+    await flush();
+  } finally {
+    console.error = original;
+  }
+  assert.ok(errors.length >= 1, "attach reports a signature error");
+  assert.ok(errors.some((m) => m.includes("storable-value")), "the error names the attribute");
+  dispose();
+});
+
+test("storage throwing does not break save, restore or clear", async () => {
   const originalLocal = globalThis.localStorage;
   const originalSession = globalThis.sessionStorage;
   const throwing = {
@@ -352,24 +352,91 @@ test("storage throwing does not break connect or save", async () => {
   globalThis.localStorage = throwing;
   globalThis.sessionStorage = throwing;
   try {
-    const el = hostElement<HTMLInputElement>("input", { name: "draft", value: "initial" });
+    const dispose = start();
+    const el = hostElement<HTMLInputElement>("input", {
+      "storable-key": "draft",
+      "storable-value": "initial",
+    });
     document.body.appendChild(el);
     await flush();
-    assert.equal(el.value, "initial", "a failed read leaves the authored value");
-    el.value = "typed";
     interact(el, "save");
-    assert.equal(el.isConnected, true, "connect and save survive storage failures");
+    interact(el, "restore");
+    interact(el, "clear");
+    assert.equal(el.isConnected, true, "save, restore and clear survive storage failures");
+    dispose();
   } finally {
     globalThis.localStorage = originalLocal;
     globalThis.sessionStorage = originalSession;
   }
 });
 
-test("authored checked is overridden by the stored value", async () => {
-  localStorage.setItem("interactable:consent", JSON.stringify([]));
-  const el = hostElement<HTMLInputElement>("input", { type: "checkbox", name: "consent", checked: "" });
-  document.body.appendChild(el);
+test("a key holds one value: a later save() under the same key overwrites", async () => {
+  const dispose = start();
+  const a = hostElement<HTMLButtonElement>("button", {
+    "storable-key": "mode",
+    "storable-value": "light",
+    "on-click": "this.save()",
+  });
+  const b = hostElement<HTMLButtonElement>("button", {
+    "storable-key": "mode",
+    "storable-value": "dark",
+    "on-click": "this.save()",
+  });
+  document.body.append(a, b);
   await flush();
-  assert.equal(el.checked, false, "the stored unchecked state overrides the authored checked attribute");
+
+  a.click();
+  assert.equal(localStorage.getItem("mode"), "light");
+  b.click();
+  assert.equal(localStorage.getItem("mode"), "dark", "the last save() wins");
+  dispose();
 });
 
+test("restore() on the element that saved matches its own authored value", async () => {
+  const dispose = start();
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "initial",
+  });
+  document.body.appendChild(el);
+  await flush();
+
+  interact(el, "save");
+  const seen = restoreCalls(el);
+  interact(el, "restore");
+  assert.deepEqual(seen, ["restore"], "save-then-restore on the same element matches");
+  dispose();
+});
+
+test("on-restore runs the author's phrase when a restore matches", async () => {
+  const dispose = start();
+  localStorage.setItem("mode", "dark");
+  const div = hostElement<HTMLDivElement>("div", {
+    implements: "storable attributable",
+    "storable-key": "mode",
+    "storable-value": "dark",
+    "on-restore": "this.setAttr({name: 'data-mode', value: 'dark'})",
+  });
+  document.body.appendChild(div);
+  await flush();
+  interact(div, "restore");
+  assert.equal(div.getAttribute("data-mode"), "dark", "the on-restore phrase paints the effect");
+  dispose();
+});
+
+test("restore event routes through the element and is catchable, never a native change", async () => {
+  const dispose = start();
+  localStorage.setItem("draft", "saved");
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "saved",
+  });
+  const seen: string[] = [];
+  el.addEventListener("restore", () => seen.push("restore"));
+  el.addEventListener("change", () => seen.push("change"));
+  document.body.appendChild(el);
+  await flush();
+  interact(el, "restore");
+  assert.deepEqual(seen, ["restore"], "restore fires one restore and no native change");
+  dispose();
+});

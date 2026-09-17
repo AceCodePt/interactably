@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably examples — every card below is plain HTML: is= hosts, implements, on-* triggers and verbs.">
+  <meta name="description" content="Interactably examples — every card below is plain HTML: implements, on-* triggers and verbs.">
   <title>Examples — Interactably</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -38,86 +38,44 @@
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-auto">Same interaction, two ways</h2>
+        <h2 id="ex-auto">One button, one panel</h2>
         <p class="ex-note">
-          The pair below is one button and one panel, written twice. On the <em>Auto-loader</em> tab the markup carries no
-          <code class="inline-code">is=</code> at all &mdash; <code class="inline-code">installAutoLoader()</code> adds it for you.
-          On the <em>Explicit is=</em> tab you write it yourself. Both are live; the difference is when the upgrade happens.
+          The whole idea in a few lines: a <code class="inline-code">start()</code> call, a trigger with
+          <code class="inline-code">on-click="#panel.toggle()"</code>, and a receiver. No
+          <code class="inline-code">is=</code>, no per-tag setup &mdash; the button is live one microtask after
+          <code class="inline-code">start()</code> sees it.
         </p>
       </div>
       <div class="example-body">
-        <div class="tabs">
-          <div class="tabbar">
-            <button is="interactable-button" type="button" aria-expanded="true" aria-controls="demo-auto"
-                    on-click="#demo-auto.show(); #demo-is.show(false)">Auto-loader &mdash; no is=</button>
-            <button is="interactable-button" type="button" aria-expanded="false" aria-controls="demo-is"
-                    on-click="#demo-auto.show(false); #demo-is.show()">Explicit is= &mdash; faster</button>
+        <div class="demo">
+          <div class="row">
+            <button id="auto-demo-btn" type="button" on-click="#auto-demo-panel.toggle()"
+                    aria-expanded="false" aria-controls="auto-demo-panel">Toggle panel</button>
           </div>
-
-          <section is="interactable-section" id="demo-auto" implements="revealable" class="tabpanel" revealable-open="true">
-            <div class="demo">
-              <div class="row">
-                <button id="auto-demo-btn" type="button" on-click="#auto-demo-panel.toggle()"
-                        aria-expanded="false" aria-controls="auto-demo-panel">Toggle panel</button>
-              </div>
-              <section id="auto-demo-panel" implements="revealable" hidden>
-                <p>No <code class="inline-code">is=</code> on this button or this panel. The auto-loader added
-                  <code class="inline-code">is="interactable-button"</code> and <code class="inline-code">is="interactable-section"</code>
-                  when the page loaded.</p>
-              </section>
-            </div>
-            <div class="codeblock">
-              <div class="codeblock-bar">
-                <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-auto)" type="button">
-                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-                </button>
-              </div>
-              <pre class="code" id="code-ex-auto" data-lang="html"><code>&lt;script type="module"&gt;
+          <section id="auto-demo-panel" implements="revealable" hidden>
+            <p>This panel is a plain <code class="inline-code">&lt;section implements="revealable"&gt;</code>. The button&rsquo;s
+              phrase is <code class="inline-code">on-click="#auto-demo-panel.toggle()"</code>, and
+              <code class="inline-code">revealable</code> keeps the <code class="inline-code">aria-expanded</code> state in sync.</p>
+          </section>
+        </div>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-ex-auto)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-auto" data-lang="html"><code>&lt;script type="module"&gt;
+  import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/revealable.js";
-  import { installAutoLoader } from "interactably/dist/cdn/auto-loader.js";
-  installAutoLoader();
+  start();
 &lt;/script&gt;
 
 &lt;button on-click="#panel.toggle()" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
 &lt;section id="panel" implements="revealable" hidden&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;</code></pre>
-            </div>
-          </section>
-
-          <section is="interactable-section" id="demo-is" implements="revealable" class="tabpanel" hidden>
-            <div class="demo">
-              <div class="row">
-                <button is="interactable-button" id="is-demo-btn" type="button" on-click="#is-demo-panel.toggle()"
-                        aria-expanded="false" aria-controls="is-demo-panel">Toggle panel</button>
-              </div>
-              <section is="interactable-section" id="is-demo-panel" implements="revealable" hidden>
-                <p>Explicit <code class="inline-code">is=</code> upgrades synchronously on insertion &mdash; no observer,
-                  no node replacement, no gap. This is the form to ship.</p>
-              </section>
-            </div>
-            <div class="codeblock">
-              <div class="codeblock-bar">
-                <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-is)" type="button">
-                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-                </button>
-              </div>
-              <pre class="code" id="code-ex-is" data-lang="html"><code>&lt;script type="module"&gt;
-  import "interactably/dist/cdn/revealable.js";
-  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
-  defineInteractableHost("button");
-&lt;/script&gt;
-
-&lt;button is="interactable-button" on-click="#panel.toggle()" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
-&lt;section is="interactable-section" id="panel" implements="revealable" hidden&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
-&lt;/section&gt;</code></pre>
-            </div>
-          </section>
         </div>
       </div>
     </section>
@@ -135,36 +93,36 @@
         <div class="demo">
           <div class="row">
             <label>Qty
-              <input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
+              <input id="qty" implements="modifiable dirtyable attributable prevent-default"
                      type="number" value="1" min="1" max="10"
                      on-input="#preview.set(this.value)"
                      on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                      on-clean="this.removeAttr('data-dirty')"
-                     on-keydown="escape: this.reset().markClean(); #preview.compute()">
+                     on-keydown="escape: this.reset(); #preview.compute()">
             </label>
-            <button is="interactable-button" id="dec" on-click="#qty.dec(); #preview.compute()" type="button">&minus;</button>
-            <button is="interactable-button" id="inc" on-click="#qty.inc(); #preview.compute()" type="button">+</button>
-            <button is="interactable-button" id="inc5" on-click="#qty.inc(5); #preview.compute()" type="button">+5</button>
-            <button is="interactable-button" id="reset" on-click="#qty.reset().markClean(); #preview.compute()" type="button">Reset</button>
-            <output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
+            <button id="dec" on-click="#qty.dec(); #preview.compute()" type="button">&minus;</button>
+            <button id="inc" on-click="#qty.inc(); #preview.compute()" type="button">+</button>
+            <button id="inc5" on-click="#qty.inc(5); #preview.compute()" type="button">+5</button>
+            <button id="reset" on-click="#qty.reset(); #preview.compute()" type="button">Reset</button>
+            <output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
           </div>
 
-          <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
+          <ul id="list" implements="listable" listable-min-rows="1">
             <li>
-              <input is="interactable-input" class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.compute()">
-              <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+              <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.compute()">
+              <button on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
             </li>
           </ul>
-          <button is="interactable-button" id="add-row" on-click="#list.adopt(#row-tpl); #total.compute()" type="button">Add row</button>
+          <button id="add-row" on-click="#list.adopt(#row-tpl); #total.compute()" type="button">Add row</button>
           <template id="row-tpl">
             <li>
-              <input is="interactable-input" class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.compute()">
-              <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+              <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.compute()">
+              <button on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
             </li>
           </template>
           <p class="total">
             Total:
-            <output is="interactable-output" id="total" implements="modifiable formattable"
+            <output id="total" implements="modifiable formattable"
 modifiable-formula="sum('#list .amount:valid')"
                     formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
           </p>
@@ -175,7 +133,7 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-calc)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -183,35 +141,35 @@ modifiable-formula="sum('#list .amount:valid')"
           <pre class="code" id="code-ex-calc" data-lang="html"><code>&lt;div class="demo"&gt;
   &lt;div class="row"&gt;
     &lt;label&gt;Qty
-      &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
+      &lt;input id="qty" implements="modifiable dirtyable attributable prevent-default"
              type="number" value="1" min="1" max="10"
              on-input="#preview.set(this.value)"
              on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
              on-clean="this.removeAttr('data-dirty')"
-             on-keydown="escape: this.reset().markClean(); #preview.compute()"&gt;
+             on-keydown="escape: this.reset(); #preview.compute()"&gt;
     &lt;/label&gt;
-    &lt;button is="interactable-button" on-click="#qty.dec(); #preview.compute()"&gt;&minus;&lt;/button&gt;
-    &lt;button is="interactable-button" on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
-    &lt;button is="interactable-button" on-click="#qty.inc(5); #preview.compute()"&gt;+5&lt;/button&gt;
-    &lt;button is="interactable-button" on-click="#qty.reset().markClean(); #preview.compute()"&gt;Reset&lt;/button&gt;
-    &lt;output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;
+    &lt;button on-click="#qty.dec(); #preview.compute()"&gt;&minus;&lt;/button&gt;
+    &lt;button on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
+    &lt;button on-click="#qty.inc(5); #preview.compute()"&gt;+5&lt;/button&gt;
+    &lt;button on-click="#qty.reset(); #preview.compute()"&gt;Reset&lt;/button&gt;
+    &lt;output id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;
   &lt;/div&gt;
 
-  &lt;ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1"&gt;
+  &lt;ul id="list" implements="listable" listable-min-rows="1"&gt;
     &lt;li&gt;
-      &lt;input is="interactable-input" class="amount" type="number" value="2.5" step="any" required on-input="#total.compute()"&gt;
-      &lt;button is="interactable-button" on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
+      &lt;input class="amount" type="number" value="2.5" step="any" required on-input="#total.compute()"&gt;
+      &lt;button on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
     &lt;/li&gt;
   &lt;/ul&gt;
-  &lt;button is="interactable-button" on-click="#list.adopt(#row-tpl); #total.compute()"&gt;Add row&lt;/button&gt;
+  &lt;button on-click="#list.adopt(#row-tpl); #total.compute()"&gt;Add row&lt;/button&gt;
   &lt;template id="row-tpl"&gt;
     &lt;li&gt;
-      &lt;input is="interactable-input" class="amount" type="number" value="3.25" step="any" required on-input="#total.compute()"&gt;
-      &lt;button is="interactable-button" on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
+      &lt;input class="amount" type="number" value="3.25" step="any" required on-input="#total.compute()"&gt;
+      &lt;button on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
     &lt;/li&gt;
   &lt;/template&gt;
   &lt;p class="total"&gt;Total:
-    &lt;output is="interactable-output" id="total" implements="modifiable formattable"
+    &lt;output id="total" implements="modifiable formattable"
             modifiable-formula="sum('#list .amount:valid')"
             formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;
   &lt;/p&gt;
@@ -234,12 +192,12 @@ modifiable-formula="sum('#list .amount:valid')"
       <div class="example-body">
         <div class="demo">
           <div class="row">
-            <button is="interactable-button" id="panel-toggle" on-click="#panel.toggle()"
+            <button id="panel-toggle" on-click="#panel.toggle()"
                     aria-expanded="false" aria-controls="panel" type="button">Toggle panel</button>
           </div>
-          <section is="interactable-section" id="panel" implements="revealable" hidden>
+          <section id="panel" implements="revealable" hidden>
             <p>
-              This panel is a <code class="inline-code">&lt;section is="interactable-section" implements="revealable"&gt;</code>.
+              This panel is a <code class="inline-code">&lt;section implements="revealable"&gt;</code>.
               <code class="inline-code">revealable</code> reads the element: <code class="inline-code">revealable-open</code> here,
               <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
               popover state on a <code class="inline-code">[popover]</code>. The trigger is
@@ -254,14 +212,14 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-reveal)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-reveal" data-lang="html"><code>&lt;button is="interactable-button" on-click="#panel.toggle()"
+          <pre class="code" id="code-ex-reveal" data-lang="html"><code>&lt;button on-click="#panel.toggle()"
         aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
-&lt;section is="interactable-section" id="panel" implements="revealable" hidden&gt;
+&lt;section id="panel" implements="revealable" hidden&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;</code></pre>
         </div>
@@ -281,16 +239,16 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="demo">
           <div class="row">
             <label>Type
-              <input is="interactable-input" id="typer" implements="modifiable dirtyable attributable prevent-default"
+              <input id="typer" implements="modifiable dirtyable attributable prevent-default"
                      on-input="#mirror.debounce(300).set(this.value)"
                      on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                      on-clean="this.removeAttr('data-dirty')"
                      on-keydown="enter: #mirror.set(this.value); escape: this.clear()">
             </label>
-            <output is="interactable-output" id="mirror" implements="modifiable">&hellip;</output>
+            <output id="mirror" implements="modifiable">&hellip;</output>
           </div>
-          <button is="interactable-button" id="tip-button" type="button" on-click="#tip.once().toggle()">Toggle tip (once)</button>
-          <section is="interactable-section" id="tip" implements="revealable" hidden>
+          <button id="tip-button" type="button" on-click="#tip.once().toggle()">Toggle tip (once)</button>
+          <section id="tip" implements="revealable" hidden>
             This sentence appears the first time the chain runs; the second click is a no-op.
           </section>
         </div>
@@ -300,20 +258,20 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-grammar)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-grammar" data-lang="html"><code>&lt;input is="interactable-input" id="typer" implements="modifiable dirtyable attributable prevent-default"
+          <pre class="code" id="code-ex-grammar" data-lang="html"><code>&lt;input id="typer" implements="modifiable dirtyable attributable prevent-default"
        on-input="#mirror.debounce(300).set(this.value)"
        on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
        on-clean="this.removeAttr('data-dirty')"
        on-keydown="enter: #mirror.set(this.value); escape: this.clear()"&gt;
-&lt;output is="interactable-output" id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
+&lt;output id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
 
-&lt;button is="interactable-button" on-click="#tip.once().toggle()"&gt;Toggle tip (once)&lt;/button&gt;
-&lt;section is="interactable-section" id="tip" implements="revealable" hidden&gt;
+&lt;button on-click="#tip.once().toggle()"&gt;Toggle tip (once)&lt;/button&gt;
+&lt;section id="tip" implements="revealable" hidden&gt;
   This sentence appears the first time the chain runs; the second click is a no-op.
 &lt;/section&gt;</code></pre>
         </div>
@@ -333,18 +291,18 @@ modifiable-formula="sum('#list .amount:valid')"
       <div class="example-body">
         <div class="demo">
           <div class="row">
-            <button is="interactable-button" id="swatch-dark" type="button"
+            <button id="swatch-dark" type="button"
                     on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})">Dark</button>
-            <button is="interactable-button" id="swatch-light" type="button"
+            <button id="swatch-light" type="button"
                     on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})">Light</button>
-            <button is="interactable-button" id="swatch-border" type="button"
+            <button id="swatch-border" type="button"
                     on-click="#swatch.toggleAttr('data-bordered')">Toggle border</button>
-            <button is="interactable-button" id="swatch-clear" type="button"
+            <button id="swatch-clear" type="button"
                     on-click="#swatch.removeAttr('data-theme')">Clear theme</button>
-            <button is="interactable-button" id="swatch-log" type="button"
+            <button id="swatch-log" type="button"
                     on-click="#swatch.log('button clicked')">Log</button>
           </div>
-          <div is="interactable-div" id="swatch" class="swatch" implements="attributable logger" data-theme="light">Swatch</div>
+          <div id="swatch" class="swatch" implements="attributable logger" data-theme="light">Swatch</div>
         </div>
       </div>
       <details class="example-code">
@@ -352,45 +310,40 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-attr)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-attr" data-lang="html"><code>&lt;button is="interactable-button" on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#swatch.toggleAttr('data-bordered')"&gt;Toggle border&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#swatch.removeAttr('data-theme')"&gt;Clear theme&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#swatch.log('button clicked')"&gt;Log&lt;/button&gt;
+          <pre class="code" id="code-ex-attr" data-lang="html"><code>&lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
+&lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
+&lt;button on-click="#swatch.toggleAttr('data-bordered')"&gt;Toggle border&lt;/button&gt;
+&lt;button on-click="#swatch.removeAttr('data-theme')"&gt;Clear theme&lt;/button&gt;
+&lt;button on-click="#swatch.log('button clicked')"&gt;Log&lt;/button&gt;
 
-&lt;div is="interactable-div" id="swatch" class="swatch" implements="attributable logger" data-theme="light"&gt;Swatch&lt;/div&gt;</code></pre>
+&lt;div id="swatch" class="swatch" implements="attributable logger" data-theme="light"&gt;Swatch&lt;/div&gt;</code></pre>
         </div>
       </details>
     </section>
 
     <section class="example">
       <div class="example-head">
-        <h2 id="ex-note">A sticky note that remembers</h2>
+        <h2 id="ex-note">A note that grows with you</h2>
         <p class="ex-note">
-          Type something and it grows with your text (<code class="inline-code">auto-grow</code>), gains an amber outline until you save
-          (<code class="inline-code">dirtyable</code>), and is restored from <code class="inline-code">localStorage</code> when you come back
-          (<code class="inline-code">storable</code>). Paste a paragraph and runs of whitespace are collapsed
-          (<code class="inline-code">paste-transform</code>).
+          Type something and it grows with your text (<code class="inline-code">auto-grow</code>) and gains an amber
+          outline while it differs from the authored default (<code class="inline-code">dirtyable</code>). Paste a
+          paragraph and runs of whitespace are collapsed (<code class="inline-code">paste-transform</code>).
         </p>
       </div>
       <div class="example-body">
         <div class="demo">
-          <textarea is="interactable-textarea" id="note" aria-label="Note"
-                    implements="auto-grow dirtyable attributable storable paste-transform"
-                    storable-key="interactably-demo-note" rows="2"
-                    on-change="this.save()"
+          <textarea id="note" aria-label="Note"
+                    implements="auto-grow dirtyable attributable paste-transform"
+                    rows="2"
                     on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                     on-clean="this.removeAttr('data-dirty')"
 paste-transform-pattern="\s+" paste-transform-replace=" "
                     placeholder="Type or paste some text&hellip;"></textarea>
-          <div class="row">
-            <button is="interactable-button" id="note-clean" type="button" on-click="#note.markClean()">Mark clean</button>
-          </div>
         </div>
       </div>
       <details class="example-code">
@@ -398,20 +351,18 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-note)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-note" data-lang="html"><code>&lt;textarea is="interactable-textarea" id="note"
-          implements="auto-grow dirtyable attributable storable paste-transform"
-          storable-key="interactably-demo-note" rows="2"
-          on-change="this.save()"
+          <pre class="code" id="code-ex-note" data-lang="html"><code>&lt;textarea id="note"
+          implements="auto-grow dirtyable attributable paste-transform"
+          rows="2"
           on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
           on-clean="this.removeAttr('data-dirty')"
           paste-transform-pattern="\s+" paste-transform-replace=" "
-          placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;
-&lt;button is="interactable-button" on-click="#note.markClean()"&gt;Mark clean&lt;/button&gt;</code></pre>
+          placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;</code></pre>
         </div>
       </details>
     </section>
@@ -431,11 +382,11 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="demo">
           <div class="row">
             <label>Age
-              <input is="interactable-input" id="age" type="number" value="17" min="18" implements="validatable"
+              <input id="age" type="number" value="17" min="18" implements="validatable"
                      on-change="this.validate() &amp;&amp; #consent.show()">
             </label>
           </div>
-          <section is="interactable-section" id="consent" implements="revealable" hidden>
+          <section id="consent" implements="revealable" hidden>
             Thanks &mdash; you&rsquo;re old enough to continue.
           </section>
         </div>
@@ -445,14 +396,14 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-age)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-age" data-lang="html"><code>&lt;input is="interactable-input" id="age" type="number" value="17" min="18" implements="validatable"
+          <pre class="code" id="code-ex-age" data-lang="html"><code>&lt;input id="age" type="number" value="17" min="18" implements="validatable"
        on-change="this.validate() &amp;&amp; #consent.show()"&gt;
-&lt;section is="interactable-section" id="consent" implements="revealable" hidden&gt;
+&lt;section id="consent" implements="revealable" hidden&gt;
   Thanks &mdash; you&rsquo;re old enough to continue.
 &lt;/section&gt;</code></pre>
         </div>
@@ -472,21 +423,21 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
       <div class="example-body">
         <div class="demo">
           <div class="row">
-            <button is="interactable-button" id="faq-toggle" type="button" on-click="#faq.toggle()"
+            <button id="faq-toggle" type="button" on-click="#faq.toggle()"
                     aria-expanded="false" aria-controls="faq">Toggle details</button>
-            <button is="interactable-button" type="button" on-click="#dlg.show()">Open dialog</button>
-            <button is="interactable-button" type="button" on-click="#pop.toggle()"
+            <button type="button" on-click="#dlg.show()">Open dialog</button>
+            <button type="button" on-click="#pop.toggle()"
                     aria-expanded="false" aria-controls="pop">Toggle popover</button>
           </div>
-          <details is="interactable-details" id="faq" implements="revealable">
+          <details id="faq" implements="revealable">
             <summary>Why not just use <code>hidden</code>?</summary>
             <p>Because each platform element already exposes its own open state.</p>
           </details>
-          <dialog is="interactable-dialog" id="dlg" implements="revealable">
+          <dialog id="dlg" implements="revealable">
             <p>A native <code class="inline-code">&lt;dialog&gt;</code>, opened with <code class="inline-code">showModal()</code>.</p>
-            <button is="interactable-button" type="button" on-click="#dlg.show(false)">Close</button>
+            <button type="button" on-click="#dlg.show(false)">Close</button>
           </dialog>
-          <div is="interactable-div" id="pop" implements="revealable" popover>
+          <div id="pop" implements="revealable" popover>
             A popover in the top layer, toggled through <code class="inline-code">showPopover()</code>.
           </div>
         </div>
@@ -496,26 +447,26 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-strat)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-strat" data-lang="html"><code>&lt;button is="interactable-button" on-click="#faq.toggle()" aria-expanded="false" aria-controls="faq"&gt;Toggle details&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#dlg.show()"&gt;Open dialog&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#pop.toggle()" aria-expanded="false" aria-controls="pop"&gt;Toggle popover&lt;/button&gt;
+          <pre class="code" id="code-ex-strat" data-lang="html"><code>&lt;button on-click="#faq.toggle()" aria-expanded="false" aria-controls="faq"&gt;Toggle details&lt;/button&gt;
+&lt;button on-click="#dlg.show()"&gt;Open dialog&lt;/button&gt;
+&lt;button on-click="#pop.toggle()" aria-expanded="false" aria-controls="pop"&gt;Toggle popover&lt;/button&gt;
 
-&lt;details is="interactable-details" id="faq" implements="revealable"&gt;
+&lt;details id="faq" implements="revealable"&gt;
   &lt;summary&gt;Why not just use &lt;code&gt;hidden&lt;/code&gt;?&lt;/summary&gt;
   &lt;p&gt;Because each platform element already exposes its own open state.&lt;/p&gt;
 &lt;/details&gt;
 
-&lt;dialog is="interactable-dialog" id="dlg" implements="revealable"&gt;
+&lt;dialog id="dlg" implements="revealable"&gt;
   &lt;p&gt;A native &lt;code&gt;&amp;lt;dialog&amp;gt;&lt;/code&gt;, opened with &lt;code&gt;showModal()&lt;/code&gt;.&lt;/p&gt;
-  &lt;button is="interactable-button" on-click="#dlg.show(false)"&gt;Close&lt;/button&gt;
+  &lt;button on-click="#dlg.show(false)"&gt;Close&lt;/button&gt;
 &lt;/dialog&gt;
 
-&lt;div is="interactable-div" id="pop" implements="revealable" popover&gt;
+&lt;div id="pop" implements="revealable" popover&gt;
   A popover in the top layer, toggled through &lt;code&gt;showPopover()&lt;/code&gt;.
 &lt;/div&gt;</code></pre>
         </div>
@@ -534,21 +485,21 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
       <div class="example-body">
         <div class="demo">
           <div class="tabbar">
-            <button is="interactable-button" type="button"
+            <button type="button"
                     on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)">Overview</button>
-            <button is="interactable-button" type="button"
+            <button type="button"
                     on-click="#tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false)">Specs</button>
-            <button is="interactable-button" type="button"
+            <button type="button"
                     on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()">Notes</button>
           </div>
-          <section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true">
+          <section id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true">
             <p><strong>Overview.</strong> A plain <code class="inline-code">&lt;section&gt;</code> whose visibility is driven by
             <code class="inline-code">revealable</code>. The other two panels stay <code class="inline-code">hidden</code> until you pick them.</p>
           </section>
-          <section is="interactable-section" id="tab-specs" implements="revealable" class="tabpanel" hidden>
+          <section id="tab-specs" implements="revealable" class="tabpanel" hidden>
             <p><strong>Specs.</strong> One phrase, three verbs: <code class="inline-code">#tab-specs.show(); #tab-overview.show(false); #tab-notes.show(false)</code>.</p>
           </section>
-          <section is="interactable-section" id="tab-notes" implements="revealable" class="tabpanel" hidden>
+          <section id="tab-notes" implements="revealable" class="tabpanel" hidden>
             <p><strong>Notes.</strong> The verbs can be anything — <code class="inline-code">set()</code>, <code class="inline-code">setAttr()</code>,
             even a <code class="inline-code">send()</code> to fetch a tab&rsquo;s content over the network.</p>
           </section>
@@ -559,27 +510,27 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-tabs)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
           <pre class="code" id="code-ex-tabs" data-lang="html"><code>&lt;div class="tabbar"&gt;
-  &lt;button is="interactable-button"
+  &lt;button
           on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)"&gt;Overview&lt;/button&gt;
-  &lt;button is="interactable-button"
+  &lt;button
           on-click="#tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false)"&gt;Specs&lt;/button&gt;
-  &lt;button is="interactable-button"
+  &lt;button
           on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()"&gt;Notes&lt;/button&gt;
 &lt;/div&gt;
 
-&lt;section is="interactable-section" id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true"&gt;
+&lt;section id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true"&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;
-&lt;section is="interactable-section" id="tab-specs" implements="revealable" class="tabpanel" hidden&gt;
+&lt;section id="tab-specs" implements="revealable" class="tabpanel" hidden&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;
-&lt;section is="interactable-section" id="tab-notes" implements="revealable" class="tabpanel" hidden&gt;
+&lt;section id="tab-notes" implements="revealable" class="tabpanel" hidden&gt;
   &lt;p&gt;&hellip;&lt;/p&gt;
 &lt;/section&gt;</code></pre>
         </div>
@@ -593,8 +544,8 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
           Three sections &mdash; install, config, troubleshooting &mdash; each with its own tab bar. Every button
           names the three panels it opens, the six it closes, and <code class="inline-code">this.save()</code>; its
           <code class="inline-code">on-restore</code> repeats the nine <code class="inline-code">show</code> /
-          <code class="inline-code">show(false)</code> receivers without the save. With <code class="inline-code">is</code>,
-          <code class="inline-code">implements</code>, <code class="inline-code">storable-key</code>,
+          <code class="inline-code">show(false)</code> receivers without the save, and <code class="inline-code">on-load="this.restore()"</code>
+          replays the stored selection when the page loads. With <code class="inline-code">implements</code>, <code class="inline-code">storable-key</code>,
           <code class="inline-code">storable-value</code> and two phrases, a button is around a dozen lines &mdash;
           that is the point: this is what a template would emit, and <code class="inline-code">aria-controls</code>
           on each button is filled in by <code class="inline-code">revealable</code> from the phrase. Adding a fourth
@@ -605,67 +556,67 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="demo">
           <div class="demo-section">
             <div class="tabbar">
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="npm"
+              <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                       on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
                       on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="pnpm"
+              <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
                       on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
                       on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="bun"
+              <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                       on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
                       on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
             </div>
-            <div is="interactable-div" id="install-npm" implements="revealable" class="tabpanel" revealable-open="true">
+            <div id="install-npm" implements="revealable" class="tabpanel" revealable-open="true">
               <p><code class="inline-code">npm install</code> ships with Node.</p>
             </div>
-            <div is="interactable-div" id="install-pnpm" implements="revealable" class="tabpanel" hidden>
+            <div id="install-pnpm" implements="revealable" class="tabpanel" hidden>
               <p><code class="inline-code">pnpm install</code> is the fast, disk-efficient one.</p>
             </div>
-            <div is="interactable-div" id="install-bun" implements="revealable" class="tabpanel" hidden>
+            <div id="install-bun" implements="revealable" class="tabpanel" hidden>
               <p><code class="inline-code">bun install</code> is the all-in-one runtime.</p>
             </div>
           </div>
           <div class="demo-section">
             <div class="tabbar">
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="npm"
+              <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                       on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
                       on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="pnpm"
+              <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
                       on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
                       on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="bun"
+              <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                       on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
                       on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
             </div>
-            <div is="interactable-div" id="config-npm" implements="revealable" class="tabpanel" revealable-open="true">
+            <div id="config-npm" implements="revealable" class="tabpanel" revealable-open="true">
               <p><code class="inline-code">npm config</code> &mdash; <code class="inline-code">.npmrc</code> lives in your home directory.</p>
             </div>
-            <div is="interactable-div" id="config-pnpm" implements="revealable" class="tabpanel" hidden>
+            <div id="config-pnpm" implements="revealable" class="tabpanel" hidden>
               <p><code class="inline-code">pnpm config</code> &mdash; the store lives outside each project.</p>
             </div>
-            <div is="interactable-div" id="config-bun" implements="revealable" class="tabpanel" hidden>
+            <div id="config-bun" implements="revealable" class="tabpanel" hidden>
               <p><code class="inline-code">bunfig.toml</code> is where bun is configured.</p>
             </div>
           </div>
           <div class="demo-section">
             <div class="tabbar">
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="npm"
+              <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                       on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
                       on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="pnpm"
+              <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
                       on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
                       on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
-              <button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="bun"
+              <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                       on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
                       on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
             </div>
-            <div is="interactable-div" id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true">
+            <div id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true">
               <p>npm troubleshooting &mdash; <code class="inline-code">npm cache clean --force</code> clears the cache.</p>
             </div>
-            <div is="interactable-div" id="trouble-pnpm" implements="revealable" class="tabpanel" hidden>
+            <div id="trouble-pnpm" implements="revealable" class="tabpanel" hidden>
               <p>pnpm troubleshooting &mdash; <code class="inline-code">pnpm store prune</code> reclaims disk.</p>
             </div>
-            <div is="interactable-div" id="trouble-bun" implements="revealable" class="tabpanel" hidden>
+            <div id="trouble-bun" implements="revealable" class="tabpanel" hidden>
               <p>bun troubleshooting &mdash; <code class="inline-code">bun pm cache rm</code> clears the cache.</p>
             </div>
           </div>
@@ -676,60 +627,60 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-pkg)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
           <pre class="code" id="code-ex-pkg" data-lang="html"><code>&lt;div class="demo-section"&gt;
   &lt;div class="tabbar"&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="npm"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
             on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
             on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="pnpm"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
             on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
             on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="bun"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
             on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
             on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
   &lt;/div&gt;
-  &lt;div is="interactable-div" id="install-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-  &lt;div is="interactable-div" id="install-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-  &lt;div is="interactable-div" id="install-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="install-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div id="install-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="install-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;
 
 &lt;div class="demo-section"&gt;
   &lt;div class="tabbar"&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="npm"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
             on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
             on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="pnpm"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
             on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
             on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="bun"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
             on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
             on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
   &lt;/div&gt;
-  &lt;div is="interactable-div" id="config-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-  &lt;div is="interactable-div" id="config-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-  &lt;div is="interactable-div" id="config-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="config-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div id="config-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="config-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;
 
 &lt;div class="demo-section"&gt;
   &lt;div class="tabbar"&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="npm"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
             on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
             on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="pnpm"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
             on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
             on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
-    &lt;button is="interactable-button" type="button" implements="storable" storable-key="pm" storable-value="bun"
+    &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
             on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
             on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
   &lt;/div&gt;
-  &lt;div is="interactable-div" id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-  &lt;div is="interactable-div" id="trouble-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-  &lt;div is="interactable-div" id="trouble-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div id="trouble-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="trouble-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
 &lt;/div&gt;</code></pre>
         </div>
       </details>
@@ -748,16 +699,16 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
       </div>
       <div class="example-body">
         <div class="demo">
-          <form is="interactable-form" id="signup" novalidate implements="prevent-default validatable attributable"
+          <form id="signup" novalidate implements="prevent-default validatable attributable"
                 on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()">
             <div class="row">
               <label>Email
                 <input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com">
               </label>
-              <button is="interactable-button" type="submit">Sign up</button>
+              <button type="submit">Sign up</button>
             </div>
             <p class="success" hidden>Thanks &mdash; that address looks valid.</p>
-            <div is="interactable-div" id="signup-alert" implements="revealable" hidden role="alert">Enter a valid email address.</div>
+            <div id="signup-alert" implements="revealable" hidden role="alert">Enter a valid email address.</div>
           </form>
         </div>
       </div>
@@ -766,20 +717,20 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-valid)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-valid" data-lang="html"><code>&lt;form is="interactable-form" id="signup" novalidate
+          <pre class="code" id="code-ex-valid" data-lang="html"><code>&lt;form id="signup" novalidate
       implements="prevent-default validatable attributable"
       on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()"&gt;
   &lt;label&gt;Email
     &lt;input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com"&gt;
   &lt;/label&gt;
-  &lt;button is="interactable-button" type="submit"&gt;Sign up&lt;/button&gt;
+  &lt;button type="submit"&gt;Sign up&lt;/button&gt;
   &lt;p class="success" hidden&gt;Thanks &mdash; that address looks valid.&lt;/p&gt;
-  &lt;div is="interactable-div" id="signup-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
+  &lt;div id="signup-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
 &lt;/form&gt;</code></pre>
         </div>
       </details>
@@ -803,7 +754,7 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
             { "name": "Alan", "role": "Cryptanalyst", "location": "Bletchley" }
           ]
           </script>
-          <div is="interactable-div" implements="json-template" json-template-for="team-data">
+          <div implements="json-template" json-template-for="team-data">
             <template>
               <article class="member">
                 <h3>{name}</h3>
@@ -818,7 +769,7 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-json)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -830,7 +781,7 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
   { "name": "Alan",  "role": "Cryptanalyst",  "location": "Bletchley" }
 ]
 &lt;/script&gt;
-&lt;div is="interactable-div" implements="json-template" json-template-for="team-data"&gt;
+&lt;div implements="json-template" json-template-for="team-data"&gt;
   &lt;template&gt;
     &lt;article class="member"&gt;
       &lt;h3&gt;{name}&lt;/h3&gt;
@@ -853,13 +804,13 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
       </div>
       <div class="example-body">
         <div class="demo">
-          <div is="interactable-div" id="outer" implements="logger"
+          <div id="outer" implements="logger"
                on-click="#outer.log('outer card')">
             <p class="lede-line">Clicking the plain area logs the outer line.</p>
             <div class="row">
-              <button is="interactable-button" id="bubbles-btn" type="button"
+              <button id="bubbles-btn" type="button"
                       on-click="#outer.log('plain inner button')">Inner button (bubbles)</button>
-              <button is="interactable-button" id="no-propagate-btn" implements="no-propagate" type="button"
+              <button id="no-propagate-btn" implements="no-propagate" type="button"
                       on-click="#outer.log('stopped inner button')">Inner button (no-propagate)</button>
             </div>
           </div>
@@ -870,16 +821,16 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-bubble)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-bubble" data-lang="html"><code>&lt;div is="interactable-div" id="outer" implements="logger"
+          <pre class="code" id="code-ex-bubble" data-lang="html"><code>&lt;div id="outer" implements="logger"
      on-click="#outer.log('outer card')"&gt;
   &lt;p&gt;Clicking the plain area logs the outer line.&lt;/p&gt;
-  &lt;button is="interactable-button" on-click="#outer.log('plain inner button')"&gt;Inner button (bubbles)&lt;/button&gt;
-  &lt;button is="interactable-button" implements="no-propagate"
+  &lt;button on-click="#outer.log('plain inner button')"&gt;Inner button (bubbles)&lt;/button&gt;
+  &lt;button implements="no-propagate"
           on-click="#outer.log('stopped inner button')"&gt;Inner button (no-propagate)&lt;/button&gt;
 &lt;/div&gt;</code></pre>
         </div>
@@ -899,7 +850,7 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
       </div>
       <div class="example-body">
         <div class="demo">
-          <form is="interactable-form" id="order" novalidate implements="prevent-default requestable"
+          <form id="order" novalidate implements="prevent-default requestable"
                 requestable-url="/api/orders" requestable-method="post"
                 requestable-target="#receipt"
                 on-response="#receipt.show(); #alert.show(false)"
@@ -908,10 +859,10 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
             <label>Qty
               <input name="qty" type="number" min="1" required value="2">
             </label>
-            <button is="interactable-button" type="submit">Place order</button>
+            <button type="submit">Place order</button>
           </form>
-          <section is="interactable-section" id="receipt" implements="revealable" hidden></section>
-          <div is="interactable-div" id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>
+          <section id="receipt" implements="revealable" hidden></section>
+          <div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>
         </div>
       </div>
       <details class="example-code">
@@ -919,12 +870,12 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-order)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-order" data-lang="html"><code>&lt;form is="interactable-form" id="order" novalidate
+          <pre class="code" id="code-ex-order" data-lang="html"><code>&lt;form id="order" novalidate
       implements="prevent-default requestable"
       requestable-url="/api/orders" requestable-method="post"
       requestable-target="#receipt"
@@ -934,10 +885,10 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
   &lt;label&gt;Qty
     &lt;input name="qty" type="number" min="1" required value="2"&gt;
   &lt;/label&gt;
-  &lt;button is="interactable-button" type="submit"&gt;Place order&lt;/button&gt;
+  &lt;button type="submit"&gt;Place order&lt;/button&gt;
 &lt;/form&gt;
-&lt;section is="interactable-section" id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
-&lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
+&lt;section id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
+&lt;div id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
         </div>
       </details>
     </section>
@@ -954,9 +905,9 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
       <div class="example-body">
         <div class="demo">
           <div class="row">
-            <button is="interactable-button" id="load-quote" type="button" on-click="#quote.send()">Load a quote</button>
+            <button id="load-quote" type="button" on-click="#quote.send()">Load a quote</button>
           </div>
-          <div is="interactable-div" id="quote" implements="requestable"
+          <div id="quote" implements="requestable"
                requestable-url="./fragments/quote.html" requestable-method="get">
             Nothing loaded yet &mdash; click the button above.
           </div>
@@ -967,13 +918,13 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-quote)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-quote" data-lang="html"><code>&lt;button is="interactable-button" on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
-&lt;div is="interactable-div" id="quote" implements="requestable"
+          <pre class="code" id="code-ex-quote" data-lang="html"><code>&lt;button on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
+&lt;div id="quote" implements="requestable"
      requestable-url="./fragments/quote.html" requestable-method="get"&gt;
   Nothing loaded yet &mdash; click the button above.
 &lt;/div&gt;</code></pre>
@@ -996,7 +947,7 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
           <div class="codeblock">
             <div class="codeblock-bar">
               <span class="codeblock-lang">text</span>
-              <button is="interactable-button" class="copy-btn" implements="copyable attributable"
+              <button class="copy-btn" implements="copyable attributable"
                       on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                       on-click="this.copy(#demo-snippet)" type="button">
                 <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
@@ -1011,12 +962,12 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-ex-copy)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-copy" data-lang="html"><code>&lt;button is="interactable-button" class="copy-btn" implements="copyable attributable"
+          <pre class="code" id="code-ex-copy" data-lang="html"><code>&lt;button class="copy-btn" implements="copyable attributable"
         on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
         on-click="this.copy(#snippet)" type="button"&gt;
   &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;

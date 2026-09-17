@@ -2,21 +2,22 @@ import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
-import { derivedDefaults } from "@behaviors/prevent-default/prevent-default.ts";
-import { defineInteractableHost } from "@behaviors/interactable-host.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
+let derivedDefaults: typeof import("@behaviors/prevent-default/prevent-default.ts").derivedDefaults;
 
-before(() => {
+before(async () => {
   dom = setupJsdom();
-  defineInteractableHost("a");
-  defineInteractableHost("button");
-  defineInteractableHost("div");
-  defineInteractableHost("form");
-  defineInteractableHost("input");
+  await import("@behaviors/prevent-default/prevent-default.ts");
+  ({ derivedDefaults } = await import("@behaviors/prevent-default/prevent-default.ts"));
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -25,7 +26,7 @@ beforeEach(() => {
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
@@ -153,6 +154,7 @@ test("a DOM move re-binds the cancel listeners", async () => {
   assert.equal(cancelableEvent(form, "submit").defaultPrevented, true);
 
   form.remove();
+  await flush();
   assert.equal(cancelableEvent(form, "submit").defaultPrevented, false);
 
   document.body.appendChild(form);

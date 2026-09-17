@@ -4,14 +4,19 @@ import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 
 before(async () => {
   dom = setupJsdom();
   await import("@behaviors/no-propagate/no-propagate.ts");
   await import("@behaviors/auto-grow/auto-grow.ts");
+  ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -20,7 +25,7 @@ beforeEach(() => {
 });
 
 function textarea(): HTMLTextAreaElement {
-  const el = document.createElement("textarea", { is: "interactable-textarea" }) as HTMLTextAreaElement;
+  const el = document.createElement("textarea") as HTMLTextAreaElement;
   el.setAttribute("implements", "auto-grow");
   return el;
 }

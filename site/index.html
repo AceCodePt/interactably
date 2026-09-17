@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably — a declarative interaction language for customized built-in web components, and the host that runs it.">
+  <meta name="description" content="Interactably — a declarative interaction language for plain HTML elements.">
   <title>Interactably — declarative interactions in plain HTML</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -33,9 +33,9 @@
       <span class="hero-badge"><span class="dot"></span>v0.1.0 &middot; no engine, no signals, no magic</span>
       <h1>Make your HTML <span class="hl">interactive</span> &mdash; without writing JavaScript.</h1>
       <p class="hero-sub">
-        You write plain HTML and Interactably wires it up. <code class="inline-code">is="interactable-&lt;tag&gt;"</code> turns any
-        element into a <strong>host</strong>, an <code class="inline-code">on-*</code> attribute is a <strong>trigger</strong>, and
-        <code class="inline-code">implements="&hellip;"</code> makes it a <strong>receiver</strong>. No page JavaScript, no framework, no build step.
+        You write plain HTML and Interactably wires it up. <code class="inline-code">start()</code> attaches any element that
+        carries an <code class="inline-code">on-*</code> attribute or <code class="inline-code">implements="&hellip;"</code> —
+        no <code class="inline-code">is=</code>, no per-tag setup. No page JavaScript, no framework, no build step.
       </p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="./docs.html">Read the docs</a>
@@ -46,58 +46,27 @@
     <div class="hero-grid">
       <div>
         <h2 class="section-label">Quick start</h2>
-        <div class="tabs">
-          <div class="tabbar">
-            <button is="interactable-button" type="button" aria-expanded="true" aria-controls="quick-auto"
-                    on-click="#quick-auto.show(); #quick-is.show(false)">Auto-loader &mdash; no is=</button>
-            <button is="interactable-button" type="button" aria-expanded="false" aria-controls="quick-is"
-                    on-click="#quick-auto.show(false); #quick-is.show()">Explicit is= &mdash; faster</button>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-quickstart)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
           </div>
-
-          <section is="interactable-section" id="quick-auto" implements="revealable" class="tabpanel" revealable-open="true">
-            <div class="codeblock">
-              <div class="codeblock-bar">
-                <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-quickstart-auto)" type="button">
-                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-                </button>
-              </div>
-              <pre class="code" id="code-quickstart-auto" data-lang="html"><code>&lt;script type="module"&gt;
+          <pre class="code" id="code-quickstart" data-lang="html"><code>&lt;script type="module"&gt;
+  import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/revealable.js";
-  import { installAutoLoader } from "interactably/dist/cdn/auto-loader.js";
-  installAutoLoader();
+  start();
 &lt;/script&gt;
 
 &lt;button on-click="#modal.show()"&gt;Open&lt;/button&gt;
 &lt;dialog id="modal" implements="revealable"&gt;&hellip;&lt;/dialog&gt;</code></pre>
-            </div>
-          </section>
-
-          <section is="interactable-section" id="quick-is" implements="revealable" class="tabpanel" hidden>
-            <div class="codeblock">
-              <div class="codeblock-bar">
-                <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-quickstart-is)" type="button">
-                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-                </button>
-              </div>
-              <pre class="code" id="code-quickstart-is" data-lang="html"><code>&lt;script type="module"&gt;
-  import "interactably/dist/cdn/revealable.js";
-  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
-  defineInteractableHost("button");   // idempotent
-&lt;/script&gt;
-
-&lt;button is="interactable-button" on-click="#modal.show()"&gt;Open&lt;/button&gt;
-&lt;dialog is="interactable-dialog" id="modal" implements="revealable"&gt;&hellip;&lt;/dialog&gt;</code></pre>
-            </div>
-          </section>
         </div>
-        <p class="note"><strong>Both run the same phrase.</strong> Clicking the button sends the verb
+        <p class="note"><strong>One phrase.</strong> Clicking the button sends the verb
           <code class="inline-code">show()</code> to <code class="inline-code">#modal</code>, which implements
-          <code class="inline-code">revealable</code>. The auto-loader is the simplest way to start; explicit
-          <code class="inline-code">is=</code> upgrades synchronously on insertion, so reach for it when performance matters.</p>
+          <code class="inline-code">revealable</code>. <code class="inline-code">start()</code> attaches everything already
+          in the document, and observes for anything added later.</p>
       </div>
 
       <div class="card">
@@ -107,36 +76,36 @@
         <div class="demo">
           <div class="row">
             <label>Qty
-              <input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
+              <input id="qty" implements="modifiable dirtyable attributable prevent-default"
                      type="number" value="1" min="1" max="10"
                      on-input="#preview.set(this.value)"
                      on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                      on-clean="this.removeAttr('data-dirty')"
-                     on-keydown="escape: this.reset().markClean(); #preview.compute()">
+                     on-keydown="escape: this.reset(); #preview.compute()">
             </label>
-            <button is="interactable-button" id="dec" on-click="#qty.dec(); #preview.compute()" type="button">&minus;</button>
-            <button is="interactable-button" id="inc" on-click="#qty.inc(); #preview.compute()" type="button">+</button>
-            <button is="interactable-button" id="inc5" on-click="#qty.inc(5); #preview.compute()" type="button">+5</button>
-            <button is="interactable-button" id="reset" on-click="#qty.reset().markClean(); #preview.compute()" type="button">Reset</button>
-            <output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
+            <button id="dec" on-click="#qty.dec(); #preview.compute()" type="button">&minus;</button>
+            <button id="inc" on-click="#qty.inc(); #preview.compute()" type="button">+</button>
+            <button id="inc5" on-click="#qty.inc(5); #preview.compute()" type="button">+5</button>
+            <button id="reset" on-click="#qty.reset(); #preview.compute()" type="button">Reset</button>
+            <output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
           </div>
 
-          <ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1">
+          <ul id="list" implements="listable" listable-min-rows="1">
             <li>
-              <input is="interactable-input" class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.compute()">
-              <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+              <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.compute()">
+              <button on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
             </li>
           </ul>
-          <button is="interactable-button" id="add-row" on-click="#list.adopt(#row-tpl); #total.compute()" type="button">Add row</button>
+          <button id="add-row" on-click="#list.adopt(#row-tpl); #total.compute()" type="button">Add row</button>
           <template id="row-tpl">
             <li>
-              <input is="interactable-input" class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.compute()">
-              <button is="interactable-button" on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+              <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.compute()">
+              <button on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
             </li>
           </template>
           <p class="total">
             Total:
-            <output is="interactable-output" id="total" implements="modifiable formattable"
+            <output id="total" implements="modifiable formattable"
                     modifiable-formula="sum('#list .amount:valid')"
                     formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
           </p>
@@ -179,7 +148,7 @@
           <span class="why-n">5</span>
           <div>
             <span class="why-q">Why should every interaction be a listener you wire, manage and clean up?</span>
-            <span class="why-a">The host does it for you &mdash; it binds <code class="inline-code">on-*</code> in <code class="inline-code">connectedCallback</code> and cleans up on disconnect. Elements declare what they do: <code class="inline-code">on-*</code>, <code class="inline-code">implements</code>, both, or neither.</span>
+            <span class="why-a"><code class="inline-code">start()</code> does it for you &mdash; one observer binds each element&rsquo;s <code class="inline-code">on-*</code> at attach and cleans up on detach. Elements declare what they do: <code class="inline-code">on-*</code>, <code class="inline-code">implements</code>, both, or neither.</span>
           </div>
         </li>
         <li>
@@ -202,13 +171,13 @@
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg></span>
-          <h3>Customized built-ins</h3>
-          <p><code class="inline-code">is="interactable-&lt;tag&gt;"</code> keeps every native behavior &mdash; forms submit, dialogs trap focus, details toggle &mdash; and adds the verbs you want.</p>
+          <h3>Native elements</h3>
+          <p>No shadow DOM, no wrapper elements. Forms submit, dialogs trap focus, details toggle &mdash; the verbs are just added on top.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg></span>
           <h3>No engine</h3>
-          <p>A pure parser and a pure executor &mdash; two functions the host calls. No store, no signals, nothing to learn.</p>
+          <p>A pure parser and a pure executor &mdash; two functions the attach pass calls. No store, no signals, nothing to learn.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 7l-5-5-5 5M17 17l-5 5-5-5"/></svg></span>
@@ -230,7 +199,7 @@
 
     <section>
       <h2 class="section-label" style="margin-top:3rem">Shipped implementations</h2>
-      <p style="color:var(--muted); margin:0.4rem 0 0">Sixteen ready-made capabilities, one per file. Import the ones you use; each registers itself and defines the hosts for its tags.</p>
+      <p style="color:var(--muted); margin:0.4rem 0 0">Sixteen ready-made capabilities, one per file. Import the ones you use; each registers itself and attaches to the elements that name it.</p>
       <div class="chip-row">
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>modifiable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>dirtyable</a>

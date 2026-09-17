@@ -4,9 +4,10 @@ import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 let InteractionEventClass: typeof import("@interactable/interaction-event.ts").InteractionEvent;
 let isImplementationEvent: (el: Element, type: string) => boolean;
-let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 
 const dialogCalls: string[] = [];
 
@@ -51,16 +52,12 @@ before(async () => {
   await import("@behaviors/revealable/revealable.ts");
   ({ InteractionEvent: InteractionEventClass } = await import("@interactable/interaction-event.ts"));
   ({ isImplementationEvent } = await import("@interactable/events.ts"));
-  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
-  defineInteractableHost("details");
-  defineInteractableHost("dialog");
-  defineInteractableHost("div");
-  defineInteractableHost("section");
-  defineInteractableHost("button");
-  defineInteractableHost("input");
+                ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -70,7 +67,7 @@ beforeEach(() => {
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   el.setAttribute("is", `interactable-${tag}`);
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
@@ -186,15 +183,18 @@ test("a plain element falls back to revealable-open and renders hidden from it",
 
   interact(panel, "show");
   assert.equal(panel.getAttribute("revealable-open"), "true");
+  await flush();
   assert.equal(panel.hidden, false);
 
   interact(panel, "toggle");
   assert.equal(panel.hasAttribute("revealable-open"), false);
+  await flush();
   assert.equal(panel.hidden, true);
 
   interact(panel, "show");
   interact(panel, "show", false);
   assert.equal(panel.hasAttribute("revealable-open"), false);
+  await flush();
   assert.equal(panel.hidden, true);
 });
 
@@ -390,12 +390,13 @@ test("a show() from a checked radio leaves a same-name sibling's open panel open
   await flush();
 
   interact(a, "show", undefined, rA);
+  await flush();
   assert.equal(a.hidden, false);
   assert.equal(b.hidden, false, "the sibling's open panel stays open: nothing closes a panel unless a phrase says show(false)");
   assert.equal(rA.checked, true, "the radio source is untouched");
 });
 
-test("on-load fires nothing at connect", async () => {
+test("on-load fires at attach: this.show() reveals the panel once implementations are wired", async () => {
   const warnings: string[] = [];
   const originalWarn = console.warn;
   console.warn = (...args: unknown[]) => warnings.push(args.map(String).join(" "));
@@ -403,9 +404,9 @@ test("on-load fires nothing at connect", async () => {
     const p = hostElement("div", { implements: "revealable", id: "p", "on-load": "this.show()" });
     document.body.appendChild(p);
     await flush();
-    assert.equal(p.hidden, true, "still closed");
+    assert.equal(p.hidden, false, "on-load ran this.show() after revealable attached");
     assert.equal(isImplementationEvent(p, "load"), false, "not a synthetic trigger");
-    assert.equal(warnings.length, 0, "no console.warn: load is an ordinary DOM event name that never fires on a div");
+    assert.equal(warnings.length, 0, "on-load binds no listener and warns nothing");
   } finally {
     console.warn = originalWarn;
   }

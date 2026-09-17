@@ -4,18 +4,18 @@ import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 
 let dom: JSDOM;
+let dispose: () => void;
+let start: typeof import("@interactable/start.ts").start;
 let dispatchInteraction: typeof import("@behaviors/test-harness.ts").dispatchInteraction;
 let fire: typeof import("@behaviors/test-harness.ts").fire;
 let defineImplementation: typeof import("@behaviors/_implementation-definition.ts").defineImplementation;
-let defineInteractableHost: typeof import("@behaviors/interactable-host.ts").defineInteractableHost;
 const received: string[] = [];
 
 before(async () => {
   dom = setupJsdom();
   ({ dispatchInteraction, fire } = await import("@behaviors/test-harness.ts"));
   ({ defineImplementation } = await import("@behaviors/_implementation-definition.ts"));
-  ({ defineInteractableHost } = await import("@behaviors/interactable-host.ts"));
-
+  
   defineImplementation(
     "echoer",
     {
@@ -34,11 +34,12 @@ before(async () => {
     }),
   );
 
-  defineInteractableHost("div");
-  defineInteractableHost("button");
+      ({ start } = await import("@interactable/start.ts"));
+  dispose = start();
 });
 
 after(() => {
+  dispose();
   teardownJsdom(dom);
 });
 
@@ -48,7 +49,7 @@ beforeEach(() => {
 });
 
 function hostElement(tag: string, attributes: Record<string, string>): HTMLElement {
-  const el = document.createElement(tag, { is: `interactable-${tag}` }) as HTMLElement;
+  const el = document.createElement(tag) as HTMLElement;
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }

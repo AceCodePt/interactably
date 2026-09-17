@@ -47,8 +47,8 @@ export function attach(el: Element): void {
   attachmentByElement.set(el, attachment);
   wireTriggers(el, attachment);
   syncIntersect(el);
-  ensureImplementations(el, attachment);
   el.addEventListener("interaction", onInteraction as EventListener);
+  ensureImplementations(el, attachment);
   wireAttributeObserver(el, attachment);
   track(el);
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably documentation — the trigger grammar, hosts, implementations, state tiers, the parser and executor, and the asynchronous seam.">
+  <meta name="description" content="Interactably documentation — the trigger grammar, attachment, implementations, state tiers, the parser and executor, and the asynchronous seam.">
   <title>Docs — Interactably</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -43,50 +43,50 @@
              sets its own link's data-visible on-intersect-enter and clears it on-intersect-leave,
              so several links can be lit at once - a true report, not a single current item. -->
         <nav id="toc" aria-label="Documentation sections">
-          <a id="toc-quick-start" is="interactable-a" implements="attributable" href="#quick-start">Quick start</a>
-          <a id="toc-trigger-grammar" is="interactable-a" implements="attributable" href="#trigger-grammar">The trigger grammar</a>
-          <a id="toc-grammar" is="interactable-a" implements="attributable" href="#grammar" class="sub">Grammar</a>
-          <a id="toc-constructs" is="interactable-a" implements="attributable" href="#constructs" class="sub">Constructs</a>
-          <a id="toc-rules" is="interactable-a" implements="attributable" href="#rules" class="sub">Rules</a>
-          <a id="toc-reserved-names" is="interactable-a" implements="attributable" href="#reserved-names" class="sub">Reserved names</a>
-          <a id="toc-formula" is="interactable-a" implements="attributable" href="#formula" class="sub">The formula</a>
-          <a id="toc-interaction-event" is="interactable-a" implements="attributable" href="#interaction-event">The interaction event</a>
-          <a id="toc-hosts" is="interactable-a" implements="attributable" href="#hosts">Hosts</a>
-          <a id="toc-four-kinds" is="interactable-a" implements="attributable" href="#four-kinds" class="sub">Four kinds of element</a>
-          <a id="toc-reporting" is="interactable-a" implements="attributable" href="#reporting" class="sub">Reporting</a>
-          <a id="toc-implementations" is="interactable-a" implements="attributable" href="#implementations">Shipped implementations</a>
-          <a id="toc-prevent-default" is="interactable-a" implements="attributable" href="#prevent-default" class="sub">prevent-default &amp; no-propagate</a>
-          <a id="toc-revealable" is="interactable-a" implements="attributable" href="#revealable" class="sub">Revealable</a>
-          <a id="toc-storable" is="interactable-a" implements="attributable" href="#storable" class="sub">Storable</a>
-          <a id="toc-writing-an-implementation" is="interactable-a" implements="attributable" href="#writing-an-implementation">Writing an implementation</a>
-          <a id="toc-signatures" is="interactable-a" implements="attributable" href="#signatures" class="sub">Signatures</a>
-          <a id="toc-declare-only" is="interactable-a" implements="attributable" href="#declare-only" class="sub">Declare only what you invent</a>
-          <a id="toc-attrs" is="interactable-a" implements="attributable" href="#attrs" class="sub">attrs is a typed proxy</a>
-          <a id="toc-conventions" is="interactable-a" implements="attributable" href="#conventions" class="sub">Conventions</a>
-          <a id="toc-state" is="interactable-a" implements="attributable" href="#state">State: three tiers</a>
-          <a id="toc-dynamics" is="interactable-a" implements="attributable" href="#dynamics">Dynamics</a>
-          <a id="toc-parser-and-executor" is="interactable-a" implements="attributable" href="#parser-and-executor">Parser and executor</a>
-          <a id="toc-pipeline" is="interactable-a" implements="attributable" href="#pipeline" class="sub">Pipeline</a>
-          <a id="toc-parse-cache" is="interactable-a" implements="attributable" href="#parse-cache" class="sub">Parse cache and resolution</a>
-          <a id="toc-native-defaults" is="interactable-a" implements="attributable" href="#native-defaults" class="sub">Native default actions</a>
-          <a id="toc-asynchrony" is="interactable-a" implements="attributable" href="#asynchrony">Asynchrony</a>
-          <a id="toc-full-examples" is="interactable-a" implements="attributable" href="#full-examples">Full examples</a>
-          <a id="toc-api-reference" is="interactable-a" implements="attributable" href="#api-reference">API reference</a>
-          <a id="toc-why-built" is="interactable-a" implements="attributable" href="#why-built">Why it is built this way</a>
-          <a id="toc-when-not-to-use" is="interactable-a" implements="attributable" href="#when-not-to-use">When not to use this library</a>
-          <a id="toc-not-supported" is="interactable-a" implements="attributable" href="#not-supported">Not supported</a>
-          <a id="toc-appendices" is="interactable-a" implements="attributable" href="#appendices">Appendices</a>
+          <a id="toc-quick-start" implements="attributable" href="#quick-start">Quick start</a>
+          <a id="toc-trigger-grammar" implements="attributable" href="#trigger-grammar">The trigger grammar</a>
+          <a id="toc-grammar" implements="attributable" href="#grammar" class="sub">Grammar</a>
+          <a id="toc-constructs" implements="attributable" href="#constructs" class="sub">Constructs</a>
+          <a id="toc-rules" implements="attributable" href="#rules" class="sub">Rules</a>
+          <a id="toc-reserved-names" implements="attributable" href="#reserved-names" class="sub">Reserved names</a>
+          <a id="toc-formula" implements="attributable" href="#formula" class="sub">The formula</a>
+          <a id="toc-interaction-event" implements="attributable" href="#interaction-event">The interaction event</a>
+          <a id="toc-attachment" implements="attributable" href="#attachment">Attachment</a>
+          <a id="toc-four-kinds" implements="attributable" href="#four-kinds" class="sub">Four kinds of element</a>
+          <a id="toc-reporting" implements="attributable" href="#reporting" class="sub">Reporting</a>
+          <a id="toc-implementations" implements="attributable" href="#implementations">Shipped implementations</a>
+          <a id="toc-prevent-default" implements="attributable" href="#prevent-default" class="sub">prevent-default &amp; no-propagate</a>
+          <a id="toc-revealable" implements="attributable" href="#revealable" class="sub">Revealable</a>
+          <a id="toc-storable" implements="attributable" href="#storable" class="sub">Storable</a>
+          <a id="toc-writing-an-implementation" implements="attributable" href="#writing-an-implementation">Writing an implementation</a>
+          <a id="toc-signatures" implements="attributable" href="#signatures" class="sub">Signatures</a>
+          <a id="toc-declare-only" implements="attributable" href="#declare-only" class="sub">Declare only what you invent</a>
+          <a id="toc-attrs" implements="attributable" href="#attrs" class="sub">attrs is a typed proxy</a>
+          <a id="toc-conventions" implements="attributable" href="#conventions" class="sub">Conventions</a>
+          <a id="toc-state" implements="attributable" href="#state">State: three tiers</a>
+          <a id="toc-dynamics" implements="attributable" href="#dynamics">Dynamics</a>
+          <a id="toc-parser-and-executor" implements="attributable" href="#parser-and-executor">Parser and executor</a>
+          <a id="toc-pipeline" implements="attributable" href="#pipeline" class="sub">Pipeline</a>
+          <a id="toc-parse-cache" implements="attributable" href="#parse-cache" class="sub">Parse cache and resolution</a>
+          <a id="toc-native-defaults" implements="attributable" href="#native-defaults" class="sub">Native default actions</a>
+          <a id="toc-asynchrony" implements="attributable" href="#asynchrony">Asynchrony</a>
+          <a id="toc-full-examples" implements="attributable" href="#full-examples">Full examples</a>
+          <a id="toc-api-reference" implements="attributable" href="#api-reference">API reference</a>
+          <a id="toc-why-built" implements="attributable" href="#why-built">Why it is built this way</a>
+          <a id="toc-when-not-to-use" implements="attributable" href="#when-not-to-use">When not to use this library</a>
+          <a id="toc-not-supported" implements="attributable" href="#not-supported">Not supported</a>
+          <a id="toc-appendices" implements="attributable" href="#appendices">Appendices</a>
         </nav>
       </aside>
 
       <div class="content">
 
-        <section id="sec-quick-start" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-quick-start.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-quick-start.removeAttr('data-visible')">
+        <section id="sec-quick-start" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-quick-start.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-quick-start.removeAttr('data-visible')">
         <h2 id="quick-start">Quick start <a class="anchor" href="#quick-start">#</a></h2>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Shell</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-install)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -95,31 +95,22 @@
         </div>
         <p>
           Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the
-          core&rsquo;s registry on import, and defines the hosts for its declared tags. You can write the markup two ways:
-          let the auto-loader add <code class="inline-code">is=</code> for you, or state it yourself.
+          core&rsquo;s registry on import. Then call <code class="inline-code">start()</code> once &mdash; the single
+          attachment point that wires up everything already in the document.
         </p>
-        <div class="tabs">
-          <div class="tabbar">
-            <button is="interactable-button" type="button" aria-expanded="true" aria-controls="docs-quick-auto"
-                    on-click="#docs-quick-auto.show(); #docs-quick-is.show(false)">Auto-loader &mdash; no is=</button>
-            <button is="interactable-button" type="button" aria-expanded="false" aria-controls="docs-quick-is"
-                    on-click="#docs-quick-auto.show(false); #docs-quick-is.show()">Explicit is= &mdash; faster</button>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-docs-load)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
           </div>
-
-          <section is="interactable-section" id="docs-quick-auto" implements="revealable" class="tabpanel" revealable-open="true">
-            <div class="codeblock">
-              <div class="codeblock-bar">
-                <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-docs-load-auto)" type="button">
-                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-                </button>
-              </div>
-              <pre class="code" id="code-docs-load-auto" data-lang="html"><code>&lt;script type="module"&gt;
+          <pre class="code" id="code-docs-load" data-lang="html"><code>&lt;script type="module"&gt;
+  import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/modifiable.js";
   import "interactably/dist/cdn/revealable.js";
-  import { installAutoLoader } from "interactably/dist/cdn/auto-loader.js";
-  installAutoLoader();
+  start();
 &lt;/script&gt;
 
 &lt;button id="inc" on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
@@ -131,44 +122,11 @@
 &lt;/label&gt;
 
 &lt;output id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;</code></pre>
-            </div>
-            <p class="note">No <code class="inline-code">is=</code> anywhere: the auto-loader upgrades every element that has
-              <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute, adding
-              <code class="inline-code">is="interactable-&lt;tag&gt;"</code> for you. A synchronous
-              <code class="inline-code">&lt;script&gt;</code> tag in <code class="inline-code">&lt;head&gt;</code> is fine because
-              connect-time work waits for the document.</p>
-          </section>
-
-          <section is="interactable-section" id="docs-quick-is" implements="revealable" class="tabpanel" hidden>
-            <div class="codeblock">
-              <div class="codeblock-bar">
-                <span class="codeblock-lang">HTML</span>
-                <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-docs-load-is)" type="button">
-                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-                </button>
-              </div>
-              <pre class="code" id="code-docs-load-is" data-lang="html"><code>&lt;script type="module"&gt;
-  import "interactably/dist/cdn/modifiable.js";
-  import "interactably/dist/cdn/revealable.js";
-  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
-  defineInteractableHost("button");   // idempotent; a &lt;button&gt; trigger has no implementation declaring it
-&lt;/script&gt;
-
-&lt;button is="interactable-button" id="inc" on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
-
-&lt;label&gt;Qty
-  &lt;input is="interactable-input" id="qty" implements="modifiable"
-         type="number" value="1" min="0" max="10"
-         on-input="#preview.set(this.value)"&gt;
-&lt;/label&gt;
-
-&lt;output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;</code></pre>
-            </div>
-            <p class="note"><code class="inline-code">is=</code> is present at creation, so the element upgrades synchronously on
-              insertion in Chrome and Firefox &mdash; the production choice when performance matters.</p>
-          </section>
         </div>
+        <p class="note">No <code class="inline-code">is=</code> anywhere: <code class="inline-code">start()</code> attaches every
+          element that has <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute.
+          A synchronous <code class="inline-code">&lt;script&gt;</code> tag in <code class="inline-code">&lt;head&gt;</code> is
+          fine because attach-time work waits for the document.</p>
         <p>Every click on <code class="inline-code">+</code> calls <code class="inline-code">#qty.inc()</code> (the input clamps to
           <code class="inline-code">max</code>) and then <code class="inline-code">#preview.compute()</code>, which re-reads
           <code class="inline-code">#qty.value</code>; typing in the field still pushes through <code class="inline-code">on-input</code>.</p>
@@ -176,19 +134,19 @@
         <p class="note" style="margin-top:1.5rem">Here is that exact markup, running live. No page JavaScript powers the button, the dialog, or the close button.</p>
         <div class="demo" style="padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)">
           <div class="row">
-            <button is="interactable-button" type="button" on-click="#qty.inc(); #preview.compute()">+</button>
-            <input is="interactable-input" id="qty" implements="modifiable" aria-label="Qty" type="number" value="1" min="0" max="10"
+            <button type="button" on-click="#qty.inc(); #preview.compute()">+</button>
+            <input id="qty" implements="modifiable" aria-label="Qty" type="number" value="1" min="0" max="10"
                    on-input="#preview.set(this.value)">
-            <output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
+            <output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
           </div>
           <div class="row">
-            <button is="interactable-button" type="button" on-click="#doc-modal.show()">Open a dialog</button>
+            <button type="button" on-click="#doc-modal.show()">Open a dialog</button>
           </div>
-          <dialog is="interactable-dialog" id="doc-modal" implements="revealable">
+          <dialog id="doc-modal" implements="revealable">
             <p>You clicked it. This native <code class="inline-code">&lt;dialog&gt;</code> was opened by
               <code class="inline-code">on-click="#doc-modal.show()"</code> and closed by
               <code class="inline-code">on-click="#doc-modal.show(false)"</code>.</p>
-            <button is="interactable-button" type="button" on-click="#doc-modal.show(false)">Close</button>
+            <button type="button" on-click="#doc-modal.show(false)">Close</button>
           </dialog>
         </div>
 
@@ -196,26 +154,30 @@
           <table class="tbl">
             <thead><tr><th>Bundle</th><th>Contents</th></tr></thead>
             <tbody>
-              <tr><td><code class="inline-code">interactably-core.js</code></td><td>parser, executor, event, host, registry. No implementations.</td></tr>
+              <tr><td><code class="inline-code">interactably-core.js</code></td><td>parser, executor, event, attachment, registry. No implementations.</td></tr>
               <tr><td><code class="inline-code">modifiable.js</code>, <code class="inline-code">dirtyable.js</code>, <code class="inline-code">listable.js</code>, &hellip;</td><td>one implementation per file, registering into the core&rsquo;s registry on import</td></tr>
-              <tr><td><code class="inline-code">auto-loader.js</code></td><td>optional: watches the DOM and adds <code class="inline-code">is=</code> to any element with <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="callout">
-          <h3>The <code class="inline-code">is=</code> rule</h3>
-          <p>An element carries <code class="inline-code">is="interactable-&lt;tag&gt;"</code> when it has <code class="inline-code">implements</code>, any <code class="inline-code">on-*</code> attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an <code class="inline-code">id</code>. The auto-loader fills <code class="inline-code">is=</code> in at runtime so you can omit it; writing it yourself is the synchronous, production form.</p>
+          <h3>The participation rule</h3>
+          <p>An element is a participant &mdash; something <code class="inline-code">start()</code> attaches &mdash; when it has
+            <code class="inline-code">implements</code>, any <code class="inline-code">on-*</code> attribute, or both.
+            Implementations and interactions are independent: an element may have either, both, or neither. If nothing else
+            addresses an element, it does not need an <code class="inline-code">id</code>. Adding a brand-new
+            <code class="inline-code">implements</code> or <code class="inline-code">on-*</code> attribute to an element after
+            insertion does not attach it; re-insert the element.</p>
         </div>
 
         </section>
-        <section id="sec-trigger-grammar" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-trigger-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-trigger-grammar.removeAttr('data-visible')">
+        <section id="sec-trigger-grammar" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-trigger-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-trigger-grammar.removeAttr('data-visible')">
         <h2 id="trigger-grammar">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
         <p>One attribute per interaction; the value is the phrase language.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-grammar-examples)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -232,12 +194,12 @@
         </div>
 
         </section>
-        <section id="sec-grammar" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-grammar.removeAttr('data-visible')">
+        <section id="sec-grammar" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-grammar.removeAttr('data-visible')">
         <h3 id="grammar">Grammar <a class="anchor" href="#grammar">#</a></h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-grammar)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -254,7 +216,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
 
         </section>
-        <section id="sec-constructs" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-constructs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-constructs.removeAttr('data-visible')">
+        <section id="sec-constructs" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-constructs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-constructs.removeAttr('data-visible')">
         <h3 id="constructs">Constructs <a class="anchor" href="#constructs">#</a></h3>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -321,7 +283,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           grammar, the same key twice is simply two phrases (<code class="inline-code">escape: this.reset(); escape: #other.show()</code>), and both run.</p>
 
         </section>
-        <section id="sec-rules" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-rules.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-rules.removeAttr('data-visible')">
+        <section id="sec-rules" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-rules.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-rules.removeAttr('data-visible')">
         <h3 id="rules">Rules <a class="anchor" href="#rules">#</a></h3>
         <ol>
           <li><strong>Parens are mandatory.</strong> <code class="inline-code">#pop.show</code> is a CSS selector; <code class="inline-code">#pop.show()</code> is a call.</li>
@@ -339,18 +301,18 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </ol>
 
         </section>
-        <section id="sec-reserved-names" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-reserved-names.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-reserved-names.removeAttr('data-visible')">
+        <section id="sec-reserved-names" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-reserved-names.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-reserved-names.removeAttr('data-visible')">
         <h3 id="reserved-names">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
         <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
 
         </section>
-        <section id="sec-formula" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-formula.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-formula.removeAttr('data-visible')">
+        <section id="sec-formula" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-formula.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-formula.removeAttr('data-visible')">
         <h3 id="formula">The formula <a class="anchor" href="#formula">#</a></h3>
         <p><code class="inline-code">modifiable-formula</code> is the second grammar an author meets on the same page as the trigger DSL, and it spells references the same way: the property is explicit, nothing is guessed from the tag.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-formula)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -370,13 +332,13 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <p>Sharp edge: two numeric-looking text inputs <em>add</em> — <code class="inline-code">#zip1.value + #zip2.value</code> sums them. Force a join with a literal on the left: <code class="inline-code">'' + #zip1.value + #zip2.value</code>.</p>
 
         </section>
-        <section id="sec-interaction-event" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-interaction-event.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-interaction-event.removeAttr('data-visible')">
+        <section id="sec-interaction-event" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-interaction-event.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-interaction-event.removeAttr('data-visible')">
         <h2 id="interaction-event">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
         <p>The host wraps every verb call in its own event, dispatched at the receiver:</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-event)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -401,41 +363,47 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </ul>
 
         </section>
-        <section id="sec-hosts" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-hosts.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-hosts.removeAttr('data-visible')">
-        <h2 id="hosts">Hosts <a class="anchor" href="#hosts">#</a></h2>
+        <section id="sec-attachment" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-attachment.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-attachment.removeAttr('data-visible')">
+        <h2 id="attachment">Attachment <a class="anchor" href="#attachment">#</a></h2>
         <p>
-          One customized built-in per tag, defined with <a href="https://github.com/AceCodePt/auto-wc">auto-wc</a> via
-          <code class="inline-code">defineInteractableHost("input")</code> &rarr; <code class="inline-code">interactable-input</code>. The host does two independent jobs.
+          <code class="inline-code">start()</code> attaches every participant &mdash; any element with an
+          <code class="inline-code">implements</code> or <code class="inline-code">on-*</code> attribute &mdash; through one
+          document-level <code class="inline-code">MutationObserver</code>. Elements inserted later attach the same way; the
+          initial document waits for <code class="inline-code">DOMContentLoaded</code> so the markup may precede the imports.
+          Attach is atomic: the trigger side, the receiver side and on-load all come from one pass, in document order.
         </p>
-        <p><strong>Trigger side.</strong> In <code class="inline-code">connectedCallback</code> it scans its <code class="inline-code">on-*</code> attributes and binds one listener per attribute on itself:</p>
+        <p><strong>Trigger side.</strong> <code class="inline-code">attach()</code> scans the element&rsquo;s <code class="inline-code">on-*</code> attributes and binds one listener per attribute on the element:</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-host-trigger)" type="button">
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-docs-attach-trigger)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-host-trigger" data-lang="ts"><code>for (const name of this.getAttributeNames()) {
-  if (!name.startsWith("on-")) continue;
-  const type = name.slice(3);
+<pre class="code" id="code-docs-attach-trigger" data-lang="ts"><code>for (const attribute of el.getAttributeNames()) {
+  if (!attribute.startsWith("on-")) continue;
+  const type = attribute.slice(3);
   const handler = (ev: Event) =&gt; {
-    if (!(ev instanceof ImplementationEvent) &amp;&amp; isImplementationEvent(this, type)) return;
-    runPhrases(this, this.getAttribute(name)!, ev);   // value read at event time
+    if (!(ev instanceof ImplementationEvent) &amp;&amp; isImplementationEvent(el, type)) return;
+    runPhrases(el, el.getAttribute(attribute) ?? "", ev);   // value read at event time
   };
-  this.addEventListener(type, handler, { passive: true });                          // the DSL never cancels
-  if (!isImplementationEvent(this, type)) {                                          // declared events never warn
-    if (!(("on" + type) in this) &amp;&amp; !LEGACY_EVENTS_WITHOUT_IDL.has(type))
-      console.warn(`[Interactable] on-${type} on ${describe(this)}: &lt;${this.localName}&gt; has no "${type}" event; custom events are fine, but check the spelling and case`);
-    warnIfNativeActionLikelyUnwanted(this, type);                                     // &lt;form on-submit&gt;, &lt;a href on-click&gt; without prevent-default
+  el.addEventListener(type, handler, { passive: true });                          // the DSL never cancels
+  if (!isImplementationEvent(el, type)) {                                          // declared events never warn
+    if (!(("on" + type) in el) &amp;&amp; !LEGACY_EVENTS_WITHOUT_IDL.has(type))
+      console.warn(`[Interactable] on-${type} on ${describe(el)}: &lt;${el.localName}&gt; has no "${type}" event; custom events are fine, but check the spelling and case`);
+    warnIfNativeActionLikelyUnwanted(el, type);                                     // &lt;form on-submit&gt;, &lt;a href on-click&gt; without prevent-default
   }
-  this._interactionCleanup.push(() =&gt; this.removeEventListener(type, handler));
+  attachment.triggers.set(attribute, () =&gt; el.removeEventListener(type, handler));
 }</code></pre>
         </div>
         <p>
-          A trigger is live the moment it connects. <code class="inline-code">disconnectedCallback</code> runs the cleanup list. The
-          <code class="inline-code">on-*</code> <strong>value</strong> is read at event time, so editing <code class="inline-code">on-click="#a.show()"</code> to
-          <code class="inline-code">"#b.show()"</code> takes effect on the next click. Adding a brand-new <code class="inline-code">on-*</code> attribute after connect requires re-inserting the element.
+          A trigger is live one microtask after insertion, or at <code class="inline-code">DOMContentLoaded</code> for the
+          initial document. Detach runs the cleanup list. The <code class="inline-code">on-*</code> <strong>value</strong> is
+          read at event time, so editing <code class="inline-code">on-click="#a.show()"</code> to
+          <code class="inline-code">"#b.show()"</code> takes effect on the next click. An element that gains
+          <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute after insertion is
+          not a participant yet &mdash; re-insert it.
         </p>
         <p>
           <strong>Receiver side.</strong> Read <code class="inline-code">implements</code>; for each name, check the implementation&rsquo;s
@@ -445,16 +413,16 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <code class="inline-code">implements</code> order</strong> that declares <code class="inline-code">e.verb</code> — after validating <code class="inline-code">e.arg</code> against the verb&rsquo;s signature.
         </p>
         <p>
-          <strong>Readiness.</strong> Implementations attach synchronously in <code class="inline-code">connectedCallback</code>, so an interaction dispatched
-          immediately after insertion is answered in the same task. An <code class="inline-code">implements</code> name the registry does not know yet is skipped,
-          and the report is deferred one turn so the imports that follow can register it first; only a name still missing when the current script settles is
-          reported with <code class="inline-code">console.error</code>. When it registers later, the registry dispatches <code class="inline-code">interactably:register</code>
-          and every connected host re-runs its attach pass. Markup may therefore precede the imports. Config and state attributes are delivered through the
-          class&rsquo;s <code class="inline-code">observedAttributes</code> snapshot plus one <code class="inline-code">MutationObserver</code> per element, never for <code class="inline-code">on-*</code> &mdash; the three intersect attributes are the one exception, observed statically so the host can rebuild their observers when they change.
+          <strong>Readiness.</strong> An <code class="inline-code">implements</code> name the registry does not know yet is skipped,
+          and the report is deferred one turn so the imports that follow can register it first; only a name still missing when the
+          current script settles is reported with <code class="inline-code">console.error</code>. When it registers later, the registry
+          re-runs the attach pass on every attached element. Markup may therefore precede the imports. Config and state attributes are
+          delivered through the element&rsquo;s <code class="inline-code">observedAttributes</code> snapshot plus one
+          <code class="inline-code">MutationObserver</code> per element, never for <code class="inline-code">on-*</code> &mdash; the three intersect attributes are the one exception, observed statically so the attach pass can rebuild their observers when they change.
         </p>
 
         </section>
-        <section id="sec-four-kinds" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-four-kinds.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-four-kinds.removeAttr('data-visible')">
+        <section id="sec-four-kinds" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-four-kinds.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-four-kinds.removeAttr('data-visible')">
         <h3 id="four-kinds">Four kinds of element <a class="anchor" href="#four-kinds">#</a></h3>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -470,7 +438,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <p>The fourth kind is why <code class="inline-code">this</code> exists: <code class="inline-code">on-click="this.remove()"</code> works on every row cloned from a template, with no generated ids.</p>
 
         </section>
-        <section id="sec-reporting" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-reporting.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-reporting.removeAttr('data-visible')">
+        <section id="sec-reporting" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-reporting.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-reporting.removeAttr('data-visible')">
         <h3 id="reporting">Reporting <a class="anchor" href="#reporting">#</a></h3>
         <p>The host and executor report through <code class="inline-code">console.error</code> / <code class="inline-code">console.warn</code>; they do not throw (host methods run on the browser&rsquo;s stack, which owns their exceptions). <code class="inline-code">throw</code> is reserved for <code class="inline-code">defineImplementation</code> and the registry, where the exception reaches the developer who wrote the call.</p>
         <ul>
@@ -479,14 +447,14 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </ul>
 
         </section>
-        <section id="sec-implementations" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-implementations.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-implementations.removeAttr('data-visible')">
+        <section id="sec-implementations" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-implementations.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-implementations.removeAttr('data-visible')">
         <h2 id="implementations">The shipped implementations <a class="anchor" href="#implementations">#</a></h2>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Implementation</th><th>Tags</th><th>Verbs</th><th>Config / state</th><th>What it does</th></tr></thead>
             <tbody>
               <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">inc</code>, <code class="inline-code">dec</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code>, <code class="inline-code">compute</code></td><td><code class="inline-code">step</code>, <code class="inline-code">formula</code>, <code class="inline-code">invalid-value</code></td><td>typed writes with clamping; evaluates a formula on <code class="inline-code">compute()</code> and on connect</td></tr>
-              <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td><code class="inline-code">markClean</code></td><td><code class="inline-code">dirty-on</code>; events <code class="inline-code">dirty</code>, <code class="inline-code">clean</code></td><td>fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing</td></tr>
+              <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td>&mdash;</td><td><code class="inline-code">dirty-on</code>; events <code class="inline-code">dirty</code>, <code class="inline-code">clean</code></td><td>fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing; move the baseline on an input with <code class="inline-code">setAttr({name: &rsquo;value&rsquo;, value: this.value})</code></td></tr>
               <tr><td><code class="inline-code">formattable</code></td><td>output, span, div, td, p, li, dd, b, strong, em, small</td><td>&mdash;</td><td><code class="inline-code">format</code></td><td>renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write</td></tr>
               <tr><td><code class="inline-code">listable</code></td><td>ul, ol, tbody</td><td><code class="inline-code">removeRow</code>, <code class="inline-code">adopt</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">min-rows</code></td><td>row removal / template adoption / clear, keeping <code class="inline-code">min-rows</code></td></tr>
               <tr><td><code class="inline-code">requestable</code></td><td>any</td><td><code class="inline-code">send</code>, <code class="inline-code">abort</code></td><td><code class="inline-code">url</code>, <code class="inline-code">method</code>, <code class="inline-code">target</code>, <code class="inline-code">swap</code>, <code class="inline-code">include</code>, <code class="inline-code">concurrency</code> + <code class="inline-code">status</code> state; events <code class="inline-code">response</code>, <code class="inline-code">request-error</code></td><td>fetch, swap the response into the DOM, fire <code class="inline-code">response</code> / <code class="inline-code">request-error</code> events</td></tr>
@@ -497,7 +465,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td><code class="inline-code">prevent-default</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">events</code> (derived, see below)</td><td><code class="inline-code">preventDefault</code> on listed events</td></tr>
               <tr><td><code class="inline-code">revealable</code></td><td>any</td><td><code class="inline-code">show</code>, <code class="inline-code">toggle</code></td><td><code class="inline-code">modal</code> + <code class="inline-code">open</code> state</td><td>strategies per element (<a href="#revealable">below</a>)</td></tr>
               <tr><td><code class="inline-code">auto-grow</code></td><td>textarea</td><td>&mdash;</td><td>&mdash;</td><td>auto-height textarea; sizes on connect and on <code class="inline-code">input</code>/<code class="inline-code">change</code>; a value written by script or restored by <code class="inline-code">storable</code> is sized on the next input</td></tr>
-              <tr><td><code class="inline-code">storable</code></td><td>any</td><td><code class="inline-code">save</code>, <code class="inline-code">load</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">scope</code> (<code class="inline-code">local</code>/<code class="inline-code">session</code>), <code class="inline-code">key</code>, <code class="inline-code">value</code></td><td>persist <code class="inline-code">storable-value ?? value</code> under <code class="inline-code">storable-key ?? name ?? id</code>; restores on connect and fires <code class="inline-code">restore</code></td></tr>
+              <tr><td><code class="inline-code">storable</code></td><td>any</td><td><code class="inline-code">save</code>, <code class="inline-code">restore</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">scope</code> (<code class="inline-code">local</code>/<code class="inline-code">session</code>), <code class="inline-code">key</code>, <code class="inline-code">value</code> (both required)</td><td>persists a declared slot under a declared key; <code class="inline-code">restore()</code> reads it back and fires <code class="inline-code">restore</code> only when it matches; nothing restores without <code class="inline-code">on-load="this.restore()"</code></td></tr>
               <tr><td><code class="inline-code">paste-transform</code></td><td>input, textarea</td><td>&mdash;</td><td><code class="inline-code">pattern</code>, <code class="inline-code">replace</code></td><td>rewrite pasted text with a regex; fires <code class="inline-code">input</code> like a native paste</td></tr>
               <tr><td><code class="inline-code">copyable</code></td><td>button</td><td><code class="inline-code">copy</code></td><td>event <code class="inline-code">copy</code></td><td>copies a target element&rsquo;s text to the clipboard and fires <code class="inline-code">copy</code> on success; the flash is the author&rsquo;s (<code class="inline-code">on-copy</code>)</td></tr>
               <tr><td><code class="inline-code">json-template</code></td><td>any</td><td>&mdash;</td><td><code class="inline-code">for</code>, <code class="inline-code">slice</code></td><td>render a JSON data source through a child <code class="inline-code">&lt;template&gt;</code></td></tr>
@@ -506,7 +474,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
 
         </section>
-        <section id="sec-prevent-default" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-prevent-default.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-prevent-default.removeAttr('data-visible')">
+        <section id="sec-prevent-default" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-prevent-default.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-prevent-default.removeAttr('data-visible')">
         <h3 id="prevent-default">prevent-default and no-propagate <a class="anchor" href="#prevent-default">#</a></h3>
         <p>
           The executor never calls <code class="inline-code">preventDefault()</code> or <code class="inline-code">stopPropagation()</code>
@@ -516,25 +484,25 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-prevent-default)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-prevent-default" data-lang="html"><code>&lt;form is="interactable-form" implements="prevent-default no-propagate" no-propagate-events="submit"
+          <pre class="code" id="code-docs-prevent-default" data-lang="html"><code>&lt;form implements="prevent-default no-propagate" no-propagate-events="submit"
       on-submit="#api.send(); #status.set('Saving&hellip;')"&gt;                                  &lt;!-- derived from on-submit: submit --&gt;
 
-&lt;div is="interactable-div" implements="prevent-default" prevent-default-events="contextmenu"
+&lt;div implements="prevent-default" prevent-default-events="contextmenu"
      on-contextmenu="#menu.showAt(this)"&gt;                                                &lt;!-- not derivable: stated --&gt;
 
-&lt;input is="interactable-input" implements="prevent-default"
+&lt;input implements="prevent-default"
        on-keydown="enter: #search.run(this.value)"&gt;                                      &lt;!-- derived from the keyed phrase: keydown:enter --&gt;
 
-&lt;section is="interactable-section" implements="prevent-default no-propagate"
+&lt;section implements="prevent-default no-propagate"
          prevent-default-events="dragover,drop" no-propagate-events="drop"
          on-drop="#uploads.accept(this)"&gt;                                                &lt;!-- not derivable; dragover must be cancelled or drop never fires --&gt;
 
-&lt;canvas is="interactable-canvas" implements="prevent-default" prevent-default-events="wheel"
+&lt;canvas implements="prevent-default" prevent-default-events="wheel"
         on-wheel="#viewport.throttle(16).zoom(this)"&gt;                                    &lt;!-- never derived: blocks scrolling, always stated --&gt;</code></pre>
         </div>
         <p>
@@ -555,7 +523,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <p><code class="inline-code">no-propagate</code> is its twin: <code class="inline-code">no-propagate-events</code>, default <code class="inline-code">"click"</code>, handler is <code class="inline-code">stopPropagation</code>. Both listen on the element, so both also receive events bubbling up from descendants — put them on the element whose keys or actions are meant, not an ancestor.</p>
 
         </section>
-        <section id="sec-revealable" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-revealable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-revealable.removeAttr('data-visible')">
+        <section id="sec-revealable" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-revealable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-revealable.removeAttr('data-visible')">
         <h3 id="revealable">Revealable <a class="anchor" href="#revealable">#</a></h3>
         <p><code class="inline-code">revealable</code> is the model generic implementation: it declares nothing the platform already holds, derives its strategy from the element at connect, and invents state only where nothing exists. Two verbs and one boolean: <code class="inline-code">show()</code> opens, <code class="inline-code">show(false)</code> closes, <code class="inline-code">toggle()</code> flips.</p>
         <div class="tbl-wrap">
@@ -570,23 +538,23 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           </table>
         </div>
         <p>Focus trapping, the top layer, light dismiss, <code class="inline-code">::backdrop</code> and Escape handling come with the first three for free; the fourth row is the only one that invents anything.</p>
-        <p><strong>Controllers are wired at connect.</strong> When a panel with an <code class="inline-code">id</code> connects, <code class="inline-code">revealable</code> scans the <code class="inline-code">is="interactable-&hellip;"</code> hosts, parses each one&rsquo;s <code class="inline-code">on-*</code> values through the same cached <code class="inline-code">parse()</code> the executor uses, and for every host that <em>controls</em> the panel &mdash; <code class="inline-code">#id.toggle()</code>, <code class="inline-code">#id.show()</code>, or <code class="inline-code">#id.show(true)</code>; the literal <code class="inline-code">show(false)</code> is a side effect, not control, and non-literal arguments such as <code class="inline-code">show(this.checked)</code> are not control either &mdash; it appends the panel&rsquo;s id to the host&rsquo;s <code class="inline-code">aria-controls</code> (deduped, existing tokens preserved) and sets <code class="inline-code">aria-expanded</code> to the current state, skipped on radio and checkbox inputs. The sync continues at fire time: every element whose <code class="inline-code">aria-controls</code> names the panel gets <code class="inline-code">aria-expanded</code> refreshed, and a bare trigger that declares none gets <code class="inline-code">aria-controls</code> added &mdash; unless the verb was <code class="inline-code">show(false)</code>, which only updates, never claims.</p>
+        <p><strong>Controllers are wired at connect.</strong> When a panel with an <code class="inline-code">id</code> connects, <code class="inline-code">revealable</code> scans the attached elements &mdash; anything carrying an <code class="inline-code">on-*</code> attribute &mdash; parses each one&rsquo;s <code class="inline-code">on-*</code> values through the same cached <code class="inline-code">parse()</code> the executor uses, and for every host that <em>controls</em> the panel &mdash; <code class="inline-code">#id.toggle()</code>, <code class="inline-code">#id.show()</code>, or <code class="inline-code">#id.show(true)</code>; the literal <code class="inline-code">show(false)</code> is a side effect, not control, and non-literal arguments such as <code class="inline-code">show(this.checked)</code> are not control either &mdash; it appends the panel&rsquo;s id to the host&rsquo;s <code class="inline-code">aria-controls</code> (deduped, existing tokens preserved) and sets <code class="inline-code">aria-expanded</code> to the current state, skipped on radio and checkbox inputs. The sync continues at fire time: every element whose <code class="inline-code">aria-controls</code> names the panel gets <code class="inline-code">aria-expanded</code> refreshed, and a bare trigger that declares none gets <code class="inline-code">aria-controls</code> added &mdash; unless the verb was <code class="inline-code">show(false)</code>, which only updates, never claims.</p>
         <p>Nothing closes a panel unless a phrase says <code class="inline-code">show(false)</code>. Mutually exclusive panels are written out: each trigger names what it opens and what it closes.</p>
 
         </section>
-        <section id="sec-storable" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-storable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-storable.removeAttr('data-visible')">
+        <section id="sec-storable" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-storable.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-storable.removeAttr('data-visible')">
         <h3 id="storable">Storable <a class="anchor" href="#storable">#</a></h3>
-        <p><code class="inline-code">storable</code> persists an element&rsquo;s value to storage through three verbs: <code class="inline-code">save()</code>, <code class="inline-code">load()</code> and <code class="inline-code">clear()</code>. Nothing is stored unless a phrase calls <code class="inline-code">save()</code> &mdash; saving is an act you can see in the markup. The value is <code class="inline-code">storable-value ?? value</code> (an authored <code class="inline-code">storable-value</code> outranks the element&rsquo;s own <code class="inline-code">.value</code>), the storage key is <code class="inline-code">interactable:&lt;storable-key ?? name ?? id&gt;</code>, and the default scope is <code class="inline-code">local</code>. Same-name checkboxes store as a list. An element with none of <code class="inline-code">storable-key</code>, <code class="inline-code">name</code> and <code class="inline-code">id</code> warns once on connect and stores nothing &mdash; as does one whose value resolves to nothing (no <code class="inline-code">storable-value</code>, no <code class="inline-code">.value</code>).</p>
-        <p>Restore waits for the document to finish parsing, so initial-load markup works regardless of element order &mdash; elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (<code class="inline-code">NotReadyError</code>), logged against that open-list item, not solved here. Restore is quiet: it applies or matches the stored value and fires the <code class="inline-code">restore</code> event, never a native <code class="inline-code">change</code>, so nothing you didn&rsquo;t write runs on a reload &mdash; <code class="inline-code">dirtyable</code> subscribes to <code class="inline-code">restore</code> and re-evaluates, so a restore that writes a differing value flips the field dirty immediately; <code class="inline-code">on-restore="this.markClean()"</code> commits the restored value as the new clean baseline. The hook is <code class="inline-code">on-restore="&hellip;"</code> on the storable element, fired once at most, only when a stored value was applied or matched, never when <code class="inline-code">save()</code> runs. An authored <code class="inline-code">storable-value</code> matches rather than writes: it fires <code class="inline-code">restore</code> only when it equals what was stored, and a different stored value changes nothing. The package-manager example is nine buttons that each say everything they do &mdash; <code class="inline-code">storable-key="pm"</code>, <code class="inline-code">storable-value="pnpm"</code>, an <code class="inline-code">on-click</code> naming the three panels it opens, the six it closes and <code class="inline-code">this.save()</code>, and the same <code class="inline-code">on-restore</code> without the save. <code class="inline-code">load()</code> re-reads the stored value as a user action and fires <code class="inline-code">restore</code> when it changes; <code class="inline-code">clear()</code> removes the key.</p>
+        <p><code class="inline-code">storable</code> persists a declared slot to storage through three verbs: <code class="inline-code">save()</code>, <code class="inline-code">restore()</code> and <code class="inline-code">clear()</code>. Nothing is stored unless a phrase calls <code class="inline-code">save()</code> &mdash; saving is an act you can see in the markup. The slot is the authored <code class="inline-code">storable-value</code>, the storage key is the declared <code class="inline-code">storable-key</code>, and the default scope is <code class="inline-code">local</code>. Both <code class="inline-code">storable-key</code> and <code class="inline-code">storable-value</code> are required: missing one is a signature error at attach naming the attribute.</p>
+        <p>Nothing restores without <code class="inline-code">on-load="this.restore()"</code> written by the author. Restore is quiet: <code class="inline-code">restore()</code> reads the key and fires the <code class="inline-code">restore</code> event only when the stored value matches the authored <code class="inline-code">storable-value</code>, at most once per call, never from <code class="inline-code">save()</code>; a different stored value changes nothing, and no stored value fires nothing. An authored <code class="inline-code">storable-value</code> matches rather than writes &mdash; the element is never written by a restore. <code class="inline-code">dirtyable</code> subscribes to <code class="inline-code">restore</code> and re-evaluates; <code class="inline-code">on-restore="this.setAttr({name: 'value', value: this.value})"</code> on an input commits the restored state as the new clean baseline. The package-manager example is nine buttons that each say everything they do &mdash; <code class="inline-code">storable-key="pm"</code>, <code class="inline-code">storable-value="pnpm"</code>, an <code class="inline-code">on-load="this.restore()"</code>, an <code class="inline-code">on-click</code> naming the three panels it opens, the six it closes and <code class="inline-code">this.save()</code>, and the same <code class="inline-code">on-restore</code> without the save. <code class="inline-code">clear()</code> removes the key.</p>
 
         </section>
-        <section id="sec-writing-an-implementation" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-writing-an-implementation.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-writing-an-implementation.removeAttr('data-visible')">
+        <section id="sec-writing-an-implementation" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-writing-an-implementation.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-writing-an-implementation.removeAttr('data-visible')">
         <h2 id="writing-an-implementation">Writing an implementation <a class="anchor" href="#writing-an-implementation">#</a></h2>
         <p>One call declares the name, the tags it may attach to, the config and state it brings, its verb signatures, and the factory — and the factory is type-checked against the signatures.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-implementation)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -646,7 +614,7 @@ export const modifiable = defineImplementation("modifiable", {
         </div>
 
         </section>
-        <section id="sec-signatures" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-signatures.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-signatures.removeAttr('data-visible')">
+        <section id="sec-signatures" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-signatures.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-signatures.removeAttr('data-visible')">
         <h3 id="signatures">Signatures <a class="anchor" href="#signatures">#</a></h3>
         <p>
           Every <code class="inline-code">config</code>, <code class="inline-code">state</code> and verb scalar signature is a
@@ -661,7 +629,7 @@ export const modifiable = defineImplementation("modifiable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-signatures)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -694,7 +662,7 @@ export const attributable = defineImplementation("attributable", {
         </div>
 
         </section>
-        <section id="sec-declare-only" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-declare-only.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-declare-only.removeAttr('data-visible')">
+        <section id="sec-declare-only" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-declare-only.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-declare-only.removeAttr('data-visible')">
         <h3 id="declare-only">Declare only what you invent <a class="anchor" href="#declare-only">#</a></h3>
         <p>
           An implementation never declares an attribute the platform already owns. <code class="inline-code">min</code>, <code class="inline-code">max</code>,
@@ -713,7 +681,7 @@ export const attributable = defineImplementation("attributable", {
         <p>Most implementations declare no <code class="inline-code">state</code>: <code class="inline-code">dirtyable</code>&rsquo;s closure holds one boolean, the last-reported dirtiness, and its baseline is the platform default &mdash; by element kind, <code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code> or <code class="inline-code">defaultSelected</code> (<code class="inline-code">defaultValue</code> is live, so a script writing the <code class="inline-code">value</code> attribute moves the baseline); <code class="inline-code">revealable</code> on a <code class="inline-code">&lt;dialog&gt;</code> reads <code class="inline-code">el.open</code>, <code class="inline-code">modifiable</code> writes <code class="inline-code">el.value</code>. A <code class="inline-code">state</code> entry is the exception, and the smell to check is whether the platform already has the thing under another name.</p>
 
         </section>
-        <section id="sec-attrs" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-attrs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-attrs.removeAttr('data-visible')">
+        <section id="sec-attrs" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-attrs.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-attrs.removeAttr('data-visible')">
         <h3 id="attrs">attrs is a typed proxy <a class="anchor" href="#attrs">#</a></h3>
         <p>Built once per instance by <code class="inline-code">bindAttributes(el, name, def)</code>. Each getter reads the attribute live and validates it through the same compiled signature verbs use:</p>
         <ul>
@@ -723,7 +691,7 @@ export const attributable = defineImplementation("attributable", {
         </ul>
 
         </section>
-        <section id="sec-conventions" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-conventions.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-conventions.removeAttr('data-visible')">
+        <section id="sec-conventions" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-conventions.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-conventions.removeAttr('data-visible')">
         <h3 id="conventions">Conventions <a class="anchor" href="#conventions">#</a></h3>
         <ul>
           <li><strong><code class="inline-code">on*</code> methods are event handlers</strong> on the host element (auto-wc semantics; <code class="inline-code">auto-grow</code>&rsquo;s <code class="inline-code">onInput</code> still works). <strong>Every other method is a verb</strong> and must appear in <code class="inline-code">verbs</code>.</li>
@@ -731,11 +699,11 @@ export const attributable = defineImplementation("attributable", {
           <li><strong>Verbs are synchronous.</strong> Do the work, return; the host stores the return value on <code class="inline-code">e.result</code>. A verb that returns a promise gets a console warning.</li>
           <li><strong>Lifecycle:</strong> <code class="inline-code">connectedCallback</code>, <code class="inline-code">disconnectedCallback</code>, <code class="inline-code">attributeChangedCallback(name, old, new)</code> may be returned from the factory alongside the verbs.</li>
           <li><strong>Implementations never call verbs on other elements.</strong> Work that completes later declares <strong>its own events</strong> (<code class="inline-code">copyable</code> declares <code class="inline-code">"copy"</code>; <code class="inline-code">requestable</code> declares <code class="inline-code">"response"</code> and <code class="inline-code">"request-error"</code>; <code class="inline-code">storable</code> declares <code class="inline-code">"restore"</code>) and dispatches an <code class="inline-code">ImplementationEvent</code> when the moment arrives; the follow-up is a plain <code class="inline-code">on-&lt;event&gt;</code> trigger attribute on that element, so <code class="inline-code">this</code> in the continuation is the element that did the work.</li>
-          <li><strong>Registering an implementation ensures its hosts.</strong> The registry calls <code class="inline-code">defineInteractableHost(tag)</code> for every tag in <code class="inline-code">tags</code>; tag-less implementations ensure nothing. <code class="inline-code">defineInteractableHost</code> is idempotent, so two implementations sharing a tag share one host class.</li>
+          <li><strong>Registering an implementation is idempotent.</strong> The registry records the name once; <code class="inline-code">defineImplementation</code> refuses a duplicate. An element whose <code class="inline-code">implements</code> names a registered implementation gets it at attach, or when the name registers later.</li>
         </ul>
 
         </section>
-        <section id="sec-state" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-state.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-state.removeAttr('data-visible')">
+        <section id="sec-state" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-state.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-state.removeAttr('data-visible')">
         <h2 id="state">State: three tiers <a class="anchor" href="#state">#</a></h2>
         <p>A verb&rsquo;s job is to <strong>mutate state</strong>; the reaction (text, classes, ARIA, <code class="inline-code">hidden</code>) happens in <code class="inline-code">attributeChangedCallback</code> or in response to the platform&rsquo;s own events. Verbs do not render.</p>
         <div class="tbl-wrap">
@@ -752,7 +720,7 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-dirtyable)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -765,7 +733,7 @@ export const attributable = defineImplementation("attributable", {
       : el instanceof HTMLInputElement &amp;&amp; (el.type === "checkbox" || el.type === "radio")
         ? el.checked !== el.defaultChecked
         : el.value !== el.defaultValue;
-  let dirty = isDirty();                          // the one boolean in the closure; fires nothing at connect
+  let dirty = isDirty();                          // the one boolean in the closure; fires nothing at attach
   const evaluate = () =&gt; {
     const next = isDirty();
     if (next === dirty) return;
@@ -776,28 +744,25 @@ export const attributable = defineImplementation("attributable", {
     onInteraction: evaluate,
     onRestore: evaluate,                          // storable's restore is seen directly
     ...(attrs["dirty-on"] === "change" ? { onChange: evaluate } : { onInput: evaluate }),
-    markClean: () =&gt; {
-      if (el instanceof HTMLSelectElement) for (const option of el.options) option.defaultSelected = option.selected;
-      else if (el instanceof HTMLInputElement &amp;&amp; (el.type === "checkbox" || el.type === "radio")) el.defaultChecked = el.checked;
-      else el.defaultValue = el.value;
-      evaluate();
+    attributeChangedCallback: (name) =&gt; {         // the per-element attribute observer re-evaluates
+      if (name === "value" || name === "checked") evaluate();
     },
   };
 }</code></pre>
         </div>
-        <p>The implementation writes nothing; the author paints the effect with the events, two lines of markup:</p>
+        <p>The implementation writes nothing; the author paints the effect with the events, two lines of markup. The baseline is the platform default; on an <code class="inline-code">&lt;input&gt;</code> the author moves it with <code class="inline-code">on-dirty="this.setAttr({name: &rsquo;value&rsquo;, value: this.value})"</code> (and, after a matching restore, <code class="inline-code">on-restore="this.setAttr({name: &rsquo;value&rsquo;, value: this.value})"</code>). On a <code class="inline-code">&lt;textarea&gt;</code> or <code class="inline-code">&lt;select&gt;</code> <code class="inline-code">setAttr</code> cannot move the baseline; this release gives them no mechanism.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
           </div>
-          <pre class="code" data-lang="html"><code>&lt;input is="interactable-input" implements="dirtyable attributable"
+          <pre class="code" data-lang="html"><code>&lt;input implements="dirtyable attributable"
        on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
        on-clean="this.removeAttr('data-dirty')"&gt;</code></pre>
         </div>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-revealable)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -812,7 +777,7 @@ export const attributable = defineImplementation("attributable", {
         </div>
         <ul>
           <li><strong>Read the platform before inventing.</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">open</code> on <code class="inline-code">&lt;details&gt;</code>/<code class="inline-code">&lt;dialog&gt;</code>, popover state, <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">step</code>. A <code class="inline-code">state</code> entry exists only when none of these hold the thing.</li>
-          <li><strong><code class="inline-code">config</code> is read-only.</strong> A verb that needs its own baseline commits one by writing the platform&rsquo;s own default property &mdash; <code class="inline-code">dirtyable</code>&rsquo;s <code class="inline-code">markClean</code> sets <code class="inline-code">defaultValue</code> / <code class="inline-code">defaultChecked</code> / <code class="inline-code">defaultSelected</code> &mdash; never a <code class="inline-code">config</code> key.</li>
+          <li><strong><code class="inline-code">config</code> is read-only.</strong> The author moves a baseline by writing the platform&rsquo;s own default attribute &mdash; <code class="inline-code">dirtyable</code>&rsquo;s baseline moves with <code class="inline-code">setAttr({name: &rsquo;value&rsquo;, value: this.value})</code> on an input &mdash; never a <code class="inline-code">config</code> key.</li>
           <li><strong>Invented live state is <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code></strong> — one namespace, shared with config, visible in the inspector. Writes go through <code class="inline-code">attrs</code>, reads in <code class="inline-code">attributeChangedCallback</code>.</li>
           <li><strong>Closure state</strong> for transient internals (in-flight request, timers).</li>
           <li><strong>One reader for an element&rsquo;s value.</strong> <code class="inline-code">readValue(el)</code> returns <code class="inline-code">formattable-value</code> when a <code class="inline-code">formattable</code> raw store is present, else <code class="inline-code">.value</code>, else <code class="inline-code">textContent</code> &mdash; a number when the text parses, else the string. Every implementation reads a number through <code class="inline-code">valueOf(el) = toNumber(readValue(el))</code> (NaN &rarr; 0).</li>
@@ -820,39 +785,34 @@ export const attributable = defineImplementation("attributable", {
         <p>There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.</p>
 
         </section>
-        <section id="sec-dynamics" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-dynamics.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-dynamics.removeAttr('data-visible')">
+        <section id="sec-dynamics" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-dynamics.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-dynamics.removeAttr('data-visible')">
         <h2 id="dynamics">Dynamics <a class="anchor" href="#dynamics">#</a></h2>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Case</th><th>Answer</th></tr></thead>
             <tbody>
-              <tr><td><strong>Dynamic triggers</strong> (rows cloned from a template)</td><td>Put <code class="inline-code">is="interactable-&lt;tag&gt;"</code> in the template. On Chrome and Firefox the clone upgrades synchronously on insertion; <code class="inline-code">on-click="this.remove()"</code> / <code class="inline-code">#list.removeRow(this)</code> works on every clone with no generated ids. On Safari, and when the auto-loader adds <code class="inline-code">is=</code> for you, the upgrade is deferred (<a href="#upgrade-timing">below</a>)</td></tr>
+              <tr><td><strong>Dynamic triggers</strong> (rows cloned from a template)</td><td>Put the <code class="inline-code">implements</code> / <code class="inline-code">on-*</code> attributes in the template; <code class="inline-code">on-click="this.remove()"</code> / <code class="inline-code">#list.removeRow(this)</code> works on every clone with no generated ids</td></tr>
               <tr><td><strong>Dynamic receivers</strong> (a row&rsquo;s own subtotal)</td><td>Receivers stay ids or <code class="inline-code">this</code>. Either address a stable ancestor and let the implementation find the relative element from <code class="inline-code">e.source</code> (<code class="inline-code">closest("li")</code>), or stamp ids in the template</td></tr>
               <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>Formula with a selector: <code class="inline-code">#total implements="modifiable" modifiable-formula="sum('#list .amount:valid')"</code>, recomputed by <code class="inline-code">#total.compute()</code>. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. <code class="inline-code">sum</code> is strict; filter blanks in the selector — <code class="inline-code">sum('#list .amount:valid')</code> (blank <code class="inline-code">required</code> inputs are <code class="inline-code">:invalid</code>), <code class="inline-code">sum('#list .amount:not(:placeholder-shown)')</code> (blank inputs carrying a <code class="inline-code">placeholder</code>, even <code class="inline-code">placeholder=" "</code>), <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes</td></tr>
               <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change fires its own event (<code class="inline-code">on-response="#count.compute()"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
             </tbody>
           </table>
         </div>
-        <p id="upgrade-timing" style="scroll-margin-top:5rem"><strong>Upgrade timing is not uniform.</strong> <code class="inline-code">is=</code> written in the markup (server-rendered or in a <code class="inline-code">&lt;template&gt;</code>) upgrades synchronously on insertion in Chrome and Firefox. Two paths are asynchronous:</p>
-        <ul>
-          <li><strong>The auto-loader</strong> (<code class="inline-code">installAutoLoader()</code>). Customized built-ins only upgrade when <code class="inline-code">is</code> is present at <em>creation</em>, so the loader watches with a <code class="inline-code">MutationObserver</code>, then <strong>replaces the node</strong>. It is the simplest way to write markup — no <code class="inline-code">is=</code> anywhere — at the cost of a document-wide observer, a microtask-late upgrade, dropped focus and lost programmatic clicks in the gap. Use it to start; switch to explicit <code class="inline-code">is=</code> for production.</li>
-          <li><strong>Safari.</strong> Needs the <a href="https://github.com/ungap/custom-elements">@ungap/custom-elements</a> polyfill; even explicit <code class="inline-code">is=</code> upgrades a tick late there.</li>
-        </ul>
-        <p>Consequence: the auto-loader is a supported convenience, but explicit <code class="inline-code">is=</code> is the faster, synchronous form — prefer it in templates and server output. If code inserts a trigger and drives it immediately, await <code class="inline-code">customElements.whenDefined()</code> plus a microtask — or drive the receiver directly with <code class="inline-code">dispatchInteraction</code>.</p>
+        <p id="timing" style="scroll-margin-top:5rem"><strong>Timing is uniform.</strong> Every element &mdash; in the initial document or inserted later, server-rendered or cloned from a template &mdash; attaches one microtask after insertion, or at <code class="inline-code">DOMContentLoaded</code> for the initial document. The cost of that microtask gap is the one price of the model: code that inserts a trigger and drives it in the same task gets a <code class="inline-code">"is not attached"</code> error. Moving an element around the document is a no-op: it stays attached, its instance survives. An element that gains <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute after insertion is not attached by that attribute alone &mdash; re-insert it.</p>
         <p>Selector rule: <strong>selectors may appear in arguments, never as receivers.</strong> The dispatch graph stays 1:1 — every interaction goes to one element with one <code class="inline-code">implements</code>, so completion, grep (<code class="inline-code">#pop.</code> finds every writer) and error rules stay exact.</p>
 
         </section>
-        <section id="sec-parser-and-executor" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-parser-and-executor.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-parser-and-executor.removeAttr('data-visible')">
+        <section id="sec-parser-and-executor" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-parser-and-executor.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-parser-and-executor.removeAttr('data-visible')">
         <h2 id="parser-and-executor">Parser and executor <a class="anchor" href="#parser-and-executor">#</a></h2>
         <p>There is no engine. Two pure functions, both called from the host.</p>
 
         </section>
-        <section id="sec-pipeline" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-pipeline.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-pipeline.removeAttr('data-visible')">
+        <section id="sec-pipeline" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-pipeline.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-pipeline.removeAttr('data-visible')">
         <h3 id="pipeline">Pipeline <a class="anchor" href="#pipeline">#</a></h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-pipeline)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
@@ -882,49 +842,49 @@ export const attributable = defineImplementation("attributable", {
         </ul>
 
         </section>
-        <section id="sec-parse-cache" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-parse-cache.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-parse-cache.removeAttr('data-visible')">
+        <section id="sec-parse-cache" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-parse-cache.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-parse-cache.removeAttr('data-visible')">
         <h3 id="parse-cache">Parse cache and resolution <a class="anchor" href="#parse-cache">#</a></h3>
         <p><code class="inline-code">parse</code> caches by attribute string; the cached value is an AST in which <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads are <strong>tokens</strong>, not elements or values. Resolution happens per fire, inside <code class="inline-code">runPhrases</code>; two identical rows share one parse and resolve to two different elements. <code class="inline-code">this</code> is resolved as <code class="inline-code">token === "this" ? source : document.getElementById(id)</code> — never rewritten into the attribute, never stamped into an id, never consulted from <code class="inline-code">event.currentTarget</code>.</p>
         <p><strong>Argument validation is the receiver&rsquo;s job, not the parser&rsquo;s.</strong> The parser knows every literal&rsquo;s kind from syntax (bare <code class="inline-code">5</code> is a number, <code class="inline-code">'5'</code> is a string, <code class="inline-code">#id</code> / <code class="inline-code">this</code> are elements). Scalars go through <code class="inline-code">parseValueAgainstDSL</code> against the slot&rsquo;s tsyntax string; resolved elements go through <code class="inline-code">instanceof</code> against the slot&rsquo;s constructor. The only runtime-typed values are reads, and they carry the platform&rsquo;s type: <code class="inline-code">this.value</code> is a string, <code class="inline-code">#qty.valueAsNumber</code> is a number, <code class="inline-code">#agree.checked</code> is a boolean. There is no coercion — <code class="inline-code">#total.add(this.value)</code> with <code class="inline-code">add: "number"</code> fails and the message says so.</p>
 
         </section>
-        <section id="sec-native-defaults" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-native-defaults.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-native-defaults.removeAttr('data-visible')">
+        <section id="sec-native-defaults" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-native-defaults.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-native-defaults.removeAttr('data-visible')">
         <h3 id="native-defaults">Native default actions and propagation <a class="anchor" href="#native-defaults">#</a></h3>
         <p>The executor does neither. Every <code class="inline-code">on-*</code> listener is passive; a phrase describes what happens, not what the browser is allowed to do.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-native-defaults)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-native-defaults" data-lang="html"><code>&lt;form is="interactable-form" implements="prevent-default" on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
-&lt;a    is="interactable-a"    href="/docs"                  on-click="#log.track('docs')"&gt;Docs&lt;/a&gt;   &lt;!-- navigates and tracks --&gt;
-&lt;a    is="interactable-a"    href="#p" implements="prevent-default" on-click="#p.show()"&gt;&hellip;&lt;/a&gt;   &lt;!-- in-page action --&gt;
-&lt;button is="interactable-button" implements="no-propagate" on-click="#list.removeRow(this)"&gt;&times;&lt;/button&gt;  &lt;!-- row's on-click untouched --&gt;</code></pre>
+          <pre class="code" id="code-docs-native-defaults" data-lang="html"><code>&lt;form implements="prevent-default" on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
+&lt;a       href="/docs"                  on-click="#log.track('docs')"&gt;Docs&lt;/a&gt;   &lt;!-- navigates and tracks --&gt;
+&lt;a       href="#p" implements="prevent-default" on-click="#p.show()"&gt;&hellip;&lt;/a&gt;   &lt;!-- in-page action --&gt;
+&lt;button implements="no-propagate" on-click="#list.removeRow(this)"&gt;&times;&lt;/button&gt;  &lt;!-- row's on-click untouched --&gt;</code></pre>
         </div>
         <p><code class="inline-code">prevent-default</code> binds its own listeners with <code class="inline-code">passive: false</code>, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying <code class="inline-code">on-submit</code> on a <code class="inline-code">&lt;form&gt;</code> (or <code class="inline-code">on-click</code> on an <code class="inline-code">&lt;a href&gt;</code>, or <code class="inline-code">on-keydown</code> on a <code class="inline-code">&lt;button&gt;</code>) without <code class="inline-code">prevent-default</code> logs one <code class="inline-code">console.warn</code>. A pre-existing <code class="inline-code">defaultPrevented</code> does <strong>not</strong> suppress dispatch.</p>
 
         </section>
-        <section id="sec-asynchrony" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-asynchrony.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-asynchrony.removeAttr('data-visible')">
+        <section id="sec-asynchrony" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-asynchrony.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-asynchrony.removeAttr('data-visible')">
         <h2 id="asynchrony">Asynchrony <a class="anchor" href="#asynchrony">#</a></h2>
         <p><strong>Verbs are synchronous and chains never await.</strong> This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A <code class="inline-code">.</code> chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints &mdash; unless a <code class="inline-code">delay()</code> link splits it. Work that finishes later belongs to an implementation that owns it — today <code class="inline-code">requestable</code> — and continues by dispatching an <code class="inline-code">ImplementationEvent</code> the author&rsquo;s <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> attributes turn into a new synchronous chain.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-async)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-async" data-lang="html"><code>&lt;input is="interactable-input" id="q" on-input="#results.debounce(300).send()"&gt;
+          <pre class="code" id="code-docs-async" data-lang="html"><code>&lt;input id="q" on-input="#results.debounce(300).send()"&gt;
 
-&lt;ul is="interactable-ul" id="results" implements="requestable"
+&lt;ul id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
     on-response="#count.compute(); #status.show(false)"
     on-request-error="#status.show()"&gt;&lt;/ul&gt;
-&lt;output is="interactable-output" id="count" implements="modifiable"
+&lt;output id="count" implements="modifiable"
         modifiable-formula="count('#results &gt; li')"&gt;&lt;/output&gt;</code></pre>
         </div>
         <p>The trigger&rsquo;s chain is one synchronous link: <code class="inline-code">send()</code> aborts the previous in-flight request for <code class="inline-code">#results</code>, starts a new one, and returns. When the response lands, <code class="inline-code">requestable</code> swaps its children and dispatches <code class="inline-code">new ImplementationEvent("response", { originalEvent })</code>; the element&rsquo;s own <code class="inline-code">on-response</code> attribute runs a second synchronous chain in which <code class="inline-code">this</code> is <code class="inline-code">#results</code>. The network gap sits between two chains and has a name and a place in the markup.</p>
@@ -945,7 +905,7 @@ export const attributable = defineImplementation("attributable", {
         <p><strong>Continuations run only if the element is still connected.</strong> A response that replaces the requestable element itself (<code class="inline-code">requestable-swap="outerHTML"</code>) disconnects its host; the <code class="inline-code">on-response</code> event is skipped. Cancellation is <code class="inline-code">AbortError</code>, which runs neither event and logs nothing.</p>
 
         </section>
-        <section id="sec-full-examples" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-full-examples.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-full-examples.removeAttr('data-visible')">
+        <section id="sec-full-examples" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-full-examples.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-full-examples.removeAttr('data-visible')">
         <h2 id="full-examples">Full examples <a class="anchor" href="#full-examples">#</a></h2>
         <p>The examples below are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
 
@@ -953,34 +913,34 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-full-calc)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
           <pre class="code" id="code-docs-full-calc" data-lang="html"><code>&lt;label&gt;Qty
-  &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
+  &lt;input id="qty" implements="modifiable dirtyable attributable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
          on-clean="this.removeAttr('data-dirty')"
-         on-keydown="escape: this.reset().markClean(); #preview.compute()"&gt;
+         on-keydown="escape: this.reset(); #preview.compute()"&gt;
 &lt;/label&gt;
-&lt;button is="interactable-button" on-click="#qty.dec(); #preview.compute()"&gt;&minus;&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#qty.inc(5); #preview.compute()"&gt;+5&lt;/button&gt;
-&lt;button is="interactable-button" on-click="#qty.reset().markClean(); #preview.compute()"&gt;Reset&lt;/button&gt;
-&lt;output is="interactable-output" id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;
+&lt;button on-click="#qty.dec(); #preview.compute()"&gt;&minus;&lt;/button&gt;
+&lt;button on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
+&lt;button on-click="#qty.inc(5); #preview.compute()"&gt;+5&lt;/button&gt;
+&lt;button on-click="#qty.reset(); #preview.compute()"&gt;Reset&lt;/button&gt;
+&lt;output id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;
 
-&lt;ul is="interactable-ul" id="list" implements="listable" listable-min-rows="1"&gt;
+&lt;ul id="list" implements="listable" listable-min-rows="1"&gt;
   &lt;li&gt;
-    &lt;input is="interactable-input" class="amount" type="number" step="any" required on-input="#total.compute()"&gt;
-    &lt;button is="interactable-button" on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
+    &lt;input class="amount" type="number" step="any" required on-input="#total.compute()"&gt;
+    &lt;button on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
-&lt;button is="interactable-button" on-click="#list.adopt(#row-tpl)"&gt;Add row&lt;/button&gt;
+&lt;button on-click="#list.adopt(#row-tpl)"&gt;Add row&lt;/button&gt;
 &lt;template id="row-tpl"&gt;&lt;li&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
-&lt;output is="interactable-output" id="total" implements="modifiable formattable"
+&lt;output id="total" implements="modifiable formattable"
 modifiable-formula="sum('#list .amount:valid')"
         formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;</code></pre>
         </div>
@@ -990,12 +950,12 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-full-order)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-full-order" data-lang="html"><code>&lt;form is="interactable-form" id="order" novalidate
+          <pre class="code" id="code-docs-full-order" data-lang="html"><code>&lt;form id="order" novalidate
       implements="prevent-default validatable requestable"
       requestable-url="/api/orders" requestable-method="post"
       requestable-target="#receipt"
@@ -1005,9 +965,9 @@ modifiable-formula="sum('#list .amount:valid')"
   &lt;input name="qty" type="number" min="1" required&gt;
   &lt;button&gt;Place order&lt;/button&gt;
 &lt;/form&gt;
-&lt;section is="interactable-section" id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
-&lt;div is="interactable-div" id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
-&lt;div is="interactable-div" id="validate-alert" implements="revealable" hidden role="alert"&gt;Please check the quantity.&lt;/div&gt;</code></pre>
+&lt;section id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
+&lt;div id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
+&lt;div id="validate-alert" implements="revealable" hidden role="alert"&gt;Please check the quantity.&lt;/div&gt;</code></pre>
         </div>
         <p>The form is the receiver of both <code class="inline-code">validate()</code> and <code class="inline-code">send()</code> in the first unit; <code class="inline-code">||</code> switches to <code class="inline-code">#validate-alert</code> only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event.</p>
         <p><code class="inline-code">novalidate</code> is load-bearing: without it the browser&rsquo;s interactive validation runs first and, for an invalid form, never fires <code class="inline-code">submit</code> at all. The phrase decides <em>when</em> validation happens; the platform still decides <em>what</em> valid means.</p>
@@ -1016,43 +976,42 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-full-spy)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
           <pre class="code" id="code-docs-full-spy" data-lang="html"><code>&lt;script type="module"&gt;
+  import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/attributable.js";
-  import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
-  for (const tag of ["section", "a"]) defineInteractableHost(tag);
+  start();
 &lt;/script&gt;
 
 &lt;nav id="toc"&gt;
-  &lt;a id="toc-intro" is="interactable-a" implements="attributable" href="#intro"&gt;Intro&lt;/a&gt;
-  &lt;a id="toc-guide" is="interactable-a" implements="attributable" href="#guide"&gt;Guide&lt;/a&gt;
+  &lt;a id="toc-intro" implements="attributable" href="#intro"&gt;Intro&lt;/a&gt;
+  &lt;a id="toc-guide" implements="attributable" href="#guide"&gt;Guide&lt;/a&gt;
 &lt;/nav&gt;
 
 &lt;!-- each section lights its own link while it is on screen --&gt;
-&lt;section is="interactable-section" id="sec-intro"
+&lt;section id="sec-intro"
          on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-intro.setAttr({name: 'data-visible', value: ''})"
          on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-intro.removeAttr('data-visible')"&gt;&hellip;&lt;/section&gt;
-&lt;section is="interactable-section" id="sec-guide"
+&lt;section id="sec-guide"
          on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-guide.setAttr({name: 'data-visible', value: ''})"
          on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-guide.removeAttr('data-visible')"&gt;&hellip;&lt;/section&gt;</code></pre>
         </div>
         <p><code class="inline-code">on-intersect-enter</code> fires when a section becomes intersecting and <code class="inline-code">on-intersect-leave</code> when it stops, so each section sets and clears its own link&rsquo;s <code class="inline-code">data-visible</code>; several links may be lit at once when several sections are visible &mdash; a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. A margin key narrows the window: <code class="inline-code">on-intersect-enter="-50% 0px 0px 0px: #a.mark()"</code> fires when the section&rsquo;s leading edge reaches the viewport&rsquo;s vertical centre, and each <code class="inline-code">;</code> phrase under one attribute observes its own margin, so <code class="inline-code">on-intersect-enter="-50% 0px 0px 0px: #a.mark(); 0px: #b.mark()"</code> is two observers on one attribute. The live sidebar of this page is exactly this shape, and the key reads the sticky header&rsquo;s height instead of restating it: the header carries <code class="inline-code">id="topnav"</code> and every section uses the same key <code class="inline-code">-#topnav.height 0px 0px 0px:</code> on both its phrases, so the box is shrunk by whatever the header actually measures, and a style change to the header rebuilds the observers on resize.</p>
 
         </section>
-        <section id="sec-api-reference" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-api-reference.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-api-reference.removeAttr('data-visible')">
+        <section id="sec-api-reference" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-api-reference.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-api-reference.removeAttr('data-visible')">
         <h2 id="api-reference">API reference <a class="anchor" href="#api-reference">#</a></h2>
-        <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset). <code class="inline-code">installAutoLoader</code> ships in the full package and as <code class="inline-code">interactably/dist/cdn/auto-loader.js</code>.</p>
+        <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset).</p>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Export</th><th>What it is</th></tr></thead>
             <tbody>
               <tr><td><code class="inline-code">defineImplementation(name, decl, factory)</code></td><td>Declare an implementation (<a href="#writing-an-implementation">§ Writing an implementation</a>)</td></tr>
-              <tr><td><code class="inline-code">defineInteractableHost(tag)</code></td><td>Define <code class="inline-code">interactable-&lt;tag&gt;</code>; idempotent, returns nothing</td></tr>
-              <tr><td><code class="inline-code">installAutoLoader()</code></td><td>Opt in to the auto-loader: watch the DOM and add <code class="inline-code">is=</code> to any element with <code class="inline-code">implements</code> or <code class="inline-code">on-*</code>; returns a dispose function (<a href="#dynamics">§ Dynamics</a>)</td></tr>
+              <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant under the root through one observer; returns a dispose function that tears the attachment down (<a href="#attachment">§ Attachment</a>)</td></tr>
               <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition (used by <code class="inline-code">defineImplementation</code>)</td></tr>
               <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
               <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
@@ -1071,14 +1030,14 @@ modifiable-formula="sum('#list .amount:valid')"
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
               <tr><td><code class="inline-code">readValue(el)</code></td><td>The element&rsquo;s value as text: <code class="inline-code">formattable-value</code> (the raw store) &rarr; <code class="inline-code">.value</code> &rarr; <code class="inline-code">textContent</code>, a number when the text parses else a string</td></tr>
               <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">toNumber(readValue(el))</code>, NaN &rarr; 0) and write helpers</td></tr>
-              <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a verb reaches a host whose implementations have not attached — the host&rsquo;s connect-time attach pass has not run. With the auto-loader in the page it is practically unreachable; without it, any phrase fired before the implementation&rsquo;s script loads can land on it</td></tr>
+              <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a dispatch reaches an attached element whose <code class="inline-code">implements</code> names an implementation still pending registration</td></tr>
               <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code>, <code class="inline-code">formattable</code></td></tr>
             </tbody>
           </table>
         </div>
 
         </section>
-        <section id="sec-why-built" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-why-built.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-why-built.removeAttr('data-visible')">
+        <section id="sec-why-built" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-why-built.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-why-built.removeAttr('data-visible')">
         <h2 id="why-built">Why it is built this way <a class="anchor" href="#why-built">#</a></h2>
         <p>The short versions of the decisions behind the design.</p>
         <ul>
@@ -1090,7 +1049,8 @@ modifiable-formula="sum('#list .amount:valid')"
           <li><strong><code class="inline-code">&amp;&amp;</code> / <code class="inline-code">||</code> continue across receivers, and <code class="inline-code">||</code> is guard-only.</strong> A guard&rsquo;s <code class="inline-code">preventDefault()</code> is the one stop the phrase can observe synchronously, so it is the only stop <code class="inline-code">||</code> reacts to; errors and unowned verbs are bugs and stay loud. <code class="inline-code">&amp;&amp;</code> is the success branch. They exist because validation failure was otherwise a dead end — sibling <code class="inline-code">;</code> phrases run regardless and no verb can observe another&rsquo;s abort. One operator per phrase keeps precedence and associativity out of the grammar.</li>
           <li><strong><code class="inline-code">once()</code> spends on passing through</strong> so <code class="inline-code">#a.once().x().y()</code> means &ldquo;x and y run once ever, together&rdquo;; the gate is about entry, and an abort or pause after it never refunds it.</li>
           <li><strong>No class or selector receivers.</strong> Classes are global; scoping is a selector language; a selector language is jQuery. Containers + scoped selector <em>arguments</em> cover the dynamic-set case with a 1:1 receiver graph.</li>
-          <li><strong>Triggers are hosts, not delegated.</strong> One place decides anything about an element. Cost: <code class="inline-code">is=</code> on every trigger (or the auto-loader), and the Safari polyfill covers more elements.</li>
+          <li><strong>Triggers are attached, not delegated.</strong> One place decides anything about an element. Cost: a participant must carry <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute, and the attachment happens on a microtask.</li>
+          <li><strong>Uniform timing over synchronous-somewhere.</strong> One attachment path for every element &mdash; initial scan and later insertions alike &mdash; instead of a fast custom-element path and a slow polyfill path with different upgrade moments.</li>
           <li><strong><code class="inline-code">this</code> for the trigger:</strong> the word inline handlers have bound to the element for thirty years.</li>
           <li><strong>Parse once, resolve per fire.</strong> <code class="inline-code">#id</code> / <code class="inline-code">this</code> stay tokens in the cached AST; two identical rows share a parse and bind to different elements. Nothing is rewritten into the DOM.</li>
           <li><strong>Nested triggers bubble</strong> like inline handlers; <code class="inline-code">no-propagate</code> on the inner element is the explicit opt-out, not an implicit rule the executor enforces with a <code class="inline-code">closest()</code> walk per event.</li>
@@ -1105,27 +1065,27 @@ modifiable-formula="sum('#list .amount:valid')"
         </ul>
 
         </section>
-        <section id="sec-when-not-to-use" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-when-not-to-use.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-when-not-to-use.removeAttr('data-visible')">
+        <section id="sec-when-not-to-use" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-when-not-to-use.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-when-not-to-use.removeAttr('data-visible')">
         <h2 id="when-not-to-use">When not to use this library <a class="anchor" href="#when-not-to-use">#</a></h2>
         <p><strong>This is a push system, not a pull one.</strong> An event on a trigger pushes a verb onto a named receiver, the DOM changes once, and the interaction is over &mdash; there is no subscription, no reactivity, and no derived state. Nothing watches a value and re-runs phrases when it changes.</p>
         <p>The tabs example is the honest boundary case. Each button&rsquo;s <code class="inline-code">on-click</code> pushes <code class="inline-code">show()</code> onto its panels, and the six it closes; &ldquo;which tab is visible&rdquo; is never stored &mdash; every switch rewrites the panels&rsquo; visibility by hand. Adding a fourth section means editing every phrase, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.</p>
         <p>When the behaviour you need <em>pulls</em> &mdash; a value kept in sync with other values, recomputed on change, reactive by construction &mdash; a reactive/data-flow framework is the right tool. The one async seam this library does own is <code class="inline-code">requestable</code>: the trigger pushes <code class="inline-code">send()</code>, and <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> continue from the element that did the work.</p>
-        <p>Input masks and format-as-you-type belong in a component library built on the same <code class="inline-code">is=</code> hosts: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw <code class="inline-code">&lt;input&gt;</code> pair, which needs markup of its own to fake. <code class="inline-code">formattable</code> is the whole declarative share &mdash; display elements only, formatted on connect and on each library write.</p>
+        <p>Input masks and format-as-you-type belong in a component library built on the same elements: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw <code class="inline-code">&lt;input&gt;</code> pair, which needs markup of its own to fake. <code class="inline-code">formattable</code> is the whole declarative share &mdash; display elements only, formatted on connect and on each library write.</p>
 
         </section>
-        <section id="sec-not-supported" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-not-supported.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-not-supported.removeAttr('data-visible')">
+        <section id="sec-not-supported" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-not-supported.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-not-supported.removeAttr('data-visible')">
         <h2 id="not-supported">Not supported <a class="anchor" href="#not-supported">#</a></h2>
-        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; dynamic <code class="inline-code">on-*</code> attribute <em>names</em> after connect &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
-        <p><code class="inline-code">on-load</code>. Every trigger fires after the document is upgraded, so every <code class="inline-code">#id</code> resolves; a connect-time trigger is the one that couldn&rsquo;t make that promise. Author the initial state instead &mdash; <code class="inline-code">open</code>, <code class="inline-code">checked</code>, <code class="inline-code">revealable-open="true"</code>.</p>
+        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; attaching an element that gains <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute after insertion (re-insert it) &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
+        <p><code class="inline-code">on-load</code>. On-load is not a DOM event and carries no native action; it runs once, after the batch that attached the element. Listen for it on anything that should run once its element is attached.</p>
 
         </section>
-        <section id="sec-appendices" is="interactable-section" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-appendices.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-appendices.removeAttr('data-visible')">
+        <section id="sec-appendices" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-appendices.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-appendices.removeAttr('data-visible')">
         <h2 id="appendices">Appendices <a class="anchor" href="#appendices">#</a></h2>
         <h3>Reference grammar</h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                     on-click="this.copy(#code-docs-reference-grammar)" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>

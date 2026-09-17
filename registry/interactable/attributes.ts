@@ -46,7 +46,11 @@ export function bindAttributes(el: Element, name: string, def: AttributeBindings
 
 function readAttribute(el: Element, attribute: string, slot: AttributeSlot): unknown {
   const value = coerceAttribute(slot, el, attribute, el.getAttribute(attribute));
-  return slot.sig.validate(value);
+  try {
+    return slot.sig.validate(value);
+  } catch (err) {
+    throw new Error(`[Interactable] ${attribute} on <${describeElement(el)}>: ${(err as Error).message}`);
+  }
 }
 
 function coerceAttribute(slot: AttributeSlot, el: Element, attribute: string, attributeValue: string | null): unknown {

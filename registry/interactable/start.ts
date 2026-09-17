@@ -67,7 +67,7 @@ export function start(root: StartRoot = document): () => void {
     if (!documentReady) {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
-          if (node.nodeType === Node.ELEMENT_NODE) collectParticipants(node as Element, pending);
+          if (node.nodeType === 1) collectParticipants(node as Element, pending);
         }
       }
       ensureDCL();
@@ -76,13 +76,13 @@ export function start(root: StartRoot = document): () => void {
     const added: Element[] = [];
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
-        if (node.nodeType === Node.ELEMENT_NODE) collectParticipants(node as Element, added);
+        if (node.nodeType === 1) collectParticipants(node as Element, added);
       }
     }
     attachBatch(added);
     for (const mutation of mutations) {
       for (const node of mutation.removedNodes) {
-        if (node.nodeType !== Node.ELEMENT_NODE) continue;
+        if (node.nodeType !== 1) continue;
         walkRemoved(node as Element);
       }
     }
@@ -128,5 +128,5 @@ function walkRemoved(node: Element): void {
 
 function byDocumentOrder(a: Element, b: Element): number {
   if (a === b) return 0;
-  return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 ? -1 : 1;
+  return (a.compareDocumentPosition(b) & 4) !== 0 ? -1 : 1;
 }
