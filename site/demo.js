@@ -14,7 +14,6 @@ import "./vendor/no-propagate.js";
 import "./vendor/auto-grow.js";
 import "./vendor/paste-transform.js";
 import "./vendor/json-template.js";
-import "./vendor/hashable.js";
 import "./vendor/formattable.js";
 import { defineInteractableHost } from "./vendor/interactably-core.js";
 import { installAutoLoader } from "./vendor/auto-loader.js";

@@ -24,7 +24,6 @@ const KNOWN_BUNDLES = new Set([
   "copyable",
   "dirtyable",
   "formattable",
-  "hashable",
   "json-template",
   "listable",
   "logger",

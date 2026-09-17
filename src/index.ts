@@ -14,6 +14,5 @@ export { storable } from "@behaviors/storable/storable.ts";
 export { pasteTransform } from "@behaviors/paste-transform/paste-transform.ts";
 export { copyable } from "@behaviors/copyable/copyable.ts";
 export { jsonTemplate } from "@behaviors/json-template/json-template.ts";
-export { hashable } from "@behaviors/hashable/hashable.ts";
 export { formattable } from "@behaviors/formattable/formattable.ts";
 export { installAutoLoader } from "@utils/auto-loader.ts";
