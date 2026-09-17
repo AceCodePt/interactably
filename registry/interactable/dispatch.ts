@@ -1,4 +1,4 @@
-import { isHost } from "@interactable/host.ts";
+import { isAttached } from "@interactable/attachment.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
 import { describeElement } from "@interactable/describe-element.ts";
 
@@ -13,10 +13,12 @@ export function dispatchInteraction(
   arg?: unknown,
   options: DispatchInteractionOptions = {},
 ): unknown {
-  if (!isHost(el)) {
+  if (!isAttached(el)) {
     const id = (el as { id?: unknown }).id;
     const subject = typeof id === "string" && id !== "" ? `#${id}` : el.localName;
-    throw new Error(`${subject} is not an interactable host; add is="interactable-${el.localName}"`);
+    throw new Error(
+      `${subject} is not attached: it has no implements or on-* attribute, or start() has not run`,
+    );
   }
   const event = new InteractionEvent({
     verb,

@@ -128,9 +128,6 @@ importers:
 
   .:
     dependencies:
-      auto-wc:
-        specifier: ^0.1.6
-        version: 0.1.6(typescript@7.0.2)
       tsyntax:
         specifier: ^0.1.4
         version: 0.1.4
@@ -648,11 +645,6 @@ packages:
 
   '@ungap/structured-clone@1.4.0':
     resolution: {integrity: sha512-1mEZtMKPM09vDmQt5y7YvmN2+DFTP7Tg0EWXdic8/C6VRnpb33e4ghisCIE3WZjsE2N8mf+QV1Zqh7ZFYLWInQ==}
-
-  auto-wc@0.1.6:
-    resolution: {integrity: sha512-WafVr2n1Y9KJo4j9NDBncQlMPElZSmNI3zlTxw+IwUDybK3/Wkqsa5brXo6q73Lf2H/JREQu8DImUaHjWpKwrQ==}
-    peerDependencies:
-      typescript: '>=5.0.0'
 
   bidi-js@1.1.0:
     resolution: {integrity: sha512-fX1Onk0tdVPC7obPWB5EbJ1z7NVhLq4m2xZLq2YXBkxzMXIGRpNMU88n0EPgWseKl12J7zXs7qrDxPK4sRs2fg==}
@@ -1206,10 +1198,6 @@ snapshots:
     optional: true
 
   '@ungap/structured-clone@1.4.0': {}
-
-  auto-wc@0.1.6(typescript@7.0.2):
-    dependencies:
-      typescript: 7.0.2
 
   bidi-js@1.1.0:
     dependencies:

@@ -1,7 +1,6 @@
 export { defineImplementation } from "@behaviors/_implementation-definition.ts";
 export type { Attrs, ArgOf, El, Implementation, ImplementationDef, Sig, Slot, Tag } from "@behaviors/_implementation-definition.ts";
-export { defineInteractableHost } from "@behaviors/interactable-host.ts";
-export type { InteractableHost } from "@behaviors/interactable-host.ts";
+export { start } from "@interactable/start.ts";
 export { getImplementationDef, registerImplementation } from "@behaviors/implementation-registry.ts";
 export type { NormalizedImplementationDef } from "@behaviors/implementation-registry.ts";
 export { NotReadyError, bindEvents, formatWrite, readValue, registerFormatter, toNumber, valueOf, writeValue } from "@behaviors/implementation-utils.ts";

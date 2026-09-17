@@ -12,7 +12,7 @@ export const dirtyable = defineImplementation(
     config: {
       "dirty-on": "'input' | 'change' | undefined",
     },
-    verbs: { markClean: "undefined" },
+    verbs: {},
     events: ["dirty", "clean"],
   },
   (el, attrs) => {
@@ -25,18 +25,6 @@ export const dirtyable = defineImplementation(
       }
       if (isCheckable(el)) return el.checked !== el.defaultChecked;
       return el.value !== el.defaultValue;
-    };
-
-    const commit = (): void => {
-      if (el instanceof HTMLSelectElement) {
-        for (const option of Array.from(el.options)) option.defaultSelected = option.selected;
-        return;
-      }
-      if (isCheckable(el)) {
-        el.defaultChecked = el.checked;
-        return;
-      }
-      el.defaultValue = el.value;
     };
 
     let dirty = isDirty();
@@ -57,9 +45,8 @@ export const dirtyable = defineImplementation(
 
     return {
       ...listeners,
-      markClean: (): void => {
-        commit();
-        evaluate();
+      attributeChangedCallback: (name: string): void => {
+        if (name === "value" || name === "checked") evaluate();
       },
     };
   },

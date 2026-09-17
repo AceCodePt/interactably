@@ -72,11 +72,6 @@ for (const entry of readdirSync(behaviorsDir, { withFileTypes: true })) {
   }
 }
 
-const autoLoaderDts = path.join(distTypes, "registry", "utils", "auto-loader.d.ts");
-if (raw.has(autoLoaderDts)) {
-  outputs.set(path.join(distCdn, "auto-loader.d.ts"), rewrite(raw.get(autoLoaderDts), distCdn));
-}
-
 for (const [file, content] of outputs) {
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, content);

@@ -93,8 +93,9 @@ function syncAria(el: HTMLElement, source: Element | undefined, open: boolean, c
 }
 
 function wireControllers(el: HTMLElement, open: boolean): void {
-  for (const host of document.querySelectorAll<HTMLElement>('[is^="interactable-"]')) {
+  for (const host of document.querySelectorAll<HTMLElement>("*")) {
     if (host === el) continue;
+    if (!host.getAttributeNames().some((name) => name.startsWith("on-"))) continue;
     if (!controlledPanelIds(host).has(el.id)) continue;
     const tokens = controlsOf(host);
     if (!tokens.includes(el.id)) {
