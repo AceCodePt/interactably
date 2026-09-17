@@ -45,6 +45,16 @@ test("auto-grow grows the textarea to its scrollHeight on input", async () => {
   assert.equal(el.style.height, "150px");
 });
 
+test("auto-grow sizes a prefilled textarea on connect", async () => {
+  const el = textarea();
+  el.value = "one\ntwo\nthree";
+  Object.defineProperty(el, "scrollHeight", { configurable: true, value: 120 });
+  document.body.appendChild(el);
+  await flush();
+
+  assert.equal(el.style.height, "120px");
+});
+
 test("auto-grow re-reads scrollHeight on each input", async () => {
   const el = textarea();
   document.body.appendChild(el);

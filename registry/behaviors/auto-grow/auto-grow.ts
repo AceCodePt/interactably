@@ -5,6 +5,7 @@ export const autoGrow = defineImplementation("auto-grow", {
   verbs: {},
 }, (el) => {
   const grow = (): void => {
+    if (el.scrollHeight === 0) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
   };
@@ -12,6 +13,7 @@ export const autoGrow = defineImplementation("auto-grow", {
     connectedCallback: () => {
       el.style.overflowY = "hidden";
       el.style.resize = "none";
+      grow();
     },
     onInput: grow,
     onChange: grow,
