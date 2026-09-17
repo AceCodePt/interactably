@@ -2,21 +2,17 @@ import { parse } from "@interactable/parser.ts";
 import type { Phrase } from "@interactable/parser.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 
-export const INTERSECT_THRESHOLDS = {
-  "intersect-enter": 0,
-  "intersect-leave": 0,
-  "intersect-half": 0.5,
-  "intersect-full": 1,
-} as const;
-
-export const INTERSECT_EVENT_NAMES: ReadonlySet<string> = new Set(Object.keys(INTERSECT_THRESHOLDS));
+export const INTERSECT_EVENT_NAMES: ReadonlySet<string> = new Set([
+  "intersect-enter",
+  "intersect-leave",
+  "intersect-full",
+]);
 
 export const INTERSECT_ATTRIBUTES: readonly string[] = [...INTERSECT_EVENT_NAMES].map(
   (name) => `on-${name}`,
 );
 
-const MARGIN_TOKEN =
-  /^(?:0|-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|em|rem|%|vh|vw|vmin|vmax|cm|mm|in|pt|pc|ex|ch|q))$/;
+const MARGIN_TOKEN = /^(?:0|-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|%))$/;
 
 export function normaliseRootMargin(key?: string): string {
   if (key === undefined || key.trim() === "") return "0px";
@@ -24,14 +20,15 @@ export function normaliseRootMargin(key?: string): string {
   if (tokens.length > 4) throw new Error(`invalid root margin "${key}": at most 4 values`);
   for (const token of tokens) {
     if (!MARGIN_TOKEN.test(token)) {
-      throw new Error(`invalid root margin "${key}": "${token}" is not a CSS length or percentage`);
+      throw new Error(`invalid root margin "${key}": rootMargin accepts only px or %`);
     }
   }
   return tokens.join(" ");
 }
 
+const THRESHOLDS: readonly number[] = Array.from({ length: 101 }, (_, index) => index / 100);
+
 interface ObserverSpec {
-  threshold: number;
   rootMargin: string;
   types: Set<string>;
 }
@@ -51,23 +48,32 @@ export function syncIntersect(el: Element): void {
   teardownIntersect(el);
   const map = new Map<string, ManagedObserver>();
   for (const [key, spec] of desired) {
-    let wasIntersecting = false;
+    let wasOverlapping = false;
+    let wasFull = false;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.target !== el) continue;
-          const isIntersecting = entry.isIntersecting;
-          const entered = !wasIntersecting && isIntersecting;
-          const left = wasIntersecting && !isIntersecting;
-          wasIntersecting = isIntersecting;
+          const inter = entry.intersectionRect;
+          const overlapping = inter !== null && inter.width > 0 && inter.height > 0;
+          const entered = !wasOverlapping && overlapping;
+          const left = wasOverlapping && !overlapping;
+          wasOverlapping = overlapping;
+          const box = entry.rootBounds;
+          const elRect = entry.boundingClientRect;
+          const isFull =
+            box !== null && elRect !== null && elRect.top >= box.top && elRect.bottom <= box.bottom;
+          const fullChanged = isFull !== wasFull;
+          wasFull = isFull;
           for (const type of spec.types) {
             if (type === "intersect-enter" && !entered) continue;
             if (type === "intersect-leave" && !left) continue;
+            if (type === "intersect-full" && !fullChanged) continue;
             el.dispatchEvent(new ImplementationEvent(type, { key: spec.rootMargin }));
           }
         }
       },
-      { rootMargin: spec.rootMargin, threshold: spec.threshold },
+      { rootMargin: spec.rootMargin, threshold: [...THRESHOLDS] },
     );
     observer.observe(el);
     map.set(key, { observer, types: spec.types });
@@ -85,7 +91,7 @@ export function teardownIntersect(el: Element): void {
 
 function collectSpecs(el: Element): Map<string, ObserverSpec> {
   const specs = new Map<string, ObserverSpec>();
-  for (const [type, threshold] of Object.entries(INTERSECT_THRESHOLDS)) {
+  for (const type of INTERSECT_EVENT_NAMES) {
     const value = el.getAttribute(`on-${type}`);
     if (value === null) continue;
     let phrases: Phrase[];
@@ -96,9 +102,8 @@ function collectSpecs(el: Element): Map<string, ObserverSpec> {
     }
     for (const phrase of phrases) {
       const rootMargin = normaliseRootMargin(phrase.key);
-      const key = `${threshold}\u0000${rootMargin}`;
-      const spec = specs.get(key);
-      if (spec === undefined) specs.set(key, { threshold, rootMargin, types: new Set([type]) });
+      const spec = specs.get(rootMargin);
+      if (spec === undefined) specs.set(rootMargin, { rootMargin, types: new Set([type]) });
       else spec.types.add(type);
     }
   }

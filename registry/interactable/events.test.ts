@@ -58,7 +58,7 @@ test("isImplementationEvent consults the synthetic intersect table as a second s
   const el = document.createElement("div");
   assert.equal(isImplementationEvent(el, "intersect-enter"), true);
   assert.equal(isImplementationEvent(el, "intersect-leave"), true);
-  assert.equal(isImplementationEvent(el, "intersect-half"), true);
+  assert.equal(isImplementationEvent(el, "intersect-half"), false);
   assert.equal(isImplementationEvent(el, "intersect-full"), true);
   assert.equal(isImplementationEvent(el, "intersect"), false);
   assert.equal(isImplementationEvent(el, "click"), false);

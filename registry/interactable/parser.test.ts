@@ -332,7 +332,7 @@ test("under the intersect names the phrase key is a CSS margin", () => {
   assert.ok(phrase);
   assert.equal(phrase.key, "0px 0px -50% 0px");
 
-  const [half] = parse("10px 20px: #a.show()", "intersect-half");
+  const [half] = parse("10px 20px: #a.show()", "intersect-enter");
   assert.ok(half);
   assert.equal(half.key, "10px 20px");
 
@@ -343,7 +343,7 @@ test("under the intersect names the phrase key is a CSS margin", () => {
 
 test("an invalid margin under an intersect name drops and logs the phrase", (t) => {
   const spy = errorsOf(t);
-  const phrases = parse("red: #a.show(); 10px: #b.show()", "intersect-half");
+  const phrases = parse("red: #a.show(); 10px: #b.show()", "intersect-enter");
   assert.equal(phrases.length, 1);
   assert.equal(phrases[0]!.key, "10px");
   assert.equal(spy.mock.callCount(), 1);
@@ -352,14 +352,14 @@ test("an invalid margin under an intersect name drops and logs the phrase", (t) 
 
 test("a margin key is a parse error under non-intersect events", () => {
   assert.deepEqual(parse("10px 20px: #a.show()", "click"), []);
-  assert.deepEqual(parse("enter: #f.send()", "intersect-half"), []);
+  assert.deepEqual(parse("enter: #f.send()", "intersect-enter"), []);
 });
 
 test("the parse cache key includes the event name", () => {
-  const half = parse("10px 20px: #a.show()", "intersect-half");
   const enter = parse("10px 20px: #a.show()", "intersect-enter");
-  assert.notStrictEqual(half, enter, "different event names parse separately");
-  assert.strictEqual(parse("10px 20px: #a.show()", "intersect-half"), half);
+  const full = parse("10px 20px: #a.show()", "intersect-full");
+  assert.notStrictEqual(enter, full, "different event names parse separately");
+  assert.strictEqual(parse("10px 20px: #a.show()", "intersect-enter"), enter);
 });
 
 test("&& and || separate top-level units", () => {

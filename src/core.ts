@@ -9,7 +9,7 @@ export type { BindEventsOptions, BoundEvents, ImplementationInstance } from "@be
 export { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 export { parse } from "@interactable/parser.ts";
 export {
-  INTERSECT_THRESHOLDS,
+  INTERSECT_EVENT_NAMES,
   normaliseRootMargin,
   syncIntersect,
   teardownIntersect,

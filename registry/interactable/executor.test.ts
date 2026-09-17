@@ -958,8 +958,8 @@ test("a keyed phrase on a non-matching synthetic event is skipped quietly", (t) 
   wireHost(receiver, { send: () => void sendCalls++ });
 
   const trigger = el();
-  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-half", { key: "0px" }));
-  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-half", { key: "0px" }));
+  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-enter", { key: "0px" }));
+  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-enter", { key: "0px" }));
   assert.equal(sendCalls, 0);
   assert.equal(spy.mock.callCount(), 0, "non-matching synthetic keys log nothing");
 });
@@ -971,7 +971,7 @@ test("an intersect event with a keyed phrase does not fall into the skip-and-log
   wireHost(receiver, { send: () => void sendCalls++ });
 
   const trigger = el();
-  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-half", { key: "10px" }));
+  run(trigger, "10px: #f.send()", new ImplementationEvent("intersect-enter", { key: "10px" }));
   assert.equal(sendCalls, 1);
   assert.equal(spy.mock.callCount(), 0);
 });

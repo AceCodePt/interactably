@@ -521,7 +521,7 @@ test("on-intersect-* needs no implements and never warns about a missing event",
 
 test("an intersect crossing runs only the phrases whose margin matches", async () => {
   const receiver = hostElement("div", { id: "spy", implements: "alpha" });
-  const trigger = hostElement("section", { "on-intersect-half": "0px: #spy.go(); 50px: #spy.go()" });
+  const trigger = hostElement("section", { "on-intersect-enter": "0px: #spy.go(); 50px: #spy.go()" });
   document.body.append(trigger, receiver);
   await flush();
 
@@ -529,10 +529,10 @@ test("an intersect crossing runs only the phrases whose margin matches", async (
   const fifty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "50px");
   assert.ok(zero && fifty);
 
-  zero!.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 0.6 }]);
+  zero!.trigger([{ target: trigger, isIntersecting: true }]);
   assert.deepEqual(calls, ["alpha.go"], "only the 0px phrase runs on the 0px observer");
   calls.length = 0;
-  fifty!.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 0.6 }]);
+  fifty!.trigger([{ target: trigger, isIntersecting: true }]);
   assert.deepEqual(calls, ["alpha.go"], "the 50px phrase runs on the 50px observer");
 });
 
