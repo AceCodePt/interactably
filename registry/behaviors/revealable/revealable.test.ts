@@ -296,6 +296,20 @@ test("wiring: a radio gets aria-controls but no aria-expanded", async () => {
   assert.equal(input.getAttribute("aria-expanded"), null);
 });
 
+test("wiring: hosts whose role cannot be expanded get aria-controls but no aria-expanded", async () => {
+  const age = hostElement("input", { type: "number", "on-change": "#p.show()" });
+  const signup = hostElement("form", { "on-submit": "#p.show()" });
+  document.body.append(age, signup);
+  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  document.body.appendChild(panel);
+  await flush();
+
+  for (const host of [age, signup]) {
+    assert.equal(host.getAttribute("aria-controls"), "p", "aria-controls is a global attribute, kept");
+    assert.equal(host.getAttribute("aria-expanded"), null, "aria-expanded does not match the host role");
+  }
+});
+
 test("wiring: a host controlling another panel is not wired", async () => {
   const button = hostElement("button", { "on-click": "#px.show()" });
   document.body.appendChild(button);

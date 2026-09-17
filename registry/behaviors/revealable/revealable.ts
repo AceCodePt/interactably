@@ -129,8 +129,41 @@ function isControllingCall(call: Call): boolean {
   return arg.kind === "boolean" && arg.value === true;
 }
 
+const EXPANDABLE_ROLES = new Set([
+  "application",
+  "button",
+  "checkbox",
+  "combobox",
+  "gridcell",
+  "link",
+  "listbox",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "row",
+  "rowheader",
+  "switch",
+  "tab",
+  "treeitem",
+]);
+
 function canBeExpanded(el: Element): boolean {
-  return !(el instanceof HTMLInputElement && (el.type === "radio" || el.type === "checkbox"));
+  const role = el.getAttribute("role");
+  if (role !== null) return EXPANDABLE_ROLES.has(role);
+  const tag = el.localName;
+  if (tag === "button") return true;
+  if (tag === "summary") return el.parentElement instanceof HTMLDetailsElement && el.parentElement.firstElementChild === el;
+  if (tag === "a" || tag === "area") return el.hasAttribute("href");
+  if (tag === "select") {
+    const select = el as HTMLSelectElement;
+    return select.multiple || select.size > 1;
+  }
+  if (tag === "input") {
+    const type = (el as HTMLInputElement).type;
+    if (type === "radio" || type === "checkbox") return false;
+    return type === "button" || type === "submit" || type === "reset" || type === "image";
+  }
+  return false;
 }
 
 function controlsOf(el: Element): string[] {
