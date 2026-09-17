@@ -312,7 +312,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | Implementation | Tags | Verbs | Config / state | What it does |
 | --- | --- | --- | --- | --- |
 | `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute` | `step`, `formula`, `invalid-value` | typed writes with clamping; `set` takes a string or a number and `inc`/`dec` accept a number or a numeric string, throwing a named error when it cannot be read; evaluates a formula on `compute()` and on connect |
-| `dirtyable` | input, textarea, select, output | `markClean` | — | toggles `.is-dirty` while `el.value` differs from the connect-time baseline |
+| `dirtyable` | input, textarea, select, output | `markClean` | `dirty-on`; events `dirty`, `clean` | fires `dirty` / `clean` as the element diverges from / returns to the platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
 | `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events |
@@ -393,7 +393,7 @@ Nothing closes a panel unless a phrase says `show(false)`. Mutually exclusive pa
 
 `storable` persists an element's value to storage through three verbs: `save()`, `load()` and `clear()`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup. The value is `storable-value ?? value` (an authored `storable-value` outranks the element's own `.value`), the storage key is `interactable:<storable-key ?? name ?? id>`, and the default scope is `local`. Same-name checkboxes store as a list: `save()` on either writes the JSON array of every checked control sharing that `name` and form owner. An element with none of `storable-key`, `name` and `id` warns once on connect and stores nothing — as does one whose value resolves to nothing (no `storable-value`, no `.value`).
 
-Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here. Restore is quiet: it applies or matches the stored value and fires the `restore` event, never a native `change`, so nothing you didn't write runs on a reload — `dirtyable`, which listened for `change`, no longer sees a restore; if a dirty baseline after restore is wanted, that is `on-restore="this.markClean()"`, written by the author. The hook is `on-restore="…"` on the storable element, fired once at most, only when a stored value was applied or matched, never when `save()` runs. An authored `storable-value` matches rather than writes: it fires `restore` only when it equals what was stored, and a different stored value changes nothing. The package-manager example is nine buttons that each say everything they do — `storable-key="pm"`, `storable-value="pnpm"`, an `on-click` naming the three panels it opens, the six it closes and `this.save()`, and the same `on-restore` without the save. `load()` re-reads the stored value as a user action and fires `restore` when it changes; `clear()` removes the key.
+Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here. Restore is quiet: it applies or matches the stored value and fires the `restore` event, never a native `change`, so nothing you didn't write runs on a reload — `dirtyable` subscribes to `restore` and re-evaluates, so a restore that writes a differing value flips the field dirty immediately; `on-restore="this.markClean()"` commits the restored value as the new clean baseline. The hook is `on-restore="…"` on the storable element, fired once at most, only when a stored value was applied or matched, never when `save()` runs. An authored `storable-value` matches rather than writes: it fires `restore` only when it equals what was stored, and a different stored value changes nothing. The package-manager example is nine buttons that each say everything they do — `storable-key="pm"`, `storable-value="pnpm"`, an `on-click` naming the three panels it opens, the six it closes and `this.save()`, and the same `on-restore` without the save. `load()` re-reads the stored value as a user action and fires `restore` when it changes; `clear()` removes the key.
 
 ### json-template
 
@@ -509,7 +509,7 @@ An implementation never declares an attribute the platform already owns. `min`, 
 - **`config`** — authored input, read on the way in, never written by a verb. Unique by construction (`<name>-<key>`), so two implementations on one element cannot collide.
 - **`state`** — live information the implementation holds because the platform holds nothing for it. Stored as `<name>-<key>`, read/write.
 
-Most implementations declare no `state`: `dirtyable` compares `el.value` with a baseline in its closure, `revealable` on a `<dialog>` reads `el.open`, `modifiable` writes `el.value`. A `state` entry is the exception, and the smell to check is whether the platform already has the thing under another name.
+Most implementations declare no `state`: `dirtyable`'s closure holds one boolean, the last-reported dirtiness, and its baseline is the platform default — by element kind, `defaultValue`, `defaultChecked` or `defaultSelected` (`defaultValue` is live, so a script writing the `value` attribute moves the baseline); `revealable` on a `<dialog>` reads `el.open`, `modifiable` writes `el.value`. A `state` entry is the exception, and the smell to check is whether the platform already has the thing under another name.
 
 ### `attrs` is a typed proxy
 
@@ -543,14 +543,31 @@ A verb's job is to **mutate state**; the reaction (text, classes, ARIA, `hidden`
 The `value` attribute / `value` property pair is the canonical case: `el.value = "x"` does not touch the attribute, and that is not an inconsistency — the attribute is what the author wrote, the property is the current value. This is what makes SSR trivial: the server writes `value="42"`, the browser parses it into both tiers, hydration adds nothing.
 
 ```ts
-// dirtyable — no attributes written; the baseline lives in the closure
-(el) => {
-  let baseline = el.value;                                 // what the field held when it connected (SSR'd value included)
-  const render = () => el.classList.toggle("is-dirty", el.value !== baseline);
-  render();
+// dirtyable — reports one decision as events; the baseline is the platform default
+(el, attrs) => {
+  const isDirty = () =>
+    el instanceof HTMLSelectElement
+      ? [...el.options].some((option) => option.selected !== option.defaultSelected)
+      : el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")
+        ? el.checked !== el.defaultChecked
+        : el.value !== el.defaultValue;
+  let dirty = isDirty();                          // the one boolean in the closure; fires nothing at connect
+  const evaluate = () => {
+    const next = isDirty();
+    if (next === dirty) return;
+    dirty = next;
+    el.dispatchEvent(new ImplementationEvent(next ? "dirty" : "clean"));
+  };
   return {
-    onInput:   render,
-    markClean: () => { baseline = el.value; render(); },
+    onInteraction: evaluate,
+    onRestore: evaluate,                          // storable's restore is seen directly
+    ...(attrs["dirty-on"] === "change" ? { onChange: evaluate } : { onInput: evaluate }),
+    markClean: () => {
+      if (el instanceof HTMLSelectElement) for (const option of el.options) option.defaultSelected = option.selected;
+      else if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) el.defaultChecked = el.checked;
+      else el.defaultValue = el.value;
+      evaluate();
+    },
   };
 }
 ```
@@ -568,7 +585,7 @@ The `value` attribute / `value` property pair is the canonical case: `el.value =
 Rules:
 
 - **Read the platform before inventing.** `value`, `checked`, `open` on `<details>`/`<dialog>`, popover state, `min`/`max`/`step`. A `state` entry exists only when none of these hold the thing.
-- **`config` is read-only.** A verb that needs its own baseline keeps one in the closure, as `dirtyable`'s `markClean` does.
+- **`config` is read-only.** A verb that needs its own baseline commits one by writing the platform's own default property — `dirtyable`'s `markClean` sets `defaultValue` / `defaultChecked` / `defaultSelected` — never a `config` key.
 - **Invented live state is `<name>-<key>`** — one namespace, shared with config, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
 - **Closure state** for transient internals (in-flight request, timers).
 - **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string (an empty value stays the empty string). Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0). A verb reading a value tolerates the unreadable (`inc()` on an empty counter produces `1`); the formula reading one treats it as an error.
@@ -709,6 +726,7 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
 <script type="module">
   import "interactably/dist/cdn/modifiable.js";
   import "interactably/dist/cdn/dirtyable.js";
+  import "interactably/dist/cdn/attributable.js";
   import "interactably/dist/cdn/listable.js";
   import "interactably/dist/cdn/prevent-default.js";
   import { defineInteractableHost } from "interactably/dist/cdn/interactably-core.js";
@@ -716,9 +734,11 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
 </script>
 
 <label>Qty
-  <input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
+  <input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
+         on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+         on-clean="this.removeAttr('data-dirty')"
          on-keydown="escape: this.reset().markClean(); #preview.compute()">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
 </label>
 <button is="interactable-button" on-click="#qty.dec(); #preview.compute()">−</button>
@@ -743,7 +763,7 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
 
 Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the buttons address it); the six buttons are trigger-only; `#preview`, `#list` and `#total` are receivers; the `<li>` is a plain element — the row is reached through `#list.removeRow(this)`, so it needs no implementation, no host and no id, and cloning it from `#row-tpl` produces nothing that has to be unique.
 
-**`+5` trace.** The button's host bound `click` in `connectedCallback` → `parse("#qty.inc(5); #preview.compute()")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → host validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → the interaction event reaches `#qty`'s own `dirtyable` handler, which marks `is-dirty` → the second phrase resolves `#preview` → `#preview.compute()` re-evaluates `#qty.value` (6).
+**`+5` trace.** The button's host bound `click` in `connectedCallback` → `parse("#qty.inc(5); #preview.compute()")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → host validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → the interaction event reaches `#qty`'s own `dirtyable` handler, which fires `dirty` if `#qty` was clean → the second phrase resolves `#preview` → `#preview.compute()` re-evaluates `#qty.value` (6).
 
 **`×` trace.** Phrase 1 resolves `#list`, arg `this` is the button → `removeRow(e, button)` finds the row via `closest(":scope > *")` → phrase 2 (independent) resolves `#total` → `compute()` re-evaluates `sum('#list .amount')` over the remaining inputs.
 
@@ -990,8 +1010,6 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 **Why not `element` and `selector` as tsyntax keywords?** tsyntax validates keywords with `typeof`, which cannot distinguish a button from a template; an element slot needs `instanceof`. And nothing makes a string a selector except that an implementation feeds it to `querySelectorAll` — that is documented by the record key, not a type.
 
 **Why doesn't `modifiable` declare `min` and `max`?** `<input>` already has them, typed, as `el.min` / `el.max`; `<textarea>` does not have them at all. A declaration lists what the implementation brings; platform attributes are read, not declared.
-
-**Why not `data-dirty` on `dirtyable`?** Dirty is `el.value` against the baseline captured at connect, a comparison the implementation can make on demand; an attribute holding the result is a cache that can go stale.
 
 **Why doesn't the executor cancel the native default for `<form on-submit>`?** A table in the executor is an implicit mechanism next to the explicit `no-propagate`, and it has to decide at event time, before debounce and before refs resolve — where it collides with late binding. Moving cancellation to `prevent-default` removes the decision rather than answering it.
 

@@ -135,9 +135,11 @@
         <div class="demo">
           <div class="row">
             <label>Qty
-              <input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
+              <input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
                      type="number" value="1" min="1" max="10"
                      on-input="#preview.set(this.value)"
+                     on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+                     on-clean="this.removeAttr('data-dirty')"
                      on-keydown="escape: this.reset().markClean(); #preview.compute()">
             </label>
             <button is="interactable-button" id="dec" on-click="#qty.dec(); #preview.compute()" type="button">&minus;</button>
@@ -181,9 +183,11 @@ modifiable-formula="sum('#list .amount:valid')"
           <pre class="code" id="code-ex-calc" data-lang="html"><code>&lt;div class="demo"&gt;
   &lt;div class="row"&gt;
     &lt;label&gt;Qty
-      &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable prevent-default"
+      &lt;input is="interactable-input" id="qty" implements="modifiable dirtyable attributable prevent-default"
              type="number" value="1" min="1" max="10"
              on-input="#preview.set(this.value)"
+             on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+             on-clean="this.removeAttr('data-dirty')"
              on-keydown="escape: this.reset().markClean(); #preview.compute()"&gt;
     &lt;/label&gt;
     &lt;button is="interactable-button" on-click="#qty.dec(); #preview.compute()"&gt;&minus;&lt;/button&gt;
@@ -277,8 +281,10 @@ modifiable-formula="sum('#list .amount:valid')"
         <div class="demo">
           <div class="row">
             <label>Type
-              <input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
+              <input is="interactable-input" id="typer" implements="modifiable dirtyable attributable prevent-default"
                      on-input="#mirror.debounce(300).set(this.value)"
+                     on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+                     on-clean="this.removeAttr('data-dirty')"
                      on-keydown="enter: #mirror.set(this.value); escape: this.clear()">
             </label>
             <output is="interactable-output" id="mirror" implements="modifiable">&hellip;</output>
@@ -299,8 +305,10 @@ modifiable-formula="sum('#list .amount:valid')"
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-ex-grammar" data-lang="html"><code>&lt;input is="interactable-input" id="typer" implements="modifiable dirtyable prevent-default"
+          <pre class="code" id="code-ex-grammar" data-lang="html"><code>&lt;input is="interactable-input" id="typer" implements="modifiable dirtyable attributable prevent-default"
        on-input="#mirror.debounce(300).set(this.value)"
+       on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+       on-clean="this.removeAttr('data-dirty')"
        on-keydown="enter: #mirror.set(this.value); escape: this.clear()"&gt;
 &lt;output is="interactable-output" id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
 
@@ -373,9 +381,11 @@ modifiable-formula="sum('#list .amount:valid')"
       <div class="example-body">
         <div class="demo">
           <textarea is="interactable-textarea" id="note" aria-label="Note"
-                    implements="auto-grow dirtyable storable paste-transform"
+                    implements="auto-grow dirtyable attributable storable paste-transform"
                     storable-key="interactably-demo-note" rows="2"
                     on-change="this.save()"
+                    on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+                    on-clean="this.removeAttr('data-dirty')"
 paste-transform-pattern="\s+" paste-transform-replace=" "
                     placeholder="Type or paste some text&hellip;"></textarea>
           <div class="row">
@@ -394,9 +404,11 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
             </button>
           </div>
           <pre class="code" id="code-ex-note" data-lang="html"><code>&lt;textarea is="interactable-textarea" id="note"
-          implements="auto-grow dirtyable storable paste-transform"
+          implements="auto-grow dirtyable attributable storable paste-transform"
           storable-key="interactably-demo-note" rows="2"
           on-change="this.save()"
+          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+          on-clean="this.removeAttr('data-dirty')"
           paste-transform-pattern="\s+" paste-transform-replace=" "
           placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;
 &lt;button is="interactable-button" on-click="#note.markClean()"&gt;Mark clean&lt;/button&gt;</code></pre>
