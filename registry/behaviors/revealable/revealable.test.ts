@@ -76,13 +76,6 @@ function hostElement(tag: string, attributes: Record<string, string>): HTMLEleme
   return el;
 }
 
-function radio(attributes: Record<string, string>): HTMLInputElement {
-  const el = document.createElement("input");
-  el.type = "radio";
-  for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
-  return el;
-}
-
 function interact(
   el: Element,
   verb: string,
@@ -281,117 +274,6 @@ test("no ARIA sync when the element triggers itself", async () => {
   assert.equal(panel.getAttribute("aria-controls"), null);
 });
 
-test("a radio source closes sibling panels across strategies", async () => {
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
-  const p3 = hostElement("div", { implements: "revealable", id: "p3", popover: "" });
-  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
-  const r2 = radio({ name: "g", "on-change": "#p2.show()" });
-  const r3 = radio({ name: "g", "on-change": "#p3.show()" });
-  document.body.append(p1, p2, p3, r1, r2, r3);
-  await flush();
-
-  interact(p2, "show");
-  interact(p3, "show");
-  assert.equal(p2.hidden, false);
-  assert.equal(p3.matches(":popover-open"), true);
-
-  interact(p1, "show", undefined, r1);
-  assert.equal(p1.hidden, false);
-  assert.equal(p2.hidden, true, "the sibling's panel closes");
-  assert.equal(p3.matches(":popover-open"), false, "the popover sibling's panel closes");
-});
-
-test("a radio in a different form with the same name is not a sibling", async () => {
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
-  const form1 = document.createElement("form");
-  const form2 = document.createElement("form");
-  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
-  const r2 = radio({ name: "g", "on-change": "#p2.show()" });
-  form1.appendChild(r1);
-  form2.appendChild(r2);
-  document.body.append(p1, p2, form1, form2);
-  await flush();
-
-  assert.equal(r1.form, form1);
-  assert.equal(r2.form, form2);
-
-  interact(p2, "show");
-  assert.equal(p2.hidden, false);
-
-  interact(p1, "show", undefined, r1);
-  assert.equal(p1.hidden, false);
-  assert.equal(p2.hidden, false, "a radio in another form is not a sibling");
-});
-
-test("a checkbox source closes nothing", async () => {
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
-  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.name = "g";
-  checkbox.setAttribute("on-change", "#p2.show()");
-  document.body.append(p1, p2, r1, checkbox);
-  await flush();
-
-  interact(p2, "show");
-  assert.equal(p2.hidden, false);
-
-  interact(p1, "show", undefined, checkbox);
-  assert.equal(p1.hidden, false);
-  assert.equal(p2.hidden, false, "a checkbox source closes nothing");
-});
-
-test("a button source closes nothing", async () => {
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
-  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
-  const r2 = radio({ name: "g", "on-change": "#p2.show()" });
-  const button = document.createElement("button");
-  button.setAttribute("on-click", "#p2.show()");
-  document.body.append(p1, p2, r1, r2, button);
-  await flush();
-
-  interact(p2, "show");
-  assert.equal(p2.hidden, false);
-
-  interact(p1, "show", undefined, button);
-  assert.equal(p1.hidden, false);
-  assert.equal(p2.hidden, false, "a button source closes nothing");
-});
-
-test("a sibling whose phrase names a non-revealable id is skipped", async () => {
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const plain = document.createElement("div");
-  plain.id = "plain";
-  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
-  const r2 = radio({ name: "g", "on-change": "#plain.show()" });
-  document.body.append(p1, plain, r1, r2);
-  await flush();
-
-  interact(p1, "show", undefined, r1);
-  assert.equal(p1.hidden, false);
-  assert.equal(plain.hasAttribute("revealable-open"), false);
-});
-
-test("a sibling with only show(false) targets closes nothing", async () => {
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
-  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
-  const r2 = radio({ name: "g", "on-change": "#p2.show(false)" });
-  document.body.append(p1, p2, r1, r2);
-  await flush();
-
-  interact(p2, "show");
-  assert.equal(p2.hidden, false);
-
-  interact(p1, "show", undefined, r1);
-  assert.equal(p1.hidden, false);
-  assert.equal(p2.hidden, false, "show(false) is a side effect, not control");
-});
-
 test("wiring: a button controlling #p gets aria-controls and aria-expanded when #p connects", async () => {
   const button = hostElement("button", { "on-click": "#p.show()" });
   document.body.appendChild(button);
@@ -499,110 +381,18 @@ test("wiring: a #p.show(true) host is wired", async () => {
   assert.equal(button.getAttribute("aria-expanded"), "false");
 });
 
-test("a radio with an empty name closes nothing", async () => {
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
-  const r1 = radio({ name: "", "on-change": "#p1.show()" });
-  const r2 = radio({ name: "", "on-change": "#p2.show()" });
-  document.body.append(p1, p2, r1, r2);
+test("a show() from a checked radio leaves a same-name sibling's open panel open", async () => {
+  const rA = hostElement("input", { type: "radio", name: "g", id: "r-a", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
+  const rB = hostElement("input", { type: "radio", name: "g", id: "r-b", "on-change": "#b.show()" }) as HTMLInputElement;
+  const a = hostElement("div", { implements: "revealable", id: "a", hidden: "" });
+  const b = hostElement("div", { implements: "revealable", id: "b", "revealable-open": "true" });
+  document.body.append(rA, rB, a, b);
   await flush();
 
-  interact(p2, "show");
-  assert.equal(p2.hidden, false);
-
-  interact(p1, "show", undefined, r1);
-  assert.equal(p1.hidden, false);
-  assert.equal(p2.hidden, false, "an empty-name radio is not a group");
-});
-
-test("a sibling naming a non-existent id is skipped silently", async () => {
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
-  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
-  const r2 = radio({ name: "g", "on-change": "#ghost.show()" });
-  document.body.append(p1, p2, r1, r2);
-  await flush();
-
-  interact(p2, "show");
-  assert.equal(p2.hidden, false);
-
-  interact(p1, "show", undefined, r1);
-  assert.equal(p1.hidden, false);
-  assert.equal(p2.hidden, false, "the sibling's ghost target is skipped, p2 stays open");
-});
-
-test("the sibling-closing no-source path refreshes button controllers and leaves the radio source untouched", async () => {
-  const r2 = hostElement("input", { type: "radio", name: "g", "on-change": "#p2.show()" });
-  const p1 = hostElement("div", { implements: "revealable", id: "p1", hidden: "" });
-  const p2 = hostElement("div", { implements: "revealable", id: "p2", hidden: "" });
-  const button = document.createElement("button");
-  button.setAttribute("aria-controls", "p2");
-  const r1 = radio({ name: "g", "on-change": "#p1.show()" });
-  document.body.append(r2, p1, p2, button, r1);
-  await flush();
-
-  assert.equal(button.getAttribute("aria-controls"), "p2");
-  assert.equal(r2.getAttribute("aria-controls"), "p2", "the sibling radio is wired at connect");
-
-  interact(p2, "show");
-  assert.equal(p2.hidden, false);
-  assert.equal(button.getAttribute("aria-expanded"), "true");
-
-  interact(p1, "show", undefined, r1);
-  assert.equal(p1.hidden, false);
-  assert.equal(p2.hidden, true, "the sibling panel closes");
-  assert.equal(button.getAttribute("aria-expanded"), "false", "the button controller is refreshed");
-  assert.equal(r2.getAttribute("aria-expanded"), null, "the radio source gets no aria-expanded");
-});
-
-test("radio-driven panels drift when another button shows one; nothing reconciles", async () => {
-  const rA = hostElement("input", { type: "radio", name: "pm", id: "r-a", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
-  const rB = hostElement("input", { type: "radio", name: "pm", id: "r-b", "on-change": "#b.show()" }) as HTMLInputElement;
-  const a = hostElement("div", { implements: "revealable", id: "a", "revealable-open": "true" });
-  const b = hostElement("div", { implements: "revealable", id: "b" });
-  const btn = hostElement("button", { id: "btn", "on-click": "#b.show()" });
-  document.body.append(rA, rB, a, b, btn);
-  await flush();
-
+  interact(a, "show", undefined, rA);
   assert.equal(a.hidden, false);
-  assert.equal(b.hidden, true);
-
-  btn.click();
-  await flush();
-  assert.equal(b.hidden, false, "the button won");
-  assert.equal(a.hidden, false, "a was not closed: a button source closes nothing");
-  assert.equal(rA.checked, true, "the radio was not touched");
-  assert.equal(rB.checked, false);
-
-  rA.click();
-  await flush();
-  assert.equal(b.hidden, false, "already checked → no change event → still drifted; this is the documented state");
-
-  rB.click();
-  await flush();
-  assert.equal(a.hidden, true);
-  assert.equal(b.hidden, false, "one full radio change resolves the drift; nothing else does");
-});
-
-test("a panel that shows itself does not write back to a radio that also drives it", async () => {
-  const form = document.createElement("form");
-  const rA = hostElement("input", { type: "radio", name: "pm", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
-  const rB = hostElement("input", { type: "radio", name: "pm", "on-change": "#b.show()" }) as HTMLInputElement;
-  form.append(rA, rB);
-  const a = hostElement("div", { implements: "revealable", id: "a", "revealable-open": "true" });
-  const b = hostElement("div", { implements: "revealable", id: "b" });
-  const btn = hostElement("button", { "on-click": "#b.show()" });
-  document.body.append(form, a, b, btn);
-  await flush();
-
-  let changes = 0;
-  form.addEventListener("change", () => changes++);
-
-  btn.click();
-  await flush();
-  assert.equal(rB.checked, false, "the radio is not re-checked");
-  assert.equal(changes, 0, "no change event was dispatched on either radio");
-  assert.equal(b.hidden, false);
+  assert.equal(b.hidden, false, "the sibling's open panel stays open: nothing closes a panel unless a phrase says show(false)");
+  assert.equal(rA.checked, true, "the radio source is untouched");
 });
 
 test("on-load fires nothing at connect", async () => {

@@ -422,11 +422,11 @@ code, pre, kbd {
   display: none;
 }
 
-.copy-btn[copyable-copied] .copy-label {
+.copy-btn[data-copied] .copy-label {
   display: none;
 }
 
-.copy-btn[copyable-copied] .copied-label {
+.copy-btn[data-copied] .copied-label {
   display: inline;
   color: var(--ok);
 }

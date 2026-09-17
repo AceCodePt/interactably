@@ -1,22 +1,25 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { ImplementationEvent } from "@interactable/implementation-event.ts";
 
 export const storable = defineImplementation(
   "storable",
   {
-    tags: ["input", "select", "textarea"],
     config: {
       scope: "'local' | 'session' | undefined",
       key: "string | undefined",
+      value: "string | undefined",
     },
     verbs: {
       save: "undefined",
       load: "undefined",
       clear: "undefined",
     },
+    events: ["restore"],
   },
   (el, attrs) => {
     const doc = el.ownerDocument;
-    const checkable = el instanceof HTMLInputElement && (el.type === "radio" || el.type === "checkbox");
+    const input = el as HTMLInputElement;
+    const checkable = el instanceof HTMLInputElement && (input.type === "radio" || input.type === "checkbox");
 
     const storage = (): Storage | null => {
       const store = attrs.scope === "session" ? sessionStorage : localStorage;
@@ -49,8 +52,9 @@ export const storable = defineImplementation(
 
     let warned = false;
     const storageKey = (): string | null => {
-      const name = el.name;
-      const key = attrs.key || (name !== "" ? name : el.id);
+      const own = (el as { name?: unknown }).name;
+      const name = typeof own === "string" ? own : "";
+      const key = attrs.key || name || el.id;
       if (key !== "") return `interactable:${key}`;
       if (!warned) {
         warned = true;
@@ -59,8 +63,21 @@ export const storable = defineImplementation(
       return null;
     };
 
-    const dispatchChange = (): void => {
-      el.dispatchEvent(new Event("change", { bubbles: true }));
+    let warnedValue = false;
+    const resolvedValue = (): string | undefined => {
+      if (attrs.value !== undefined) return attrs.value;
+      const own = (el as { value?: unknown }).value;
+      return typeof own === "string" ? own : undefined;
+    };
+    const warnIfNoValue = (): void => {
+      if (warnedValue) return;
+      if (resolvedValue() !== undefined) return;
+      warnedValue = true;
+      console.warn("[Interactable] storable: the element has no storable-value and no value to store");
+    };
+
+    const dispatchRestore = (): void => {
+      el.dispatchEvent(new ImplementationEvent("restore"));
     };
 
     const restore = (): void => {
@@ -76,16 +93,25 @@ export const storable = defineImplementation(
           return;
         }
         if (!Array.isArray(values)) return;
-        const target = values.includes(el.value);
-        if (el.checked === target) return;
-        el.checked = target;
-        if (el.type === "radio" && !target) return;
-        dispatchChange();
+        const target = values.includes(input.value);
+        if (input.checked === target) {
+          if (target) dispatchRestore();
+          return;
+        }
+        input.checked = target;
+        if (input.type === "radio" && !target) return;
+        dispatchRestore();
         return;
       }
-      if (el.value === stored) return;
-      el.value = stored;
-      dispatchChange();
+      const resolved = resolvedValue();
+      if (resolved === undefined) return;
+      if (stored === resolved) {
+        dispatchRestore();
+        return;
+      }
+      if (attrs.value !== undefined) return;
+      (el as { value?: unknown }).value = stored;
+      dispatchRestore();
     };
 
     let pendingReady: (() => void) | null = null;
@@ -95,9 +121,9 @@ export const storable = defineImplementation(
         const key = storageKey();
         if (key === null) return;
         if (checkable) {
-          const name = el.name;
+          const name = input.name;
           if (name === "") return;
-          const owner = el.form ?? document;
+          const owner = input.form ?? document;
           const checked: string[] = [];
           for (const control of owner.querySelectorAll<HTMLInputElement>(
             "input[type='radio'], input[type='checkbox']",
@@ -107,7 +133,9 @@ export const storable = defineImplementation(
           write(key, JSON.stringify(checked));
           return;
         }
-        write(key, String(el.value));
+        const resolved = resolvedValue();
+        if (resolved === undefined) return;
+        write(key, resolved);
       },
       load: (): void => {
         restore();
@@ -118,6 +146,7 @@ export const storable = defineImplementation(
         remove(key);
       },
       connectedCallback: (): void => {
+        warnIfNoValue();
         if (doc.readyState === "loading") {
           pendingReady = (): void => {
             pendingReady = null;

@@ -6,10 +6,9 @@ export const copyable = defineImplementation(
   {
     tags: ["button"],
     events: ["copy"],
-    state: { copied: "boolean | undefined" },
     verbs: { copy: HTMLElement },
   },
-  (el, attrs) => ({
+  (el) => ({
     copy: (e, target) => {
       const text = target.textContent ?? "";
       if (text.trim() === "") {
@@ -18,7 +17,6 @@ export const copyable = defineImplementation(
       }
       void copyText(text).then((ok) => {
         if (ok) {
-          attrs.copied = true;
           if (el.isConnected) {
             el.dispatchEvent(new ImplementationEvent("copy", { originalEvent: e.originalEvent }));
           }

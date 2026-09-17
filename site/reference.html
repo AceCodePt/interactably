@@ -203,11 +203,11 @@
       <article class="ref-card">
         <h3><code class="inline-code">copyable</code></h3>
         <p class="ref-tags">button</p>
-        <p class="ref-desc">Copies a target element&rsquo;s text to the clipboard: <code class="inline-code">on-click="this.copy(#id)"</code>. Sets <code class="inline-code">copyable-copied</code> on the button and fires <code class="inline-code">copy</code> on success.</p>
+        <p class="ref-desc">Copies a target element&rsquo;s text to the clipboard: <code class="inline-code">on-click="this.copy(#id)"</code>. Fires <code class="inline-code">copy</code> on success; it never touches attributes, so the flash is the author&rsquo;s (<code class="inline-code">on-copy</code>).</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">copy</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">copied (state)</span></div>
+        <div><span class="verb-tag">&mdash;</span></div>
         <p class="ref-labels">Events</p>
         <div><span class="verb-tag">copy</span></div>
       </article>
@@ -262,7 +262,7 @@
     <div class="codeblock">
       <div class="codeblock-bar">
         <span class="codeblock-lang">Text</span>
-        <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.delay(1500).removeAttr('copyable-copied')"
+        <button is="interactable-button" class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
                 on-click="this.copy(#code-reference-grammar)" type="button">
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>

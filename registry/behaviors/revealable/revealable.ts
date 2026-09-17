@@ -1,7 +1,6 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { parse } from "@interactable/parser.ts";
 import type { Call } from "@interactable/parser.ts";
-import { InteractionEvent } from "@interactable/interaction-event.ts";
 
 type Strategy =
   | { kind: "details" }
@@ -57,7 +56,6 @@ export const revealable = defineImplementation("revealable", {
   return {
     show: (e, value) => {
       const resolved = value ?? true;
-      if (resolved) closeRadioSiblings(el, e);
       setOpen(resolved);
       syncAria(el, e.source, isOpen(), resolved);
     },
@@ -107,30 +105,6 @@ function wireControllers(el: HTMLElement, open: boolean): void {
   }
 }
 
-function closeRadioSiblings(el: HTMLElement, e: InteractionEvent): void {
-  const source = e.source;
-  if (!(source instanceof HTMLInputElement)) return;
-  if (source.type !== "radio") return;
-  const name = source.name;
-  if (name === "") return;
-  const owner = source.form ?? document;
-  const radios = owner.querySelectorAll<HTMLInputElement>("input[type='radio']");
-  for (const radio of radios) {
-    if (radio === source) continue;
-    if (radio.name !== name) continue;
-    if ((radio.form ?? document) !== owner) continue;
-    for (const id of controlledPanelIds(radio)) {
-      const panel = document.getElementById(id);
-      if (panel === null || panel === el) continue;
-      if (!panel.isConnected) continue;
-      if (!implementsRevealable(panel)) continue;
-      panel.dispatchEvent(
-        new InteractionEvent({ verb: "show", arg: false, originalEvent: e.originalEvent }),
-      );
-    }
-  }
-}
-
 function controlledPanelIds(host: Element): Set<string> {
   const ids = new Set<string>();
   for (const name of host.getAttributeNames()) {
@@ -153,10 +127,6 @@ function isControllingCall(call: Call): boolean {
   const arg = call.arg;
   if (arg === undefined) return true;
   return arg.kind === "boolean" && arg.value === true;
-}
-
-function implementsRevealable(el: Element): boolean {
-  return (el.getAttribute("implements") ?? "").split(/\s+/).includes("revealable");
 }
 
 function canBeExpanded(el: Element): boolean {

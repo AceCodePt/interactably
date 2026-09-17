@@ -183,7 +183,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Delay | `#note.delay(500).reset()` | Pauses the chain where it sits; downstream links — even past `&&` — wait |
 | Selector | `modifiable-formula="sum('#list .amount')"` | Selectors appear only inside string arguments |
 
-`<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions. Triggers are three kinds: **native DOM events**, **implementation events**, and **synthetic triggers**. An implementation may declare its own events (`copy`, `response`, `request-error`); on the element that implements it, `on-<event>` fires only for the implementation's `ImplementationEvent`, never for a same-named DOM event. The synthetic names `on-intersect-enter` / `on-intersect-leave` / `on-intersect-half` / `on-intersect-full` map to `IntersectionObserver` thresholds 0, 0, 0.5 and 1 with the viewport as root, so they need no `implements` and never warn about a missing event; the phrase key is the observer's `rootMargin` (a CSS length/percentage string, or nothing for `0px`), and each `;` phrase observes its own margin. `enter` fires when the element becomes intersecting — including the observer's initial report for an element visible at load — and `leave` fires when it stops; both observe threshold 0 and share one observer per margin. `half` and `full` fire on every threshold crossing, in either direction.
+`<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions. Triggers are three kinds: **native DOM events**, **implementation events**, and **synthetic triggers**. An implementation may declare its own events (`copy`, `response`, `request-error`, `restore`); on the element that implements it, `on-<event>` fires only for the implementation's `ImplementationEvent`, never for a same-named DOM event. The synthetic names `on-intersect-enter` / `on-intersect-leave` / `on-intersect-half` / `on-intersect-full` map to `IntersectionObserver` thresholds 0, 0, 0.5 and 1 with the viewport as root, so they need no `implements` and never warn about a missing event; the phrase key is the observer's `rootMargin` (a CSS length/percentage string, or nothing for `0px`), and each `;` phrase observes its own margin. `enter` fires when the element becomes intersecting — including the observer's initial report for an element visible at load — and `leave` fires when it stops; both observe threshold 0 and share one observer per margin. `half` and `full` fire on every threshold crossing, in either direction.
 
 **Keys and keyed event lists.** Key names match `KeyboardEvent.key` case-insensitively — `enter`, `Enter`, `ENTER` are the same key — and `space` means the space bar; there are no aliases, so `Esc` is not `escape`. A key is a keyboard-event fact: `on-click="enter: #f.send()"` parses, but at fire time the phrase is skipped with a one-time `console.error` (`key "enter" on non-keyboard event "click"; phrase skipped`). The `event:key` entries in the comma-separated config lists (`prevent-default-events`, `no-propagate-events`, [§ prevent-default and no-propagate](#prevent-default)) use the same matcher: each entry is one `event` or one `event:key` pair, a keyed entry only ever matches a keyboard event (a non-keyboard event never carries a `key`), and listing the same pair twice is harmless — the second occurrence is dropped. In the phrase grammar, the same key twice is simply two phrases (`escape: this.reset(); escape: #other.show()`), and both run.
 
@@ -323,9 +323,9 @@ The host and executor report through `console.error` / `console.warn`; they do n
 | `prevent-default` | any | — | `events` (derived, see below) | `preventDefault` on listed events |
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([below](#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea |
-| `storable` | input, select, textarea | `save`, `load`, `clear` | `scope` (`local`/`session`), `key` | persist a field's value to storage; restores on connect and fires `change` |
+| `storable` | any | `save`, `load`, `clear` | `scope` (`local`/`session`), `key`, `value` | persist `storable-value ?? value` under `storable-key ?? name ?? id`; restores on connect and fires `restore` |
 | `paste-transform` | input, textarea | — | `patterns`, `replaces` | rewrite pasted text with regexes |
-| `copyable` | button | `copy` | `copied` state; event `copy` | copies a target element's text to the clipboard; sets `copyable-copied` and fires `copy` on success |
+| `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
 | `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
 | `hashable` | any | `hash` | — | writes `#<id>` into the location hash with `replaceState` (no history entry); no-op when already set, warns once without an id |
 
@@ -338,7 +338,7 @@ The host and executor report through `console.error` / `console.warn`; they do n
         on-click="this.delay(300).setAttr({name: 'aria-busy', value: 'true'})">…</button>
 ```
 
-The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms` later, and returns. A re-fire that reaches the same delay reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. The timer is keyed per element and dropped on disconnect. The copy-flash pattern is unchanged: `this.copy(#snippet).delay(1500).removeAttr('copyable-copied')` marks the button, pauses, and the reset runs 1.5 s later. A pause is a scheduling decision the executor owns — never an awaited interaction.
+The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms` later, and returns. A re-fire that reaches the same delay reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. The timer is keyed per element and dropped on disconnect. The copy-flash pattern lives in the trigger attribute: `on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"` marks the button, pauses, and the reset runs 1.5 s later. A pause is a scheduling decision the executor owns — never an awaited interaction.
 
 ### `prevent-default` and `no-propagate`
 
@@ -383,9 +383,7 @@ Focus trapping, the top layer, light dismiss, `::backdrop` and Escape handling c
 
 **Controllers are wired at connect.** When a panel with an `id` connects, `revealable` scans the `is="interactable-…"` hosts, parses each one's `on-*` values through the same cached `parse()` the executor uses, and for every host that *controls* the panel — `#id.toggle()`, `#id.show()`, or `#id.show(true)`; the literal `show(false)` is a side effect, not control, and non-literal arguments such as `show(this.checked)` are not control either — it appends the panel's id to the host's `aria-controls` (deduped, existing tokens preserved) and sets `aria-expanded` to the current state, skipped on radio and checkbox inputs where it is meaningless. The sync continues at fire time: every element whose `aria-controls` names the panel gets `aria-expanded` refreshed, and a bare trigger that declares none gets `aria-controls` added — unless the verb was `show(false)`, which only updates, never claims.
 
-**Radio-derived exclusivity, no attribute.** A panel shown *from* an `<input type="radio">` closes the panels of that radio's siblings — the radios sharing its `name` and its form owner (`source.form`, else `document`). Each sibling's `on-*` phrases are parsed, and every panel the sibling controls, other than the one being opened, receives `show(false)` — dispatched with no interacting source, so nothing is written onto a source element; the closed panel's `aria-expanded` is still refreshed on its button controllers. The browser's radio group *is* the group: the package-manager example is three radios named `pm` plus a panel per section, nothing else. Checkbox and button sources close nothing.
-
-A radio group is the single source of truth for the panels it drives. Don't also `show()` one of those panels from another button: whichever fired last is what you'll see, and nothing reconciles the two until the next radio change.
+Nothing closes a panel unless a phrase says `show(false)`. Mutually exclusive panels are written out: each trigger names what it opens and what it closes.
 
 ### Hashable
 
@@ -393,9 +391,9 @@ A radio group is the single source of truth for the panels it drives. Don't also
 
 ### Storable
 
-`storable` persists a form field's value to storage through three verbs: `save()`, `load()` and `clear()`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup. The storage key is `interactable:<storable-key ?? name ?? id>`, the default scope is `local`, and same-name checkboxes store as a list: `save()` on either writes the JSON array of every checked control sharing that `name` and form owner. A field with none of `storable-key`, `name` and `id` warns once on connect and stores nothing.
+`storable` persists an element's value to storage through three verbs: `save()`, `load()` and `clear()`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup. The value is `storable-value ?? value` (an authored `storable-value` outranks the element's own `.value`), the storage key is `interactable:<storable-key ?? name ?? id>`, and the default scope is `local`. Same-name checkboxes store as a list: `save()` on either writes the JSON array of every checked control sharing that `name` and form owner. An element with none of `storable-key`, `name` and `id` warns once on connect and stores nothing — as does one whose value resolves to nothing (no `storable-value`, no `.value`).
 
-Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here. Restore fires a native `change`, so your `on-change` phrase runs on restore — that is the point: in the package-manager example `name="pm"` does two jobs (the browser's radio group and the storage key), so restoring the stored radio re-opens the section that radio controls. `load()` re-reads the stored value as a user action and fires `change` when it changes; `clear()` removes the key.
+Restore waits for the document to finish parsing, so initial-load markup works regardless of element order — elements connected after parse (e.g. a swapped fragment) restore immediately and may hit the readiness-replay gap (`NotReadyError`), logged against that open-list item, not solved here. Restore is quiet: it applies or matches the stored value and fires the `restore` event, never a native `change`, so nothing you didn't write runs on a reload — `dirtyable`, which listened for `change`, no longer sees a restore; if a dirty baseline after restore is wanted, that is `on-restore="this.markClean()"`, written by the author. The hook is `on-restore="…"` on the storable element, fired once at most, only when a stored value was applied or matched, never when `save()` runs. An authored `storable-value` matches rather than writes: it fires `restore` only when it equals what was stored, and a different stored value changes nothing. The package-manager example is nine buttons that each say everything they do — `storable-key="pm"`, `storable-value="pnpm"`, an `on-click` naming the three panels it opens, the six it closes and `this.save()`, and the same `on-restore` without the save. `load()` re-reads the stored value as a user action and fires `restore` when it changes; `clear()` removes the key.
 
 ### json-template
 
@@ -465,7 +463,7 @@ export const modifiable = defineImplementation("modifiable", {
 | `config` | `Record<string, tsyntax-string>` | Authored input, read-only, stored as `<name>-<key>` (`modifiable-step`) |
 | `state` | `Record<string, tsyntax-string>` | Invented live state, read/write, stored as `<name>-<key>` (`revealable-open`) |
 | `verbs` | `Record<verb, Sig>` | Public surface. `Sig` is a tsyntax string, an element constructor, or a record of those |
-| `events` | `string[]` (optional) | Events the implementation dispatches (`copy`, `response`, `request-error`); on the element, `on-<event>` fires only for the implementation's `ImplementationEvent` |
+| `events` | `string[]` (optional) | Events the implementation dispatches (`copy`, `response`, `request-error`, `restore`); on the element, `on-<event>` fires only for the implementation's `ImplementationEvent` |
 | `factory` | `(el, attrs) => Implementation` | Returns the verb bodies and lifecycle/`on*` handlers |
 
 ### Signatures
@@ -527,7 +525,7 @@ Built once per instance by `bindAttributes(el, name, def)`. Each getter reads th
 - **Verbs receive `(e, arg)`.** `arg` is already validated against the signature. Inputs come from `arg`; `e.source` and `e.originalEvent` are *context*, not input — metadata about the trigger (`aria-expanded` on the button that opened a dialog), not what to act on.
 - **Verbs are synchronous.** Do the work, return; the host stores the return value on `e.result`. A verb that returns a promise gets a console warning.
 - **Lifecycle:** `connectedCallback`, `disconnectedCallback`, `attributeChangedCallback(name, old, new)` may be returned from the factory alongside the verbs.
-- **Implementations never call verbs on other elements.** Work that completes later declares **its own events** (`copyable` declares `"copy"`; `requestable` declares `"response"` and `"request-error"`) and dispatches an `ImplementationEvent` when the moment arrives; the follow-up is a plain `on-<event>` trigger attribute on that element, so `this` in the continuation is the element that did the work.
+- **Implementations never call verbs on other elements.** Work that completes later declares **its own events** (`copyable` declares `"copy"`; `requestable` declares `"response"` and `"request-error"`; `storable` declares `"restore"`) and dispatches an `ImplementationEvent` when the moment arrives; the follow-up is a plain `on-<event>` trigger attribute on that element, so `this` in the continuation is the element that did the work.
 - **Registering an implementation ensures its hosts.** The registry calls `defineInteractableHost(tag)` for every tag in `tags`; tag-less implementations ensure nothing. `defineInteractableHost` is idempotent, so two implementations sharing a tag share one host class.
 
 ---
@@ -657,17 +655,17 @@ The executor does neither. Every `on-*` listener is passive; a phrase describes 
 
 **Verbs are synchronous and chains never await.** This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A `.` chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints — unless a `delay()` link splits it ([§ The pause mechanism](#the-pause-mechanism)). Work that finishes later belongs to an implementation that owns it — today `requestable` — and continues by dispatching an `ImplementationEvent` the author's `on-response` / `on-request-error` attributes turn into a new synchronous chain.
 
-A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain where it sits, and the executor runs the remainder of the chain `ms` later as its own scheduled step. That is the mechanism behind a "temporarily set attribute" — `copyable` marks `copyable-copied` on success and never clears it, so the *developer* decides whether the flash persists or disappears:
+A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain where it sits, and the executor runs the remainder of the chain `ms` later as its own scheduled step. That is the mechanism behind a "temporarily set attribute" — `copyable` copies and fires `copy` on success; it never touches attributes, so the flash is entirely the author's, in the trigger attribute:
 
 ```html
 <button is="interactable-button" implements="copyable attributable"
         on-click="this.copy(#snippet)"
-        on-copy="this.delay(1500).removeAttr('copyable-copied')">
+        on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')">
   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
 </button>
 ```
 
-`copy` fires its `copy` event on success (`this` is the button); `delay(1500)` pauses; `removeAttr('copyable-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
+`copy` fires its `copy` event on success (`this` is the button); `setAttr` marks the button; `delay(1500)` pauses; `removeAttr('data-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
 
 ```html
 <input is="interactable-input" id="q" on-input="#results.debounce(300).send()">
@@ -875,7 +873,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `parse(value, eventName?)` | Parse an attribute string into phrases (cached by event name and value) |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](#the-interaction-event)) |
-| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`); a synthetic intersect event carries the observed margin as `key` |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `restore`); a synthetic intersect event carries the observed margin as `key` |
 | `isImplementationEvent(el, type)` | True when `type` is an intersect name or an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per `(threshold, rootMargin)` |
@@ -923,7 +921,7 @@ The short versions of the decisions behind the design. The full argument for eac
 
 **This is a push system, not a pull one.** An event on a trigger pushes a verb onto a named receiver, the DOM changes once, and the interaction is over — there is no subscription, no reactivity, and no derived state. Nothing watches a value and re-runs phrases when it changes.
 
-The tabs example is the honest boundary case. Each radio's `on-change` pushes `show()` onto its panels, and the exclusivity closes the rest; "which tab is visible" is never stored — every switch rewrites the panels' visibility by hand. Adding a fourth section means editing all three radio phrases, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.
+The tabs example is the honest boundary case. Each button's `on-click` pushes `show()` onto its panels, and the six it closes; "which tab is visible" is never stored — every switch rewrites the panels' visibility by hand. Adding a fourth section means editing every phrase, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.
 
 When the behaviour you need *pulls* — a value kept in sync with other values, recomputed on change, reactive by construction — a reactive/data-flow framework is the right tool. The one async seam this library does own is `requestable`: the trigger pushes `send()`, and `on-response` / `on-request-error` continue from the element that did the work.
 
@@ -1005,6 +1003,6 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 
 **Why `handled` and `error` on the event rather than exceptions?** `dispatchEvent` swallows listener exceptions and returns normally. An async wrapper would fix throws by making every chain asynchronous; a direct method call would add a second dispatch path. Fields on the event fix both with no change to either.
 
-**Why not a general `<name>-after` convention for every implementation?** The word is shared, the event is not: a request failing and an upload failing call for different follow-ups. Each implementation names the moments it exposes as events (`copy`, `response`, `request-error`); the phrase for each is a plain `on-<event>` trigger attribute, and only dispatch is shared.
+**Why not a general `<name>-after` convention for every implementation?** The word is shared, the event is not: a request failing and an upload failing call for different follow-ups. Each implementation names the moments it exposes as events (`copy`, `response`, `request-error`, `restore`); the phrase for each is a plain `on-<event>` trigger attribute, and only dispatch is shared.
 
 **Why not queue an interaction until the lazily loaded implementation arrives?** A queue is a waiting chain, and the host would answer the event after `dispatchEvent` returned, when the executor had already read the channels. With implementations imported before the markup, the case never occurs.

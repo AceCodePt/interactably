@@ -54,7 +54,11 @@ function installClipboard(writeText: ((text: string) => Promise<void>) | undefin
   });
 }
 
-test("copy writes the target's text and marks the button copied", async () => {
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+test("copy writes the target's text without touching any attribute", async () => {
   const copied: string[] = [];
   installClipboard(async (text) => {
     copied.push(text);
@@ -68,10 +72,10 @@ test("copy writes the target's text and marks the button copied", async () => {
   await flush();
   assert.equal(copied.length, 1);
   assert.equal(copied[0], "const x = 1;");
-  assert.equal(button.getAttribute("copyable-copied"), "true");
+  assert.deepEqual(button.getAttributeNames(), ["implements", "id"], "copy itself never writes an attribute");
 });
 
-test("a rejected clipboard write falls back and warns, without marking copied", async (t) => {
+test("a rejected clipboard write falls back and warns", async (t) => {
   const warn = t.mock.method(console, "warn");
   installClipboard(async () => {
     throw new Error("denied");
@@ -84,10 +88,9 @@ test("a rejected clipboard write falls back and warns, without marking copied", 
   interact(button, "copy", code);
   await flush();
   assert.equal(warn.mock.callCount(), 1);
-  assert.equal(button.hasAttribute("copyable-copied"), false);
 });
 
-test("without a clipboard API it warns and never marks copied", async (t) => {
+test("without a clipboard API it warns", async (t) => {
   const warn = t.mock.method(console, "warn");
   const button = hostElement("button", { implements: "copyable" });
   const code = hostElement("pre", { id: "code" });
@@ -97,10 +100,9 @@ test("without a clipboard API it warns and never marks copied", async (t) => {
   interact(button, "copy", code);
   await flush();
   assert.equal(warn.mock.callCount(), 1);
-  assert.equal(button.hasAttribute("copyable-copied"), false);
 });
 
-test("an empty target warns without flashing", async (t) => {
+test("an empty target warns", async (t) => {
   const warn = t.mock.method(console, "warn");
   const button = hostElement("button", { implements: "copyable" });
   const code = hostElement("pre", { id: "code" });
@@ -108,7 +110,26 @@ test("an empty target warns without flashing", async (t) => {
   await flush();
   interact(button, "copy", code);
   assert.equal(warn.mock.callCount(), 1);
-  assert.equal(button.hasAttribute("copyable-copied"), false);
+});
+
+test("the flash is the trigger attribute's job: on-copy marks, pauses, then clears", async () => {
+  installClipboard(async () => {});
+  const button = hostElement("button", {
+    implements: "copyable attributable",
+    id: "copy-btn",
+    "on-copy": "this.setAttr({name: 'data-copied', value: 'true'}).delay(20).removeAttr('data-copied')",
+  });
+  const code = hostElement("pre", { id: "code" });
+  code.textContent = "copy me";
+  document.body.append(button, code);
+  await flush();
+
+  interact(button, "copy", code);
+  await flush();
+  assert.equal(button.getAttribute("data-copied"), "true", "on-copy marks the button");
+
+  await delay(60);
+  assert.equal(button.hasAttribute("data-copied"), false, "the paused reset removes the marker");
 });
 
 test("a successful copy runs on-copy", async () => {
@@ -129,7 +150,7 @@ test("a successful copy runs on-copy", async () => {
   assert.equal(receipt.getAttribute("revealable-open"), "true");
 });
 
-test("a failed copy warns and never marks copied or fires on-copy", async () => {
+test("a failed copy warns and never fires on-copy", async () => {
   installClipboard(async () => {
     throw new Error("denied");
   });
@@ -147,7 +168,6 @@ test("a failed copy warns and never marks copied or fires on-copy", async () => 
   interact(button, "copy", code);
   await flush();
   assert.equal(alert.hidden, true);
-  assert.equal(button.hasAttribute("copyable-copied"), false);
 });
 
 test("a native copy event on a copyable element does not run on-copy", async (t) => {
