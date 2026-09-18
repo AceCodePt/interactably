@@ -32,13 +32,6 @@ function hostElement(tag: string, attributes: Record<string, string>): HTMLEleme
   return el;
 }
 
-function dep(id: string, value: string): HTMLInputElement {
-  const input = document.createElement("input");
-  input.id = id;
-  input.value = value;
-  return input;
-}
-
 function interact(el: Element, verb: string, arg?: unknown): InteractionEvent {
   const event = new InteractionEventClass({
     verb,
@@ -282,12 +275,33 @@ test("inc reads the current value back off the element", async () => {
   assert.equal(input.value, "4");
 });
 
-test("modifiable-formula evaluates against #id references at fire time", async () => {
-  const price = dep("price", "2");
-  const qty = dep("qty", "3");
+function numDep(id: string, value: string): HTMLInputElement {
+  const input = document.createElement("input");
+  input.type = "number";
+  input.id = id;
+  input.value = value;
+  return input;
+}
+
+test("nothing recomputes on connect: an element with no on-load keeps its authored text", async () => {
   const total = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "#price.value * #qty.value + 1",
+    "modifiable-step": "1",
+  }) as HTMLOutputElement;
+  total.textContent = "42";
+  document.body.appendChild(total);
+  await flush();
+  assert.equal(total.textContent, "42");
+});
+
+test("set evaluates an expression against #id references at fire time", async () => {
+  const price = numDep("price", "2");
+  price.setAttribute("on-input", "#total.set(#price.value * #qty.value + 1)");
+  const qty = numDep("qty", "3");
+  const total = hostElement("output", {
+    implements: "modifiable",
+    id: "total",
+    "on-load": "this.set(#price.value * #qty.value + 1)",
   }) as HTMLOutputElement;
   document.body.append(price, qty, total);
   await flush();
@@ -295,68 +309,52 @@ test("modifiable-formula evaluates against #id references at fire time", async (
   assert.equal(total.textContent, "7");
 
   price.value = "4";
-  interact(total, "compute");
+  price.dispatchEvent(new Event("input", { bubbles: true }));
   assert.equal(total.textContent, "13");
 });
 
-test("a modifiable-formula using this.value computes on connect and on compute()", async () => {
+test("this.set(this.value * 2) reads the element's own number value", async () => {
   const self = hostElement("input", {
     implements: "modifiable",
-    "modifiable-formula": "this.value * 2",
+    type: "number",
     value: "21",
+    "on-click": "this.set(this.value * 2)",
   }) as HTMLInputElement;
   document.body.appendChild(self);
   await flush();
 
-  assert.equal(self.value, "42");
+  assert.equal(self.value, "21", "nothing recomputes on connect");
 
-  self.value = "5";
-  interact(self, "compute");
-  assert.equal(self.value, "10");
+  self.dispatchEvent(new MouseEvent("click"));
+  assert.equal(self.value, "42");
 });
 
-test("compute writes the derived value without dispatching a synthetic input event", async () => {
+test("set(expr) writes the derived value without dispatching a synthetic input event", async () => {
   const total = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "1 + 1",
+    "on-click": "this.set(1 + 1)",
   }) as HTMLOutputElement;
   document.body.appendChild(total);
   await flush();
 
   let inputs = 0;
   total.addEventListener("input", () => inputs++);
-  interact(total, "compute");
+  total.dispatchEvent(new MouseEvent("click"));
   assert.equal(total.textContent, "2");
   assert.equal(inputs, 0);
 });
 
-test("a malformed formula writes the modifiable-invalid-value fallback", async () => {
-  const fallback = hostElement("output", {
-    implements: "modifiable",
-    "modifiable-formula": "1 +",
-    "modifiable-invalid-value": "0",
-  }) as HTMLOutputElement;
-  const defaulted = hostElement("output", {
-    implements: "modifiable",
-    "modifiable-formula": "1 +",
-  }) as HTMLOutputElement;
-  document.body.append(fallback, defaulted);
-  await flush();
-
-  assert.equal(fallback.textContent, "0");
-  assert.equal(defaulted.textContent, "Error");
-});
-
-test("sum(selector) adds matched elements and count(selector) counts them", async () => {
+test("set(sum('.amount')) adds matched elements and set(count('.amount')) counts them", async () => {
   const root = document.createElement("div");
-  root.innerHTML = '<input class="amount" value="2.5"><input class="amount" value="3.25">';
+  root.innerHTML =
+    '<input class="amount" type="number" value="2.5"><input class="amount" type="number" value="3.25">';
   const total = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "sum('.amount')",
+    "on-load": "this.set(sum('.amount'))",
   }) as HTMLOutputElement;
   const tally = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "count('.amount')",
+    "on-load": "this.set(count('.amount'))",
   }) as HTMLOutputElement;
   document.body.append(root, total, tally);
   await flush();
@@ -365,12 +363,12 @@ test("sum(selector) adds matched elements and count(selector) counts them", asyn
   assert.equal(tally.textContent, "2");
 });
 
-test("the formula supports parentheses, unary minus and min/max/floor/ceil/round", async () => {
-  const a = dep("a", "1");
-  const b = dep("b", "5");
+test("expressions support parentheses, unary minus and min/max/floor/ceil/round", async () => {
+  const a = numDep("a", "1");
+  const b = numDep("b", "5");
   const out = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "min(#a.value, #b.value) + round(2.6) * floor(2.7) - (1 + 1)",
+    "on-load": "this.set(min(#a.value, #b.value) + round(2.6) * floor(2.7) - (1 + 1))",
   }) as HTMLOutputElement;
   document.body.append(a, b, out);
   await flush();
@@ -379,51 +377,61 @@ test("the formula supports parentheses, unary minus and min/max/floor/ceil/round
 
   const neg = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "-#a.value + 10",
+    "on-load": "this.set(-#a.value + 10)",
   }) as HTMLOutputElement;
   document.body.appendChild(neg);
   await flush();
   assert.equal(neg.textContent, "9");
 });
 
-test("a missing #id dependency is an empty-operand error under +, writing invalid-value", async () => {
-  const out = hostElement("output", {
-    implements: "modifiable",
-    "modifiable-formula": "#ghost.value + 5",
-    "modifiable-invalid-value": "0",
-  }) as HTMLOutputElement;
-  document.body.appendChild(out);
-  await flush();
-  assert.equal(out.textContent, "0");
-});
-
-test("compute() on a throwing formula writes invalid-value and logs the formula source", async (t) => {
+test("a malformed expression is a trigger parse error reported once, never at fire time", async (t) => {
   const error = t.mock.method(console, "error");
   const out = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "#ghost.value * 2",
-    "modifiable-invalid-value": "0",
+    "on-load": "this.set(1 +)",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
   await flush();
 
-  assert.equal(out.textContent, "0");
-  assert.equal(error.mock.callCount(), 1);
+  assert.equal(out.textContent, "");
   const messages = error.mock.calls.map((call) => String(call.arguments[0]));
-  assert.ok(messages.some((message) => message.includes("#ghost.value * 2")), messages.join(" | "));
+  assert.ok(
+    messages.some(
+      (message) => message.includes("invalid phrase") && message.includes("expression at position 0"),
+    ),
+    messages.join(" | "),
+  );
+  assert.equal(
+    messages.filter((message) => message.includes("expression at position 0")).length,
+    1,
+    "the parse error is reported once per attribute string",
+  );
 });
 
-test("a division by zero writes invalid-value and logs the division", async (t) => {
+test("a fire-time expression error fails the unit and leaves the element untouched", async (t) => {
   const error = t.mock.method(console, "error");
   const out = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "1 / 0",
-    "modifiable-invalid-value": "0",
+    "on-load": "this.set(#ghost.value * 2)",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
   await flush();
 
-  assert.equal(out.textContent, "0");
+  assert.equal(out.textContent, "", "a failed expression is a failed unit: nothing is written");
+  assert.equal(error.mock.callCount(), 1);
+  assert.ok(String(error.mock.calls[0]!.arguments[0]).includes("#ghost"));
+});
+
+test("a division by zero is a fire-time error, not a fallback", async (t) => {
+  const error = t.mock.method(console, "error");
+  const out = hostElement("output", {
+    implements: "modifiable",
+    "on-load": "this.set(1 / 0)",
+  }) as HTMLOutputElement;
+  document.body.appendChild(out);
+  await flush();
+
+  assert.equal(out.textContent, "", "nothing is written");
   assert.equal(error.mock.callCount(), 1);
   assert.ok(String(error.mock.calls[0]!.arguments[0]).includes("divided by zero"));
 });

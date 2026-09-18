@@ -49,7 +49,7 @@
           <a id="toc-constructs" implements="attributable" href="#constructs" class="sub">Constructs</a>
           <a id="toc-rules" implements="attributable" href="#rules" class="sub">Rules</a>
           <a id="toc-reserved-names" implements="attributable" href="#reserved-names" class="sub">Reserved names</a>
-          <a id="toc-formula" implements="attributable" href="#formula" class="sub">The formula</a>
+          <a id="toc-expressions" implements="attributable" href="#expressions" class="sub">Expressions</a>
           <a id="toc-interaction-event" implements="attributable" href="#interaction-event">The interaction event</a>
           <a id="toc-attachment" implements="attributable" href="#attachment">Attachment</a>
           <a id="toc-four-kinds" implements="attributable" href="#four-kinds" class="sub">Four kinds of element</a>
@@ -113,7 +113,7 @@
   start();
 &lt;/script&gt;
 
-&lt;button id="inc" on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
+&lt;button id="inc" on-click="#qty.inc(); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
 
 &lt;label&gt;Qty
   &lt;input id="qty" implements="modifiable"
@@ -121,23 +121,24 @@
          on-input="#preview.set(this.value)"&gt;
 &lt;/label&gt;
 
-&lt;output id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;</code></pre>
+&lt;output id="preview" implements="modifiable" on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;</code></pre>
         </div>
         <p class="note">No <code class="inline-code">is=</code> anywhere: <code class="inline-code">start()</code> attaches every
           element that has <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute.
           A synchronous <code class="inline-code">&lt;script&gt;</code> tag in <code class="inline-code">&lt;head&gt;</code> is
           fine because attach-time work waits for the document.</p>
         <p>Every click on <code class="inline-code">+</code> calls <code class="inline-code">#qty.inc()</code> (the input clamps to
-          <code class="inline-code">max</code>) and then <code class="inline-code">#preview.compute()</code>, which re-reads
-          <code class="inline-code">#qty.value</code>; typing in the field still pushes through <code class="inline-code">on-input</code>.</p>
+          <code class="inline-code">max</code>) and then <code class="inline-code">#preview.set(#qty.value)</code>; typing in the field still pushes
+          through <code class="inline-code">on-input</code>. <code class="inline-code">#preview</code>&rsquo;s own
+          <code class="inline-code">on-load="this.set(#qty.value)"</code> computes it once at attach.</p>
 
         <p class="note" style="margin-top:1.5rem">Here is that exact markup, running live. No page JavaScript powers the button, the dialog, or the close button.</p>
         <div class="demo" style="padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)">
           <div class="row">
-            <button type="button" on-click="#qty.inc(); #preview.compute()">+</button>
+            <button type="button" on-click="#qty.inc(); #preview.set(#qty.value)">+</button>
             <input id="qty" implements="modifiable" aria-label="Qty" type="number" value="1" min="0" max="10"
                    on-input="#preview.set(this.value)">
-            <output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
+            <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
           </div>
           <div class="row">
             <button type="button" on-click="#doc-modal.show()">Open a dialog</button>
@@ -209,8 +210,9 @@ phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#'id | this
 call      := verb '(' [arg | object] ')'
-arg       := number | 'string' | true | false | ref | read
-read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
+arg       := number | 'string' | true | false | ref | read | expr
+read      := ref '.' ('value' | 'checked')
+expr      := <expression>  (see §Expressions)
 object    := '{' name ':' arg (',' name ':' arg)* '}'
 modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
@@ -233,14 +235,14 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td>Or</td><td><code class="inline-code">#form.validate().send() || #alert.show()</code></td><td><code class="inline-code">#alert.show()</code> only if a guard aborted the first unit</td></tr>
               <tr><td>Scalar arg</td><td><code class="inline-code">#qty.inc(5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
               <tr><td>Element arg</td><td><code class="inline-code">#list.removeRow(this)</code></td><td>A ref resolves to the element at fire time</td></tr>
-              <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code>, the platform&rsquo;s own types</td></tr>
+              <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code>, the type the element declares</td></tr>
               <tr><td>Key</td><td><code class="inline-code">on-keydown="enter: #f.send()"</code></td><td>Filter <em>which</em> events reach the phrase</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
               <tr><td>Debounce</td><td><code class="inline-code">#echo.debounce(300).set(this.value)</code></td><td>Defers this receiver&rsquo;s chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref</td></tr>
               <tr><td>Throttle</td><td><code class="inline-code">#viewport.throttle(16).zoom(this)</code></td><td>Leading-edge throttle of this receiver&rsquo;s chain; per element</td></tr>
               <tr><td>Once</td><td><code class="inline-code">#tour.once().show()</code></td><td>Gates the rest of the chain; spent when the walk passes it</td></tr>
               <tr><td>Delay</td><td><code class="inline-code">#note.delay(500).reset()</code></td><td>Pauses the chain where it sits for a fixed ms; re-fires stack, they do not reset it</td></tr>
-              <tr><td>Selector</td><td><code class="inline-code">modifiable-formula="sum('#list .amount')"</code></td><td>Selectors appear only inside string arguments</td></tr>
+              <tr><td>Expression</td><td><code class="inline-code">#total.set(sum('#list .amount'))</code></td><td>An argument that is not a literal, ref or read is evaluated as an expression at fire time; selectors appear only inside string arguments</td></tr>
             </tbody>
           </table>
         </div>
@@ -295,7 +297,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <li><strong><code class="inline-code">once()</code> spends on passing through, not on completion.</strong> The gate is about entry: the moment the walk reaches the <code class="inline-code">once</code> it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.</li>
           <li><strong>References are late-bound.</strong> <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads resolve at fire time (after any debounce), never at parse time.</li>
           <li><strong>One argument per verb.</strong> A string signature takes one scalar (<code class="inline-code">set(5)</code>); a record signature takes one object literal (<code class="inline-code">setAttr({name: 'aria-expanded', value: 'true'})</code>); <code class="inline-code">"undefined"</code> takes none. Two bare arguments is a grammar error.</li>
-          <li><strong>Exactly three properties may be read off a ref:</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> — with the platform&rsquo;s own types, no coercion. <code class="inline-code">this.parentElement</code> and friends are not legal; relative navigation lives in implementation code.</li>
+          <li><strong>Exactly two properties may be read off a ref:</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code> — with the type the element declares, no coercion. <code class="inline-code">this.parentElement</code> and friends are not legal; relative navigation lives in implementation code.</li>
           <li><strong>Selectors appear only inside string arguments</strong> (<code class="inline-code">'.amount'</code>, <code class="inline-code">':scope &gt; li'</code>). The grammar sees a string; the implementation&rsquo;s schema types it as a selector.</li>
           <li><strong>Errors are local.</strong> A missing <code class="inline-code">#id</code>, a grammar error, or an argument that fails the signature logs once and skips that phrase/link; the rest of the value runs.</li>
         </ol>
@@ -303,12 +305,15 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </section>
         <section id="sec-reserved-names" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-reserved-names.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-reserved-names.removeAttr('data-visible')">
         <h3 id="reserved-names">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
-        <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
+        <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
 
         </section>
-        <section id="sec-formula" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-formula.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-formula.removeAttr('data-visible')">
-        <h3 id="formula">The formula <a class="anchor" href="#formula">#</a></h3>
-        <p><code class="inline-code">modifiable-formula</code> is the second grammar an author meets on the same page as the trigger DSL, and it spells references the same way: the property is explicit, nothing is guessed from the tag.</p>
+        <section id="sec-expressions" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-expressions.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-expressions.removeAttr('data-visible')">
+        <h3 id="expressions">Expressions <a class="anchor" href="#expressions">#</a></h3>
+        <p>An argument is a literal, a reference, an object literal, or an expression. The expression grammar lives
+          inside the trigger: <code class="inline-code">#total.set(sum('#list .amount'))</code>,
+          <code class="inline-code">this.set(replace(this.value, '\D', ''))</code>. One language &mdash; what a trigger
+          computes is written on the trigger, and the same recipe on two triggers is written twice.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
@@ -317,22 +322,30 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-formula" data-lang="text"><code>reference := ('#' id | 'this') '.' ('value' | 'checked' | 'height' | 'width')</code></pre>
+<pre class="code" id="code-docs-formula" data-lang="text"><code>expression := term (('+' | '-') term)*
+term       := factor (('*' | '/') factor)*
+factor     := '-' factor | primary
+primary    := number | 'string' | reference | function'(' args ')' | '(' expression ')'
+reference  := ('#' id | 'this') '.' ('value' | 'checked' | 'height' | 'width')
+function   := min | max | floor | ceil | round | sum | count | replace</code></pre>
         </div>
-        <p><code class="inline-code">this</code> is the element the formula is on — the same <code class="inline-code">this</code> as in a trigger.</p>
+        <p><code class="inline-code">this</code> in an expression is the element the phrase was read from &mdash; the same
+          <code class="inline-code">this</code> as in a trigger.</p>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
             <tbody>
-              <tr><td>Reference</td><td><code class="inline-code">#qty.value</code>, <code class="inline-code">#agree.checked</code>, <code class="inline-code">#nav.height</code>, <code class="inline-code">#nav.width</code></td><td><code class="inline-code">.value</code> reads the element&rsquo;s text — a number when it parses, else a string; an empty or missing value is <code class="inline-code">""</code>. <code class="inline-code">.checked</code> is the boolean <code class="inline-code">el.checked === true</code>, <code class="inline-code">false</code> on an element without one. <code class="inline-code">.height</code>/<code class="inline-code">.width</code> are the element&rsquo;s border-box size in CSS pixels as of the last layout the browser reported — a phrase that resizes an element and reads it in the same chain reads the previous size. A bare <code class="inline-code">#id</code> is a parse error: <code class="inline-code">reference #qty needs .value, .checked, .height or .width</code></td></tr>
-              <tr><td><code class="inline-code">this</code></td><td><code class="inline-code">this.value</code>, <code class="inline-code">this.checked</code>, <code class="inline-code">this.height</code>, <code class="inline-code">this.width</code></td><td>Reads the element the formula is on — a row cloned from a template computes from its own value with no id. The four properties read the same as <code class="inline-code">#id</code>. A bare <code class="inline-code">this</code> is a parse error: <code class="inline-code">reference this needs .value, .checked, .height or .width</code></td></tr>
-              <tr><td>Typed <code class="inline-code">+</code></td><td><code class="inline-code">'invoice-' + #slug.value + '.pdf'</code></td><td>Joins when either side is a string, adds otherwise, left to right: <code class="inline-code">'a' + 1 + 2</code> is <code class="inline-code">"a12"</code>, <code class="inline-code">1 + 2 + 'a'</code> is <code class="inline-code">"1a"</code>. An empty <code class="inline-code">.value</code> operand is an empty-operand error, not a silent <code class="inline-code">""</code> join — unless a string literal makes the join explicit (<code class="inline-code">'' + #a.value</code> stays a join, <code class="inline-code">#a.value + 1</code> errors). <code class="inline-code">-</code>, <code class="inline-code">*</code>, <code class="inline-code">/</code>, unary <code class="inline-code">-</code> are always arithmetic; <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">floor</code>/<code class="inline-code">ceil</code>/<code class="inline-code">round</code>/<code class="inline-code">sum</code>/<code class="inline-code">count</code> return numbers; <code class="inline-code">replace</code> returns a string. A string literal escapes only the quote and itself (<code class="inline-code">\'</code>, <code class="inline-code">\\</code>); any other <code class="inline-code">\x</code> stays verbatim, so <code class="inline-code">'\D'</code> is the three characters <code class="inline-code">\D</code></td></tr>
-              <tr><td>Boolean in arithmetic</td><td><code class="inline-code">this.value * this.checked</code></td><td><code class="inline-code">true</code> is <code class="inline-code">1</code>, <code class="inline-code">false</code> is <code class="inline-code">0</code> — the line-item pattern: price when ticked, <code class="inline-code">0</code> when not</td></tr>
-              <tr><td><code class="inline-code">replace</code></td><td><code class="inline-code">replace(this.value, '\D', '')</code></td><td>Regex replace, always global; the value must read as a string. The pattern is compiled <code class="inline-code">new RegExp(pattern, "g")</code>, so <code class="inline-code">$1</code>/<code class="inline-code">$&amp;</code> in the replacement work as the platform defines them; an invalid pattern is a <code class="inline-code">FormulaError</code> naming it</td></tr>
+              <tr><td>Typed read</td><td><code class="inline-code">this.value</code>, <code class="inline-code">#agree.checked</code>, <code class="inline-code">#nav.height</code>, <code class="inline-code">#nav.width</code></td><td>A read has the type the element declares: <code class="inline-code">type="number"</code>/<code class="inline-code">type="range"</code> read a number, a checkbox/radio reads its checked boolean, every other input/textarea/select reads the platform value string (zeros intact), and display elements read what their implementation declares &mdash; formattable with a numeric format reads its raw number, a date format or a plain element reads textContent. <code class="inline-code">.checked</code> is <code class="inline-code">el.checked === true</code>, <code class="inline-code">false</code> on an element without one. <code class="inline-code">.height</code>/<code class="inline-code">.width</code> are the border-box size in CSS pixels as of the last layout the browser reported.</td></tr>
+              <tr><td><code class="inline-code">this</code></td><td><code class="inline-code">this.set(this.value + '!')</code></td><td>Reads the element the phrase was read from — a row cloned from a template computes from its own value with no id.</td></tr>
+              <tr><td>Typed <code class="inline-code">+</code></td><td><code class="inline-code">'invoice-' + #slug.value + '.pdf'</code></td><td>Joins when either side is a string, adds otherwise, left to right: <code class="inline-code">'a' + 1 + 2</code> is <code class="inline-code">"a12"</code>, <code class="inline-code">1 + 2 + 'a'</code> is <code class="inline-code">"1a"</code>. An empty read operand is an empty-operand error, not a silent <code class="inline-code">""</code> join — unless a string literal makes the join explicit (<code class="inline-code">'' + #a.value</code> stays a join, <code class="inline-code">#a.value + 1</code> errors). <code class="inline-code">-</code>, <code class="inline-code">*</code>, <code class="inline-code">/</code>, unary <code class="inline-code">-</code> are always arithmetic; a string operand under them is a not-a-number error naming the reference. <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">floor</code>/<code class="inline-code">ceil</code>/<code class="inline-code">round</code>/<code class="inline-code">sum</code>/<code class="inline-code">count</code> return numbers; <code class="inline-code">replace</code> returns a string. A string literal escapes only the quote and itself (<code class="inline-code">\'</code>, <code class="inline-code">\\</code>); any other <code class="inline-code">\x</code> stays verbatim, so <code class="inline-code">'\D'</code> is the three characters <code class="inline-code">\D</code></td></tr>
+              <tr><td>Boolean in arithmetic</td><td><code class="inline-code">#price.value * #tick.checked</code></td><td><code class="inline-code">true</code> is <code class="inline-code">1</code>, <code class="inline-code">false</code> is <code class="inline-code">0</code> — the line-item row: the price lives on a number element and the tick on the checkbox</td></tr>
+              <tr><td><code class="inline-code">sum</code> / <code class="inline-code">count</code></td><td><code class="inline-code">sum('#list .amount')</code></td><td>Run <code class="inline-code">querySelectorAll</code> at fire time; <code class="inline-code">sum</code> totals number-typed elements and errors on the first that is not, naming it; <code class="inline-code">count</code> counts. Over checkboxes <code class="inline-code">sum</code> totals the ticks as 1/0 — a count of ticked.</td></tr>
+              <tr><td><code class="inline-code">replace</code></td><td><code class="inline-code">this.set(replace(this.value, '\D', ''))</code></td><td>Regex replace, always global; the value must read as a string. The pattern is compiled <code class="inline-code">new RegExp(pattern, "g")</code>, so <code class="inline-code">$1</code>/<code class="inline-code">$&amp;</code> in the replacement work as the platform defines them; an invalid pattern is a <code class="inline-code">FormulaError</code> naming it</td></tr>
             </tbody>
           </table>
         </div>
-        <p>Sharp edge: two numeric-looking text inputs <em>add</em> — <code class="inline-code">#zip1.value + #zip2.value</code> sums them. Force a join with a literal on the left: <code class="inline-code">'' + #zip1.value + #zip2.value</code>. A numeric-looking value also loses its leading zeros — <code class="inline-code">#zip.value</code> for <code class="inline-code">"05"</code> is the number <code class="inline-code">5</code> — so it cannot be passed to <code class="inline-code">replace</code>, which refuses a number as its first argument and says why.</p>
+        <p>Sharp edge: a checkbox&rsquo;s <code class="inline-code">value="..."</code> attribute is unreachable through <code class="inline-code">.value</code> — a checkbox reads its checked boolean, whatever spelling, so the price belongs on a number element and the tick on the checkbox.</p>
+        <p>Syntax is checked at parse time: <code class="inline-code">#total.set(1 +)</code> is a trigger parse error naming the position, reported once per attribute like every other parse error. Fire time only ever carries data errors &mdash; empty, not-a-number, division by zero, not-a-string, invalid pattern, a missing reference &mdash; each a failed unit reported with <code class="inline-code">on-&lt;event&gt; on &lt;element&gt;, argument 1 of set():</code>.</p>
 
         </section>
         <section id="sec-interaction-event" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-interaction-event.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-interaction-event.removeAttr('data-visible')">
@@ -456,7 +469,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <table class="tbl">
             <thead><tr><th>Implementation</th><th>Tags</th><th>Verbs</th><th>Config / state</th><th>What it does</th></tr></thead>
             <tbody>
-              <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">inc</code>, <code class="inline-code">dec</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code>, <code class="inline-code">compute</code></td><td><code class="inline-code">step</code>, <code class="inline-code">formula</code>, <code class="inline-code">invalid-value</code></td><td>typed writes with clamping; evaluates a formula on <code class="inline-code">compute()</code> and on connect</td></tr>
+              <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">inc</code>, <code class="inline-code">dec</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code></td><td><code class="inline-code">step</code></td><td>typed writes with clamping; <code class="inline-code">set</code> takes a string, a number, or an expression evaluated at fire time</td></tr>
               <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td>&mdash;</td><td><code class="inline-code">dirty-on</code>; events <code class="inline-code">dirty</code>, <code class="inline-code">clean</code></td><td>fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing; move the baseline on an input with <code class="inline-code">setAttr({name: &rsquo;value&rsquo;, value: this.value})</code></td></tr>
               <tr><td><code class="inline-code">formattable</code></td><td>output, span, div, td, p, li, dd, b, strong, em, small</td><td>&mdash;</td><td><code class="inline-code">format</code></td><td>renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write</td></tr>
               <tr><td><code class="inline-code">listable</code></td><td>ul, ol, tbody</td><td><code class="inline-code">removeRow</code>, <code class="inline-code">adopt</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">min-rows</code></td><td>row removal / template adoption / clear, keeping <code class="inline-code">min-rows</code></td></tr>
@@ -796,8 +809,8 @@ export const attributable = defineImplementation("attributable", {
             <tbody>
               <tr><td><strong>Dynamic triggers</strong> (rows cloned from a template)</td><td>Put the <code class="inline-code">implements</code> / <code class="inline-code">on-*</code> attributes in the template; <code class="inline-code">on-click="this.remove()"</code> / <code class="inline-code">#list.removeRow(this)</code> works on every clone with no generated ids</td></tr>
               <tr><td><strong>Dynamic receivers</strong> (a row&rsquo;s own subtotal)</td><td>Receivers stay ids or <code class="inline-code">this</code>. Either address a stable ancestor and let the implementation find the relative element from <code class="inline-code">e.source</code> (<code class="inline-code">closest("li")</code>), or stamp ids in the template</td></tr>
-              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>Formula with a selector: <code class="inline-code">#total implements="modifiable" modifiable-formula="sum('#list .amount:valid')"</code>, recomputed by <code class="inline-code">#total.compute()</code>. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. <code class="inline-code">sum</code> is strict; filter blanks in the selector — <code class="inline-code">sum('#list .amount:valid')</code> (blank <code class="inline-code">required</code> inputs are <code class="inline-code">:invalid</code>), <code class="inline-code">sum('#list .amount:not(:placeholder-shown)')</code> (blank inputs carrying a <code class="inline-code">placeholder</code>, even <code class="inline-code">placeholder=" "</code>), <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes</td></tr>
-              <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change fires its own event (<code class="inline-code">on-response="#count.compute()"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
+              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>An expression with a selector: the row&rsquo;s <code class="inline-code">on-input="#total.set(sum('#list .amount:valid'))"</code>, and <code class="inline-code">on-load="this.set(sum('#list .amount:valid'))"</code> on the total to compute at attach. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. <code class="inline-code">sum</code> is strict; filter blanks in the selector — <code class="inline-code">sum('#list .amount:valid')</code> (blank <code class="inline-code">required</code> inputs are <code class="inline-code">:invalid</code>), <code class="inline-code">sum('#list .amount:not(:placeholder-shown)')</code> (blank inputs carrying a <code class="inline-code">placeholder</code>, even <code class="inline-code">placeholder=" "</code>), <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes</td></tr>
+              <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change fires its own event (<code class="inline-code">on-response="#count.set(count('#results &gt; li'))"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
             </tbody>
           </table>
         </div>
@@ -848,7 +861,7 @@ export const attributable = defineImplementation("attributable", {
         <section id="sec-parse-cache" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-parse-cache.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-parse-cache.removeAttr('data-visible')">
         <h3 id="parse-cache">Parse cache and resolution <a class="anchor" href="#parse-cache">#</a></h3>
         <p><code class="inline-code">parse</code> caches by attribute string; the cached value is an AST in which <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads are <strong>tokens</strong>, not elements or values. Resolution happens per fire, inside <code class="inline-code">runPhrases</code>; two identical rows share one parse and resolve to two different elements. <code class="inline-code">this</code> is resolved as <code class="inline-code">token === "this" ? source : document.getElementById(id)</code> — never rewritten into the attribute, never stamped into an id, never consulted from <code class="inline-code">event.currentTarget</code>.</p>
-        <p><strong>Argument validation is the receiver&rsquo;s job, not the parser&rsquo;s.</strong> The parser knows every literal&rsquo;s kind from syntax (bare <code class="inline-code">5</code> is a number, <code class="inline-code">'5'</code> is a string, <code class="inline-code">#id</code> / <code class="inline-code">this</code> are elements). Scalars go through <code class="inline-code">parseValueAgainstDSL</code> against the slot&rsquo;s tsyntax string; resolved elements go through <code class="inline-code">instanceof</code> against the slot&rsquo;s constructor. The only runtime-typed values are reads, and they carry the platform&rsquo;s type: <code class="inline-code">this.value</code> is a string, <code class="inline-code">#qty.valueAsNumber</code> is a number, <code class="inline-code">#agree.checked</code> is a boolean. There is no coercion — <code class="inline-code">#total.add(this.value)</code> with <code class="inline-code">add: "number"</code> fails and the message says so.</p>
+        <p><strong>Argument validation is the receiver&rsquo;s job, not the parser&rsquo;s.</strong> The parser knows every literal&rsquo;s kind from syntax (bare <code class="inline-code">5</code> is a number, <code class="inline-code">'5'</code> is a string, <code class="inline-code">#id</code> / <code class="inline-code">this</code> are elements). Scalars go through <code class="inline-code">parseValueAgainstDSL</code> against the slot&rsquo;s tsyntax string; resolved elements go through <code class="inline-code">instanceof</code> against the slot&rsquo;s constructor. Reads carry the type the element declares: <code class="inline-code">this.value</code> on a number input is a number, on a text input a string, <code class="inline-code">#agree.checked</code> a boolean. There is no coercion — <code class="inline-code">#total.add(this.value)</code> with <code class="inline-code">add: "number"</code> fails and the message says so, and an expression argument is validated against the same signature once it has resolved.</p>
 
         </section>
         <section id="sec-native-defaults" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-native-defaults.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-native-defaults.removeAttr('data-visible')">
@@ -885,10 +898,9 @@ export const attributable = defineImplementation("attributable", {
 
 &lt;ul id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
-    on-response="#count.compute(); #status.show(false)"
+    on-response="#count.set(count('#results &gt; li')); #status.show(false)"
     on-request-error="#status.show()"&gt;&lt;/ul&gt;
-&lt;output id="count" implements="modifiable"
-        modifiable-formula="count('#results &gt; li')"&gt;&lt;/output&gt;</code></pre>
+&lt;output id="count" implements="modifiable"&gt;&lt;/output&gt;</code></pre>
         </div>
         <p>The trigger&rsquo;s chain is one synchronous link: <code class="inline-code">send()</code> aborts the previous in-flight request for <code class="inline-code">#results</code>, starts a new one, and returns. When the response lands, <code class="inline-code">requestable</code> swaps its children and dispatches <code class="inline-code">new ImplementationEvent("response", { originalEvent })</code>; the element&rsquo;s own <code class="inline-code">on-response</code> attribute runs a second synchronous chain in which <code class="inline-code">this</code> is <code class="inline-code">#results</code>. The network gap sits between two chains and has a name and a place in the markup.</p>
         <p><code class="inline-code">requestable-include</code> adds matched controls to the request collected as <code class="inline-code">FormData</code> would: disabled, unchecked and unselected controls are not sent, a multi-select contributes one entry per selected option, a file input one entry per file, and a matched <code class="inline-code">&lt;form&gt;</code> is spread whole. A matched control that already lives inside the requestable form itself is sent twice &mdash; the same as two <code class="inline-code">&lt;input name=x&gt;</code> in one form.</p>
@@ -927,24 +939,24 @@ export const attributable = defineImplementation("attributable", {
          on-input="#preview.set(this.value)"
          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
          on-clean="this.removeAttr('data-dirty')"
-         on-keydown="escape: this.reset(); #preview.compute()"&gt;
+         on-keydown="escape: this.reset(); #preview.set(#qty.value)"&gt;
 &lt;/label&gt;
-&lt;button on-click="#qty.dec(); #preview.compute()"&gt;&minus;&lt;/button&gt;
-&lt;button on-click="#qty.inc(); #preview.compute()"&gt;+&lt;/button&gt;
-&lt;button on-click="#qty.inc(5); #preview.compute()"&gt;+5&lt;/button&gt;
-&lt;button on-click="#qty.reset(); #preview.compute()"&gt;Reset&lt;/button&gt;
-&lt;output id="preview" implements="modifiable" modifiable-formula="#qty.value"&gt;1&lt;/output&gt;
+&lt;button on-click="#qty.dec(); #preview.set(#qty.value)"&gt;&minus;&lt;/button&gt;
+&lt;button on-click="#qty.inc(); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
+&lt;button on-click="#qty.inc(5); #preview.set(#qty.value)"&gt;+5&lt;/button&gt;
+&lt;button on-click="#qty.reset(); #preview.set(#qty.value)"&gt;Reset&lt;/button&gt;
+&lt;output id="preview" implements="modifiable" on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;
 
 &lt;ul id="list" implements="listable" listable-min-rows="1"&gt;
   &lt;li&gt;
-    &lt;input class="amount" type="number" step="any" required on-input="#total.compute()"&gt;
-    &lt;button on-click="#list.removeRow(this); #total.compute()"&gt;&times;&lt;/button&gt;
+    &lt;input class="amount" type="number" step="any" required on-input="#total.set(sum('#list .amount:valid'))"&gt;
+    &lt;button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
-&lt;button on-click="#list.adopt(#row-tpl)"&gt;Add row&lt;/button&gt;
+&lt;button on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount:valid'))"&gt;Add row&lt;/button&gt;
 &lt;template id="row-tpl"&gt;&lt;li&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
 &lt;output id="total" implements="modifiable formattable"
-modifiable-formula="sum('#list .amount:valid')"
+        on-load="this.set(sum('#list .amount:valid'))"
         formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;</code></pre>
         </div>
         <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers; the <code class="inline-code">&lt;li&gt;</code> is a plain element — the row is reached through <code class="inline-code">#list.removeRow(this)</code>, so it needs no implementation, no host and no id, and cloning it produces nothing that has to be unique.</p>
@@ -1078,7 +1090,7 @@ modifiable-formula="sum('#list .amount:valid')"
         </section>
         <section id="sec-not-supported" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-not-supported.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-not-supported.removeAttr('data-visible')">
         <h2 id="not-supported">Not supported <a class="anchor" href="#not-supported">#</a></h2>
-        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">valueAsNumber</code> &middot; attaching an element that gains <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute after insertion (re-insert it) &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
+        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> &middot; attaching an element that gains <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute after insertion (re-insert it) &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
         <p><code class="inline-code">on-load</code>. On-load is not a DOM event and carries no native action; it runs once, after the batch that attached the element. Listen for it on anything that should run once its element is attached.</p>
 
         </section>
@@ -1099,8 +1111,9 @@ phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
-arg       := number | "'" string "'" | 'true' | 'false' | ref | read
-read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
+arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
+read      := ref '.' ('value' | 'checked')
+expr      := <expression>  (see §Expressions)
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'</code></pre>

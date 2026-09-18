@@ -91,11 +91,11 @@ test("sum('#total') and a bare #total.value reference both read the raw value", 
   const total = formatted({ id: "total", "formattable-format": CURRENCY }, "7");
   const sumOut = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "sum('#total')",
+    "on-load": "this.set(sum('#total'))",
   }) as HTMLOutputElement;
   const refOut = hostElement("output", {
     implements: "modifiable",
-    "modifiable-formula": "#total.value",
+    "on-load": "this.set(#total.value)",
   }) as HTMLOutputElement;
   document.body.append(sumOut, refOut);
   await flush();

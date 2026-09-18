@@ -704,22 +704,23 @@ test("one registration refreshes each attached element once and skips detached o
   dispose();
 });
 
-test("a modifiable attached with its #id dependency resolves the formula", async () => {
+test("a modifiable attached with its #id dependency resolves the expression", async () => {
   const dispose = start();
   const output = hostElement("output", {
     id: "sum",
     implements: "modifiable",
-    "modifiable-formula": "#a.value + 1",
+    "on-load": "this.set(#a.value + 1)",
   });
   document.body.appendChild(output);
   assert.equal(output.textContent, "", "the output is untouched while the batch is pending");
 
   const a = document.createElement("input");
   a.id = "a";
+  a.type = "number";
   a.value = "1";
   document.body.appendChild(a);
   await flush();
-  assert.equal(output.textContent, "2", "compute at attach reads #a");
+  assert.equal(output.textContent, "2", "set at attach reads #a");
   dispose();
 });
 

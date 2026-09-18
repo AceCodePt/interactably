@@ -34,7 +34,7 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
   - [Constructs](#constructs)
   - [Rules](#rules)
   - [Reserved names](#reserved-names)
-  - [The formula](#formula)
+  - [Expressions](#expressions)
 - [The `interaction` event](#interaction-event)
 - [Attachment](#attachment)
   - [Four kinds of element](#four-kinds)
@@ -86,7 +86,7 @@ Load the core bundle plus the implementations you use. Each implementation bundl
   start();
 </script>
 
-<button id="inc" on-click="#qty.inc(); #preview.compute()">+</button>
+<button id="inc" on-click="#qty.inc(); #preview.set(#qty.value)">+</button>
 
 <label>Qty
   <input id="qty" implements="modifiable"
@@ -94,10 +94,10 @@ Load the core bundle plus the implementations you use. Each implementation bundl
          on-input="#preview.set(this.value)">
 </label>
 
-<output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
+<output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
 ```
 
-Every click on `+` calls `#qty.inc()` (the input clamps to `max`) and then `#preview.compute()`, which re-reads `#qty.value`; typing in the field still pushes through `on-input`.
+Every click on `+` calls `#qty.inc()` (the input clamps to `max`) and then `#preview.set(#qty.value)`; typing in the field still pushes through `on-input`. `#preview`'s own `on-load="this.set(#qty.value)"` computes it once at attach.
 
 Bundle files:
 
@@ -134,8 +134,9 @@ phrase    := [key ':'] unit (('&&' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#'id | this
 call      := verb '(' [arg | object] ')'
-arg       := number | 'string' | true | false | ref | read
-read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
+arg       := number | 'string' | true | false | ref | read | expr
+read      := ref '.' ('value' | 'checked')
+expr      := <expression>  (see § Expressions)
 object    := '{' name ':' arg (',' name ':' arg)* '}'
 modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 ```
@@ -156,14 +157,14 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Or | `#form.validate().send() \|\| #alert.show()` | `#alert.show()` only if a guard aborted the first unit |
 | Scalar arg | `#qty.inc(5)` | Numbers, `'strings'`, `true` / `false` |
 | Element arg | `#list.removeRow(this)` | A ref resolves to the element at fire time |
-| Property read | `#preview.set(this.value)` | `value` / `checked` / `valueAsNumber`, the platform's own types |
+| Property read | `#preview.set(this.value)` | `value` / `checked`, the type the element declares |
 | Key | `on-keydown="enter: #f.send()"` | Filter *which* events reach the phrase |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
 | Debounce | `#echo.debounce(300).set(this.value)` | Defers this receiver's chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref |
 | Throttle | `#viewport.throttle(16).zoom(this)` | Leading-edge throttle of this receiver's chain; per element |
 | Once | `#tour.once().show()` | Gates the rest of the chain; spent when the walk passes it |
 | Delay | `#note.delay(500).reset()` | Pauses the chain where it sits for a fixed ms; re-fires stack, they do not reset it |
-| Selector | `modifiable-formula="sum('#list .amount')"` | Selectors appear only inside string arguments |
+| Expression | `#total.set(sum('#list .amount'))` | An argument that is not a literal, ref or read is evaluated as an expression at fire time; selectors appear only inside string arguments |
 
 `<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions. Triggers are three kinds: **native DOM events**, **implementation events**, and **synthetic triggers**. An implementation may declare its own events (`copy`, `response`, `request-error`, `restore`); on the element that implements it, `on-<event>` fires only for the implementation's `ImplementationEvent`, never for a same-named DOM event. The synthetic names `on-intersect-enter` / `on-intersect-leave` / `on-intersect-full` are evaluated from an `IntersectionObserver` against the viewport, so they need no `implements` and never warn about a missing event; the phrase key is the observer's `rootMargin` (a `px`/`%` string, a `#id.height`/`#id.width` reference, or nothing for `0px`), and each `;` phrase observes its own margin. `enter` fires when the element's intersection with the box gains non-zero area — including the observer's initial report for an element visible at load — and `leave` fires when it loses it; `full` fires on either side of a change between the element being entirely inside the box and not. `full` means the whole element is inside the box, so an element taller than the box is never `full`; shrink the box with a margin and use `enter` instead. A `-50% 0px 0px 0px` margin shrinks the box to the viewport's vertical centre: `on-intersect-enter="-50% 0px 0px 0px: …"` fires when the element's leading edge reaches that line, for an element of any height.
 
@@ -180,40 +181,45 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 7. **`once()` spends on passing through, not on completion.** The gate is about entry: the moment the walk reaches the `once` it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.
 8. **References are late-bound.** `#id`, `this` and reads resolve at fire time (after any debounce), never at parse time.
 9. **One argument per verb.** A string signature takes one scalar (`set(5)`); a record signature takes one object literal (`setAttr({name: 'aria-expanded', value: 'true'})`); `"undefined"` takes none. Two bare arguments is a grammar error.
-10. **Exactly three properties may be read off a ref** — `value`, `checked`, `valueAsNumber` — with the platform's own types, no coercion. `this.parentElement` and friends are not legal; relative navigation lives in implementation code.
+10. **Exactly two properties may be read off a ref** — `value`, `checked` — with the type the element declares, no coercion. `this.parentElement` and friends are not legal; relative navigation lives in implementation code.
 11. **Selectors appear only inside string arguments** (`'.amount'`, `':scope > li'`). The grammar sees a string; the implementation's schema types it as a selector.
 12. **Errors are local.** A missing `#id`, a grammar error, or an argument that fails the signature logs once and skips that phrase/link; the rest of the value runs.
 
 ### Reserved names
 
-`debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb. `this` is the only keyword. `value`, `checked`, `valueAsNumber` are property reads, not verbs; an implementation may still define a verb called `value()` (distinguished by its parens).
+`debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb. `this` is the only keyword. `value`, `checked` are property reads, not verbs; an implementation may still define a verb called `value()` (distinguished by its parens).
 
 Ids are addressable only if they avoid the phrase punctuation. An id containing `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#` is a parse error even though it is valid HTML: `#a:b` reads `invalid id "a:b" in #a:b; ids used in phrases may not contain : & | { } ' " #`.
 
-### The formula
+### Expressions
 
-`modifiable-formula` is the second grammar an author meets on the same page as the trigger DSL, and it spells references the same way: the property is explicit, nothing is guessed from the tag.
+An argument is a literal, a reference, an object literal, or an expression. The expression grammar lives inside the trigger — `#total.set(sum('#list .amount'))`, `this.set(replace(this.value, '\D', ''))` — one language, no second attribute. DRY is not a goal: the same recipe on two triggers is written twice.
 
 ```
-reference := ('#' id | 'this') '.' ('value' | 'checked' | 'height' | 'width')
+expression := term (('+' | '-') term)*
+term       := factor (('*' | '/') factor)*
+factor     := '-' factor | primary
+primary    := number | 'string' | reference | function'(' args ')' | '(' expression ')'
+reference  := ('#' id | 'this') '.' ('value' | 'checked' | 'height' | 'width')
+function   := min | max | floor | ceil | round | sum | count | replace
 ```
 
-`this` is the element the formula is on — the same `this` as in a trigger.
+`this` in an expression is the element the phrase was read from — the same `this` as in a trigger.
 
 | Construct | Example | Meaning |
 | --- | --- | --- |
-| Reference | `#qty.value`, `#agree.checked`, `#nav.height`, `#nav.width` | `.value` reads the element's text — a number when it parses, else a string; an empty or missing value is `""`. `.checked` is the boolean `el.checked === true`, `false` on an element without one. `.height`/`.width` are the element's border-box size in CSS pixels as of the last layout the browser reported — a phrase that resizes an element and reads it in the same chain reads the previous size. A bare `#id` is a parse error: `reference #qty needs .value, .checked, .height or .width` |
-| `this` | `this.value`, `this.checked`, `this.height`, `this.width` | Reads the element the formula is on — a row cloned from a template computes from its own value with no id. The four properties read the same as `#id`. A bare `this` is a parse error: `reference this needs .value, .checked, .height or .width` |
-| Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"1a"`. An empty `.value` operand is an empty-operand error, not a silent `""` join — unless a string literal makes the join explicit (`'' + #a.value` stays a join, `#a.value + 1` errors). `-`, `*`, `/`, unary `-` are always arithmetic; `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers; `replace` returns a string. A string literal escapes only the quote and itself (`\'`, `\\`); any other `\x` stays verbatim, so `'\D'` is the three characters `\D` |
-| Boolean in arithmetic | `this.value * this.checked` | `true` is `1`, `false` is `0` — the line-item pattern: price when ticked, `0` when not |
-| Arithmetic is strict | `#qty.value * #price.value` | `-`, `*`, `/`, unary `-`, and `+` between numbers require number or boolean operands; an empty `.value` operand under `+` is the same empty-operand error, never a silent join. An empty or non-numeric operand is an error, and so is division by zero; both are written to the console and shown as `modifiable-invalid-value` — no `NaN`, no `Infinity`, no silent zero |
+| Typed read | `this.value`, `#agree.checked`, `#nav.height`, `#nav.width` | A read has the type the element declares. `type="number"` / `type="range"` read a number (an empty field stays `""` — the empty-operand error names it, never a silent zero; an unparseable value is not-a-number). A checkbox/radio reads its checked boolean, whatever the spelling. Every other input/textarea/select reads the platform `.value` string, zeros intact, `inputmode` declaring nothing. Display elements read what their implementation declares: formattable with a numeric format reads its raw `formattable-value` as a number, a date format or a plain element reads `textContent` a string. `.checked` is `el.checked === true`, `false` on an element without one. `.height`/`.width` are the element's border-box size in CSS pixels as of the last layout the browser reported — a phrase that resizes an element and reads it in the same chain reads the previous size |
+| `this` | `this.set(this.value + '!')` | Reads the element the phrase was read from — a row cloned from a template computes from its own value with no id |
+| Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"1a"`. An empty read operand is an empty-operand error, not a silent `""` join — unless a string literal makes the join explicit (`'' + #a.value` stays a join, `#a.value + 1` errors). `-`, `*`, `/`, unary `-` are always arithmetic; a string operand under them is not-a-number naming the reference. `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers; `replace` returns a string. A string literal escapes only the quote and itself (`\'`, `\\`); any other `\x` stays verbatim, so `'\D'` is the three characters `\D` |
+| Boolean in arithmetic | `#price.value * #tick.checked` | `true` is `1`, `false` is `0` — the line-item row keeps its shape, with the price on a number element and the tick on the checkbox |
+| `sum` / `count` | `sum('#list .amount')` | Run `querySelectorAll` at fire time; `sum` totals number-typed elements and errors on the first that is not, naming it as today; `count` counts. Over checkboxes `sum` totals the ticks as 1/0 — a count of ticked |
 | `replace` | `replace(this.value, '\D', '')` | Regex replace, always global; the value must read as a string. The pattern is compiled `new RegExp(pattern, "g")`, so `$1`/`$&` in the replacement work as the platform defines them; an invalid pattern is a `FormulaError` naming it |
 
 `#id` references and `sum(...)`/`count(...)` selectors resolve against the whole document — scope a set by putting its container's id in the selector (`sum('#list .amount')`).
 
-Sharp edge: two numeric-looking text inputs *add* — `#zip1.value + #zip2.value` sums them. Force a join with a literal on the left: `'' + #zip1.value + #zip2.value`. A numeric-looking value also loses its leading zeros — `#zip.value` for `"05"` is the number `5` — so it cannot be passed to `replace`, which refuses a number as its first argument and says why.
+Sharp edge: a checkbox's `value="..."` attribute is unreachable through `.value` — a checkbox reads its checked boolean, whatever the spelling, so the price belongs on a number element and the tick on the checkbox.
 
-Division by zero is an error, not `Infinity`: `1 / 0` and `0 / 0` throw a `FormulaError` naming the divisor — `(literal)` for a literal zero, else the reference it came from (`#qty.value`).
+Syntax is checked at parse time: `#total.set(1 +)` is a trigger parse error naming the position, reported once per attribute like every other parse error. Fire time only ever carries data errors — empty, not-a-number, division by zero, not-a-string, invalid pattern, a missing reference — each a failed unit, exactly like a throwing verb, reported as `on-<event> on <element>, argument 1 of <verb>(): <reason>`.
 
 ---
 
@@ -299,7 +305,7 @@ The attachment and executor report through `console.error` / `console.warn`; the
 
 | Implementation | Tags | Verbs | Config / state | What it does |
 | --- | --- | --- | --- | --- |
-| `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset`, `compute` | `step`, `formula`, `invalid-value` | typed writes with clamping; `set` takes a string or a number and `inc`/`dec` accept a number or a numeric string, throwing a named error when it cannot be read; evaluates a formula on `compute()` and on connect |
+| `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset` | `step` | typed writes with clamping; `set` takes a string, a number, or an expression evaluated at fire time |
 | `dirtyable` | input, textarea, select, output | — | `dirty-on`; events `dirty`, `clean` | compares the element's current value with its platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); fires `dirty` / `clean` on transition; writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
@@ -567,7 +573,7 @@ Rules:
 - **`config` is read-only.** A baseline is moved by writing the platform's own default property — on an input, `setAttr({name: 'value', value: this.value})` makes the live `defaultValue` follow the current value — never a `config` key.
 - **Invented live state is `<name>-<key>`** — one namespace, shared with config, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
 - **Closure state** for transient internals (in-flight request, timers).
-- **One reader for an element's value.** `readValue(el)` returns `formattable-value` when a `formattable` raw store is present, else `.value`, else `textContent` — a number when the text parses, else the string (an empty value stays the empty string). Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0). A verb reading a value tolerates the unreadable (`inc()` on an empty counter produces `1`); the formula reading one treats it as an error.
+- **One reader for an element's value.** `readValue(el, property = "value")` dispatches on the element's declared type: number/range inputs read a number (an empty value stays `""`), a checkbox/radio reads its checked boolean, every other input/textarea/select reads the platform `.value` string, and display elements read `formattable-value` as a number when a numeric format is present, else `textContent` a string. Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0). A verb reading a value tolerates the unreadable (`inc()` on an empty counter produces `1`); an expression reading one treats a data error as a failed unit.
 
 There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.
 
@@ -579,8 +585,8 @@ There is no store, no signals, no cross-element watching. The DOM is the store; 
 | --- | --- |
 | **Dynamic triggers** (rows cloned from a template) | Rows cloned from a template are attached one microtask after insertion; `on-click="this.remove()"` / `#list.removeRow(this)` works on every clone with no generated ids |
 | **Dynamic receivers** (a row's own subtotal) | Receivers stay ids or `this`. Either address a stable ancestor and let the implementation find the relative element from `e.source` (`closest("li")`), or stamp ids in the template |
-| **Dynamic data sources** (sum whatever inputs exist) | Formula with a selector: `#total implements="modifiable" modifiable-formula="sum('#list .amount:valid')"`, recomputed by `#total.compute()`. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time. `sum` is strict; filter blanks in the selector — `sum('#list .amount:valid')` (blank `required` inputs are `:invalid`), `sum('#list .amount:not(:placeholder-shown)')` (blank inputs carrying a `placeholder`, even `placeholder=" "`), `sum('#list .amount:checked')` sums only ticked checkboxes |
-| **Change without interaction** (server swap, external mutation) | The implementation that performed the change fires its own event (`on-response="#count.compute()"`), a new synchronous chain with `this` bound to that element |
+| **Dynamic data sources** (sum whatever inputs exist) | An expression with a selector: the row's `on-input="#total.set(sum('#list .amount:valid'))"`, and `on-load="this.set(sum('#list .amount:valid'))"` on the total to compute at attach. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time. `sum` is strict; filter blanks in the selector — `sum('#list .amount:valid')` (blank `required` inputs are `:invalid`), `sum('#list .amount:not(:placeholder-shown)')` (blank inputs carrying a `placeholder`, even `placeholder=" "`), `sum('#list .amount:checked')` sums only ticked checkboxes |
+| **Change without interaction** (server swap, external mutation) | The implementation that performed the change fires its own event (`on-response="#count.set(count('#results > li'))"`), a new synchronous chain with `this` bound to that element |
 
 **Timing is uniform.** Every element — in the initial document or inserted later, server-rendered or cloned from a template — attaches one microtask after insertion, or at `DOMContentLoaded` for the initial document. The microtask gap is the one price of the model: a programmatic `.click()` in the gap runs nothing — await a microtask or use `dispatchInteraction`. Moving an element around the document is a no-op: it stays attached, its instance survives. An element that gains `implements` or an `on-*` attribute after insertion is not attached by that attribute alone — re-insert it.
 
@@ -624,7 +630,7 @@ Every receiver must be a participant — `#id` and `this` resolve to elements ca
 
 `parse` caches by attribute string; the cached value is an AST in which `#id`, `this` and reads are **tokens**, not elements or values. Resolution happens per fire, inside `runPhrases`; two identical rows share one parse and resolve to two different elements. `this` is resolved as `token === "this" ? source : document.getElementById(id)` — never rewritten into the attribute, never stamped into an id, never consulted from `event.currentTarget`.
 
-**Argument validation is the receiver's job, not the parser's.** The parser knows every literal's kind from syntax (bare `5` is a number, `'5'` is a string, `#id` / `this` are elements). Scalars go through `parseValueAgainstDSL` against the slot's tsyntax string; resolved elements go through `instanceof` against the slot's constructor. The only runtime-typed values are reads, and they carry the platform's type: `this.value` is a string, `#qty.valueAsNumber` is a number, `#agree.checked` is a boolean. The system never coerces a read; a verb that wants both types widens its own signature — `modifiable`'s numeric verbs are declared `"string | number | undefined"` and parse the string themselves, throwing a named error when they cannot: `inc() could not read a number from "banana"`.
+**Argument validation is the receiver's job, not the parser's.** The parser knows every literal's kind from syntax (bare `5` is a number, `'5'` is a string, `#id` / `this` are elements). Scalars go through `parseValueAgainstDSL` against the slot's tsyntax string; resolved elements go through `instanceof` against the slot's constructor. Reads carry the type the element declares: `this.value` on a number input is a number, on a text input a string, `#agree.checked` a boolean. An expression argument is resolved to a value at fire time and then validated against the same signature. The system never coerces a read; a verb that wants both types widens its own signature — `modifiable`'s numeric verbs are declared `"string | number | undefined"` and parse the string themselves, throwing a named error when they cannot: `inc() could not read a number from "banana"`.
 
 ### Native default actions and propagation
 
@@ -662,10 +668,9 @@ A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain whe
 
 <ul id="results" implements="requestable"
     requestable-url="/api/search" requestable-include="#q"
-    on-response="#count.compute(); #status.show(false)"
+    on-response="#count.set(count('#results > li')); #status.show(false)"
     on-request-error="#status.show()"></ul>
-<output id="count" implements="modifiable"
-        modifiable-formula="count('#results > li')"></output>
+<output id="count" implements="modifiable"></output>
 ```
 
 The trigger's chain is one synchronous link: `send()` aborts the previous in-flight request for `#results`, starts a new one, and returns. When the response lands, `requestable` swaps its children and dispatches `new ImplementationEvent("response", { originalEvent: e.originalEvent })`; the element's own `on-response` attribute runs a second synchronous chain in which `this` is `#results`. The network gap sits between two chains and has a name and a place in the markup.
@@ -712,33 +717,33 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
          on-input="#preview.set(this.value)"
          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
          on-clean="this.removeAttr('data-dirty')"
-         on-keydown="escape: this.reset(); #preview.compute()">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
+         on-keydown="escape: this.reset(); #preview.set(#qty.value)">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
 </label>
-<button on-click="#qty.dec(); #preview.compute()">−</button>
-<button on-click="#qty.inc(); #preview.compute()">+</button>
-<button on-click="#qty.inc(5); #preview.compute()">+5</button>
-<button on-click="#qty.reset(); #preview.compute()">Reset</button>
+<button on-click="#qty.dec(); #preview.set(#qty.value)">−</button>
+<button on-click="#qty.inc(); #preview.set(#qty.value)">+</button>
+<button on-click="#qty.inc(5); #preview.set(#qty.value)">+5</button>
+<button on-click="#qty.reset(); #preview.set(#qty.value)">Reset</button>
 <!-- min/max are the input's own; modifiable reads el.min / el.max and declares nothing for them -->
-<output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
+<output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
 
 <ul id="list" implements="listable" listable-min-rows="1">
   <li>
-    <input class="amount" type="number" on-input="#total.compute()">
-    <button on-click="#list.removeRow(this); #total.compute()">×</button>
+    <input class="amount" type="number" on-input="#total.set(sum('#list .amount'))">
+    <button on-click="#list.removeRow(this); #total.set(sum('#list .amount'))">×</button>
   </li>
 </ul>
-<button on-click="#list.adopt(#row-tpl)">Add row</button>
+<button on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount'))">Add row</button>
 <template id="row-tpl"><li>…</li></template>
 <output id="total" implements="modifiable formattable"
-        modifiable-formula="sum('#list .amount')"
+        on-load="this.set(sum('#list .amount'))"
         formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
 ```
 
 Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the buttons address it); the six buttons are trigger-only; `#preview`, `#list` and `#total` are receivers; the `<li>` is a plain element — the row is reached through `#list.removeRow(this)`, so it needs no implementation and no id, and cloning it from `#row-tpl` produces nothing that has to be unique.
 
-**`+5` trace.** The button's `on-click` listener (bound at attach) → `parse("#qty.inc(5); #preview.compute()")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → the attachment validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → the interaction event reaches `#qty`'s own `dirtyable` handler, which fires `dirty` if `#qty` was clean → the second phrase resolves `#preview` → `#preview.compute()` re-evaluates `#qty.value` (6).
+**`+5` trace.** The button's `on-click` listener (bound at attach) → `parse("#qty.inc(5); #preview.set(#qty.value)")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → the attachment validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → the interaction event reaches `#qty`'s own `dirtyable` handler, which fires `dirty` if `#qty` was clean → the second phrase resolves `#preview` → the expression `#qty.value` reads 6 → `set(6)` writes it.
 
-**`×` trace.** Phrase 1 resolves `#list`, arg `this` is the button → `removeRow(e, button)` finds the row via `closest(":scope > *")` → phrase 2 (independent) resolves `#total` → `compute()` re-evaluates `sum('#list .amount')` over the remaining inputs.
+**`×` trace.** Phrase 1 resolves `#list`, arg `this` is the button → `removeRow(e, button)` finds the row via `closest(":scope > *")` → phrase 2 (independent) resolves `#total` → `set(sum('#list .amount'))` re-totals the remaining inputs.
 
 **`Add row` trace.** `#row-tpl` is a bare ref → resolved to the `<template>` → the attachment checks `tpl instanceof HTMLTemplateElement` (the `adopt` slot) → `listable.adopt(e, tpl)` clones the content. Point it at a `<div>` and the attachment logs `expected HTMLTemplateElement, got HTMLDivElement` and aborts the chain; write `'#row-tpl'` in quotes and it is a string, rejected the same way.
 
@@ -887,7 +892,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
-| `readValue(el)` | The element's value as text: `formattable-value` (the raw store) → `.value` → `textContent`, a number when the text parses else a string |
+| `readValue(el, property = "value")` | The element's value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read `.value` (a string), display elements read `formattable-value` as a number under a numeric format, else `textContent` (a string); `readValue(el, "checked")` is the checked boolean |
 | `valueOf(el)` / `writeValue(el, v)` | Number read (`toNumber(readValue(el))`, NaN → 0) and write helpers |
 | `NotReadyError` | Error set on `e.error` when a dispatch reaches an attached element whose `implements` names an implementation that has not registered yet |
 | Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `formattable` |
@@ -937,7 +942,7 @@ Input masks and format-as-you-type belong in a component library built on the sa
 
 ## Not supported
 
-Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `valueAsNumber` · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1).
+Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1).
 
 `on-load` always means attach, including on `<img>`, `<iframe>`, `<body>`, `<link>`, `<script>`; it is never the native `load` event — bytes-arrived is `addEventListener('load', …)`.
 
@@ -952,8 +957,9 @@ phrase    := [key ':'] unit (('&&' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
-arg       := number | "'" string "'" | 'true' | 'false' | ref | read
-read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
+arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
+read      := ref '.' ('value' | 'checked')
+expr      := <expression>  (see § Expressions)
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'
@@ -979,7 +985,7 @@ Questions a reader may ask, with the answer they got. Each is the decision the b
 
 **Why is there no key list, `enter, numpadenter: #f.send()`?** It is one phrase standing for two, and every per-phrase mechanism (does Enter spend `once()` for NumpadEnter? do debounce timers merge?) then has to pick an answer. `;` already writes two phrases.
 
-**Why isn't an empty field zero?** Because zero is an answer and an empty field is the lack of one — a blank quantity multiplied into a total of `0` invents the answer. The library refuses to invent it: an empty or non-numeric operand is an error, written to the console and shown as `modifiable-invalid-value`, and the author filters blanks in the selector (`:valid`, `:not(:placeholder-shown)`) when a set is allowed to have gaps.
+**Why isn't an empty field zero?** Because zero is an answer and an empty field is the lack of one — a blank quantity multiplied into a total of `0` invents the answer. The library refuses to invent it: an empty or non-numeric operand is a fire-time error, and the author filters blanks in the selector (`:valid`, `:not(:placeholder-shown)`) when a set is allowed to have gaps.
 
 **Why is there no group receiver, `(#a, #b).show(false)`?** The chain aborts per receiver, so the group form is exactly `#a.show(false); #b.show(false)` with a second spelling and a bookkeeping key that has to survive `#b` being replaced in the DOM. A shorthand that needs a paragraph is not a shorthand.
 

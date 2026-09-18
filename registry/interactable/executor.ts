@@ -5,6 +5,8 @@ import { normaliseRootMargin } from "@interactable/intersect.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { Arg, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
+import { readValue } from "@behaviors/implementation-utils.ts";
+import { evaluateFormula, FormulaError } from "@utils/formula.ts";
 
 const KEYBOARD_EVENT_TYPES = new Set(["keydown", "keyup"]);
 
@@ -180,9 +182,13 @@ function walkUnit(state: WalkState, unit: Unit): ChainResult {
     state.callIndex += 1;
     let arg: unknown;
     try {
-      arg = resolveArg(call.arg, source);
+      arg = resolveArg(call.arg, source, { ev: state.ev, verb: call.verb });
     } catch (err) {
-      logOnce(source, `argument for ${call.verb}(): ${(err as Error).message}; phrase skipped`);
+      if (err instanceof FormulaError && err.label !== undefined) {
+        logOnce(source, `${err.label}${err.message}`);
+      } else {
+        logOnce(source, `argument for ${call.verb}(): ${(err as Error).message}; phrase skipped`);
+      }
       return { outcome: "failed" };
     }
 
@@ -272,7 +278,11 @@ function resolveRef(ref: Ref, source: Element): Element | null {
   return document.getElementById(ref.id);
 }
 
-function resolveArg(arg: Arg | undefined, source: Element): unknown {
+function resolveArg(
+  arg: Arg | undefined,
+  source: Element,
+  context: { ev: Event; verb: string; fieldName?: string },
+): unknown {
   if (arg === undefined) return undefined;
   switch (arg.kind) {
     case "number":
@@ -287,15 +297,24 @@ function resolveArg(arg: Arg | undefined, source: Element): unknown {
     case "read": {
       const el = resolveRef(arg.ref, source);
       if (el === null) throw new Error(`${describeRef(arg.ref)} not found`);
-      const target = el as unknown as Record<string, unknown>;
-      if (!(arg.property in target)) {
-        throw new Error(`${describeRef(arg.ref)} has no ${arg.property} property`);
+      return readValue(el, arg.property);
+    }
+    case "expr": {
+      try {
+        return evaluateFormula(arg.source, { document: source.ownerDocument, source }).value;
+      } catch (err) {
+        if (err instanceof FormulaError) {
+          const field = context.fieldName !== undefined ? `, field ${context.fieldName}` : "";
+          err.label = `on-${context.ev.type} on ${describeElement(source)}, argument 1 of ${context.verb}()${field}: `;
+        }
+        throw err;
       }
-      return target[arg.property];
     }
     case "object": {
       const out: Record<string, unknown> = {};
-      for (const field of arg.fields) out[field.name] = resolveArg(field.value, source);
+      for (const field of arg.fields) {
+        out[field.name] = resolveArg(field.value, source, { ...context, fieldName: field.name });
+      }
       return out;
     }
   }

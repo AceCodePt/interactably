@@ -1,4 +1,5 @@
 import { INTERSECT_EVENT_NAMES, normaliseRootMargin } from "@interactable/intersect.ts";
+import { parseFormula } from "@utils/formula.ts";
 
 export type Ref = { kind: "id"; id: string } | { kind: "this" };
 
@@ -7,7 +8,8 @@ export type Arg =
   | { kind: "string"; value: string }
   | { kind: "boolean"; value: boolean }
   | { kind: "ref"; ref: Ref }
-  | { kind: "read"; ref: Ref; property: "value" | "checked" | "valueAsNumber" }
+  | { kind: "read"; ref: Ref; property: "value" | "checked" }
+  | { kind: "expr"; source: string; position: number }
   | { kind: "object"; fields: ReadonlyArray<{ name: string; value: Arg }> };
 
 export interface Call {
@@ -41,8 +43,6 @@ const ID = /^[^\s,;.()&|{}:'"#]+$/;
 const KEY = /^[^\s.,;()&|{}:'"#]+$/;
 const TIMING = /^(debounce|throttle|delay)\(([^)]*)\)$/;
 const READ = /^(this|#[^\s,;.()]+)\.([A-Za-z_$][A-Za-z0-9_$]*)$/;
-
-const READABLE_PROPERTIES = new Set(["value", "checked", "valueAsNumber"]);
 
 const cache = new Map<string, Phrase[]>();
 
@@ -174,17 +174,18 @@ function parseCall(segment: string): Call {
   const match = CALL.exec(segment);
   if (match === null) throw new Error(`expected a verb call with parens, got "${segment}"`);
   const verb = match[1]!;
-  const inner = match[2]!.trim();
+  const inner = match[2]!;
+  const trimmed = inner.trim();
   let arg: Arg | undefined;
-  if (inner !== "") {
-    if (inner.startsWith("{")) {
-      arg = parseObject(inner);
+  if (trimmed !== "") {
+    if (trimmed.startsWith("{")) {
+      arg = parseObject(trimmed);
     } else {
       const positional = splitTopLevel(inner, ",").map((s) => s.trim());
       if (positional.length > 1) {
         throw new Error(`verb ${verb}() takes one argument, got ${positional.length}`);
       }
-      arg = parseArg(positional[0]!);
+      arg = parseArg(positional[0]!, inner.indexOf(positional[0]!));
     }
   }
   const call: Call = { verb };
@@ -192,29 +193,66 @@ function parseCall(segment: string): Call {
   return call;
 }
 
-function parseArg(text: string): Arg {
+function parseArg(text: string, position: number): Arg {
   if (NUMBER.test(text)) return { kind: "number", value: Number(text) };
   if (text === "true" || text === "false") return { kind: "boolean", value: text === "true" };
   const stringMatch = STRING.exec(text);
-  if (stringMatch !== null) return { kind: "string", value: stringMatch[1]! };
+  if (stringMatch !== null) return { kind: "string", value: unescapeString(stringMatch[1]!) };
   if (text === "this") return { kind: "ref", ref: { kind: "this" } };
 
   const read = READ.exec(text);
   if (read !== null) {
     const ref = parseRef(read[1]!);
     const property = read[2]!;
-    if (!READABLE_PROPERTIES.has(property)) {
-      throw new Error(`property "${property}" is not readable; only value, checked, valueAsNumber`);
+    if (property === "value" || property === "checked") {
+      return { kind: "read", ref, property };
     }
-    return { kind: "read", ref, property: property as "value" | "checked" | "valueAsNumber" };
+    if (property === "valueAsNumber") {
+      throw new Error(".valueAsNumber is not a property; .value on a number input is already a number");
+    }
+    if (property !== "height" && property !== "width") {
+      throw new Error(`property "${property}" is not readable; only value, checked`);
+    }
   }
 
-  if (text.startsWith("#")) {
+  if (text.startsWith("#") && !text.includes(".")) {
     const id = text.slice(1);
     validateId(id);
     return { kind: "ref", ref: { kind: "id", id } };
   }
-  throw new Error(`cannot parse argument "${text}"`);
+  return expressionArg(text, position);
+}
+
+function expressionArg(text: string, position: number): Arg {
+  try {
+    parseFormula(text);
+  } catch (err) {
+    throw new Error(`expression at position ${position}: ${(err as Error).message}`);
+  }
+  return { kind: "expr", source: text, position };
+}
+
+function unescapeString(raw: string): string {
+  let out = "";
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i]!;
+    if (ch === "\\") {
+      const next = raw[i + 1];
+      if (next === undefined) {
+        out += ch;
+        break;
+      }
+      if (next === "'" || next === "\\") {
+        out += next;
+        i++;
+        continue;
+      }
+      out += ch;
+      continue;
+    }
+    out += ch;
+  }
+  return out;
 }
 
 function parseObject(inner: string): Arg {
@@ -223,11 +261,15 @@ function parseObject(inner: string): Arg {
   if (body === "") throw new Error("object literal needs at least one field");
   const fields = splitTopLevel(body, ",").map((s) => s.trim());
   const parsed = fields.map((field) => {
+    const fieldIndex = body.indexOf(field);
     const colon = field.indexOf(":");
     if (colon === -1) throw new Error(`object field "${field}" needs "name: value"`);
     const name = field.slice(0, colon).trim();
     if (!IDENT.test(name)) throw new Error(`invalid object field name "${name}"`);
-    return { name, value: parseArg(field.slice(colon + 1).trim()) };
+    const afterColon = field.slice(colon + 1);
+    const valueText = afterColon.trim();
+    const valuePosition = fieldIndex + colon + 1 + (afterColon.length - afterColon.trimStart().length);
+    return { name, value: parseArg(valueText, valuePosition) };
   });
   return { kind: "object", fields: parsed };
 }
@@ -242,7 +284,10 @@ function findKeyColon(raw: string): number {
       single = !single;
       continue;
     }
-    if (single) continue;
+    if (single) {
+      if (ch === "\\" && i + 1 < raw.length) i++;
+      continue;
+    }
     if (ch === "(") {
       paren++;
       continue;
@@ -280,6 +325,10 @@ function splitUnits(text: string): { parts: string[]; operators: string[] } {
     }
     if (single) {
       current += ch;
+      if (ch === "\\" && i + 1 < text.length) {
+        current += text[i + 1]!;
+        i++;
+      }
       continue;
     }
     if (ch === "(") paren++;
@@ -308,7 +357,8 @@ function splitTopLevel(text: string, separator: string): string[] {
   let single = false;
   let paren = 0;
   let brace = 0;
-  for (const ch of text) {
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
     if (ch === "'") {
       single = !single;
       current += ch;
@@ -316,6 +366,10 @@ function splitTopLevel(text: string, separator: string): string[] {
     }
     if (single) {
       current += ch;
+      if (ch === "\\" && i + 1 < text.length) {
+        current += text[i + 1]!;
+        i++;
+      }
       continue;
     }
     if (ch === "(") paren++;

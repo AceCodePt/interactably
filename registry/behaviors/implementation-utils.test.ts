@@ -14,14 +14,20 @@ after(() => {
   teardownJsdom(dom);
 });
 
-test("valueOf reads through readValue: formattable-value first, then .value, then textContent", () => {
+test("valueOf reads through readValue: number input, formattable raw, textContent", () => {
+  const numberInput = document.createElement("input");
+  numberInput.type = "number";
+  numberInput.value = "7";
+  assert.equal(valueOf(numberInput), 7);
+
+  const textInput = document.createElement("input");
+  textInput.value = "7";
+  assert.equal(valueOf(textInput), 7);
+
   const byFormattable = document.createElement("div");
   byFormattable.setAttribute("formattable-value", "7");
+  byFormattable.setAttribute("formattable-format", "{ style: 'currency', currency: 'USD' }");
   assert.equal(valueOf(byFormattable), 7);
-
-  const byStringValue = document.createElement("div") as unknown as { value: string };
-  byStringValue.value = "7";
-  assert.equal(valueOf(byStringValue as unknown as Element), 7);
 
   const byText = document.createElement("div");
   byText.textContent = "42";
@@ -31,18 +37,21 @@ test("valueOf reads through readValue: formattable-value first, then .value, the
   assert.equal(valueOf(empty), 0);
 });
 
-test("readValue reads formattable-value first, then .value as a number when it parses, else as a string, falling back to textContent", () => {
+test("readValue dispatches on the element's declared type", () => {
   const formatted = document.createElement("div");
   formatted.textContent = "$42.00";
   formatted.setAttribute("formattable-value", "42");
+  formatted.setAttribute("formattable-format", "{ style: 'currency', currency: 'USD' }");
   assert.equal(readValue(formatted), 42);
 
-  const formattedWords = document.createElement("div");
-  formattedWords.textContent = "$42.00";
-  formattedWords.setAttribute("formattable-value", "forty-two");
-  assert.equal(readValue(formattedWords), "forty-two");
+  const dated = document.createElement("div");
+  dated.textContent = "Jan 2, 2024";
+  dated.setAttribute("formattable-value", "2024-01-02");
+  dated.setAttribute("formattable-format", "{ type: 'date', dateStyle: 'medium' }");
+  assert.equal(readValue(dated), "Jan 2, 2024");
 
   const numeric = document.createElement("input");
+  numeric.type = "number";
   numeric.value = "42";
   assert.equal(readValue(numeric), 42);
 
@@ -50,17 +59,25 @@ test("readValue reads formattable-value first, then .value as a number when it p
   words.value = "abc";
   assert.equal(readValue(words), "abc");
 
-  const empty = document.createElement("input");
-  empty.value = "";
-  assert.equal(readValue(empty), "");
+  const textNumeric = document.createElement("input");
+  textNumeric.value = "05";
+  assert.equal(readValue(textNumeric), "05");
+
+  const emptyNumber = document.createElement("input");
+  emptyNumber.type = "number";
+  emptyNumber.value = "";
+  assert.equal(readValue(emptyNumber), "");
+
+  const checked = document.createElement("input");
+  checked.type = "checkbox";
+  checked.checked = true;
+  assert.equal(readValue(checked), true);
+  assert.equal(readValue(checked, "checked"), true);
 
   const byText = document.createElement("div");
   byText.textContent = "7";
-  assert.equal(readValue(byText), 7);
-
-  const byTextWords = document.createElement("div");
-  byTextWords.textContent = "seven";
-  assert.equal(readValue(byTextWords), "seven");
+  assert.equal(readValue(byText), "7");
+  assert.equal(readValue(byText, "checked"), false);
 });
 
 test("bindEvents binds one listener per entry, filters event:key pairs, and updates live", () => {

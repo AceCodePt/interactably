@@ -34,25 +34,25 @@ const MARKUP = `
          on-input="#preview.set(this.value)"
          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
          on-clean="this.removeAttr('data-dirty')"
-         on-keydown="escape: this.reset(); #preview.compute()">
+         on-keydown="escape: this.reset(); #preview.set(#qty.value)">
 </label>
-<button id="dec" on-click="#qty.dec(); #preview.compute()">−</button>
-<button id="inc" on-click="#qty.inc(); #preview.compute()">+</button>
-<button id="inc5" on-click="#qty.inc(5); #preview.compute()">+5</button>
-<button id="reset" on-click="#qty.reset(); #preview.compute()">Reset</button>
+<button id="dec" on-click="#qty.dec(); #preview.set(#qty.value)">−</button>
+<button id="inc" on-click="#qty.inc(); #preview.set(#qty.value)">+</button>
+<button id="inc5" on-click="#qty.inc(5); #preview.set(#qty.value)">+5</button>
+<button id="reset" on-click="#qty.reset(); #preview.set(#qty.value)">Reset</button>
 <output id="preview" implements="modifiable"
-        modifiable-formula="#qty.value">1</output>
+        on-load="this.set(#qty.value)">1</output>
 
 <ul id="list" implements="listable" listable-min-rows="1">
   <li>
-    <input class="amount" type="number" value="2.5" on-input="#total.compute()">
-    <button on-click="#list.removeRow(this); #total.compute()">×</button>
+    <input class="amount" type="number" value="2.5" on-input="#total.set(sum('#list .amount'))">
+    <button on-click="#list.removeRow(this); #total.set(sum('#list .amount'))">×</button>
   </li>
 </ul>
-<button id="add-row" on-click="#list.adopt(#row-tpl)">Add row</button>
-<template id="row-tpl"><li><input class="amount" type="number" value="3.25" on-input="#total.compute()"><button on-click="#list.removeRow(this); #total.compute()">×</button></li></template>
+<button id="add-row" on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount'))">Add row</button>
+<template id="row-tpl"><li><input class="amount" type="number" value="3.25" on-input="#total.set(sum('#list .amount'))"><button on-click="#list.removeRow(this); #total.set(sum('#list .amount'))">×</button></li></template>
 <output id="total" implements="modifiable formattable"
-        modifiable-formula="sum('#list .amount')"
+        on-load="this.set(sum('#list .amount'))"
         formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
 `;
 
@@ -153,7 +153,7 @@ test("Escape on #qty runs the keyed this.reset()", async () => {
   assert.equal(qty.hasAttribute("data-dirty"), false);
 });
 
-test("the × trace: removeRow finds the row from the button, then compute re-reads the remaining amounts", async () => {
+test("the × trace: removeRow finds the row from the button, then set(sum) re-reads the remaining amounts", async () => {
   mount();
   await flush();
 

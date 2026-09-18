@@ -1,7 +1,28 @@
-import { test } from "node:test";
+import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
+import type { JSDOM } from "jsdom";
+import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
 import { compileSignature } from "@interactable/signature.ts";
 import type { Ctor } from "@interactable/signature.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
+
+let dom: JSDOM;
+let runPhrases: typeof import("@interactable/executor.ts").runPhrases;
+let attach: typeof import("@interactable/attachment.ts").attach;
+
+before(async () => {
+  dom = setupJsdom();
+  ({ runPhrases } = await import("@interactable/executor.ts"));
+  ({ attach } = await import("@interactable/attachment.ts"));
+  const { defineImplementation } = await import("@behaviors/_implementation-definition.ts");
+  defineImplementation("signature-fake", { tags: ["div"], verbs: { set: "string | number" } }, () => ({
+    set: () => undefined,
+  }));
+});
+
+after(() => {
+  teardownJsdom(dom);
+});
 
 class Widget {
   name = "widget";
@@ -98,4 +119,35 @@ test("record slot keys that do not admit undefined stay required", () => {
   assert.deepEqual(sig.validate({ title: "hello" }), { title: "hello" });
   assert.throws(() => sig.validate({}));
   assert.throws(() => sig.validate({ count: 1 }));
+});
+
+test("the signature validates the resolved value, not the Arg node", () => {
+  const receiver = document.createElement("div");
+  receiver.id = "m";
+  receiver.setAttribute("implements", "signature-fake");
+  document.body.appendChild(receiver);
+  attach(receiver);
+
+  const seen: InteractionEvent[] = [];
+  receiver.addEventListener("interaction", (raw) => seen.push(raw as InteractionEvent));
+
+  const text = document.createElement("input");
+  text.value = "abc";
+  document.body.appendChild(text);
+  attach(text);
+  runPhrases(text, "#m.set(this.value)", new Event("input"));
+  assert.equal(seen[0]!.handled, true);
+  assert.equal(seen[0]!.error, undefined, "an expression resolving to a string passes 'string | number'");
+
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  document.body.appendChild(box);
+  attach(box);
+  runPhrases(box, "#m.set(this.checked)", new Event("change"));
+  assert.equal(seen[1]!.handled, true);
+  assert.ok(seen[1]!.error !== undefined, "an expression resolving to a boolean fails 'string | number'");
+  assert.ok(
+    String(seen[1]!.error).includes('"string | number"'),
+    String(seen[1]!.error),
+  );
 });
