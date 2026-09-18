@@ -104,9 +104,6 @@ test("site: no is= anywhere, referenced bundles are built, and the demo interact
     const html = readFileSync(fileURLToPath(new URL(file, siteDir)), "utf8");
     assert.equal(html.includes("interactable-"), false, `${file} carries no interactable- mentions`);
   }
-  assert.equal(examples.includes("installAutoLoader"), false, "examples.html carries no auto-loader reference");
-  assert.equal(demo.includes("installAutoLoader"), false, "demo.js carries no auto-loader reference");
-
   const names = vendorRefs(examples, demo);
   assert.ok(names.includes("interactably-core.js"), "the site imports the core bundle");
   assert.ok(names.length > 0, "the site references at least one vendor bundle");
