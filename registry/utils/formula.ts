@@ -18,13 +18,13 @@ interface Operand {
   readonly literal?: boolean;
 }
 
-type Reason = "empty" | "not-a-number" | "division-by-zero";
+type Reason = "empty" | "not-a-number" | "division-by-zero" | "not-a-string" | "invalid-pattern";
 
 export class FormulaError extends Error {
   readonly formula: string;
   readonly operator: string | undefined;
   readonly function: string | undefined;
-  readonly operand: string | number;
+  readonly operand: string | number | boolean;
   readonly origin: string;
   readonly selector: string | undefined;
   readonly element: Element | undefined;
@@ -34,7 +34,7 @@ export class FormulaError extends Error {
     formula: string;
     operator: string | undefined;
     function: string | undefined;
-    operand: string | number;
+    operand: string | number | boolean;
     origin: string;
     selector: string | undefined;
     element: Element | undefined;
@@ -42,12 +42,20 @@ export class FormulaError extends Error {
   }) {
     const channel =
       opts.function !== undefined ? `${opts.function}()` : JSON.stringify(opts.operator);
-    const reason = opts.reason === "empty" ? "empty" : "not a number";
-    super(
-      opts.reason === "division-by-zero"
-        ? `formula ${JSON.stringify(opts.formula)}: ${channel} divided by zero from ${opts.origin}`
-        : `formula ${JSON.stringify(opts.formula)}: ${channel} got ${JSON.stringify(opts.operand)} from ${opts.origin} (${reason})`,
-    );
+    let message: string;
+    if (opts.reason === "division-by-zero") {
+      message = `formula ${JSON.stringify(opts.formula)}: ${channel} divided by zero from ${opts.origin}`;
+    } else if (opts.reason === "not-a-string") {
+      message = `${channel} needs a string as its first argument; ${opts.origin} read as ${
+        typeof opts.operand === "boolean" ? "a boolean" : "a number"
+      } — see the .value rule`;
+    } else if (opts.reason === "invalid-pattern") {
+      message = `${channel} got an invalid pattern ${JSON.stringify(opts.operand)}`;
+    } else {
+      const reason = opts.reason === "empty" ? "empty" : "not a number";
+      message = `formula ${JSON.stringify(opts.formula)}: ${channel} got ${JSON.stringify(opts.operand)} from ${opts.origin} (${reason})`;
+    }
+    super(message);
     this.name = "FormulaError";
     this.formula = opts.formula;
     this.operator = opts.operator;
@@ -296,8 +304,13 @@ class Formula {
       if (ch === "\\") {
         const next = this.source[this.pos + 1];
         if (next === undefined) break;
-        out += next;
-        this.pos += 2;
+        if (next === quote || next === "\\") {
+          out += next;
+          this.pos += 2;
+          continue;
+        }
+        out += ch;
+        this.pos++;
         continue;
       }
       if (ch === quote) {
@@ -349,6 +362,20 @@ function applyFunction(name: string, args: Operand[], formula: string, context: 
     case "count":
       requireArity(name, args.length, 1);
       return count(selectorArg(args[0]!.value), context);
+    case "replace": {
+      requireArity(name, args.length, 3);
+      const meta = functionMeta(formula, name);
+      const source = requireString(args[0]!, meta);
+      const pattern = String(args[1]!.value);
+      const replacement = String(args[2]!.value);
+      let regex: RegExp;
+      try {
+        regex = new RegExp(pattern, "g");
+      } catch {
+        throw new FormulaError({ ...meta, operand: pattern, origin: args[1]!.origin, reason: "invalid-pattern" });
+      }
+      return source.replace(regex, replacement);
+    }
     default:
       throw new Error(`unknown function ${name}()`);
   }
@@ -393,6 +420,17 @@ function requireNumber(operand: Operand, meta: Meta): number {
     operand: String(value),
     origin: operand.origin,
     reason: value === "" ? "empty" : "not-a-number",
+  });
+}
+
+function requireString(operand: Operand, meta: Meta): string {
+  const value = operand.value;
+  if (typeof value === "string") return value;
+  throw new FormulaError({
+    ...meta,
+    operand: value,
+    origin: operand.origin,
+    reason: "not-a-string",
   });
 }
 
