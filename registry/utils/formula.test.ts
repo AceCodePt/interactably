@@ -489,3 +489,72 @@ test("an empty this.value operand is an empty-operand error naming this.value", 
     return true;
   });
 });
+
+test("a backslash escapes only the quote and itself; every other \\x stays verbatim", () => {
+  assert.equal(evaluateFormula("'\\D'").value, "\\D");
+  assert.equal(evaluateFormula("'\\''").value, "'");
+  assert.equal(evaluateFormula("'\\\\'").value, "\\");
+});
+
+test("replace strips non-digits from a string", () => {
+  assert.equal(evaluateFormula("replace('a1b2', '\\D', '')").value, "12");
+});
+
+test("replace is always global and supports $1 group references", () => {
+  assert.equal(evaluateFormula("replace('1-2-3', '-', '')").value, "123");
+  assert.equal(evaluateFormula("replace('John Smith', '(\\w+) (\\w+)', '$2, $1')").value, "Smith, John");
+});
+
+test("replace('', '\\D', '') is the empty string, not an empty-operand error", () => {
+  assert.equal(evaluateFormula("replace('', '\\D', '')").value, "");
+});
+
+test("replace takes exactly three arguments", () => {
+  assert.throws(() => evaluateFormula("replace('a', 'b')"), /takes 3 arguments/);
+  assert.throws(() => evaluateFormula("replace('a', 'b', 'c', 'd')"), /takes 3 arguments/);
+});
+
+test("replace refuses a number first argument, naming the origin and the .value rule", () => {
+  const zip = document.createElement("input");
+  zip.id = "zip";
+  zip.value = "05";
+  document.body.appendChild(zip);
+
+  assert.throws(() => evaluateFormula("replace(#zip.value, '\\D', '')"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "not-a-string");
+    assert.ok(
+      err.message.includes("replace() needs a string as its first argument; #zip.value read as a number"),
+      err.message,
+    );
+    assert.ok(err.message.includes("see the .value rule"), err.message);
+    return true;
+  });
+});
+
+test("replace rejects an invalid pattern as a FormulaError naming the pattern", () => {
+  assert.throws(() => evaluateFormula("replace('a', '[', 'b')"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "invalid-pattern");
+    assert.ok(err.message.includes("invalid pattern"), err.message);
+    assert.ok(err.message.includes('"["'), err.message);
+    return true;
+  });
+});
+
+test("replace(this.value, …) reads the source element the formula is on", () => {
+  const self = document.createElement("input");
+  self.value = "1-2-3";
+  document.body.appendChild(self);
+
+  assert.equal(evaluateFormula("replace(this.value, '-', '')", { document, source: self }).value, "123");
+});
+
+test("replace nests inside + with a non-numeric-looking value", () => {
+  const phone = document.createElement("input");
+  phone.id = "phone";
+  phone.value = "(555) 123-4567";
+  document.body.appendChild(phone);
+
+  assert.equal(evaluateFormula("'tel:' + replace(#phone.value, '\\D', '')").value, "tel:5551234567");
+});
