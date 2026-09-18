@@ -10,7 +10,8 @@ const KEYBOARD_EVENT_TYPES = new Set(["keydown", "keyup"]);
 
 interface ElementPhraseState {
   spentOnce: Set<string>;
-  timers: Map<string, ReturnType<typeof setTimeout>>;
+  debounceTimers: Map<string, ReturnType<typeof setTimeout>>;
+  pending: Set<ReturnType<typeof setTimeout>>;
   throttles: Map<string, number>;
   logged: Set<string>;
 }
@@ -20,7 +21,13 @@ const stateByElement = new WeakMap<Element, ElementPhraseState>();
 function stateOf(el: Element): ElementPhraseState {
   let state = stateByElement.get(el);
   if (state === undefined) {
-    state = { spentOnce: new Set(), timers: new Map(), throttles: new Map(), logged: new Set() };
+    state = {
+      spentOnce: new Set(),
+      debounceTimers: new Map(),
+      pending: new Set(),
+      throttles: new Map(),
+      logged: new Set(),
+    };
     stateByElement.set(el, state);
   }
   return state;
@@ -29,7 +36,8 @@ function stateOf(el: Element): ElementPhraseState {
 export function clearPhraseState(el: Element): void {
   const state = stateByElement.get(el);
   if (state === undefined) return;
-  for (const timer of state.timers.values()) clearTimeout(timer);
+  for (const timer of state.debounceTimers.values()) clearTimeout(timer);
+  for (const timer of state.pending) clearTimeout(timer);
   stateByElement.delete(el);
 }
 
@@ -229,38 +237,31 @@ function chainKeyOf(key: string, unitIndex: number): string {
 }
 
 function scheduleResume(state: WalkState, ms: number): void {
-  const timers = stateOf(state.source).timers;
-  const pauseKey = pauseTimerKey(state.key);
-  const existing = timers.get(pauseKey);
-  if (existing !== undefined) clearTimeout(existing);
+  const pending = stateOf(state.source).pending;
   const timer = setTimeout(() => {
-    timers.delete(pauseKey);
+    pending.delete(timer);
     try {
       walk(state);
     } catch (err) {
       console.error("[Interactable]", err);
     }
   }, ms);
-  timers.set(pauseKey, timer);
+  pending.add(timer); // spentOnces is an array on the per-walk WalkState, so two remainders in flight do not share cursor or gate state
 }
 
 function scheduleDebounce(state: WalkState, chainKey: string, ms: number): void {
-  const timers = stateOf(state.source).timers;
-  const existing = timers.get(chainKey);
+  const debounceTimers = stateOf(state.source).debounceTimers;
+  const existing = debounceTimers.get(chainKey);
   if (existing !== undefined) clearTimeout(existing);
   const timer = setTimeout(() => {
-    timers.delete(chainKey);
+    debounceTimers.delete(chainKey);
     try {
       walk(state);
     } catch (err) {
       console.error("[Interactable]", err);
     }
   }, ms);
-  timers.set(chainKey, timer);
-}
-
-function pauseTimerKey(key: string): string {
-  return `${key}\u0000pause`;
+  debounceTimers.set(chainKey, timer);
 }
 
 function resolveRef(ref: Ref, source: Element): Element | null {

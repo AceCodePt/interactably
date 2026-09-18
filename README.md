@@ -159,10 +159,10 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Property read | `#preview.set(this.value)` | `value` / `checked` / `valueAsNumber`, the platform's own types |
 | Key | `on-keydown="enter: #f.send()"` | Filter *which* events reach the phrase |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
-| Debounce | `#echo.debounce(300).set(this.value)` | Defers this receiver's chain by 300ms; must sit right after the ref |
+| Debounce | `#echo.debounce(300).set(this.value)` | Defers this receiver's chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref |
 | Throttle | `#viewport.throttle(16).zoom(this)` | Leading-edge throttle of this receiver's chain; per element |
 | Once | `#tour.once().show()` | Gates the rest of the chain; spent when the walk passes it |
-| Delay | `#note.delay(500).reset()` | Pauses the chain where it sits; downstream links — even past `&&` — wait |
+| Delay | `#note.delay(500).reset()` | Pauses the chain where it sits for a fixed ms; re-fires stack, they do not reset it |
 | Selector | `modifiable-formula="sum('#list .amount')"` | Selectors appear only inside string arguments |
 
 `<event-type>` is any DOM event type — `on-click`, `on-input`, `on-keydown`, `on-mouseenter`, `on-toggle`, `on-cart-updated`, … The listener is bound on the element itself, so there is no supported-events list. Every trigger names its event; there are no default interactions. Triggers are three kinds: **native DOM events**, **implementation events**, and **synthetic triggers**. An implementation may declare its own events (`copy`, `response`, `request-error`, `restore`); on the element that implements it, `on-<event>` fires only for the implementation's `ImplementationEvent`, never for a same-named DOM event. The synthetic names `on-intersect-enter` / `on-intersect-leave` / `on-intersect-full` are evaluated from an `IntersectionObserver` against the viewport, so they need no `implements` and never warn about a missing event; the phrase key is the observer's `rootMargin` (a `px`/`%` string, a `#id.height`/`#id.width` reference, or nothing for `0px`), and each `;` phrase observes its own margin. `enter` fires when the element's intersection with the box gains non-zero area — including the observer's initial report for an element visible at load — and `leave` fires when it loses it; `full` fires on either side of a change between the element being entirely inside the box and not. `full` means the whole element is inside the box, so an element taller than the box is never `full`; shrink the box with a margin and use `enter` instead. A `-50% 0px 0px 0px` margin shrinks the box to the viewport's vertical centre: `on-intersect-enter="-50% 0px 0px 0px: …"` fires when the element's leading edge reaches that line, for an element of any height.
@@ -233,7 +233,7 @@ class InteractionEvent extends Event {
 - **Non-bubbling.** An attached element receives interactions aimed at itself and nothing else — no `if (e.target !== el)` guards.
 - **`preventDefault()` aborts the rest of the chain.** This is the guard-verb mechanism: `validate().send()`, with `||` as the failure branch.
 - **Four return channels, because a DOM event has none.** `dispatchEvent` swallows listener exceptions and cannot tell "handled" from "nobody listened". So the attachment writes `handled` (an implementation owned the verb), `error` (validation or the verb body threw), `result` (the return value) and `pauseMs` (a verb paused the chain) onto the event, and the executor reads them after dispatch.
-- **`pauseMs` defers the chain, it does not abort it.** The `delay(ms)` modifier — and any verb that sets `e.pauseMs = N` — stops the chain where it is, schedules the remainder to run N ms later, and returns. A re-fire that reaches the same pause reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. Disconnecting the element drops it — the timer lives in the same per-element state as `debounce`.
+- **`pauseMs` defers the chain, it does not abort it.** The `delay(ms)` modifier — and any verb that sets `e.pauseMs = N` — stops the chain where it is, schedules the remainder to run N ms later, and returns. Each re-fire that reaches the same delay schedules its own remainder — they stack, they do not reset each other, so two can be pending at once; superseding is `debounce`'s job. A re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. Disconnecting the element drops them — every pending remainder lives in the same per-element state as `debounce`.
 - **No `isTrusted` gate.** Tests dispatch real DOM events on triggers.
 - **The browser's `command` event plays no part.** A page can also use native invokers; an implementation may listen to `command` like any other DOM event.
 
@@ -321,7 +321,7 @@ The attachment and executor report through `console.error` / `console.warn`; the
         on-click="this.delay(300).setAttr({name: 'aria-busy', value: 'true'})">…</button>
 ```
 
-The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms` later, and returns. A re-fire that reaches the same delay reschedules it (latest wins); a re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. The timer is keyed per element and dropped on disconnect. The copy-flash pattern lives in the trigger attribute: `on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"` marks the button, pauses, and the reset runs 1.5 s later. A pause is a scheduling decision the executor owns — never an awaited interaction.
+The executor stops the chain at `delay(ms)`, schedules the remainder to run `ms` later, and returns. Each re-fire that reaches the same delay schedules its own remainder — they stack, they do not reset each other, so two can be pending at once; superseding is `debounce`'s job. A re-fire gated before it — for example by a spent `once()` — leaves the pending remainder to run. Every pending remainder is dropped on disconnect. The copy-flash pattern lives in the trigger attribute: `on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"` marks the button, and the reset debounced 1.5 s after the last copy. A pause is a scheduling decision the executor owns — never an awaited interaction.
 
 ### `prevent-default` and `no-propagate`
 
@@ -646,12 +646,12 @@ A chain can still be *paused* without awaiting: `delay(ms)` pauses the chain whe
 ```html
 <button implements="copyable attributable"
         on-click="this.copy(#snippet)"
-        on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')">
+        on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')">
   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
 </button>
 ```
 
-`copy` fires its `copy` event on success (`this` is the button); `setAttr` marks the button; `delay(1500)` pauses; `removeAttr('data-copied')` runs 1.5 s later and the label reverts. A re-copy during the pause cancels the pending remove and reschedules it, so the flash lasts 1.5 s *after the last* copy.
+`copy` fires its `copy` event on success (`this` is the button); `setAttr` marks the button; the reset runs after the last copy — each copy restarts the 1.5 s `debounce`, so the flash lasts 1.5 s *after the last* copy.
 
 ```html
 <input id="q" on-input="#results.debounce(300).send()">
