@@ -12,8 +12,10 @@ cd "${WORKTREE_PATH:-$(git rev-parse --show-toplevel)}" || exit 1
 # Install the worktree's dependencies (node_modules is not committed).
 pnpm install --prefer-offline
 
-# Type-check and run the node:test suite. Both must pass.
+# Type-check, build, then run the node:test suite. The site tests load
+# dist/site/demo.js, so the build must run first.
 pnpm check
+pnpm build
 pnpm test
 
 # Verification passed: commit anything the agent left uncommitted (idempotent).
