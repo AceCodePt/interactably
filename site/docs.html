@@ -113,7 +113,7 @@
   start();
 &lt;/script&gt;
 
-&lt;button id="inc" on-click="#qty.inc(); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
+&lt;button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
 
 &lt;label&gt;Qty
   &lt;input id="qty" implements="modifiable"
@@ -127,15 +127,15 @@
           element that has <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute.
           A synchronous <code class="inline-code">&lt;script&gt;</code> tag in <code class="inline-code">&lt;head&gt;</code> is
           fine because attach-time work waits for the document.</p>
-        <p>Every click on <code class="inline-code">+</code> calls <code class="inline-code">#qty.inc()</code> (the input clamps to
-          <code class="inline-code">max</code>) and then <code class="inline-code">#preview.set(#qty.value)</code>; typing in the field still pushes
+        <p>Every click on <code class="inline-code">+</code> runs <code class="inline-code">#qty.set(#qty.value + 1)</code> and then
+          <code class="inline-code">#preview.set(#qty.value)</code>; typing in the field still pushes
           through <code class="inline-code">on-input</code>. <code class="inline-code">#preview</code>&rsquo;s own
           <code class="inline-code">on-load="this.set(#qty.value)"</code> computes it once at attach.</p>
 
         <p class="note" style="margin-top:1.5rem">Here is that exact markup, running live. No page JavaScript powers the button, the dialog, or the close button.</p>
         <div class="demo" style="padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)">
           <div class="row">
-            <button type="button" on-click="#qty.inc(); #preview.set(#qty.value)">+</button>
+            <button type="button" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
             <input id="qty" implements="modifiable" aria-label="Qty" type="number" value="1" min="0" max="10"
                    on-input="#preview.set(this.value)">
             <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
@@ -211,7 +211,7 @@ unit      := ref ('.' (call | modifier))+
 ref       := '#'id | this
 call      := verb '(' [arg | object] ')'
 arg       := number | 'string' | true | false | ref | read | expr
-read      := ref '.' ('value' | 'checked')
+read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
 expr      := <expression>  (see §Expressions)
 object    := '{' name ':' arg (',' name ':' arg)* '}'
 modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
@@ -233,9 +233,9 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td>Independent</td><td><code class="inline-code">#pb.show(false); #pa.show()</code></td><td>Two phrases that run regardless of each other</td></tr>
               <tr><td>And</td><td><code class="inline-code">#form.validate() &amp;&amp; #hint.show()</code></td><td><code class="inline-code">.validate()</code> then, only if it completed, <code class="inline-code">#hint.show()</code> &mdash; possibly on another receiver</td></tr>
               <tr><td>Or</td><td><code class="inline-code">#form.validate().send() || #alert.show()</code></td><td><code class="inline-code">#alert.show()</code> only if a guard aborted the first unit</td></tr>
-              <tr><td>Scalar arg</td><td><code class="inline-code">#qty.inc(5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
+              <tr><td>Scalar arg</td><td><code class="inline-code">#qty.set(#qty.value + 5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
               <tr><td>Element arg</td><td><code class="inline-code">#list.removeRow(this)</code></td><td>A ref resolves to the element at fire time</td></tr>
-              <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code>, the type the element declares</td></tr>
+              <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code>, the type the element declares; absent <code class="inline-code">min</code>/<code class="inline-code">max</code> reads empty, absent <code class="inline-code">step</code> on a number/range input reads <code class="inline-code">1</code></td></tr>
               <tr><td>Key</td><td><code class="inline-code">on-keydown="enter: #f.send()"</code></td><td>Filter <em>which</em> events reach the phrase</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
               <tr><td>Debounce</td><td><code class="inline-code">#echo.debounce(300).set(this.value)</code></td><td>Defers this receiver&rsquo;s chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref</td></tr>
@@ -297,7 +297,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <li><strong><code class="inline-code">once()</code> spends on passing through, not on completion.</strong> The gate is about entry: the moment the walk reaches the <code class="inline-code">once</code> it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.</li>
           <li><strong>References are late-bound.</strong> <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads resolve at fire time (after any debounce), never at parse time.</li>
           <li><strong>One argument per verb.</strong> A string signature takes one scalar (<code class="inline-code">set(5)</code>); a record signature takes one object literal (<code class="inline-code">setAttr({name: 'aria-expanded', value: 'true'})</code>); <code class="inline-code">"undefined"</code> takes none. Two bare arguments is a grammar error.</li>
-          <li><strong>Exactly two properties may be read off a ref:</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code> — with the type the element declares, no coercion. <code class="inline-code">this.parentElement</code> and friends are not legal; relative navigation lives in implementation code.</li>
+          <li><strong>Six properties may be read off a ref:</strong> <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">min</code>, <code class="inline-code">max</code>, <code class="inline-code">step</code>, plus <code class="inline-code">height</code>/<code class="inline-code">width</code> inside expressions — with the type the element declares, no coercion. <code class="inline-code">this.parentElement</code> and friends are not legal; relative navigation lives in implementation code.</li>
           <li><strong>Selectors appear only inside string arguments</strong> (<code class="inline-code">'.amount'</code>, <code class="inline-code">':scope &gt; li'</code>). The grammar sees a string; the implementation&rsquo;s schema types it as a selector.</li>
           <li><strong>Errors are local.</strong> A missing <code class="inline-code">#id</code>, a grammar error, or an argument that fails the signature logs once and skips that phrase/link; the rest of the value runs.</li>
         </ol>
@@ -305,7 +305,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </section>
         <section id="sec-reserved-names" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-reserved-names.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-reserved-names.removeAttr('data-visible')">
         <h3 id="reserved-names">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
-        <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
+        <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">min</code>, <code class="inline-code">max</code>, <code class="inline-code">step</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens).</p>
 
         </section>
         <section id="sec-expressions" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-expressions.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-expressions.removeAttr('data-visible')">
@@ -326,7 +326,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
 term       := factor (('*' | '/') factor)*
 factor     := '-' factor | primary
 primary    := number | 'string' | reference | function'(' args ')' | '(' expression ')'
-reference  := ('#' id | 'this') '.' ('value' | 'checked' | 'height' | 'width')
+reference  := ('#' id | 'this') '.' ('value' | 'checked' | 'min' | 'max' | 'step' | 'height' | 'width')
 function   := min | max | floor | ceil | round | sum | count | replace</code></pre>
         </div>
         <p><code class="inline-code">this</code> in an expression is the element the phrase was read from &mdash; the same
@@ -335,7 +335,7 @@ function   := min | max | floor | ceil | round | sum | count | replace</code></p
           <table class="tbl">
             <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
             <tbody>
-              <tr><td>Typed read</td><td><code class="inline-code">this.value</code>, <code class="inline-code">#agree.checked</code>, <code class="inline-code">#nav.height</code>, <code class="inline-code">#nav.width</code></td><td>A read has the type the element declares: <code class="inline-code">type="number"</code>/<code class="inline-code">type="range"</code> read a number, a checkbox/radio reads its checked boolean, every other input/textarea/select reads the platform value string (zeros intact), and display elements read what their implementation declares &mdash; formattable with a numeric format reads its raw number, a date format or a plain element reads textContent. <code class="inline-code">.checked</code> is <code class="inline-code">el.checked === true</code>, <code class="inline-code">false</code> on an element without one. <code class="inline-code">.height</code>/<code class="inline-code">.width</code> are the border-box size in CSS pixels as of the last layout the browser reported.</td></tr>
+              <tr><td>Typed read</td><td><code class="inline-code">this.value</code>, <code class="inline-code">#agree.checked</code>, <code class="inline-code">#q.min</code>, <code class="inline-code">#q.step</code>, <code class="inline-code">#nav.height</code>, <code class="inline-code">#nav.width</code></td><td>A read has the type the element declares: <code class="inline-code">type="number"</code>/<code class="inline-code">type="range"</code> read a number (an empty field stays <code class="inline-code">""</code> — the empty-operand error names it, never a silent zero; an unparseable value is not-a-number). <code class="inline-code">.min</code>/<code class="inline-code">.max</code>/<code class="inline-code">.step</code> read the platform&rsquo;s own bounds the same way: a number on number/range inputs — absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code> and absent <code class="inline-code">step</code> is <code class="inline-code">1</code>, the platform&rsquo;s declared default — and the string as written elsewhere, so a date&rsquo;s bounds stay date strings. A checkbox/radio reads its checked boolean, every other input/textarea/select reads the platform value string (zeros intact), and display elements read what their implementation declares &mdash; formattable with a numeric format reads its raw number, a date format or a plain element reads textContent. <code class="inline-code">.checked</code> is <code class="inline-code">el.checked === true</code>, <code class="inline-code">false</code> on an element without one. <code class="inline-code">.height</code>/<code class="inline-code">.width</code> are the border-box size in CSS pixels as of the last layout the browser reported.</td></tr>
               <tr><td><code class="inline-code">this</code></td><td><code class="inline-code">this.set(this.value + '!')</code></td><td>Reads the element the phrase was read from — a row cloned from a template computes from its own value with no id.</td></tr>
               <tr><td>Typed <code class="inline-code">+</code></td><td><code class="inline-code">'invoice-' + #slug.value + '.pdf'</code></td><td>Joins when either side is a string, adds otherwise, left to right: <code class="inline-code">'a' + 1 + 2</code> is <code class="inline-code">"a12"</code>, <code class="inline-code">1 + 2 + 'a'</code> is <code class="inline-code">"1a"</code>. An empty read operand is an empty-operand error, not a silent <code class="inline-code">""</code> join — unless a string literal makes the join explicit (<code class="inline-code">'' + #a.value</code> stays a join, <code class="inline-code">#a.value + 1</code> errors). <code class="inline-code">-</code>, <code class="inline-code">*</code>, <code class="inline-code">/</code>, unary <code class="inline-code">-</code> are always arithmetic; a string operand under them is a not-a-number error naming the reference. <code class="inline-code">min</code>/<code class="inline-code">max</code>/<code class="inline-code">floor</code>/<code class="inline-code">ceil</code>/<code class="inline-code">round</code>/<code class="inline-code">sum</code>/<code class="inline-code">count</code> return numbers; <code class="inline-code">replace</code> returns a string. A string literal escapes only the quote and itself (<code class="inline-code">\'</code>, <code class="inline-code">\\</code>); any other <code class="inline-code">\x</code> stays verbatim, so <code class="inline-code">'\D'</code> is the three characters <code class="inline-code">\D</code></td></tr>
               <tr><td>Boolean in arithmetic</td><td><code class="inline-code">#price.value * #tick.checked</code></td><td><code class="inline-code">true</code> is <code class="inline-code">1</code>, <code class="inline-code">false</code> is <code class="inline-code">0</code> — the line-item row: the price lives on a number element and the tick on the checkbox</td></tr>
@@ -345,6 +345,7 @@ function   := min | max | floor | ceil | round | sum | count | replace</code></p
           </table>
         </div>
         <p>Sharp edge: a checkbox&rsquo;s <code class="inline-code">value="..."</code> attribute is unreachable through <code class="inline-code">.value</code> — a checkbox reads its checked boolean, whatever spelling, so the price belongs on a number element and the tick on the checkbox.</p>
+        <p>Sharp edge: <code class="inline-code">set()</code> does not clamp. Say it: <code class="inline-code">min(#q.max, &hellip;)</code>. Writing past a bound is a real state (<code class="inline-code">:out-of-range</code>, <code class="inline-code">validity.rangeOverflow</code>), and <code class="inline-code">validatable</code> is where it is reported.</p>
         <p>Syntax is checked at parse time: <code class="inline-code">#total.set(1 +)</code> is a trigger parse error naming the position, reported once per attribute like every other parse error. Fire time only ever carries data errors &mdash; empty, not-a-number, division by zero, not-a-string, invalid pattern, a missing reference &mdash; each a failed unit reported with <code class="inline-code">on-&lt;event&gt; on &lt;element&gt;, argument 1 of set():</code>.</p>
 
         </section>
@@ -469,7 +470,7 @@ function   := min | max | floor | ceil | round | sum | count | replace</code></p
           <table class="tbl">
             <thead><tr><th>Implementation</th><th>Tags</th><th>Verbs</th><th>Config / state</th><th>What it does</th></tr></thead>
             <tbody>
-              <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">inc</code>, <code class="inline-code">dec</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code></td><td><code class="inline-code">step</code></td><td>typed writes with clamping; <code class="inline-code">set</code> takes a string, a number, or an expression evaluated at fire time</td></tr>
+              <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code></td><td>&mdash;</td><td>typed writes; <code class="inline-code">set</code> takes a string, a number, or an expression evaluated at fire time</td></tr>
               <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td>&mdash;</td><td><code class="inline-code">dirty-on</code>; events <code class="inline-code">dirty</code>, <code class="inline-code">clean</code></td><td>fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing; move the baseline on an input with <code class="inline-code">setAttr({name: &rsquo;value&rsquo;, value: this.value})</code></td></tr>
               <tr><td><code class="inline-code">formattable</code></td><td>output, span, div, td, p, li, dd, b, strong, em, small</td><td>&mdash;</td><td><code class="inline-code">format</code></td><td>renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write</td></tr>
               <tr><td><code class="inline-code">listable</code></td><td>ul, ol, tbody</td><td><code class="inline-code">removeRow</code>, <code class="inline-code">adopt</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">min-rows</code></td><td>row removal / template adoption / clear, keeping <code class="inline-code">min-rows</code></td></tr>
@@ -575,34 +576,25 @@ function   := min | max | floor | ceil | round | sum | count | replace</code></p
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-implementation" data-lang="ts"><code>import { defineImplementation, valueOf } from "interactably";
+          <pre class="code" id="code-docs-implementation" data-lang="ts"><code>import { defineImplementation } from "interactably";
 
 export const modifiable = defineImplementation("modifiable", {
   tags: ["input", "textarea", "output", "select"],
-  config: { step: "number | undefined" },                // authored: modifiable-step, read-only
-  // no min/max here: &lt;input&gt; already has them as el.min / el.max
+  // no min/max/step here: &lt;input&gt; already has them as el.min / el.max / el.step
   verbs: {
-    set:   "string",
-    inc:   "number | undefined",
-    dec:   "number | undefined",
+    set:   "string | number",
     clear: "undefined",
     reset: "undefined",
   },
-}, (el, attrs) =&gt; {
+}, (el) =&gt; {
   const write = (v: string | number) =&gt; {
     const text = String(v);
     if ("value" in el) { if (el.value === text) return; el.value = text; }
     else               { if (el.textContent === text) return; el.textContent = text; }
   };
-  const bound = (k: "min" | "max") =&gt;
-    el instanceof HTMLInputElement &amp;&amp; el[k] !== "" ? Number(el[k]) : undefined;
-  const clamp = (n: number) =&gt;
-    Math.min(bound("max") ?? Infinity, Math.max(bound("min") ?? -Infinity, n));
   return {
-    set:   (_e, v)                    =&gt; write(v),
-    inc:   (_e, n = attrs.step ?? 1)  =&gt; write(clamp(valueOf(el) + n)),
-    dec:   (_e, n = attrs.step ?? 1)  =&gt; write(clamp(valueOf(el) - n)),
-    clear: ()                         =&gt; write(""),
+    set:   (_e, v) =&gt; write(v),
+    clear: ()      =&gt; write(""),
     reset: () =&gt; {
       if (el instanceof HTMLSelectElement) {
         for (const option of Array.from(el.options)) option.selected = option.defaultSelected;
@@ -621,7 +613,7 @@ export const modifiable = defineImplementation("modifiable", {
             <tbody>
               <tr><td><code class="inline-code">name</code></td><td><code class="inline-code">string</code></td><td>The <code class="inline-code">implements="&hellip;"</code> word</td></tr>
               <tr><td><code class="inline-code">tags</code></td><td><code class="inline-code">string[]</code> (optional)</td><td>Tags the implementation attaches to; types <code class="inline-code">el</code> via <code class="inline-code">HTMLElementTagNameMap</code>. Omitted = any tag (<code class="inline-code">el</code> is <code class="inline-code">HTMLElement</code>)</td></tr>
-              <tr><td><code class="inline-code">config</code></td><td><code class="inline-code">Record&lt;string, tsyntax-string&gt;</code></td><td>Authored input, read-only, stored as <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code> (<code class="inline-code">modifiable-step</code>)</td></tr>
+              <tr><td><code class="inline-code">config</code></td><td><code class="inline-code">Record&lt;string, tsyntax-string&gt;</code></td><td>Authored input, read-only, stored as <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code> (<code class="inline-code">formattable-format</code>)</td></tr>
               <tr><td><code class="inline-code">state</code></td><td><code class="inline-code">Record&lt;string, tsyntax-string&gt;</code></td><td>Invented live state, read/write, stored as <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code> (<code class="inline-code">revealable-open</code>)</td></tr>
               <tr><td><code class="inline-code">verbs</code></td><td><code class="inline-code">Record&lt;verb, Sig&gt;</code></td><td>Public surface. <code class="inline-code">Sig</code> is a tsyntax string, an element constructor, or a record of those</td></tr>
               <tr><td><code class="inline-code">factory</code></td><td><code class="inline-code">(el, attrs) =&gt; Implementation</code></td><td>Returns the verb bodies and lifecycle/<code class="inline-code">on*</code> handlers</td></tr>
@@ -701,9 +693,9 @@ export const attributable = defineImplementation("attributable", {
         <h3 id="attrs">attrs is a typed proxy <a class="anchor" href="#attrs">#</a></h3>
         <p>Built once per instance by <code class="inline-code">bindAttributes(el, name, def)</code>. Each getter reads the attribute live and validates it through the same compiled signature verbs use:</p>
         <ul>
-          <li><code class="inline-code">config</code> keys are <strong>getters only</strong> — TypeScript rejects <code class="inline-code">attrs.step = 2</code> and the runtime proxy throws.</li>
+          <li><code class="inline-code">config</code> keys are <strong>getters only</strong> — TypeScript rejects <code class="inline-code">attrs.format = "&hellip;"</code> and the runtime proxy throws.</li>
           <li><code class="inline-code">state</code> keys also have <strong>setters</strong> that write the <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code> attribute (<code class="inline-code">undefined</code> removes it); that is the sanctioned way for a verb to mutate invented state. The attribute change then reaches <code class="inline-code">attributeChangedCallback</code>, which renders.</li>
-          <li><code class="inline-code">attrs.step</code> maps to <code class="inline-code">modifiable-step</code>, <code class="inline-code">attrs.open</code> maps to <code class="inline-code">revealable-open</code>; the body spells neither.</li>
+          <li><code class="inline-code">attrs.format</code> maps to <code class="inline-code">formattable-format</code>, <code class="inline-code">attrs.open</code> maps to <code class="inline-code">revealable-open</code>; the body spells neither.</li>
         </ul>
 
         </section>
@@ -726,7 +718,7 @@ export const attributable = defineImplementation("attributable", {
           <table class="tbl">
             <thead><tr><th>Tier</th><th>What it is</th><th>Where it lives</th><th>Who writes it</th></tr></thead>
             <tbody>
-              <tr><td><strong>Authored</strong></td><td>What arrived in the markup: the server&rsquo;s answer, the reset baseline</td><td>Attributes: <code class="inline-code">value</code>, <code class="inline-code">min</code>, <code class="inline-code">checked</code>, and our <code class="inline-code">config</code> (<code class="inline-code">modifiable-step</code>)</td><td>The author / the server; implementations only read</td></tr>
+              <tr><td><strong>Authored</strong></td><td>What arrived in the markup: the server&rsquo;s answer, the reset baseline</td><td>Attributes: <code class="inline-code">value</code>, <code class="inline-code">min</code>, <code class="inline-code">checked</code>, and our <code class="inline-code">config</code> (<code class="inline-code">formattable-format</code>)</td><td>The author / the server; implementations only read</td></tr>
               <tr><td><strong>Live</strong></td><td>Current state, which may have diverged from authored</td><td>Properties where the platform has them (<code class="inline-code">el.value</code>, <code class="inline-code">el.checked</code>, <code class="inline-code">el.open</code>, popover state); <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code> from our <code class="inline-code">state</code> where it does not</td><td>Verbs, the user, the platform</td></tr>
               <tr><td><strong>Derived</strong></td><td>Presentation</td><td>Classes, ARIA, <code class="inline-code">textContent</code>, <code class="inline-code">hidden</code></td><td>The render callback only</td></tr>
             </tbody>
@@ -796,7 +788,7 @@ export const attributable = defineImplementation("attributable", {
           <li><strong><code class="inline-code">config</code> is read-only.</strong> The author moves a baseline by writing the platform&rsquo;s own default attribute &mdash; <code class="inline-code">dirtyable</code>&rsquo;s baseline moves with <code class="inline-code">setAttr({name: &rsquo;value&rsquo;, value: this.value})</code> on an input &mdash; never a <code class="inline-code">config</code> key.</li>
           <li><strong>Invented live state is <code class="inline-code">&lt;name&gt;-&lt;key&gt;</code></strong> — one namespace, shared with config, visible in the inspector. Writes go through <code class="inline-code">attrs</code>, reads in <code class="inline-code">attributeChangedCallback</code>.</li>
           <li><strong>Closure state</strong> for transient internals (in-flight request, timers).</li>
-          <li><strong>One reader for an element&rsquo;s value.</strong> <code class="inline-code">readValue(el)</code> returns <code class="inline-code">formattable-value</code> when a <code class="inline-code">formattable</code> raw store is present, else <code class="inline-code">.value</code>, else <code class="inline-code">textContent</code> &mdash; a number when the text parses, else the string. Every implementation reads a number through <code class="inline-code">valueOf(el) = toNumber(readValue(el))</code> (NaN &rarr; 0).</li>
+          <li><strong>One reader for an element&rsquo;s value.</strong> <code class="inline-code">readValue(el, property = "value")</code> dispatches on the element&rsquo;s declared type: number/range inputs read a number (an empty value stays <code class="inline-code">""</code>), a checkbox/radio reads its checked boolean, every other input/textarea/select reads the platform <code class="inline-code">.value</code> string, and display elements read <code class="inline-code">formattable-value</code> as a number when a numeric format is present, else <code class="inline-code">textContent</code> a string. <code class="inline-code">readValue(el, "min" | "max" | "step")</code> reads the platform&rsquo;s own bound the same way: a number on number/range inputs (absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code>, absent <code class="inline-code">step</code> is <code class="inline-code">1</code>, the platform&rsquo;s declared default), the string as written elsewhere. An expression reading a value treats a data error as a failed unit.</li>
         </ul>
         <p>There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.</p>
 
@@ -941,9 +933,9 @@ export const attributable = defineImplementation("attributable", {
          on-clean="this.removeAttr('data-dirty')"
          on-keydown="escape: this.reset(); #preview.set(#qty.value)"&gt;
 &lt;/label&gt;
-&lt;button on-click="#qty.dec(); #preview.set(#qty.value)"&gt;&minus;&lt;/button&gt;
-&lt;button on-click="#qty.inc(); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
-&lt;button on-click="#qty.inc(5); #preview.set(#qty.value)"&gt;+5&lt;/button&gt;
+&lt;button on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)"&gt;&minus;&lt;/button&gt;
+&lt;button on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
+&lt;button on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)"&gt;+5&lt;/button&gt;
 &lt;button on-click="#qty.reset(); #preview.set(#qty.value)"&gt;Reset&lt;/button&gt;
 &lt;output id="preview" implements="modifiable" on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;
 
@@ -1043,8 +1035,8 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive) used by keys and event lists</td></tr>
               <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
-              <tr><td><code class="inline-code">readValue(el)</code></td><td>The element&rsquo;s value as text: <code class="inline-code">formattable-value</code> (the raw store) &rarr; <code class="inline-code">.value</code> &rarr; <code class="inline-code">textContent</code>, a number when the text parses else a string</td></tr>
-              <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">toNumber(readValue(el))</code>, NaN &rarr; 0) and write helpers</td></tr>
+              <tr><td><code class="inline-code">readValue(el, property = "value")</code></td><td>The element&rsquo;s value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read <code class="inline-code">.value</code> (a string), display elements read <code class="inline-code">formattable-value</code> as a number under a numeric format, else <code class="inline-code">textContent</code> (a string); <code class="inline-code">readValue(el, "checked")</code> is the checked boolean; <code class="inline-code">readValue(el, "min" | "max" | "step")</code> is the platform bound — a number on number/range inputs (absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code>, absent <code class="inline-code">step</code> is <code class="inline-code">1</code>), the string as written elsewhere</td></tr>
+              <tr><td><code class="inline-code">writeValue(el, v)</code></td><td>Write helper: sets <code class="inline-code">.value</code> where the element has one, else <code class="inline-code">textContent</code></td></tr>
               <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a dispatch reaches an attached element whose <code class="inline-code">implements</code> names an implementation still pending registration</td></tr>
               <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pasteTransform</code>, <code class="inline-code">copyable</code>, <code class="inline-code">jsonTemplate</code>, <code class="inline-code">formattable</code></td></tr>
             </tbody>
@@ -1090,7 +1082,7 @@ export const attributable = defineImplementation("attributable", {
         </section>
         <section id="sec-not-supported" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-not-supported.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-not-supported.removeAttr('data-visible')">
         <h2 id="not-supported">Not supported <a class="anchor" href="#not-supported">#</a></h2>
-        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> &middot; attaching an element that gains <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute after insertion (re-insert it) &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
+        <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code> (and <code class="inline-code">height</code> / <code class="inline-code">width</code> in expressions) &middot; attaching an element that gains <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute after insertion (re-insert it) &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs.</p>
         <p><code class="inline-code">on-load</code>. On-load is not a DOM event and carries no native action; it runs once, after the batch that attached the element. Listen for it on anything that should run once its element is attached.</p>
 
         </section>
@@ -1112,7 +1104,7 @@ unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
 arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
-read      := ref '.' ('value' | 'checked')
+read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
 expr      := <expression>  (see §Expressions)
 object    := '{' field (',' field)* '}'
 field     := name ':' arg

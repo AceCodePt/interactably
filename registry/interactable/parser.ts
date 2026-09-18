@@ -3,12 +3,16 @@ import { parseFormula } from "@utils/formula.ts";
 
 export type Ref = { kind: "id"; id: string } | { kind: "this" };
 
+export const READABLE_PROPERTIES = ["value", "checked", "min", "max", "step"] as const;
+
+export type ReadProperty = (typeof READABLE_PROPERTIES)[number];
+
 export type Arg =
   | { kind: "number"; value: number }
   | { kind: "string"; value: string }
   | { kind: "boolean"; value: boolean }
   | { kind: "ref"; ref: Ref }
-  | { kind: "read"; ref: Ref; property: "value" | "checked" }
+  | { kind: "read"; ref: Ref; property: ReadProperty }
   | { kind: "expr"; source: string; position: number }
   | { kind: "object"; fields: ReadonlyArray<{ name: string; value: Arg }> };
 
@@ -204,14 +208,16 @@ function parseArg(text: string, position: number): Arg {
   if (read !== null) {
     const ref = parseRef(read[1]!);
     const property = read[2]!;
-    if (property === "value" || property === "checked") {
-      return { kind: "read", ref, property };
+    if ((READABLE_PROPERTIES as readonly string[]).includes(property)) {
+      return { kind: "read", ref, property: property as ReadProperty };
     }
     if (property === "valueAsNumber") {
       throw new Error(".valueAsNumber is not a property; .value on a number input is already a number");
     }
     if (property !== "height" && property !== "width") {
-      throw new Error(`property "${property}" is not readable; only value, checked`);
+      throw new Error(
+        `property "${property}" is not readable; only value, checked, min, max, step`,
+      );
     }
   }
 

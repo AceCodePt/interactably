@@ -284,12 +284,27 @@ test("rule 10: an object literal field may be an expression", () => {
   });
 });
 
-test("rule 11: only value and checked may be read off a ref; valueAsNumber is a parse error", (t) => {
+test("rule 11: value, checked, min, max and step may be read off a ref; valueAsNumber is a parse error", (t) => {
   const spy = errorsOf(t);
   assert.deepEqual(first(parse("#x.set(#agree.checked)")[0]!).calls[0]!.arg, {
     kind: "read",
     ref: { kind: "id", id: "agree" },
     property: "checked",
+  });
+  assert.deepEqual(first(parse("#x.set(#q.min)")[0]!).calls[0]!.arg, {
+    kind: "read",
+    ref: { kind: "id", id: "q" },
+    property: "min",
+  });
+  assert.deepEqual(first(parse("#x.set(#q.max)")[0]!).calls[0]!.arg, {
+    kind: "read",
+    ref: { kind: "id", id: "q" },
+    property: "max",
+  });
+  assert.deepEqual(first(parse("#x.set(#q.step)")[0]!).calls[0]!.arg, {
+    kind: "read",
+    ref: { kind: "id", id: "q" },
+    property: "step",
   });
 
   assert.deepEqual(parse("#total.add(#qty.valueAsNumber)"), []);

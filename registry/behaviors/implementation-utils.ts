@@ -16,18 +16,29 @@ export class NotReadyError extends Error {
   }
 }
 
-export function toNumber(value: string | number | boolean): number {
-  return typeof value === "number" ? value : Number(value);
-}
+export type ReadableProperty = "value" | "checked" | "min" | "max" | "step";
 
-export function readValue(el: Element, property: "value" | "checked" = "value"): number | string | boolean {
+export function readValue(el: Element, property: ReadableProperty = "value"): number | string | boolean {
   if (property === "checked") return (el as unknown as { checked?: unknown }).checked === true;
-  if (el instanceof HTMLInputElement) {
-    if (el.type === "number" || el.type === "range") {
+  if (el instanceof HTMLInputElement && (el.type === "number" || el.type === "range")) {
+    if (property === "value") {
       const raw = el.value;
       if (raw === "") return "";
       return el.valueAsNumber;
     }
+    if (property === "step") {
+      const raw = el.step;
+      if (raw === "") return 1;
+      return Number(raw);
+    }
+    const raw = el[property];
+    if (raw === "") return "";
+    return Number(raw);
+  }
+  if (property === "min" || property === "max" || property === "step") {
+    return el.getAttribute(property) ?? "";
+  }
+  if (el instanceof HTMLInputElement) {
     if (el.type === "checkbox" || el.type === "radio") return el.checked === true;
     return el.value;
   }
@@ -36,15 +47,10 @@ export function readValue(el: Element, property: "value" | "checked" = "value"):
   const format = el.getAttribute("formattable-format");
   if (stored !== null && format !== null && !isDateFormat(format)) {
     if (stored === "") return "";
-    const parsed = toNumber(stored);
+    const parsed = Number(stored);
     return Number.isNaN(parsed) ? NaN : parsed;
   }
   return el.textContent ?? "";
-}
-
-export function valueOf(el: Element): number {
-  const parsed = toNumber(readValue(el));
-  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 const formatters = new WeakMap<Element, (raw: string) => string>();

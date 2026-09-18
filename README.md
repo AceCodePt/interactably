@@ -86,7 +86,7 @@ Load the core bundle plus the implementations you use. Each implementation bundl
   start();
 </script>
 
-<button id="inc" on-click="#qty.inc(); #preview.set(#qty.value)">+</button>
+<button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
 
 <label>Qty
   <input id="qty" implements="modifiable"
@@ -97,7 +97,7 @@ Load the core bundle plus the implementations you use. Each implementation bundl
 <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
 ```
 
-Every click on `+` calls `#qty.inc()` (the input clamps to `max`) and then `#preview.set(#qty.value)`; typing in the field still pushes through `on-input`. `#preview`'s own `on-load="this.set(#qty.value)"` computes it once at attach.
+Every click on `+` runs `#qty.set(#qty.value + 1)` and then `#preview.set(#qty.value)`; typing in the field still pushes through `on-input`. `#preview`'s own `on-load="this.set(#qty.value)"` computes it once at attach.
 
 Bundle files:
 
@@ -155,9 +155,9 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 | Independent | `#pb.show(false); #pa.show()` | Two phrases that run regardless of each other |
 | And | `#form.validate() && #hint.show()` | `.validate()` then, only if it completed, `#hint.show()` — possibly on another receiver |
 | Or | `#form.validate().send() \|\| #alert.show()` | `#alert.show()` only if a guard aborted the first unit |
-| Scalar arg | `#qty.inc(5)` | Numbers, `'strings'`, `true` / `false` |
+| Scalar arg | `#qty.set(#qty.value + 5)` | Numbers, `'strings'`, `true` / `false` |
 | Element arg | `#list.removeRow(this)` | A ref resolves to the element at fire time |
-| Property read | `#preview.set(this.value)` | `value` / `checked`, the type the element declares |
+| Property read | `#preview.set(this.value)` | `value` / `checked` / `min` / `max` / `step`, the type the element declares; absent `min`/`max` reads empty, absent `step` on a number/range input reads `1` |
 | Key | `on-keydown="enter: #f.send()"` | Filter *which* events reach the phrase |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
 | Debounce | `#echo.debounce(300).set(this.value)` | Defers this receiver's chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref |
@@ -181,13 +181,13 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 7. **`once()` spends on passing through, not on completion.** The gate is about entry: the moment the walk reaches the `once` it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.
 8. **References are late-bound.** `#id`, `this` and reads resolve at fire time (after any debounce), never at parse time.
 9. **One argument per verb.** A string signature takes one scalar (`set(5)`); a record signature takes one object literal (`setAttr({name: 'aria-expanded', value: 'true'})`); `"undefined"` takes none. Two bare arguments is a grammar error.
-10. **Exactly two properties may be read off a ref** — `value`, `checked` — with the type the element declares, no coercion. `this.parentElement` and friends are not legal; relative navigation lives in implementation code.
+10. **Exactly six properties may be read off a ref** — `value`, `checked`, `min`, `max`, `step`, plus `height`/`width` inside expressions — with the type the element declares, no coercion. `this.parentElement` and friends are not legal; relative navigation lives in implementation code.
 11. **Selectors appear only inside string arguments** (`'.amount'`, `':scope > li'`). The grammar sees a string; the implementation's schema types it as a selector.
 12. **Errors are local.** A missing `#id`, a grammar error, or an argument that fails the signature logs once and skips that phrase/link; the rest of the value runs.
 
 ### Reserved names
 
-`debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb. `this` is the only keyword. `value`, `checked` are property reads, not verbs; an implementation may still define a verb called `value()` (distinguished by its parens).
+`debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb. `this` is the only keyword. `value`, `checked`, `min`, `max`, `step` are property reads, not verbs; an implementation may still define a verb called `value()` (distinguished by its parens).
 
 Ids are addressable only if they avoid the phrase punctuation. An id containing `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#` is a parse error even though it is valid HTML: `#a:b` reads `invalid id "a:b" in #a:b; ids used in phrases may not contain : & | { } ' " #`.
 
@@ -200,7 +200,7 @@ expression := term (('+' | '-') term)*
 term       := factor (('*' | '/') factor)*
 factor     := '-' factor | primary
 primary    := number | 'string' | reference | function'(' args ')' | '(' expression ')'
-reference  := ('#' id | 'this') '.' ('value' | 'checked' | 'height' | 'width')
+reference  := ('#' id | 'this') '.' ('value' | 'checked' | 'min' | 'max' | 'step' | 'height' | 'width')
 function   := min | max | floor | ceil | round | sum | count | replace
 ```
 
@@ -208,7 +208,7 @@ function   := min | max | floor | ceil | round | sum | count | replace
 
 | Construct | Example | Meaning |
 | --- | --- | --- |
-| Typed read | `this.value`, `#agree.checked`, `#nav.height`, `#nav.width` | A read has the type the element declares. `type="number"` / `type="range"` read a number (an empty field stays `""` — the empty-operand error names it, never a silent zero; an unparseable value is not-a-number). A checkbox/radio reads its checked boolean, whatever the spelling. Every other input/textarea/select reads the platform `.value` string, zeros intact, `inputmode` declaring nothing. Display elements read what their implementation declares: formattable with a numeric format reads its raw `formattable-value` as a number, a date format or a plain element reads `textContent` a string. `.checked` is `el.checked === true`, `false` on an element without one. `.height`/`.width` are the element's border-box size in CSS pixels as of the last layout the browser reported — a phrase that resizes an element and reads it in the same chain reads the previous size |
+| Typed read | `this.value`, `#agree.checked`, `#q.min`, `#q.step`, `#nav.height`, `#nav.width` | A read has the type the element declares. `type="number"` / `type="range"` read a number (an empty field stays `""` — the empty-operand error names it, never a silent zero; an unparseable value is not-a-number). `.min`/`.max`/`.step` read the platform's own bounds the same way: a number on `type="number"` / `type="range"` — absent `min`/`max` is `""` (the empty-operand error) and absent `step` is `1`, the platform's declared default — and the string as written elsewhere, so a date's bounds stay date strings. A checkbox/radio reads its checked boolean, whatever the spelling. Every other input/textarea/select reads the platform `.value` string, zeros intact, `inputmode` declaring nothing. Display elements read what their implementation declares: formattable with a numeric format reads its raw `formattable-value` as a number, a date format or a plain element reads `textContent` a string. `.checked` is `el.checked === true`, `false` on an element without one. `.height`/`.width` are the element's border-box size in CSS pixels as of the last layout the browser reported — a phrase that resizes an element and reads it in the same chain reads the previous size |
 | `this` | `this.set(this.value + '!')` | Reads the element the phrase was read from — a row cloned from a template computes from its own value with no id |
 | Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"1a"`. An empty read operand is an empty-operand error, not a silent `""` join — unless a string literal makes the join explicit (`'' + #a.value` stays a join, `#a.value + 1` errors). `-`, `*`, `/`, unary `-` are always arithmetic; a string operand under them is not-a-number naming the reference. `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers; `replace` returns a string. A string literal escapes only the quote and itself (`\'`, `\\`); any other `\x` stays verbatim, so `'\D'` is the three characters `\D` |
 | Boolean in arithmetic | `#price.value * #tick.checked` | `true` is `1`, `false` is `0` — the line-item row keeps its shape, with the price on a number element and the tick on the checkbox |
@@ -218,6 +218,8 @@ function   := min | max | floor | ceil | round | sum | count | replace
 `#id` references and `sum(...)`/`count(...)` selectors resolve against the whole document — scope a set by putting its container's id in the selector (`sum('#list .amount')`).
 
 Sharp edge: a checkbox's `value="..."` attribute is unreachable through `.value` — a checkbox reads its checked boolean, whatever the spelling, so the price belongs on a number element and the tick on the checkbox.
+
+Sharp edge: `set()` does not clamp. Say it: `min(#q.max, …)`. Writing past a bound is a real state (`:out-of-range`, `validity.rangeOverflow`), and `validatable` is where it is reported.
 
 Syntax is checked at parse time: `#total.set(1 +)` is a trigger parse error naming the position, reported once per attribute like every other parse error. Fire time only ever carries data errors — empty, not-a-number, division by zero, not-a-string, invalid pattern, a missing reference — each a failed unit, exactly like a throwing verb, reported as `on-<event> on <element>, argument 1 of <verb>(): <reason>`.
 
@@ -305,7 +307,7 @@ The attachment and executor report through `console.error` / `console.warn`; the
 
 | Implementation | Tags | Verbs | Config / state | What it does |
 | --- | --- | --- | --- | --- |
-| `modifiable` | input, textarea, output, select | `set`, `inc`, `dec`, `clear`, `reset` | `step` | typed writes with clamping; `set` takes a string, a number, or an expression evaluated at fire time |
+| `modifiable` | input, textarea, output, select | `set`, `clear`, `reset` | — | typed writes; `set` takes a string, a number, or an expression evaluated at fire time |
 | `dirtyable` | input, textarea, select, output | — | `dirty-on`; events `dirty`, `clean` | compares the element's current value with its platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); fires `dirty` / `clean` on transition; writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
@@ -404,34 +406,25 @@ fallback      := quoted | number | true | false | bare
 One call declares the name, the tags it may attach to, the config and state it brings, its verb signatures, and the factory — and the factory is type-checked against the signatures.
 
 ```ts
-import { defineImplementation, valueOf } from "interactably";
+import { defineImplementation } from "interactably";
 
 export const modifiable = defineImplementation("modifiable", {
   tags: ["input", "textarea", "output", "select"],
-  config: { step: "number | undefined" },                // authored: modifiable-step, read-only
-  // no min/max here: <input> already has them as el.min / el.max
+  // no min/max/step here: <input> already has them as el.min / el.max / el.step
   verbs: {
     set:   "string | number",
-    inc:   "string | number | undefined",
-    dec:   "string | number | undefined",
     clear: "undefined",
     reset: "undefined",
   },
-}, (el, attrs) => {
+}, (el) => {
   const write = (v: string | number) => {
     const text = String(v);
     if ("value" in el) { if (el.value === text) return; el.value = text; }
     else               { if (el.textContent === text) return; el.textContent = text; }
   };
-  const bound = (k: "min" | "max") =>
-    el instanceof HTMLInputElement && el[k] !== "" ? Number(el[k]) : undefined;
-  const clamp = (n: number) =>
-    Math.min(bound("max") ?? Infinity, Math.max(bound("min") ?? -Infinity, n));
   return {
-    set:   (_e, v)                    => write(v),
-    inc:   (_e, n = attrs.step ?? 1)  => write(clamp(valueOf(el) + n)),
-    dec:   (_e, n = attrs.step ?? 1)  => write(clamp(valueOf(el) - n)),
-    clear: ()                         => write(""),
+    set:   (_e, v) => write(v),
+    clear: ()      => write(""),
     reset: () => {
       if (el instanceof HTMLSelectElement) {
         for (const option of Array.from(el.options)) option.selected = option.defaultSelected;
@@ -449,7 +442,7 @@ export const modifiable = defineImplementation("modifiable", {
 | --- | --- | --- |
 | `name` | `string` | The `implements="…"` word |
 | `tags` | `string[]` (optional) | Tags the implementation attaches to; types `el` via `HTMLElementTagNameMap`. Omitted = any tag (`el` is `HTMLElement`) |
-| `config` | `Record<string, tsyntax-string>` | Authored input, read-only, stored as `<name>-<key>` (`modifiable-step`) |
+| `config` | `Record<string, tsyntax-string>` | Authored input, read-only, stored as `<name>-<key>` (`formattable-format`) |
 | `state` | `Record<string, tsyntax-string>` | Invented live state, read/write, stored as `<name>-<key>` (`revealable-open`) |
 | `verbs` | `Record<verb, Sig>` | Public surface. `Sig` is a tsyntax string, an element constructor, or a record of those |
 | `events` | `string[]` (optional) | Events the implementation dispatches (`copy`, `response`, `request-error`, `restore`); on the element, `on-<event>` fires only for the implementation's `ImplementationEvent` |
@@ -504,9 +497,9 @@ Most implementations declare no `state`: `dirtyable`'s closure holds one boolean
 
 Built once per instance by `bindAttributes(el, name, def)`. Each getter reads the attribute live and validates it through the same compiled signature verbs use:
 
-- `config` keys are **getters only** — TypeScript rejects `attrs.step = 2` and the runtime proxy throws.
+- `config` keys are **getters only** — TypeScript rejects `attrs.format = "…"` and the runtime proxy throws.
 - `state` keys also have **setters** that write the `<name>-<key>` attribute (`undefined` removes it); that is the sanctioned way for a verb to mutate invented state. The attribute change then reaches `attributeChangedCallback`, which renders.
-- `attrs.step` maps to `modifiable-step`, `attrs.open` maps to `revealable-open`; the body spells neither.
+- `attrs.format` maps to `formattable-format`, `attrs.open` maps to `revealable-open`; the body spells neither.
 
 ### Conventions
 
@@ -525,7 +518,7 @@ A verb's job is to **mutate state**; the reaction (text, classes, ARIA, `hidden`
 
 | Tier | What it is | Where it lives | Who writes it |
 | --- | --- | --- | --- |
-| **Authored** | What arrived in the markup: the server's answer, the reset baseline | Attributes: `value`, `min`, `checked`, and our `config` (`modifiable-step`) | The author / the server; implementations only read |
+| **Authored** | What arrived in the markup: the server's answer, the reset baseline | Attributes: `value`, `min`, `checked`, and our `config` (`formattable-format`) | The author / the server; implementations only read |
 | **Live** | Current state, which may have diverged from authored | Properties where the platform has them (`el.value`, `el.checked`, `el.open`, popover state); `<name>-<key>` from our `state` where it does not | Verbs, the user, the platform |
 | **Derived** | Presentation | Classes, ARIA, `textContent`, `hidden` | The render callback only |
 
@@ -573,7 +566,7 @@ Rules:
 - **`config` is read-only.** A baseline is moved by writing the platform's own default property — on an input, `setAttr({name: 'value', value: this.value})` makes the live `defaultValue` follow the current value — never a `config` key.
 - **Invented live state is `<name>-<key>`** — one namespace, shared with config, visible in the inspector. Writes go through `attrs`, reads in `attributeChangedCallback`.
 - **Closure state** for transient internals (in-flight request, timers).
-- **One reader for an element's value.** `readValue(el, property = "value")` dispatches on the element's declared type: number/range inputs read a number (an empty value stays `""`), a checkbox/radio reads its checked boolean, every other input/textarea/select reads the platform `.value` string, and display elements read `formattable-value` as a number when a numeric format is present, else `textContent` a string. Every implementation reads a number through `valueOf(el) = toNumber(readValue(el))` (NaN → 0). A verb reading a value tolerates the unreadable (`inc()` on an empty counter produces `1`); an expression reading one treats a data error as a failed unit.
+- **One reader for an element's value.** `readValue(el, property = "value")` dispatches on the element's declared type: number/range inputs read a number (an empty value stays `""`), a checkbox/radio reads its checked boolean, every other input/textarea/select reads the platform `.value` string, and display elements read `formattable-value` as a number when a numeric format is present, else `textContent` a string. `readValue(el, "min" | "max" | "step")` reads the platform's own bound the same way: a number on number/range inputs (absent `min`/`max` is `""`, absent `step` is `1`, the platform's declared default), the string as written elsewhere. An expression reading a value treats a data error as a failed unit.
 
 There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.
 
@@ -630,7 +623,7 @@ Every receiver must be a participant — `#id` and `this` resolve to elements ca
 
 `parse` caches by attribute string; the cached value is an AST in which `#id`, `this` and reads are **tokens**, not elements or values. Resolution happens per fire, inside `runPhrases`; two identical rows share one parse and resolve to two different elements. `this` is resolved as `token === "this" ? source : document.getElementById(id)` — never rewritten into the attribute, never stamped into an id, never consulted from `event.currentTarget`.
 
-**Argument validation is the receiver's job, not the parser's.** The parser knows every literal's kind from syntax (bare `5` is a number, `'5'` is a string, `#id` / `this` are elements). Scalars go through `parseValueAgainstDSL` against the slot's tsyntax string; resolved elements go through `instanceof` against the slot's constructor. Reads carry the type the element declares: `this.value` on a number input is a number, on a text input a string, `#agree.checked` a boolean. An expression argument is resolved to a value at fire time and then validated against the same signature. The system never coerces a read; a verb that wants both types widens its own signature — `modifiable`'s numeric verbs are declared `"string | number | undefined"` and parse the string themselves, throwing a named error when they cannot: `inc() could not read a number from "banana"`.
+**Argument validation is the receiver's job, not the parser's.** The parser knows every literal's kind from syntax (bare `5` is a number, `'5'` is a string, `#id` / `this` are elements). Scalars go through `parseValueAgainstDSL` against the slot's tsyntax string; resolved elements go through `instanceof` against the slot's constructor. Reads carry the type the element declares: `this.value` on a number input is a number, on a text input a string, `#agree.checked` a boolean, `#q.min` on a number input a number. An expression argument is resolved to a value at fire time and then validated against the same signature. The system never coerces a read; a verb that wants both types widens its own signature — `modifiable`'s `set` is declared `"string | number"` and writes `String(v)`.
 
 ### Native default actions and propagation
 
@@ -719,11 +712,11 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
          on-clean="this.removeAttr('data-dirty')"
          on-keydown="escape: this.reset(); #preview.set(#qty.value)">    <!-- prevent-default derives keydown:escape and cancels the browser's native revert -->
 </label>
-<button on-click="#qty.dec(); #preview.set(#qty.value)">−</button>
-<button on-click="#qty.inc(); #preview.set(#qty.value)">+</button>
-<button on-click="#qty.inc(5); #preview.set(#qty.value)">+5</button>
+<button on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)">−</button>
+<button on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
+<button on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)">+5</button>
 <button on-click="#qty.reset(); #preview.set(#qty.value)">Reset</button>
-<!-- min/max are the input's own; modifiable reads el.min / el.max and declares nothing for them -->
+<!-- min/max are the input's own; the grammar reads them as #qty.min / #qty.max and modifiable declares nothing for them -->
 <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
 
 <ul id="list" implements="listable" listable-min-rows="1">
@@ -741,7 +734,7 @@ Each example imports the CDN bundles from the package. The core bundle ships ins
 
 Kinds present: `#qty` is self-acting (implementations + `on-*` + id because the buttons address it); the six buttons are trigger-only; `#preview`, `#list` and `#total` are receivers; the `<li>` is a plain element — the row is reached through `#list.removeRow(this)`, so it needs no implementation and no id, and cloning it from `#row-tpl` produces nothing that has to be unique.
 
-**`+5` trace.** The button's `on-click` listener (bound at attach) → `parse("#qty.inc(5); #preview.set(#qty.value)")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → dispatches `InteractionEvent{verb:"inc", arg:5, source: button}` at `#qty` → the attachment validates `5` against `"string | number | undefined"` → `modifiable.inc` → `write(6)` (clamped by `max`) → the interaction event reaches `#qty`'s own `dirtyable` handler, which fires `dirty` if `#qty` was clean → the second phrase resolves `#preview` → the expression `#qty.value` reads 6 → `set(6)` writes it.
+**`+5` trace.** The button's `on-click` listener (bound at attach) → `parse("#qty.set(#qty.value + 5); #preview.set(#qty.value)")` (cached) → `runPhrases(button, …, clickEvent)` → resolves `#qty` → the expression `#qty.value + 5` reads `1 + 5` → dispatches `InteractionEvent{verb:"set", arg:6, source: button}` at `#qty` → the attachment validates `6` against `"string | number"` → `modifiable.set` → `write(6)` → the interaction event reaches `#qty`'s own `dirtyable` handler, which fires `dirty` if `#qty` was clean → the second phrase resolves `#preview` → the expression `#qty.value` reads 6 → `set(6)` writes it.
 
 **`×` trace.** Phrase 1 resolves `#list`, arg `this` is the button → `removeRow(e, button)` finds the row via `closest(":scope > *")` → phrase 2 (independent) resolves `#total` → `set(sum('#list .amount'))` re-totals the remaining inputs.
 
@@ -892,8 +885,8 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
-| `readValue(el, property = "value")` | The element's value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read `.value` (a string), display elements read `formattable-value` as a number under a numeric format, else `textContent` (a string); `readValue(el, "checked")` is the checked boolean |
-| `valueOf(el)` / `writeValue(el, v)` | Number read (`toNumber(readValue(el))`, NaN → 0) and write helpers |
+| `readValue(el, property = "value")` | The element's value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read `.value` (a string), display elements read `formattable-value` as a number under a numeric format, else `textContent` (a string); `readValue(el, "checked")` is the checked boolean; `readValue(el, "min" | "max" | "step")` is the platform bound — a number on number/range inputs (absent `min`/`max` is `""`, absent `step` is `1`), the string as written elsewhere |
+| `writeValue(el, v)` | Write helper: sets `.value` where the element has one, else `textContent` |
 | `NotReadyError` | Error set on `e.error` when a dispatch reaches an attached element whose `implements` names an implementation that has not registered yet |
 | Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `formattable` |
 
@@ -942,7 +935,7 @@ Input masks and format-as-you-type belong in a component library built on the sa
 
 ## Not supported
 
-Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1).
+Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `min` / `max` / `step` (and `height` / `width` in expressions) · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1).
 
 `on-load` always means attach, including on `<img>`, `<iframe>`, `<body>`, `<link>`, `<script>`; it is never the native `load` event — bytes-arrived is `addEventListener('load', …)`.
 
@@ -958,7 +951,7 @@ unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
 arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
-read      := ref '.' ('value' | 'checked')
+read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
 expr      := <expression>  (see § Expressions)
 object    := '{' field (',' field)* '}'
 field     := name ':' arg

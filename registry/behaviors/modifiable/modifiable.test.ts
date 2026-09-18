@@ -71,42 +71,6 @@ test("set never dispatches, even when the value changes", async () => {
   assert.equal(inputs, 0);
 });
 
-test("inc and dec step by 1 by default and accept an explicit amount", async () => {
-  const input = hostElement("input", { implements: "modifiable", value: "5" }) as HTMLInputElement;
-  document.body.appendChild(input);
-  await flush();
-
-  interact(input, "inc");
-  assert.equal(input.value, "6");
-  interact(input, "dec");
-  assert.equal(input.value, "5");
-  interact(input, "inc", 10);
-  assert.equal(input.value, "15");
-  interact(input, "dec", 4);
-  assert.equal(input.value, "11");
-});
-
-test("inc and dec accept a numeric string from a text input", async () => {
-  const input = hostElement("input", { implements: "modifiable", value: "5" }) as HTMLInputElement;
-  document.body.appendChild(input);
-  await flush();
-
-  interact(input, "inc", "5");
-  assert.equal(input.value, "10");
-  interact(input, "dec", "3");
-  assert.equal(input.value, "7");
-});
-
-test("a numeric verb that cannot read its string reports the verb and the raw input", async () => {
-  const input = hostElement("input", { implements: "modifiable", value: "5" }) as HTMLInputElement;
-  document.body.appendChild(input);
-  await flush();
-
-  const event = interact(input, "inc", "banana");
-  assert.match(String(event.error), /inc\(\) could not read a number from "banana"/);
-  assert.equal(input.value, "5");
-});
-
 test("set accepts both a string and a number", async () => {
   const input = hostElement("input", { implements: "modifiable" }) as HTMLInputElement;
   document.body.appendChild(input);
@@ -118,36 +82,18 @@ test("set accepts both a string and a number", async () => {
   assert.equal(input.value, "7");
 });
 
-test("modifiable-step config is the default step", async () => {
-  const input = hostElement("input", { implements: "modifiable", "modifiable-step": "3", value: "0" }) as HTMLInputElement;
-  document.body.appendChild(input);
-  await flush();
-
-  interact(input, "inc");
-  assert.equal(input.value, "3");
-  interact(input, "dec");
-  assert.equal(input.value, "0");
-});
-
-test("inc and dec clamp through the platform's own min and max", async () => {
+test("set writes what it was asked: an out-of-range value reports rangeOverflow", async () => {
   const input = hostElement("input", {
     implements: "modifiable",
     type: "number",
-    value: "8",
-    min: "0",
     max: "10",
   }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
-  interact(input, "inc", 5);
-  assert.equal(input.value, "10");
-  interact(input, "dec", 5);
-  assert.equal(input.value, "5");
-  interact(input, "dec", 100);
-  assert.equal(input.value, "0");
-  interact(input, "inc", 100);
-  assert.equal(input.value, "10");
+  interact(input, "set", 999);
+  assert.equal(input.value, "999");
+  assert.equal(input.validity.rangeOverflow, true);
 });
 
 test("clear writes an empty string", async () => {
@@ -265,16 +211,6 @@ test("works on textarea, select and output", async () => {
   assert.equal(output.textContent, "6");
 });
 
-test("inc reads the current value back off the element", async () => {
-  const input = hostElement("input", { implements: "modifiable", value: "1" }) as HTMLInputElement;
-  document.body.appendChild(input);
-  await flush();
-
-  input.value = "3";
-  interact(input, "inc");
-  assert.equal(input.value, "4");
-});
-
 function numDep(id: string, value: string): HTMLInputElement {
   const input = document.createElement("input");
   input.type = "number";
@@ -286,7 +222,6 @@ function numDep(id: string, value: string): HTMLInputElement {
 test("nothing recomputes on connect: an element with no on-load keeps its authored text", async () => {
   const total = hostElement("output", {
     implements: "modifiable",
-    "modifiable-step": "1",
   }) as HTMLOutputElement;
   total.textContent = "42";
   document.body.appendChild(total);

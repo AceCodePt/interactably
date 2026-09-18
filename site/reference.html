@@ -41,11 +41,11 @@
       <article class="ref-card">
         <h3><code class="inline-code">modifiable</code></h3>
         <p class="ref-tags">input &middot; textarea &middot; output &middot; select</p>
-        <p class="ref-desc">Typed writes with clamping; <code class="inline-code">set(...)</code> takes an expression inline, so derived values are computed on the trigger that wants them.</p>
+        <p class="ref-desc">Typed writes; <code class="inline-code">set(...)</code> takes an expression inline, so derived values are computed on the trigger that wants them. <code class="inline-code">set()</code> does not clamp — say the bound: <code class="inline-code">min(#q.max, &hellip;)</code>.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">set</span><span class="verb-tag">inc</span><span class="verb-tag">dec</span><span class="verb-tag">clear</span><span class="verb-tag">reset</span></div>
+        <div><span class="verb-tag">set</span><span class="verb-tag">clear</span><span class="verb-tag">reset</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">step</span></div>
+        <div><span class="verb-tag">&mdash;</span></div>
       </article>
 
       <article class="ref-card">
@@ -228,8 +228,8 @@
           <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive)</td></tr>
           <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
           <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
-          <tr><td><code class="inline-code">readValue(el)</code></td><td>The element&rsquo;s value as text: <code class="inline-code">formattable-value</code> (the raw store) &rarr; <code class="inline-code">.value</code> &rarr; <code class="inline-code">textContent</code>, a number when the text parses else a string</td></tr>
-          <tr><td><code class="inline-code">valueOf(el)</code> / <code class="inline-code">writeValue(el, v)</code></td><td>Number read (<code class="inline-code">toNumber(readValue(el))</code>, NaN &rarr; 0) and write helpers</td></tr>
+          <tr><td><code class="inline-code">readValue(el, property = "value")</code></td><td>The element&rsquo;s value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read <code class="inline-code">.value</code> (a string), display elements read <code class="inline-code">formattable-value</code> as a number under a numeric format, else <code class="inline-code">textContent</code> (a string); <code class="inline-code">readValue(el, "checked")</code> is the checked boolean; <code class="inline-code">readValue(el, "min" | "max" | "step")</code> is the platform bound — a number on number/range inputs (absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code>, absent <code class="inline-code">step</code> is <code class="inline-code">1</code>), the string as written elsewhere</td></tr>
+          <tr><td><code class="inline-code">writeValue(el, v)</code></td><td>Write helper: sets <code class="inline-code">.value</code> where the element has one, else <code class="inline-code">textContent</code></td></tr>
           <tr><td><code class="inline-code">NotReadyError</code></td><td>Set on <code class="inline-code">e.error</code> when a dispatch reaches an attached element whose <code class="inline-code">implements</code> names an implementation still pending registration</td></tr>
         </tbody>
       </table>
@@ -242,7 +242,7 @@
         <tbody>
           <tr><td><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code></td><td>Modifiers — an implementation may not name a verb that way</td></tr>
           <tr><td><code class="inline-code">this</code></td><td>The only keyword</td></tr>
-          <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
+          <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">min</code>, <code class="inline-code">max</code>, <code class="inline-code">step</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
           <tr><td><code class="inline-code">enter</code>, <code class="inline-code">escape</code>, <code class="inline-code">space</code>, &hellip;</td><td>Key names, matching <code class="inline-code">KeyboardEvent.key</code> case-insensitively, one per phrase, under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code>; under the intersect triggers the key is a CSS root-margin string instead</td></tr>
         </tbody>
       </table>
@@ -264,7 +264,7 @@ unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
 arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
-read      := ref '.' ('value' | 'checked')
+read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
 expr      := <expression>   (see the docs)

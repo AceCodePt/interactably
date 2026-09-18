@@ -23,7 +23,6 @@ test("smoke: built CDN core and an implementation bundle load and share the regi
     assert.equal(typeof core[name], "function", `core exports ${name}`);
   }
   assert.equal(typeof core.parse, "function");
-  assert.equal(typeof core.valueOf, "function");
 
   await import(implUrl.href);
   assert.ok(core.getImplementationDef("modifiable"), "dist/cdn/modifiable.js registers into the core registry");
