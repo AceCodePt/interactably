@@ -71,8 +71,8 @@
 
       <div class="card">
         <h2>Try it — a working price calculator</h2>
-        <p class="ex-note">The total is a formula, <code class="inline-code">sum('#list .amount')</code>, recomputed by
-          <code class="inline-code">#total.compute()</code> after every change. Nothing on this card was written in JavaScript.</p>
+        <p class="ex-note">The total is the expression <code class="inline-code">sum('#list .amount')</code>, evaluated by
+          <code class="inline-code">#total.set(...)</code> after every change. Nothing on this card was written in JavaScript.</p>
         <div class="demo">
           <div class="row">
             <label>Qty
@@ -81,32 +81,32 @@
                      on-input="#preview.set(this.value)"
                      on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                      on-clean="this.removeAttr('data-dirty')"
-                     on-keydown="escape: this.reset(); #preview.compute()">
+                     on-keydown="escape: this.reset(); #preview.set(#qty.value)">
             </label>
-            <button id="dec" on-click="#qty.dec(); #preview.compute()" type="button">&minus;</button>
-            <button id="inc" on-click="#qty.inc(); #preview.compute()" type="button">+</button>
-            <button id="inc5" on-click="#qty.inc(5); #preview.compute()" type="button">+5</button>
-            <button id="reset" on-click="#qty.reset(); #preview.compute()" type="button">Reset</button>
-            <output id="preview" implements="modifiable" modifiable-formula="#qty.value">1</output>
+            <button id="dec" on-click="#qty.dec(); #preview.set(#qty.value)" type="button">&minus;</button>
+            <button id="inc" on-click="#qty.inc(); #preview.set(#qty.value)" type="button">+</button>
+            <button id="inc5" on-click="#qty.inc(5); #preview.set(#qty.value)" type="button">+5</button>
+            <button id="reset" on-click="#qty.reset(); #preview.set(#qty.value)" type="button">Reset</button>
+            <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
           </div>
 
           <ul id="list" implements="listable" listable-min-rows="1">
             <li>
-              <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.compute()">
-              <button on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+              <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
+              <button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
             </li>
           </ul>
-          <button id="add-row" on-click="#list.adopt(#row-tpl); #total.compute()" type="button">Add row</button>
+          <button id="add-row" on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount:valid'))" type="button">Add row</button>
           <template id="row-tpl">
             <li>
-              <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.compute()">
-              <button on-click="#list.removeRow(this); #total.compute()" type="button">&times;</button>
+              <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
+              <button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
             </li>
           </template>
           <p class="total">
             Total:
             <output id="total" implements="modifiable formattable"
-                    modifiable-formula="sum('#list .amount:valid')"
+                    on-load="this.set(sum('#list .amount:valid'))"
                     formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
           </p>
         </div>

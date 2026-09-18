@@ -13,6 +13,14 @@ export function parseOptions(source: string): Options {
   return options;
 }
 
+export function isDateFormat(source: string): boolean {
+  try {
+    return parseOptions(source)["type"] === "date";
+  } catch {
+    return false;
+  }
+}
+
 export function formatValue(raw: string, options: Options): string {
   const locale = typeof options["locale"] === "string" ? options["locale"] : "en-US";
   const type = options["type"] === "date" ? "date" : "number";

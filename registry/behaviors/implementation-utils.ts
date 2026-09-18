@@ -1,4 +1,5 @@
 import { matchesKey } from "@interactable/keys.ts";
+import { isDateFormat } from "@behaviors/formattable/format.ts";
 
 export interface ImplementationInstance {
   // Runs once the document is parsed; #id references resolve.
@@ -15,17 +16,30 @@ export class NotReadyError extends Error {
   }
 }
 
-export function toNumber(value: string | number): number {
+export function toNumber(value: string | number | boolean): number {
   return typeof value === "number" ? value : Number(value);
 }
 
-export function readValue(el: Element): number | string {
+export function readValue(el: Element, property: "value" | "checked" = "value"): number | string | boolean {
+  if (property === "checked") return (el as unknown as { checked?: unknown }).checked === true;
+  if (el instanceof HTMLInputElement) {
+    if (el.type === "number" || el.type === "range") {
+      const raw = el.value;
+      if (raw === "") return "";
+      return el.valueAsNumber;
+    }
+    if (el.type === "checkbox" || el.type === "radio") return el.checked === true;
+    return el.value;
+  }
+  if (el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) return el.value;
   const stored = el.getAttribute("formattable-value");
-  const value = (el as unknown as { value?: unknown }).value;
-  const text = stored !== null ? stored : typeof value === "string" ? value : el.textContent ?? "";
-  if (text.trim() === "") return text;
-  const parsed = toNumber(text);
-  return Number.isNaN(parsed) ? text : parsed;
+  const format = el.getAttribute("formattable-format");
+  if (stored !== null && format !== null && !isDateFormat(format)) {
+    if (stored === "") return "";
+    const parsed = toNumber(stored);
+    return Number.isNaN(parsed) ? NaN : parsed;
+  }
+  return el.textContent ?? "";
 }
 
 export function valueOf(el: Element): number {

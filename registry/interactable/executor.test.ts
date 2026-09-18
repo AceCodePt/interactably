@@ -419,35 +419,32 @@ test("a missing receiver fails only its phrase and is logged once per element", 
   assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("receiver #ghost not found"));
 });
 
-test("property reads resolve to the platform value at fire time", () => {
+test("this.value resolves to the platform type at fire time: number on a number input, string on a text input", () => {
   const qty = numberEl("qty");
-  qty.valueAsNumber = 5;
+  qty.value = "5";
+  const text = inputEl("text");
+  text.value = "abc";
   const receiver = el("total");
-  const seen: InteractionEvent[] = [];
-  wireHost(receiver, { add: () => undefined });
-  observe(receiver, seen);
+  const seen: unknown[] = [];
+  wireHost(receiver, { add: (_, arg) => void seen.push(arg) });
 
-  run(el(), "#total.add(#qty.valueAsNumber)", new Event("click"));
-  assert.equal(seen[0]!.arg, 5);
-
-  const trigger = inputEl();
-  trigger.value = "abc";
-  run(trigger, "#total.add(this.value)", new Event("click"));
-  assert.equal(seen[1]!.arg, "abc");
+  run(text, "#total.add(this.value)", new Event("click"));
+  run(qty, "#total.add(this.value)", new Event("click"));
+  assert.deepEqual(seen, ["abc", 5]);
 });
 
-test("reading a property the resolved element lacks skips the phrase and is logged", (t) => {
-  const spy = t.mock.method(console, "error");
-  const panel = el("panel");
-  Reflect.deleteProperty(panel, "checked");
-  const receiver = el("x");
-  let setCalls = 0;
-  wireHost(receiver, { set: () => void setCalls++ });
+test("a read on a display element resolves like the evaluator: a div reads its textContent", () => {
+  const panel = plainEl("panel");
+  panel.textContent = "hello";
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
 
-  run(el(), "#x.set(#panel.checked)", new Event("click"));
-  assert.equal(setCalls, 0);
-  assert.equal(spy.mock.callCount(), 1);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("#panel has no checked property"));
+  run(el(), "#total.set(#panel.value)", new Event("click"));
+  assert.deepEqual(seen, ["hello"]);
+
+  run(el(), "#total.set(#panel.checked)", new Event("click"));
+  assert.deepEqual(seen, ["hello", false]);
 });
 
 test("object literal arguments resolve field by field", () => {
@@ -459,6 +456,99 @@ test("object literal arguments resolve field by field", () => {
 
   run(el(), "#total.sum({root: #list, select: '.amount'})", new Event("click"));
   assert.deepEqual(seen[0]!.arg, { root: list, select: ".amount" });
+});
+
+test("an expression argument is evaluated at fire time: #total.set(sum('#list .amount'))", () => {
+  const list = plainEl("list");
+  list.innerHTML =
+    '<input class="amount" type="number" value="2.5"><input class="amount" type="number" value="3.25">';
+  document.body.appendChild(list);
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+
+  run(el(), "#total.set(sum('#list .amount'))", new Event("click"));
+  assert.deepEqual(seen, [5.75]);
+});
+
+test("this.set(replace(this.value, '\\D', '')) cleans a pasted blob", () => {
+  const trigger = inputEl();
+  trigger.value = "(555) 123-4567";
+  const receiver = el("mirror");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+
+  run(trigger, "#mirror.set(replace(this.value, '\\D', ''))", new Event("paste"));
+  assert.deepEqual(seen, ["5551234567"]);
+});
+
+test("an object literal field resolves an expression", () => {
+  const qty = numberEl("qty");
+  qty.value = "4";
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+
+  run(el(), "#total.set({name: 'doubled', value: #qty.value * 2})", new Event("click"));
+  assert.deepEqual(seen, [{ name: "doubled", value: 8 }]);
+});
+
+test("a fire-time FormulaError is a failed unit: && stops, || does not fire, and the next ; phrase recovers", (t) => {
+  const spy = t.mock.method(console, "error");
+  const empty = numberEl("empty");
+  empty.value = "";
+  const total = el("total");
+  const alert = el("alert");
+  const other = el("other");
+  const order: string[] = [];
+  wireHost(total, { set: () => void order.push("set") });
+  wireHost(alert, { show: () => void order.push("show") });
+  wireHost(other, { show: () => void order.push("other") });
+
+  const trigger = el();
+  run(trigger, "#total.set(#empty.value * 2) && #alert.show()", new Event("click"));
+  assert.deepEqual(order, [], "&& stops after the failing unit");
+  assert.equal(spy.mock.callCount(), 1);
+
+  run(trigger, "#total.set(#empty.value * 2) || #alert.show()", new Event("click"));
+  assert.deepEqual(order, [], "|| does not fire the fallback for a data error");
+  assert.equal(spy.mock.callCount(), 1, "the same message is logged once per element");
+
+  run(trigger, "#total.set(#empty.value * 2); #other.show()", new Event("click"));
+  assert.deepEqual(order, ["other"], "the next independent ; phrase still runs");
+  assert.equal(spy.mock.callCount(), 1);
+});
+
+test("the executor prefixes a fire-time FormulaError with on-<event>, the source and the argument ordinal", (t) => {
+  const spy = t.mock.method(console, "error");
+  const empty = numberEl("empty");
+  empty.value = "";
+  const total = el("total");
+  wireHost(total, { set: () => undefined });
+
+  const trigger = el("qty");
+  trigger.setAttribute("implements", "modifiable");
+  run(trigger, "#total.set(#empty.value + 1)", new Event("input"));
+
+  const message = String(spy.mock.calls[0]!.arguments[0]);
+  assert.ok(
+    message.includes('on-input on <div#qty implements="modifiable">, argument 1 of set()'),
+    message,
+  );
+  assert.ok(message.includes("(empty)"), message);
+});
+
+test("an expr in an object literal is reported with ', field <name>' appended", (t) => {
+  const spy = t.mock.method(console, "error");
+  const empty = numberEl("empty");
+  empty.value = "";
+  const total = el("total");
+  wireHost(total, { set: () => undefined });
+
+  run(el(), "#total.set({name: 'total', value: #empty.value + 1})", new Event("change"));
+
+  const message = String(spy.mock.calls[0]!.arguments[0]);
+  assert.ok(message.includes("on-change on <div>, argument 1 of set(), field value"), message);
 });
 
 test("the result channel carries the verb's return value", () => {
@@ -937,8 +1027,6 @@ test("a missing receiver stops && and does not trigger ||", (t) => {
 
 test("a failed argument resolution stops && and does not trigger ||", (t) => {
   const spy = t.mock.method(console, "error");
-  const panel = el("panel");
-  Reflect.deleteProperty(panel, "checked");
   const form = el("form");
   const alert = el("alert");
   const order: string[] = [];
@@ -946,8 +1034,8 @@ test("a failed argument resolution stops && and does not trigger ||", (t) => {
   wireHost(alert, { show: () => void order.push("show") });
 
   const trigger = el();
-  run(trigger, "#form.set(#panel.checked) && #alert.show()", new Event("click"));
-  run(trigger, "#form.set(#panel.checked) || #alert.show()", new Event("click"));
+  run(trigger, "#form.set(#ghost.value + 1) && #alert.show()", new Event("click"));
+  run(trigger, "#form.set(#ghost.value + 1) || #alert.show()", new Event("click"));
   assert.deepEqual(order, []);
   assert.equal(spy.mock.callCount(), 1);
   assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("argument for set()"));

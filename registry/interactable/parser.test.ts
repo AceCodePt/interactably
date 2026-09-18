@@ -246,17 +246,58 @@ test("rule 10: argument kinds - number, string, boolean, ref, this, read, object
   assert.deepEqual(parse("#x.set(qty * 2)"), []);
 });
 
-test("rule 11: only value, checked, valueAsNumber may be read off a ref", () => {
-  assert.deepEqual(first(parse("#total.add(#qty.valueAsNumber)")[0]!).calls[0]!.arg, {
-    kind: "read",
-    ref: { kind: "id", id: "qty" },
-    property: "valueAsNumber",
+test("rule 10: an argument falls through to an expression for operators, calls and .height/.width reads", () => {
+  assert.deepEqual(first(parse("#x.set(#qty.value * 2)")[0]!).calls[0]!.arg, {
+    kind: "expr",
+    source: "#qty.value * 2",
+    position: 0,
   });
+  assert.deepEqual(first(parse("#total.set(sum('#list .amount'))")[0]!).calls[0]!.arg, {
+    kind: "expr",
+    source: "sum('#list .amount')",
+    position: 0,
+  });
+  assert.deepEqual(first(parse("#total.set(#qty.value + #price.value)")[0]!).calls[0]!.arg, {
+    kind: "expr",
+    source: "#qty.value + #price.value",
+    position: 0,
+  });
+  assert.deepEqual(first(parse("#nav.set(#top.height)")[0]!).calls[0]!.arg, {
+    kind: "expr",
+    source: "#top.height",
+    position: 0,
+  });
+  assert.deepEqual(first(parse("#nav.set(this.width)")[0]!).calls[0]!.arg, {
+    kind: "expr",
+    source: "this.width",
+    position: 0,
+  });
+});
+
+test("rule 10: an object literal field may be an expression", () => {
+  assert.deepEqual(first(parse("#x.set({name: 'value', value: this.value + '!'})")[0]!).calls[0]!.arg, {
+    kind: "object",
+    fields: [
+      { name: "name", value: { kind: "string", value: "value" } },
+      { name: "value", value: { kind: "expr", source: "this.value + '!'", position: 22 } },
+    ],
+  });
+});
+
+test("rule 11: only value and checked may be read off a ref; valueAsNumber is a parse error", (t) => {
+  const spy = errorsOf(t);
   assert.deepEqual(first(parse("#x.set(#agree.checked)")[0]!).calls[0]!.arg, {
     kind: "read",
     ref: { kind: "id", id: "agree" },
     property: "checked",
   });
+
+  assert.deepEqual(parse("#total.add(#qty.valueAsNumber)"), []);
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes(
+      ".valueAsNumber is not a property; .value on a number input is already a number",
+    ),
+  );
 
   assert.deepEqual(parse("set(this.parentElement)"), []);
   assert.deepEqual(parse("this.value"), []);
@@ -441,4 +482,55 @@ test("delay is a modifier: it parses in any position, not just the end", () => {
   assert.deepEqual(first(mid).modifiers, [{ kind: "delay", ms: 1500, position: 1 }]);
 
   assert.deepEqual(parse("#a.delay(abc).x()"), []);
+});
+
+test("a verb still takes one argument: nested commas inside a call are one argument", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("#x.set(1, 2)"), []);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("takes one argument"));
+
+  const [nested] = parse("#total.set(min(1, 2))");
+  assert.ok(nested);
+  assert.deepEqual(first(nested).calls[0]!.arg, { kind: "expr", source: "min(1, 2)", position: 0 });
+});
+
+test("a malformed expression is a parse-time error naming the position", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("#total.set(1 +)"), []);
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes('expression at position 0: unexpected "end of formula"'),
+  );
+  assert.deepEqual(parse("#total.set(1 +)"), []);
+  assert.equal(spy.mock.callCount(), 1, "the expression error is reported once per attribute string");
+});
+
+test("the escape rule: \\' and \\\\ inside strings are skipped by the splitters", () => {
+  const [phrase] = parse("#x.set('it\\'s;ok'); #y.show()");
+  assert.ok(phrase);
+  assert.equal(phrase.units.length, 1);
+  assert.deepEqual(first(phrase).calls[0]!.arg, { kind: "expr", source: "'it\\'s;ok'", position: 0 });
+
+  const [nested] = parse("#x.set('a\\',b')");
+  assert.ok(nested);
+  assert.deepEqual(first(nested).calls[0]!.arg, { kind: "expr", source: "'a\\',b'", position: 0 });
+
+  const [joined] = parse("#x.set('a\\' && b')");
+  assert.ok(joined);
+  assert.equal(joined.units.length, 1);
+  assert.equal(joined.operator, undefined);
+
+  const [escapedBackslash] = parse("#x.set('\\\\D')");
+  assert.ok(escapedBackslash);
+  assert.deepEqual(first(escapedBackslash).calls[0]!.arg, { kind: "string", value: "\\D" });
+});
+
+test("a backslash escapes only the quote and itself; every other \\x stays verbatim", () => {
+  assert.deepEqual(first(parse("#x.set('\\D')")[0]!).calls[0]!.arg, { kind: "string", value: "\\D" });
+  assert.deepEqual(first(parse("#x.set('\\'')")[0]!).calls[0]!.arg, {
+    kind: "expr",
+    source: "'\\''",
+    position: 0,
+  });
+  assert.deepEqual(first(parse("#x.set('\\\\')")[0]!).calls[0]!.arg, { kind: "string", value: "\\" });
 });

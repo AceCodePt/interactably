@@ -41,11 +41,11 @@
       <article class="ref-card">
         <h3><code class="inline-code">modifiable</code></h3>
         <p class="ref-tags">input &middot; textarea &middot; output &middot; select</p>
-        <p class="ref-desc">Typed writes with clamping; evaluates a formula on <code class="inline-code">compute()</code> and on connect.</p>
+        <p class="ref-desc">Typed writes with clamping; <code class="inline-code">set(...)</code> takes an expression inline, so derived values are computed on the trigger that wants them.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">set</span><span class="verb-tag">inc</span><span class="verb-tag">dec</span><span class="verb-tag">clear</span><span class="verb-tag">reset</span><span class="verb-tag">compute</span></div>
+        <div><span class="verb-tag">set</span><span class="verb-tag">inc</span><span class="verb-tag">dec</span><span class="verb-tag">clear</span><span class="verb-tag">reset</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">step</span><span class="verb-tag">formula</span><span class="verb-tag">invalid-value</span></div>
+        <div><span class="verb-tag">step</span></div>
       </article>
 
       <article class="ref-card">
@@ -242,7 +242,7 @@
         <tbody>
           <tr><td><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code></td><td>Modifiers — an implementation may not name a verb that way</td></tr>
           <tr><td><code class="inline-code">this</code></td><td>The only keyword</td></tr>
-          <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">valueAsNumber</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
+          <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
           <tr><td><code class="inline-code">enter</code>, <code class="inline-code">escape</code>, <code class="inline-code">space</code>, &hellip;</td><td>Key names, matching <code class="inline-code">KeyboardEvent.key</code> case-insensitively, one per phrase, under <code class="inline-code">on-keydown</code> / <code class="inline-code">on-keyup</code>; under the intersect triggers the key is a CSS root-margin string instead</td></tr>
         </tbody>
       </table>
@@ -263,10 +263,11 @@ phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
-arg       := number | "'" string "'" | 'true' | 'false' | ref | read
-read      := ref '.' ('value' | 'checked' | 'valueAsNumber')
+arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
+read      := ref '.' ('value' | 'checked')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
+expr      := <expression>   (see the docs)
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'</code></pre>
     </div>
     <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>

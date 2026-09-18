@@ -1,6 +1,5 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { formatWrite, toNumber, valueOf } from "@behaviors/implementation-utils.ts";
-import { evaluateFormula } from "@utils/formula.ts";
 
 export const modifiable = defineImplementation(
   "modifiable",
@@ -8,8 +7,6 @@ export const modifiable = defineImplementation(
     tags: ["input", "textarea", "output", "select"],
     config: {
       step: "number | undefined",
-      formula: "string | undefined",
-      "invalid-value": "string | undefined",
     },
     verbs: {
       set: "string | number",
@@ -17,7 +14,6 @@ export const modifiable = defineImplementation(
       dec: "string | number | undefined",
       clear: "undefined",
       reset: "undefined",
-      compute: "undefined",
     },
   },
   (el, attrs) => {
@@ -30,16 +26,6 @@ export const modifiable = defineImplementation(
       } else {
         if (target.textContent === text) return;
         target.textContent = text;
-      }
-    };
-    const compute = (): void => {
-      const formula = attrs.formula;
-      if (formula === undefined) return;
-      try {
-        write(String(evaluateFormula(formula, { document, source: el }).value));
-      } catch (err) {
-        console.error(String(err instanceof Error ? err.message : err));
-        write(attrs["invalid-value"] ?? "Error");
       }
     };
     const bound = (k: "min" | "max"): number | undefined =>
@@ -65,8 +51,6 @@ export const modifiable = defineImplementation(
         }
         write(el.defaultValue);
       },
-      compute: () => compute(),
-      connectedCallback: () => compute(),
     };
   },
 );

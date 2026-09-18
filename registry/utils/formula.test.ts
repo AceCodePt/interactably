@@ -7,7 +7,7 @@ import {
   installFakeResizeObserver,
   resetFakeResizeObserver,
 } from "@tests/resize-observer.ts";
-import { FormulaError, evaluateFormula } from "@utils/formula.ts";
+import { FormulaError, evaluateFormula, parseFormula } from "@utils/formula.ts";
 import { MEASURED } from "@interactable/measure.ts";
 
 let dom: JSDOM;
@@ -26,31 +26,123 @@ beforeEach(() => {
   document.body.replaceChildren();
 });
 
-test("#a.value is a number when the text parses, else a string; empty is the empty string", () => {
-  const numeric = document.createElement("input");
-  numeric.id = "numeric";
-  numeric.value = "42";
-  const words = document.createElement("input");
-  words.id = "words";
-  words.value = "abc";
-  const empty = document.createElement("input");
-  empty.id = "empty";
-  empty.value = "";
-  document.body.append(numeric, words, empty);
+test("type=text reads the platform string: '05' stays '05', inputmode declares nothing", () => {
+  const zip = document.createElement("input");
+  zip.id = "zip";
+  zip.value = "05";
+  zip.setAttribute("inputmode", "numeric");
+  const text = document.createElement("input");
+  text.id = "text";
+  text.value = "abc";
+  document.body.append(zip, text);
 
-  const n = evaluateFormula("#numeric.value");
-  assert.equal(n.value, 42);
-  assert.equal(evaluateFormula("#words.value").value, "abc");
-  assert.equal(evaluateFormula("#empty.value").value, "");
+  assert.equal(evaluateFormula("#zip.value").value, "05");
+  assert.equal(evaluateFormula("#text.value").value, "abc");
 });
 
-test("a missing element referenced by .value throws not-found", () => {
-  assert.throws(() => evaluateFormula("#ghost.value"), (err: unknown) => {
-    assert.ok(err instanceof Error);
-    assert.ok(err.message.includes("#ghost not found"), err.message);
-    assert.ok(!err.message.includes("(empty)"), err.message);
+test("two text inputs + join, two number inputs + add, text and number + join", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "05";
+  const b = document.createElement("input");
+  b.id = "b";
+  b.value = "07";
+  document.body.append(a, b);
+
+  assert.equal(evaluateFormula("#a.value + #b.value").value, "0507");
+
+  const n1 = document.createElement("input");
+  n1.id = "n1";
+  n1.type = "number";
+  n1.value = "5";
+  const n2 = document.createElement("input");
+  n2.id = "n2";
+  n2.type = "number";
+  n2.value = "7";
+  document.body.append(n1, n2);
+
+  assert.equal(evaluateFormula("#n1.value + #n2.value").value, 12);
+
+  assert.equal(evaluateFormula("#a.value + #n1.value").value, "055");
+});
+
+test("a value reference joins through + to build a string", () => {
+  const slug = document.createElement("input");
+  slug.id = "slug";
+  slug.value = "x";
+  document.body.appendChild(slug);
+
+  assert.equal(evaluateFormula("'invoice-' + #slug.value + '.pdf'").value, "invoice-x.pdf");
+});
+
+test("type=number: an empty value is the empty error, an unparseable value is not-a-number", () => {
+  const empty = document.createElement("input");
+  empty.id = "empty";
+  empty.type = "number";
+  empty.value = "";
+  const nan = document.createElement("input");
+  nan.id = "nan";
+  nan.type = "number";
+  Object.defineProperty(nan, "value", { value: "abc", configurable: true });
+  document.body.append(empty, nan);
+
+  assert.throws(() => evaluateFormula("#empty.value * 2"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "empty");
+    assert.ok(err.message.includes("#empty.value"), err.message);
     return true;
   });
+
+  assert.throws(() => evaluateFormula("#nan.value + 1"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "not-a-number");
+    assert.ok(err.message.includes("#nan.value"), err.message);
+    return true;
+  });
+});
+
+test("- on a text input is not-a-number naming the reference", () => {
+  const a = document.createElement("input");
+  a.id = "a";
+  a.value = "abc";
+  document.body.appendChild(a);
+
+  assert.throws(() => evaluateFormula("#a.value - 1"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "not-a-number");
+    assert.ok(err.message.includes('"-"'), err.message);
+    assert.ok(err.message.includes('"abc"'), err.message);
+    assert.ok(err.message.includes("#a.value"), err.message);
+    return true;
+  });
+});
+
+test("type=range reads valueAsNumber", () => {
+  const range = document.createElement("input");
+  range.id = "range";
+  range.type = "range";
+  range.value = "50";
+  document.body.appendChild(range);
+
+  assert.equal(evaluateFormula("#range.value").value, 50);
+});
+
+test("a checkbox reads .value as its checked boolean, and the value= attribute is unreachable through .value", () => {
+  const on = document.createElement("input");
+  on.id = "on";
+  on.type = "checkbox";
+  on.value = "12.99";
+  on.checked = true;
+  const off = document.createElement("input");
+  off.id = "off";
+  off.type = "checkbox";
+  off.value = "12.99";
+  off.checked = false;
+  document.body.append(on, off);
+
+  assert.equal(evaluateFormula("#on.value").value, "true");
+  assert.equal(evaluateFormula("#on.value * 1").value, 1);
+  assert.equal(evaluateFormula("#off.value * 1").value, 0);
 });
 
 test("#a.checked is the element's checked boolean, false when there is none", () => {
@@ -71,6 +163,15 @@ test("#a.checked is the element's checked boolean, false when there is none", ()
   assert.equal(evaluateFormula("#plain.checked").value, "false");
 });
 
+test("a missing element referenced by .value throws not-found", () => {
+  assert.throws(() => evaluateFormula("#ghost.value"), (err: unknown) => {
+    assert.ok(err instanceof Error);
+    assert.ok(err.message.includes("#ghost not found"), err.message);
+    assert.ok(!err.message.includes("(empty)"), err.message);
+    return true;
+  });
+});
+
 test("a bare reference is a parse error naming the fix", () => {
   const a = document.createElement("input");
   a.id = "a";
@@ -89,40 +190,21 @@ test("+ joins when either side is a string and adds otherwise, left to right", (
   assert.equal(evaluateFormula("1 + 2 + 'a'").value, "3a");
 });
 
-test("a value reference joins through + to build a string", () => {
-  const slug = document.createElement("input");
-  slug.id = "slug";
-  slug.value = "x";
-  document.body.appendChild(slug);
-
-  assert.equal(evaluateFormula("'invoice-' + #slug.value + '.pdf'").value, "invoice-x.pdf");
-});
-
-test("zip codes: two numeric-looking values add; a leading literal forces a join", () => {
-  const zip1 = document.createElement("input");
-  zip1.id = "zip1";
-  zip1.value = "02134";
-  const zip2 = document.createElement("input");
-  zip2.id = "zip2";
-  zip2.value = "90210";
-  document.body.append(zip1, zip2);
-
-  assert.equal(evaluateFormula("#zip1.value + #zip2.value").value, 92344);
-  assert.equal(evaluateFormula("'' + #zip1.value + #zip2.value").value, "213490210");
-});
-
 test("a boolean is 1 and 0 in arithmetic: the line-item pattern", () => {
   const item = document.createElement("input");
   item.id = "item";
-  item.type = "checkbox";
+  item.type = "number";
   item.value = "12.99";
-  item.checked = true;
-  document.body.appendChild(item);
+  const tick = document.createElement("input");
+  tick.id = "tick";
+  tick.type = "checkbox";
+  tick.checked = true;
+  document.body.append(item, tick);
 
-  assert.equal(evaluateFormula("#item.value * #item.checked").value, 12.99);
+  assert.equal(evaluateFormula("#item.value * #tick.checked").value, 12.99);
 
-  item.checked = false;
-  assert.equal(evaluateFormula("#item.value * #item.checked").value, 0);
+  tick.checked = false;
+  assert.equal(evaluateFormula("#item.value * #tick.checked").value, 0);
 });
 
 test("checked references add as 1/0 and min coerces them", () => {
@@ -144,42 +226,100 @@ test("checked references add as 1/0 and min coerces them", () => {
   assert.equal(evaluateFormula("#a.checked + #b.checked").value, 0);
 });
 
-test("sum/count filter the set in the selector with :checked", () => {
+test("sum/count filter the set in the selector with :checked, totalling booleans as 1/0", () => {
   const list = document.createElement("ul");
   list.id = "list";
   list.innerHTML = `
-    <li><input class="amount" type="checkbox" value="10" checked></li>
-    <li><input class="amount" type="checkbox" value="20"></li>
-    <li><input class="amount" type="checkbox" value="30" checked></li>`;
+    <li><input class="amount" type="checkbox" checked></li>
+    <li><input class="amount" type="checkbox"></li>
+    <li><input class="amount" type="checkbox" checked></li>`;
   document.body.appendChild(list);
 
-  assert.equal(evaluateFormula("sum('#list .amount:checked')").value, 40);
+  assert.equal(evaluateFormula("sum('#list .amount:checked')").value, 2);
   assert.equal(evaluateFormula("count('#list .amount:checked')").value, 2);
 });
 
-test("sum over plain inputs and count over li are unchanged", () => {
+test("sum totals number-typed elements and count over li is unchanged", () => {
   const root = document.createElement("div");
   root.innerHTML =
-    '<input class="amount" value="2.5"><input class="amount" value="3.25"><li class="row"></li><li class="row"></li>';
+    '<input class="amount" type="number" value="2.5"><input class="amount" type="number" value="3.25"><li class="row"></li><li class="row"></li>';
   document.body.appendChild(root);
 
   assert.equal(evaluateFormula("sum('.amount')").value, 5.75);
   assert.equal(evaluateFormula("count('.row')").value, 2);
 });
 
-test("arithmetic on a non-numeric reference throws a FormulaError naming operator, operand and reference", () => {
+test("sum is strict: a string-typed element errors naming match 1", () => {
+  const root = document.createElement("div");
+  root.innerHTML = '<span class="amount">7</span><span class="amount">8</span>';
+  document.body.appendChild(root);
+
+  assert.throws(() => evaluateFormula("sum('.amount')"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "not-a-number");
+    assert.ok(err.message.includes("match 1"), err.message);
+    assert.ok(err.message.includes("sum()"), err.message);
+    return true;
+  });
+});
+
+test("numeric functions require number arguments", () => {
   const a = document.createElement("input");
   a.id = "a";
-  a.value = "abc";
+  a.value = "x";
   document.body.appendChild(a);
 
-  assert.throws(() => evaluateFormula("#a.value - 1"), (err: unknown) => {
+  assert.throws(() => evaluateFormula("min(#a.value, 3)"), (err: unknown) => {
     assert.ok(err instanceof FormulaError);
-    assert.ok(err.message.includes('"-"'), err.message);
-    assert.ok(err.message.includes('"abc"'), err.message);
+    assert.ok(err.message.includes("min()"), err.message);
     assert.ok(err.message.includes("#a.value"), err.message);
     return true;
   });
+});
+
+test("sum is strict: a blank row is an error naming the row's id", () => {
+  const list = document.createElement("ul");
+  list.id = "list";
+  list.innerHTML = `
+    <li><input class="amount" type="number" value="10"></li>
+    <li><input id="row3" class="amount" type="number" value=""></li>
+    <li><input class="amount" type="number" value="30"></li>`;
+  document.body.appendChild(list);
+
+  assert.throws(() => evaluateFormula("sum('#list .amount')"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.ok(err.message.includes("#row3"), err.message);
+    assert.ok(err.message.includes("sum()"), err.message);
+    return true;
+  });
+});
+
+test("sum skips a required-but-blank row when filtered by :valid", () => {
+  const list = document.createElement("ul");
+  list.id = "list";
+  list.innerHTML = `
+    <li><input class="amount" type="number" value="10"></li>
+    <li><input class="amount" type="number" required value=""></li>
+    <li><input class="amount" type="number" value="30"></li>`;
+  document.body.appendChild(list);
+
+  assert.equal(evaluateFormula("sum('#list .amount:valid')").value, 40);
+});
+
+test("sum skips a blank placeholder row when filtered by :not(:placeholder-shown)", () => {
+  const list = document.createElement("ul");
+  list.id = "list";
+  list.innerHTML = `
+    <li><input class="amount" type="number" value="10"></li>
+    <li><input class="amount" type="number" placeholder=" " value=""></li>
+    <li><input class="amount" type="number" value="30"></li>`;
+  document.body.appendChild(list);
+
+  assert.equal(evaluateFormula("sum('#list .amount:not(:placeholder-shown)')").value, 40);
+});
+
+test("count over an empty selection is 0, no throw", () => {
+  assert.equal(evaluateFormula("count('#list .none')").value, 0);
 });
 
 test("an empty .value operand is an error marked (empty)", () => {
@@ -241,84 +381,14 @@ test("a missing element is a not-found error for .value and .checked, even in a 
   }
 });
 
-test("#typo.value + 1 and #typo.checked throw not-found, not the strict-arithmetic empty error", () => {
-  for (const source of ["#typo.value + 1", "#typo.checked"]) {
-    assert.throws(() => evaluateFormula(source), (err: unknown) => {
-      assert.ok(err instanceof Error, "expected an Error");
-      assert.ok(err.message.includes("formula"), err.message);
-      assert.ok(err.message.includes("#typo not found"), err.message);
-      assert.ok(!err.message.includes("(empty)"), err.message);
-      return true;
-    });
-  }
-});
-
-test("an existing element's value still reads and arithmetics", () => {
+test("an existing number element's value still reads and arithmetics", () => {
   const present = document.createElement("input");
   present.id = "present";
+  present.type = "number";
   present.value = "2";
   document.body.appendChild(present);
 
   assert.equal(evaluateFormula("#present.value + 1").value, 3);
-});
-
-test("numeric functions require number arguments", () => {
-  const a = document.createElement("input");
-  a.id = "a";
-  a.value = "x";
-  document.body.appendChild(a);
-
-  assert.throws(() => evaluateFormula("min(#a.value, 3)"), (err: unknown) => {
-    assert.ok(err instanceof FormulaError);
-    assert.ok(err.message.includes("min()"), err.message);
-    assert.ok(err.message.includes("#a.value"), err.message);
-    return true;
-  });
-});
-
-test("sum is strict: a blank row is an error naming the row's id", () => {
-  const list = document.createElement("ul");
-  list.id = "list";
-  list.innerHTML = `
-    <li><input class="amount" value="10"></li>
-    <li><input id="row3" class="amount" value=""></li>
-    <li><input class="amount" value="30"></li>`;
-  document.body.appendChild(list);
-
-  assert.throws(() => evaluateFormula("sum('#list .amount')"), (err: unknown) => {
-    assert.ok(err instanceof FormulaError);
-    assert.ok(err.message.includes("#row3"), err.message);
-    assert.ok(err.message.includes("sum()"), err.message);
-    return true;
-  });
-});
-
-test("sum skips a required-but-blank row when filtered by :valid", () => {
-  const list = document.createElement("ul");
-  list.id = "list";
-  list.innerHTML = `
-    <li><input class="amount" value="10"></li>
-    <li><input class="amount" required value=""></li>
-    <li><input class="amount" value="30"></li>`;
-  document.body.appendChild(list);
-
-  assert.equal(evaluateFormula("sum('#list .amount:valid')").value, 40);
-});
-
-test("sum skips a blank placeholder row when filtered by :not(:placeholder-shown)", () => {
-  const list = document.createElement("ul");
-  list.id = "list";
-  list.innerHTML = `
-    <li><input class="amount" value="10"></li>
-    <li><input class="amount" placeholder=" " value=""></li>
-    <li><input class="amount" value="30"></li>`;
-  document.body.appendChild(list);
-
-  assert.equal(evaluateFormula("sum('#list .amount:not(:placeholder-shown)')").value, 40);
-});
-
-test("count over an empty selection is 0, no throw", () => {
-  assert.equal(evaluateFormula("count('#list .none')").value, 0);
 });
 
 test("#a.checked stays a boolean: 1 and 0 in arithmetic", () => {
@@ -349,9 +419,11 @@ test("division by zero is an error: 1 / 0, 0 / 0 and -0 divisors throw, naming t
 test("an empty divisor reference is an empty-operand error, not division by zero", () => {
   const a = document.createElement("input");
   a.id = "a";
+  a.type = "number";
   a.value = "4";
   const b = document.createElement("input");
   b.id = "b";
+  b.type = "number";
   b.value = "";
   document.body.append(a, b);
 
@@ -367,9 +439,11 @@ test("an empty divisor reference is an empty-operand error, not division by zero
 test("a zero-valued reference divisor is a division error naming the reference", () => {
   const a = document.createElement("input");
   a.id = "a";
+  a.type = "number";
   a.value = "4";
   const b = document.createElement("input");
   b.id = "b";
+  b.type = "number";
   b.value = "0";
   document.body.append(a, b);
 
@@ -425,7 +499,7 @@ test("this.value reads the source element passed in the context", () => {
   self.value = "42";
   document.body.appendChild(self);
 
-  assert.equal(evaluateFormula("this.value", { document, source: self }).value, 42);
+  assert.equal(evaluateFormula("this.value", { document, source: self }).value, "42");
 });
 
 test("this.checked on an unchecked box is false", () => {
@@ -454,9 +528,11 @@ test("this.height and this.width read the source's measured border-box size", ()
 
 test("this.value mixes with #id references in one formula", () => {
   const self = document.createElement("input");
+  self.type = "number";
   self.value = "2";
   const other = document.createElement("input");
   other.id = "other";
+  other.type = "number";
   other.value = "3";
   document.body.append(self, other);
 
@@ -490,6 +566,37 @@ test("an empty this.value operand is an empty-operand error naming this.value", 
   });
 });
 
+test("formattable numeric-format output reads a number from formattable-value", () => {
+  const out = document.createElement("output");
+  out.id = "out";
+  out.setAttribute("formattable-value", "42");
+  out.setAttribute("formattable-format", "{ style: 'currency', currency: 'USD' }");
+  out.textContent = "$42.00";
+  document.body.appendChild(out);
+
+  assert.equal(evaluateFormula("#out.value").value, 42);
+});
+
+test("formattable date-format output reads a string", () => {
+  const out = document.createElement("output");
+  out.id = "out";
+  out.setAttribute("formattable-value", "2024-01-02");
+  out.setAttribute("formattable-format", "{ type: 'date', dateStyle: 'medium' }");
+  out.textContent = "Jan 2, 2024";
+  document.body.appendChild(out);
+
+  assert.equal(evaluateFormula("#out.value").value, "Jan 2, 2024");
+});
+
+test("a plain span reads textContent as a string", () => {
+  const span = document.createElement("span");
+  span.id = "span";
+  span.textContent = "7";
+  document.body.appendChild(span);
+
+  assert.equal(evaluateFormula("#span.value").value, "7");
+});
+
 test("a backslash escapes only the quote and itself; every other \\x stays verbatim", () => {
   assert.equal(evaluateFormula("'\\D'").value, "\\D");
   assert.equal(evaluateFormula("'\\''").value, "'");
@@ -514,17 +621,27 @@ test("replace takes exactly three arguments", () => {
   assert.throws(() => evaluateFormula("replace('a', 'b', 'c', 'd')"), /takes 3 arguments/);
 });
 
-test("replace refuses a number first argument, naming the origin and the .value rule", () => {
+test("replace accepts a text input's string first argument", () => {
   const zip = document.createElement("input");
   zip.id = "zip";
   zip.value = "05";
   document.body.appendChild(zip);
 
-  assert.throws(() => evaluateFormula("replace(#zip.value, '\\D', '')"), (err: unknown) => {
+  assert.equal(evaluateFormula("replace(#zip.value, '\\D', '')").value, "05");
+});
+
+test("replace refuses a number first argument, naming the origin and the .value rule", () => {
+  const num = document.createElement("input");
+  num.id = "num";
+  num.type = "number";
+  num.value = "5";
+  document.body.appendChild(num);
+
+  assert.throws(() => evaluateFormula("replace(#num.value, '\\D', '')"), (err: unknown) => {
     assert.ok(err instanceof FormulaError);
     assert.equal(err.reason, "not-a-string");
     assert.ok(
-      err.message.includes("replace() needs a string as its first argument; #zip.value read as a number"),
+      err.message.includes("replace() needs a string as its first argument; #num.value read as a number"),
       err.message,
     );
     assert.ok(err.message.includes("see the .value rule"), err.message);
@@ -557,4 +674,24 @@ test("replace nests inside + with a non-numeric-looking value", () => {
   document.body.appendChild(phone);
 
   assert.equal(evaluateFormula("'tel:' + replace(#phone.value, '\\D', '')").value, "tel:5551234567");
+});
+
+test("parseFormula validates syntax without a document or source, gating data errors", () => {
+  assert.doesNotThrow(() => parseFormula("1 + 2"));
+  assert.doesNotThrow(() => parseFormula("min(#a.value, 3)"));
+  assert.doesNotThrow(() => parseFormula("#ghost.value + 1"));
+  assert.doesNotThrow(() => parseFormula("this.value * 2"));
+  assert.doesNotThrow(() => parseFormula("1 / 0"));
+  assert.doesNotThrow(() => parseFormula("replace(#num.value, '\\D', '')"));
+  assert.doesNotThrow(() => parseFormula("sum('.amount')"));
+  assert.doesNotThrow(() => parseFormula("'invoice-' + #slug.value + '.pdf'"));
+
+  assert.throws(() => parseFormula("1 +"), /unexpected "end of formula"/);
+  assert.throws(() => parseFormula("#a."), /needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => parseFormula("#a.foo"), /needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => parseFormula("min()"), /min\(\) needs at least one argument/);
+  assert.throws(() => parseFormula("floor(1, 2)"), /floor\(\) takes 1 argument/);
+  assert.throws(() => parseFormula("'unterminated"), /unterminated string/);
+  assert.throws(() => parseFormula("frobnicate(1)"), /unknown function frobnicate\(\)/);
+  assert.throws(() => parseFormula("1 + (2"), /missing \)/);
 });
