@@ -102,10 +102,8 @@ test("site: no is= anywhere, referenced bundles are built, and the demo interact
 
   for (const file of ["docs.html", "examples.html", "index.html", "reference.html"]) {
     const html = readFileSync(fileURLToPath(new URL(file, siteDir)), "utf8");
-    assert.equal(html.includes('is="interactable-'), false, `${file} carries no is="interactable-`);
     assert.equal(html.includes("interactable-"), false, `${file} carries no interactable- mentions`);
   }
-  assert.equal(examples.includes('is="interactable-'), false, "examples.html carries no is= in samples");
   assert.equal(examples.includes("installAutoLoader"), false, "examples.html carries no auto-loader reference");
   assert.equal(demo.includes("installAutoLoader"), false, "demo.js carries no auto-loader reference");
 
