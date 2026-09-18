@@ -7,6 +7,7 @@ export interface FormulaResult {
 
 interface EvalContext {
   readonly document: Document;
+  readonly source?: Element;
 }
 
 type Value = number | string | boolean;
@@ -188,7 +189,7 @@ class Formula {
       this.skipSpace();
       if (this.source[this.pos] !== ")") throw new Error("missing )");
       this.pos++;
-    } else if (ch === "#") {
+    } else if (ch === "#" || (ch !== undefined && /[A-Za-z_$]/.test(ch) && this.isThisKeyword())) {
       value = this.parseReference();
     } else if (ch === "'" || ch === '"') {
       value = this.parseString(ch);
@@ -204,27 +205,54 @@ class Formula {
     return { value, origin: this.source.slice(start, this.pos).trim(), literal };
   }
 
-  private parseReference(): Value {
-    this.pos++;
+  private isThisKeyword(): boolean {
     const start = this.pos;
-    while (this.pos < this.source.length && /[\w-]/.test(this.source[this.pos]!)) this.pos++;
-    const id = this.source.slice(start, this.pos);
-    if (id === "") throw new Error("empty # reference");
+    while (this.pos < this.source.length && /[A-Za-z0-9_$]/.test(this.source[this.pos]!)) this.pos++;
+    const name = this.source.slice(start, this.pos);
+    if (name !== "this") {
+      this.pos = start;
+      return false;
+    }
     this.skipSpace();
-    if (this.source[this.pos] !== ".") throw new Error(`reference #${id} needs .value, .checked, .height or .width`);
+    const call = this.source[this.pos] === "(";
+    this.pos = start;
+    return !call;
+  }
+
+  private parseReference(): Value {
+    let display: string;
+    let target: Element | null | undefined;
+    if (this.source[this.pos] === "#") {
+      this.pos++;
+      const start = this.pos;
+      while (this.pos < this.source.length && /[\w-]/.test(this.source[this.pos]!)) this.pos++;
+      const id = this.source.slice(start, this.pos);
+      if (id === "") throw new Error("empty # reference");
+      display = `#${id}`;
+      target = this.context.document.getElementById(id);
+    } else {
+      const start = this.pos;
+      while (this.pos < this.source.length && /[A-Za-z0-9_$]/.test(this.source[this.pos]!)) this.pos++;
+      display = this.source.slice(start, this.pos);
+      target = this.context.source;
+    }
+    this.skipSpace();
+    if (this.source[this.pos] !== ".") throw new Error(`reference ${display} needs .value, .checked, .height or .width`);
     this.pos++;
     const propStart = this.pos;
     while (this.pos < this.source.length && /[A-Za-z]/.test(this.source[this.pos]!)) this.pos++;
     const prop = this.source.slice(propStart, this.pos);
-    const element = this.context.document.getElementById(id);
-    if (element === null) {
-      throw new Error(`formula ${JSON.stringify(this.source)}: #${id} not found`);
+    if (target === undefined) {
+      throw new Error(`formula ${JSON.stringify(this.source)}: this has no element here`);
     }
-    if (prop === "value") return readValue(element);
-    if (prop === "checked") return (element as unknown as { checked?: unknown }).checked === true;
-    if (prop === "height") return readMeasured(element, "height");
-    if (prop === "width") return readMeasured(element, "width");
-    throw new Error(`reference #${id} needs .value, .checked, .height or .width`);
+    if (target === null) {
+      throw new Error(`formula ${JSON.stringify(this.source)}: ${display} not found`);
+    }
+    if (prop === "value") return readValue(target);
+    if (prop === "checked") return (target as unknown as { checked?: unknown }).checked === true;
+    if (prop === "height") return readMeasured(target, "height");
+    if (prop === "width") return readMeasured(target, "width");
+    throw new Error(`reference ${display} needs .value, .checked, .height or .width`);
   }
 
   private parseCall(): Value {

@@ -8,6 +8,7 @@ import {
   resetFakeResizeObserver,
 } from "@tests/resize-observer.ts";
 import { FormulaError, evaluateFormula } from "@utils/formula.ts";
+import { MEASURED } from "@interactable/measure.ts";
 
 let dom: JSDOM;
 
@@ -417,4 +418,74 @@ test("an unknown reference property lists all four readable properties", () => {
   document.body.appendChild(a);
 
   assert.throws(() => evaluateFormula("#a.foo"), /needs \.value, \.checked, \.height or \.width/);
+});
+
+test("this.value reads the source element passed in the context", () => {
+  const self = document.createElement("input");
+  self.value = "42";
+  document.body.appendChild(self);
+
+  assert.equal(evaluateFormula("this.value", { document, source: self }).value, 42);
+});
+
+test("this.checked on an unchecked box is false", () => {
+  const self = document.createElement("input");
+  self.type = "checkbox";
+  self.checked = false;
+  document.body.appendChild(self);
+
+  assert.equal(evaluateFormula("this.checked", { document, source: self }).value, "false");
+});
+
+test("this.height and this.width read the source's measured border-box size", () => {
+  const self = document.createElement("header");
+  document.body.appendChild(self);
+
+  assert.equal(
+    evaluateFormula("this.height", { document, source: self }).value,
+    0,
+    "before any report the fallback rect reads",
+  );
+
+  (self as unknown as Record<PropertyKey, unknown>)[MEASURED] = { width: 120, height: 74 };
+  assert.equal(evaluateFormula("this.height", { document, source: self }).value, 74);
+  assert.equal(evaluateFormula("this.width", { document, source: self }).value, 120);
+});
+
+test("this.value mixes with #id references in one formula", () => {
+  const self = document.createElement("input");
+  self.value = "2";
+  const other = document.createElement("input");
+  other.id = "other";
+  other.value = "3";
+  document.body.append(self, other);
+
+  assert.equal(evaluateFormula("this.value + #other.value", { document, source: self }).value, 5);
+});
+
+test("a formula reading this without a source element throws the no-element-here error", () => {
+  assert.throws(() => evaluateFormula("this.value"), (err: unknown) => {
+    assert.ok(err instanceof Error);
+    assert.ok(err.message.includes("this has no element here"), err.message);
+    return true;
+  });
+});
+
+test("this is a keyword: a bare this is a reference error, and this(...) is an unknown function", () => {
+  assert.throws(() => evaluateFormula("this"), /reference this needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => evaluateFormula("this + 1"), /reference this needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => evaluateFormula("this(1)"), /unknown function this\(\)/);
+});
+
+test("an empty this.value operand is an empty-operand error naming this.value", () => {
+  const self = document.createElement("input");
+  self.value = "";
+  document.body.appendChild(self);
+
+  assert.throws(() => evaluateFormula("this.value * 2", { document, source: self }), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.ok(err.message.includes("this.value"), err.message);
+    assert.ok(err.message.includes("(empty)"), err.message);
+    return true;
+  });
 });
