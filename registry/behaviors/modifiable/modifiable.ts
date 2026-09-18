@@ -1,22 +1,17 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { formatWrite, toNumber, valueOf } from "@behaviors/implementation-utils.ts";
+import { formatWrite } from "@behaviors/implementation-utils.ts";
 
 export const modifiable = defineImplementation(
   "modifiable",
   {
     tags: ["input", "textarea", "output", "select"],
-    config: {
-      step: "number | undefined",
-    },
     verbs: {
       set: "string | number",
-      inc: "string | number | undefined",
-      dec: "string | number | undefined",
       clear: "undefined",
       reset: "undefined",
     },
   },
-  (el, attrs) => {
+  (el) => {
     const write = (v: string | number): void => {
       const text = formatWrite(el, String(v));
       const target: Element = el;
@@ -28,21 +23,8 @@ export const modifiable = defineImplementation(
         target.textContent = text;
       }
     };
-    const bound = (k: "min" | "max"): number | undefined =>
-      el instanceof HTMLInputElement && el[k] !== "" ? Number(el[k]) : undefined;
-    const clamp = (n: number): number =>
-      Math.min(bound("max") ?? Infinity, Math.max(bound("min") ?? -Infinity, n));
-    const numberArg = (verb: string, value: string | number): number => {
-      const parsed = toNumber(value);
-      if (Number.isNaN(parsed)) {
-        throw new Error(`${verb}() could not read a number from "${String(value)}"`);
-      }
-      return parsed;
-    };
     return {
       set: (_e, v) => write(v),
-      inc: (_e, n = attrs.step ?? 1) => write(clamp(valueOf(el) + numberArg("inc", n))),
-      dec: (_e, n = attrs.step ?? 1) => write(clamp(valueOf(el) - numberArg("dec", n))),
       clear: () => write(""),
       reset: () => {
         if (el instanceof HTMLSelectElement) {

@@ -36,9 +36,9 @@ const MARKUP = `
          on-clean="this.removeAttr('data-dirty')"
          on-keydown="escape: this.reset(); #preview.set(#qty.value)">
 </label>
-<button id="dec" on-click="#qty.dec(); #preview.set(#qty.value)">−</button>
-<button id="inc" on-click="#qty.inc(); #preview.set(#qty.value)">+</button>
-<button id="inc5" on-click="#qty.inc(5); #preview.set(#qty.value)">+5</button>
+<button id="dec" on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)">−</button>
+<button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
+<button id="inc5" on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)">+5</button>
 <button id="reset" on-click="#qty.reset(); #preview.set(#qty.value)">Reset</button>
 <output id="preview" implements="modifiable"
         on-load="this.set(#qty.value)">1</output>
@@ -70,7 +70,7 @@ function byId(id: string): HTMLElement {
   return document.getElementById(id)!;
 }
 
-test("the +5 trace: inc clamps, dirties via the interaction event and the preview follows", async () => {
+test("the +5 trace: set writes the sum, dirties via the interaction event and the preview follows", async () => {
   mount();
   await flush();
 
@@ -87,22 +87,22 @@ test("the +5 trace: inc clamps, dirties via the interaction event and the previe
   assert.equal(preview.textContent, "6");
 
   click(byId("inc5"));
-  assert.equal(qty.value, "10");
-  assert.equal(preview.textContent, "10");
+  assert.equal(qty.value, "11");
+  assert.equal(preview.textContent, "11");
 
   click(byId("inc"));
+  assert.equal(qty.value, "12");
+  assert.equal(preview.textContent, "12");
+
+  click(byId("dec"));
+  assert.equal(qty.value, "11");
+  assert.equal(preview.textContent, "11");
+  click(byId("dec"));
   assert.equal(qty.value, "10");
   assert.equal(preview.textContent, "10");
-
-  click(byId("dec"));
-  assert.equal(qty.value, "9");
-  assert.equal(preview.textContent, "9");
-  click(byId("dec"));
-  assert.equal(qty.value, "8");
-  assert.equal(preview.textContent, "8");
 });
 
-test("dec clamps at the min", async () => {
+test("set does not clamp: dec walks below the min and the input reports rangeUnderflow", async () => {
   mount();
   await flush();
 
@@ -114,8 +114,9 @@ test("dec clamps at the min", async () => {
   assert.equal(preview.textContent, "0");
 
   click(byId("dec"));
-  assert.equal(qty.value, "0");
-  assert.equal(preview.textContent, "0");
+  assert.equal(qty.value, "-1");
+  assert.equal(preview.textContent, "-1");
+  assert.equal(qty.validity.rangeUnderflow, true);
 });
 
 test("Reset runs this.reset(): back to the authored value, clean", async () => {

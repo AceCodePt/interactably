@@ -336,7 +336,7 @@ test("a library write through modifiable dirties via the interaction event; rese
 
   const events = track(input);
 
-  interact(input, "inc");
+  interact(input, "set", 2);
   assert.equal(input.value, "2");
   assert.deepEqual(events, ["dirty"]);
 

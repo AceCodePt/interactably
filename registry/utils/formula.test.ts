@@ -177,9 +177,9 @@ test("a bare reference is a parse error naming the fix", () => {
   a.id = "a";
   document.body.appendChild(a);
 
-  assert.throws(() => evaluateFormula("#a"), /needs \.value, \.checked, \.height or \.width/);
-  assert.throws(() => evaluateFormula("#a + 1"), /needs \.value, \.checked, \.height or \.width/);
-  assert.throws(() => evaluateFormula("#a.textContent"), /needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => evaluateFormula("#a"), /needs \.value, \.checked, \.min, \.max, \.step, \.height or \.width/);
+  assert.throws(() => evaluateFormula("#a + 1"), /needs \.value, \.checked, \.min, \.max, \.step, \.height or \.width/);
+  assert.throws(() => evaluateFormula("#a.textContent"), /needs \.value, \.checked, \.min, \.max, \.step, \.height or \.width/);
 });
 
 test("+ joins when either side is a string and adds otherwise, left to right", () => {
@@ -486,12 +486,12 @@ test("a .height/.width reference to a missing id throws not-found", () => {
   }
 });
 
-test("an unknown reference property lists all four readable properties", () => {
+test("an unknown reference property lists all the readable properties", () => {
   const a = document.createElement("div");
   a.id = "a";
   document.body.appendChild(a);
 
-  assert.throws(() => evaluateFormula("#a.foo"), /needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => evaluateFormula("#a.foo"), /needs \.value, \.checked, \.min, \.max, \.step, \.height or \.width/);
 });
 
 test("this.value reads the source element passed in the context", () => {
@@ -548,8 +548,8 @@ test("a formula reading this without a source element throws the no-element-here
 });
 
 test("this is a keyword: a bare this is a reference error, and this(...) is an unknown function", () => {
-  assert.throws(() => evaluateFormula("this"), /reference this needs \.value, \.checked, \.height or \.width/);
-  assert.throws(() => evaluateFormula("this + 1"), /reference this needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => evaluateFormula("this"), /reference this needs \.value, \.checked, \.min, \.max, \.step, \.height or \.width/);
+  assert.throws(() => evaluateFormula("this + 1"), /reference this needs \.value, \.checked, \.min, \.max, \.step, \.height or \.width/);
   assert.throws(() => evaluateFormula("this(1)"), /unknown function this\(\)/);
 });
 
@@ -595,6 +595,74 @@ test("a plain span reads textContent as a string", () => {
   document.body.appendChild(span);
 
   assert.equal(evaluateFormula("#span.value").value, "7");
+});
+
+test("#q.min, #q.max and #q.step read numbers on a number input", () => {
+  const q = document.createElement("input");
+  q.id = "q";
+  q.type = "number";
+  q.min = "0";
+  q.max = "10";
+  q.step = "2";
+  document.body.appendChild(q);
+
+  assert.equal(evaluateFormula("#q.min").value, 0);
+  assert.equal(evaluateFormula("#q.max").value, 10);
+  assert.equal(evaluateFormula("#q.step").value, 2);
+});
+
+test("min(#q.max, #q.value + 1) clamps the way the author says", () => {
+  const q = document.createElement("input");
+  q.id = "q";
+  q.type = "number";
+  q.max = "10";
+  q.value = "10";
+  document.body.appendChild(q);
+
+  assert.equal(evaluateFormula("min(#q.max, #q.value + 1)").value, 10);
+  q.value = "3";
+  assert.equal(evaluateFormula("min(#q.max, #q.value + 1)").value, 4);
+});
+
+test("an absent max reads empty: the empty-operand error names #q.max", () => {
+  const q = document.createElement("input");
+  q.id = "q";
+  q.type = "number";
+  document.body.appendChild(q);
+
+  assert.throws(() => evaluateFormula("min(#q.max, #q.value + 1)"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "empty");
+    assert.ok(err.message.includes("#q.max"), err.message);
+    return true;
+  });
+});
+
+test("an absent step on a number input reads the platform default 1", () => {
+  const q = document.createElement("input");
+  q.id = "q";
+  q.type = "number";
+  q.value = "4";
+  document.body.appendChild(q);
+
+  assert.equal(evaluateFormula("#q.step").value, 1);
+  assert.equal(evaluateFormula("#q.value + #q.step").value, 5);
+});
+
+test("step on a date input is the string, a span's step is empty", () => {
+  const d = document.createElement("input");
+  d.id = "d";
+  d.type = "date";
+  d.setAttribute("step", "7");
+  document.body.appendChild(d);
+
+  assert.equal(evaluateFormula("#d.step").value, "7");
+
+  const span = document.createElement("span");
+  span.id = "span";
+  document.body.appendChild(span);
+
+  assert.equal(evaluateFormula("#span.step").value, "");
 });
 
 test("a backslash escapes only the quote and itself; every other \\x stays verbatim", () => {
@@ -679,6 +747,7 @@ test("replace nests inside + with a non-numeric-looking value", () => {
 test("parseFormula validates syntax without a document or source, gating data errors", () => {
   assert.doesNotThrow(() => parseFormula("1 + 2"));
   assert.doesNotThrow(() => parseFormula("min(#a.value, 3)"));
+  assert.doesNotThrow(() => parseFormula("min(#q.max, #q.value + 1)"));
   assert.doesNotThrow(() => parseFormula("#ghost.value + 1"));
   assert.doesNotThrow(() => parseFormula("this.value * 2"));
   assert.doesNotThrow(() => parseFormula("1 / 0"));
@@ -687,8 +756,8 @@ test("parseFormula validates syntax without a document or source, gating data er
   assert.doesNotThrow(() => parseFormula("'invoice-' + #slug.value + '.pdf'"));
 
   assert.throws(() => parseFormula("1 +"), /unexpected "end of formula"/);
-  assert.throws(() => parseFormula("#a."), /needs \.value, \.checked, \.height or \.width/);
-  assert.throws(() => parseFormula("#a.foo"), /needs \.value, \.checked, \.height or \.width/);
+  assert.throws(() => parseFormula("#a."), /needs \.value, \.checked, \.min, \.max, \.step, \.height or \.width/);
+  assert.throws(() => parseFormula("#a.foo"), /needs \.value, \.checked, \.min, \.max, \.step, \.height or \.width/);
   assert.throws(() => parseFormula("min()"), /min\(\) needs at least one argument/);
   assert.throws(() => parseFormula("floor(1, 2)"), /floor\(\) takes 1 argument/);
   assert.throws(() => parseFormula("'unterminated"), /unterminated string/);

@@ -447,6 +447,33 @@ test("a read on a display element resolves like the evaluator: a div reads its t
   assert.deepEqual(seen, ["hello", false]);
 });
 
+test("#q.min, #q.max and #q.step read arguments resolve through the typed reader", () => {
+  const qty = numberEl("qty");
+  qty.min = "2";
+  qty.max = "10";
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+
+  run(el(), "#total.set(#qty.min)", new Event("click"));
+  run(el(), "#total.set(#qty.max)", new Event("click"));
+  run(el(), "#total.set(#qty.step)", new Event("click"));
+  assert.deepEqual(seen, [2, 10, 1]);
+});
+
+test(".min on a textarea (no such attribute) reads the empty string, no has-no-min error", () => {
+  const area = document.createElement("textarea");
+  area.id = "area";
+  document.body.appendChild(area);
+  attach(area);
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+
+  run(el(), "#total.set(#area.min)", new Event("click"));
+  assert.deepEqual(seen, [""]);
+});
+
 test("object literal arguments resolve field by field", () => {
   const list = el("list");
   const receiver = el("total");

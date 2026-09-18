@@ -2,7 +2,7 @@ import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
-import { bindEvents, NotReadyError, readValue, valueOf } from "@behaviors/implementation-utils.ts";
+import { bindEvents, NotReadyError, readValue } from "@behaviors/implementation-utils.ts";
 
 let dom: JSDOM;
 
@@ -12,29 +12,6 @@ before(() => {
 
 after(() => {
   teardownJsdom(dom);
-});
-
-test("valueOf reads through readValue: number input, formattable raw, textContent", () => {
-  const numberInput = document.createElement("input");
-  numberInput.type = "number";
-  numberInput.value = "7";
-  assert.equal(valueOf(numberInput), 7);
-
-  const textInput = document.createElement("input");
-  textInput.value = "7";
-  assert.equal(valueOf(textInput), 7);
-
-  const byFormattable = document.createElement("div");
-  byFormattable.setAttribute("formattable-value", "7");
-  byFormattable.setAttribute("formattable-format", "{ style: 'currency', currency: 'USD' }");
-  assert.equal(valueOf(byFormattable), 7);
-
-  const byText = document.createElement("div");
-  byText.textContent = "42";
-  assert.equal(valueOf(byText), 42);
-
-  const empty = document.createElement("div");
-  assert.equal(valueOf(empty), 0);
 });
 
 test("readValue dispatches on the element's declared type", () => {
@@ -78,6 +55,46 @@ test("readValue dispatches on the element's declared type", () => {
   byText.textContent = "7";
   assert.equal(readValue(byText), "7");
   assert.equal(readValue(byText, "checked"), false);
+});
+
+test("readValue reads min/max/step typed by the element", () => {
+  const bounded = document.createElement("input");
+  bounded.type = "number";
+  bounded.min = "2";
+  bounded.max = "10";
+  assert.equal(readValue(bounded, "min"), 2);
+  assert.equal(readValue(bounded, "max"), 10);
+
+  const stepped = document.createElement("input");
+  stepped.type = "number";
+  stepped.step = "5";
+  assert.equal(readValue(stepped, "step"), 5);
+
+  const range = document.createElement("input");
+  range.type = "range";
+  assert.equal(readValue(range, "min"), "");
+  assert.equal(readValue(range, "max"), "");
+  assert.equal(readValue(range, "step"), 1, "absent step on number/range is the platform default");
+
+  const unparseable = document.createElement("input");
+  unparseable.type = "number";
+  Object.defineProperty(unparseable, "min", { value: "abc", configurable: true });
+  assert.ok(Number.isNaN(readValue(unparseable, "min") as number), "a malformed bound reads NaN");
+
+  const dated = document.createElement("input");
+  dated.type = "date";
+  dated.setAttribute("min", "2024-01-01");
+  dated.setAttribute("step", "7");
+  assert.equal(readValue(dated, "min"), "2024-01-01", "a date bound is the string as written");
+  assert.equal(readValue(dated, "step"), "7");
+
+  const text = document.createElement("input");
+  text.setAttribute("step", "any");
+  assert.equal(readValue(text, "step"), "any");
+
+  const bare = document.createElement("span");
+  assert.equal(readValue(bare, "min"), "", "an element without the attribute reads empty");
+  assert.equal(readValue(bare, "step"), "");
 });
 
 test("bindEvents binds one listener per entry, filters event:key pairs, and updates live", () => {

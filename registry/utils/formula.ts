@@ -249,14 +249,22 @@ class Formula {
       display = this.source.slice(start, this.pos);
     }
     this.skipSpace();
-    if (this.source[this.pos] !== ".") throw new Error(`reference ${display} needs .value, .checked, .height or .width`);
+    if (this.source[this.pos] !== ".") throw new Error(`reference ${display} needs .value, .checked, .min, .max, .step, .height or .width`);
     this.pos++;
     const propStart = this.pos;
     while (this.pos < this.source.length && /[A-Za-z]/.test(this.source[this.pos]!)) this.pos++;
     const prop = this.source.slice(propStart, this.pos);
     if (this.context.dryRun === true) {
-      if (prop !== "value" && prop !== "checked" && prop !== "height" && prop !== "width") {
-        throw new Error(`reference ${display} needs .value, .checked, .height or .width`);
+      if (
+        prop !== "value" &&
+        prop !== "checked" &&
+        prop !== "min" &&
+        prop !== "max" &&
+        prop !== "step" &&
+        prop !== "height" &&
+        prop !== "width"
+      ) {
+        throw new Error(`reference ${display} needs .value, .checked, .min, .max, .step, .height or .width`);
       }
       return 0;
     }
@@ -272,9 +280,10 @@ class Formula {
     }
     if (prop === "value") return readValue(target);
     if (prop === "checked") return readValue(target, "checked");
+    if (prop === "min" || prop === "max" || prop === "step") return readValue(target, prop);
     if (prop === "height") return readMeasured(target, "height");
     if (prop === "width") return readMeasured(target, "width");
-    throw new Error(`reference ${display} needs .value, .checked, .height or .width`);
+    throw new Error(`reference ${display} needs .value, .checked, .min, .max, .step, .height or .width`);
   }
 
   private parseCall(): Value {

@@ -83,9 +83,9 @@
                      on-clean="this.removeAttr('data-dirty')"
                      on-keydown="escape: this.reset(); #preview.set(#qty.value)">
             </label>
-            <button id="dec" on-click="#qty.dec(); #preview.set(#qty.value)" type="button">&minus;</button>
-            <button id="inc" on-click="#qty.inc(); #preview.set(#qty.value)" type="button">+</button>
-            <button id="inc5" on-click="#qty.inc(5); #preview.set(#qty.value)" type="button">+5</button>
+            <button id="dec" on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)" type="button">&minus;</button>
+            <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)" type="button">+</button>
+            <button id="inc5" on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)" type="button">+5</button>
             <button id="reset" on-click="#qty.reset(); #preview.set(#qty.value)" type="button">Reset</button>
             <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
           </div>
