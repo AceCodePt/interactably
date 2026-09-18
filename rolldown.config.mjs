@@ -119,4 +119,13 @@ export default defineConfig([
       entryFileNames: "[name].js",
     },
   },
+  {
+    tsconfig: "./tsconfig.json",
+    input: path.join(root, "site", "demo.src.js"),
+    treeshake: { moduleSideEffects: (id) => true },
+    output: {
+      format: "esm",
+      file: "dist/site/demo.js",
+    },
+  },
 ]);

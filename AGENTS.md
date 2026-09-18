@@ -23,6 +23,8 @@ Before a task is declared done, both must pass on the committed tree:
 - `pnpm check` — `tsc --noEmit`
 - `pnpm test` — `node --test` under the `tsx` loader (`node --import tsx`); `tsx` is a dev-only dependency because `tsyntax` ships as `.ts` source and Node's native type stripping refuses `node_modules` files.
 
+`pnpm test` requires `pnpm build` first: the site tests load `dist/site/demo.js` and assert on `site-dist/demo.js` (which needs `pnpm build:site`), so run `pnpm build && pnpm build:site && pnpm test` on a fresh checkout.
+
 ## TypeScript posture
 
 New code must type-check under the strict tsconfig: no `any`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`.

@@ -13,7 +13,7 @@ import {
 const siteDir = new URL("../site/", import.meta.url);
 const examplesUrl = new URL("examples.html", siteDir);
 const docsUrl = new URL("docs.html", siteDir);
-const demoUrl = new URL("demo.js", siteDir);
+const siteDistDemo = new URL("../site-dist/demo.js", import.meta.url);
 const cdnDir = new URL("../dist/cdn/", import.meta.url);
 
 const KNOWN_BUNDLES = new Set([
@@ -35,29 +35,6 @@ const KNOWN_BUNDLES = new Set([
   "storable",
   "validatable",
 ]);
-
-const VENDOR_REF = /vendor\/([\w.-]+\.js)/g;
-
-function vendorRefs(...sources: string[]): string[] {
-  const names = new Set<string>();
-  for (const source of sources) {
-    for (const match of source.matchAll(VENDOR_REF)) {
-      const name = match[1];
-      if (name !== undefined) names.add(name);
-    }
-  }
-  return [...names];
-}
-
-function bareSpecifiers(source: string): string[] {
-  const found: string[] = [];
-  const pattern = /\b(?:import|export)\b[^\n]*?\bfrom\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']/g;
-  for (const match of source.matchAll(pattern)) {
-    const spec = match[1] ?? match[2];
-    if (spec !== undefined && !spec.startsWith(".") && !spec.startsWith("/")) found.push(spec);
-  }
-  return found;
-}
 
 function bodyMarkup(html: string): string {
   const match = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html);
@@ -96,40 +73,24 @@ function setReadyState(state: DocumentReadyState): void {
   Object.defineProperty(document, "readyState", { value: state, configurable: true });
 }
 
-test("site: no is= anywhere, referenced bundles are built, and the demo interacts under jsdom", async (t) => {
+test("site: no is= anywhere, the demo ships as one file, and the demo interacts under jsdom", async (t) => {
   const examples = readFileSync(fileURLToPath(examplesUrl), "utf8");
-  const demo = readFileSync(fileURLToPath(demoUrl), "utf8");
 
   for (const file of ["docs.html", "examples.html", "index.html", "reference.html"]) {
     const html = readFileSync(fileURLToPath(new URL(file, siteDir)), "utf8");
     assert.equal(html.includes("interactable-"), false, `${file} carries no interactable- mentions`);
   }
-  const names = vendorRefs(examples, demo);
-  assert.ok(names.includes("interactably-core.js"), "the site imports the core bundle");
-  assert.ok(names.length > 0, "the site references at least one vendor bundle");
 
-  const coreUrl = new URL("interactably-core.js", cdnDir);
-  const built = names.every((name) => existsSync(fileURLToPath(new URL(name, cdnDir))));
-  if (!existsSync(fileURLToPath(coreUrl)) || !built) {
-    t.skip("dist not built; run pnpm build first");
-    return;
-  }
-
-  for (const name of names) {
-    assert.ok(
-      existsSync(fileURLToPath(new URL(name, cdnDir))),
-      `vendor/${name} is built at dist/cdn/${name}`,
-    );
-    const base = name.replace(/\.js$/, "");
-    assert.ok(KNOWN_BUNDLES.has(base), `vendor/${name} is a known bundle (${base})`);
-    const bundle = readFileSync(fileURLToPath(new URL(name, cdnDir)), "utf8");
-    const bare = bareSpecifiers(bundle);
-    assert.deepEqual(
-      bare,
-      [],
-      `vendor/${name} is browser-loadable: no bare specifiers (${bare.join(", ") || "none"})`,
-    );
-  }
+  assert.ok(
+    existsSync(fileURLToPath(siteDistDemo)),
+    "site-dist/demo.js is missing; run pnpm build && pnpm build:site first",
+  );
+  const bundle = readFileSync(fileURLToPath(siteDistDemo), "utf8");
+  assert.equal(
+    /^import /m.test(bundle),
+    false,
+    "site-dist/demo.js is a single file: it imports nothing, so the chain is depth two",
+  );
 
   const dom: JSDOM = setupJsdom();
   t.after(() => teardownJsdom(dom));
@@ -157,13 +118,7 @@ test("site: no is= anywhere, referenced bundles are built, and the demo interact
   holder.innerHTML = bodyMarkup(examples);
   document.body.appendChild(holder);
 
-  const core = await import(coreUrl.href);
-  for (const name of names) {
-    if (name === "interactably-core.js") continue;
-    await import(new URL(name, cdnDir).href);
-  }
-  setReadyState("loading");
-  core.start();
+  await import(siteDistDemo.href);
 
   await flush();
   document.dispatchEvent(new Event("DOMContentLoaded"));
@@ -364,7 +319,6 @@ test("site: no is= anywhere, referenced bundles are built, and the demo interact
 test("site: docs.html sidebar lights each section's own link", async (t) => {
   const html = readFileSync(fileURLToPath(docsUrl), "utf8");
   const css = readFileSync(fileURLToPath(new URL("styles.css", siteDir)), "utf8");
-  const demo = readFileSync(fileURLToPath(demoUrl), "utf8");
 
   assert.equal(/data-current/.test(css), false, "styles.css contains no data-current");
   assert.equal(/this\.hash\(\)/.test(html), false, "docs.html contains no this.hash()");
@@ -382,10 +336,10 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
   assert.deepEqual([...leaveTargets].sort(), [...enterTargets].sort(), "every enter has a matching leave");
 
   const coreUrl = new URL("interactably-core.js", cdnDir);
-  if (!existsSync(fileURLToPath(coreUrl))) {
-    t.skip("dist not built; run pnpm build first");
-    return;
-  }
+  assert.ok(
+    existsSync(fileURLToPath(siteDistDemo)),
+    "site-dist/demo.js is missing; run pnpm build && pnpm build:site first",
+  );
 
   const dom: JSDOM = setupJsdom();
   t.after(() => teardownJsdom(dom));
@@ -414,9 +368,8 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
   t.after(resetFakeIntersectionObserver);
 
   const core = await import(coreUrl.href);
-  const names = vendorRefs(html, demo);
+  const names = [...KNOWN_BUNDLES].filter((name) => name !== "interactably-core");
   for (const name of names) {
-    if (name === "interactably-core.js") continue;
     await import(new URL(name, cdnDir).href);
   }
   core.start();
