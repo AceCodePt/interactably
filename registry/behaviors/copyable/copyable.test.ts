@@ -111,12 +111,12 @@ test("an empty target warns", async (t) => {
   assert.equal(warn.mock.callCount(), 1);
 });
 
-test("the flash is the trigger attribute's job: on-copy marks, pauses, then clears", async () => {
+test("the flash is the trigger attribute's job: on-copy marks, then debounces the clear", async () => {
   installClipboard(async () => {});
   const button = hostElement("button", {
     implements: "copyable attributable",
     id: "copy-btn",
-    "on-copy": "this.setAttr({name: 'data-copied', value: 'true'}).delay(20).removeAttr('data-copied')",
+    "on-copy": "this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(20).removeAttr('data-copied')",
   });
   const code = hostElement("pre", { id: "code" });
   code.textContent = "copy me";
@@ -128,7 +128,7 @@ test("the flash is the trigger attribute's job: on-copy marks, pauses, then clea
   assert.equal(button.getAttribute("data-copied"), "true", "on-copy marks the button");
 
   await delay(60);
-  assert.equal(button.hasAttribute("data-copied"), false, "the paused reset removes the marker");
+  assert.equal(button.hasAttribute("data-copied"), false, "the debounced reset removes the marker");
 });
 
 test("a successful copy runs on-copy", async () => {

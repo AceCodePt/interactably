@@ -558,9 +558,10 @@ test("an implementation may still set e.pauseMs to defer the rest of the chain",
 
   const trigger = el();
   run(trigger, "#m.wait(20).after()", new Event("click"));
-  assert.deepEqual(order, ["wait"]);
+  run(trigger, "#m.wait(20).after()", new Event("click"));
+  assert.deepEqual(order, ["wait", "wait"]);
   await delay(60);
-  assert.deepEqual(order, ["wait", "after"]);
+  assert.deepEqual(order, ["wait", "wait", "after", "after"]);
 });
 
 test("delay() defers the rest of the chain", async () => {
@@ -663,24 +664,121 @@ test("clearPhraseState cancels a pending delay resume", async () => {
 
   const trigger = el();
   run(trigger, "#m.delay(20).show()", new Event("click"));
+  run(trigger, "#m.delay(20).show()", new Event("click"));
   clearPhraseState(trigger as unknown as Element);
   await delay(60);
   assert.equal(showCalls, 0);
 });
 
-test("a re-fire while a delay is pending cancels the earlier resume", async () => {
+test("delay(): two fires inside the window run twice", async () => {
+  const receiver = el("m");
+  const order: string[] = [];
+  wireHost(receiver, {
+    after: () => {
+      order.push("after");
+    },
+  });
+
+  const trigger = el();
+  run(trigger, "#m.delay(20).after()", new Event("click"));
+  await delay(10);
+  run(trigger, "#m.delay(20).after()", new Event("click"));
+  await delay(60);
+  assert.deepEqual(order, ["after", "after"]);
+});
+
+test("delay(): three fires inside the window run three times", async () => {
   const receiver = el("m");
   let showCalls = 0;
   wireHost(receiver, { show: () => void showCalls++ });
 
   const trigger = el();
-  run(trigger, "#m.delay(30).show()", new Event("click"));
-  await delay(10);
-  run(trigger, "#m.delay(30).show()", new Event("click"));
-  await delay(25);
-  assert.equal(showCalls, 0);
-  await delay(40);
-  assert.equal(showCalls, 1);
+  run(trigger, "#m.delay(20).show()", new Event("click"));
+  run(trigger, "#m.delay(20).show()", new Event("click"));
+  run(trigger, "#m.delay(20).show()", new Event("click"));
+  await delay(60);
+  assert.equal(showCalls, 3);
+});
+
+test("delay(): a re-fire after a remainder has run still runs", async () => {
+  const receiver = el("m");
+  let showCalls = 0;
+  wireHost(receiver, { show: () => void showCalls++ });
+
+  const trigger = el();
+  run(trigger, "#m.delay(20).show()", new Event("click"));
+  await delay(30);
+  run(trigger, "#m.delay(20).show()", new Event("click"));
+  await delay(60);
+  assert.equal(showCalls, 2);
+});
+
+test("delay(): remainders keep their own arguments", async () => {
+  const receiver = el("m");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+
+  const trigger = inputEl();
+  trigger.value = "first";
+  run(trigger, "#m.delay(20).set(this.value)", new Event("click"));
+  await delay(30);
+  trigger.value = "second";
+  run(trigger, "#m.delay(20).set(this.value)", new Event("click"));
+  await delay(60);
+  assert.deepEqual(seen, ["first", "second"]);
+});
+
+test("delay() then once(): both waits run, one call passes the gate", async () => {
+  const receiver = el("m");
+  let counterCalls = 0;
+  let showCalls = 0;
+  wireHost(receiver, {
+    counter: () => void counterCalls++,
+    show: () => void showCalls++,
+  });
+
+  const trigger = el();
+  const value = "#m.counter().delay(20).once().show()";
+  run(trigger, value, new Event("click"));
+  run(trigger, value, new Event("click"));
+  assert.equal(counterCalls, 2, "both fires run the counter before the delay");
+  await delay(60);
+  assert.equal(showCalls, 1, "the once is spent by the first resume, so one call passes the gate");
+});
+
+test("delay(): two chains on one element keep independent remainders", async () => {
+  const receiver = el("m");
+  const order: string[] = [];
+  wireHost(receiver, {
+    a: () => void order.push("a"),
+    b: () => void order.push("b"),
+  });
+
+  const trigger = el();
+  run(trigger, "#m.delay(20).a()", new Event("click"));
+  run(trigger, "#m.delay(20).b()", new Event("click"));
+  await delay(60);
+  assert.deepEqual(order, ["a", "b"]);
+});
+
+test("delay(): two remainders each abort at their own guard", async () => {
+  const receiver = el("m");
+  let validateCalls = 0;
+  let sendCalls = 0;
+  wireHost(receiver, {
+    validate: (e) => {
+      validateCalls++;
+      e.preventDefault();
+    },
+    send: () => void sendCalls++,
+  });
+
+  const trigger = el();
+  run(trigger, "#m.delay(20).validate().send()", new Event("submit"));
+  run(trigger, "#m.delay(20).validate().send()", new Event("submit"));
+  await delay(60);
+  assert.equal(validateCalls, 2, "each remainder runs its own guard");
+  assert.equal(sendCalls, 0, "each guard aborts its own remainder");
 });
 
 test("a guard after a delay still stops the chain", async () => {
