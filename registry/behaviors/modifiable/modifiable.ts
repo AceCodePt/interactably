@@ -36,7 +36,7 @@ export const modifiable = defineImplementation(
       const formula = attrs.formula;
       if (formula === undefined) return;
       try {
-        write(String(evaluateFormula(formula).value));
+        write(String(evaluateFormula(formula, { document, source: el }).value));
       } catch (err) {
         console.error(String(err instanceof Error ? err.message : err));
         write(attrs["invalid-value"] ?? "Error");

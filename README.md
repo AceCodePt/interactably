@@ -195,14 +195,17 @@ Ids are addressable only if they avoid the phrase punctuation. An id containing 
 `modifiable-formula` is the second grammar an author meets on the same page as the trigger DSL, and it spells references the same way: the property is explicit, nothing is guessed from the tag.
 
 ```
-reference := '#' id '.' ('value' | 'checked' | 'height' | 'width')
+reference := ('#' id | 'this') '.' ('value' | 'checked' | 'height' | 'width')
 ```
+
+`this` is the element the formula is on — the same `this` as in a trigger.
 
 | Construct | Example | Meaning |
 | --- | --- | --- |
 | Reference | `#qty.value`, `#agree.checked`, `#nav.height`, `#nav.width` | `.value` reads the element's text — a number when it parses, else a string; an empty or missing value is `""`. `.checked` is the boolean `el.checked === true`, `false` on an element without one. `.height`/`.width` are the element's border-box size in CSS pixels as of the last layout the browser reported — a phrase that resizes an element and reads it in the same chain reads the previous size. A bare `#id` is a parse error: `reference #qty needs .value, .checked, .height or .width` |
-| Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"3a"`. An empty `.value` operand is an empty-operand error, not a silent `""` join — unless a string literal makes the join explicit (`'' + #a.value` stays a join, `#a.value + 1` errors). `-`, `*`, `/`, unary `-` are always arithmetic; `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers |
-| Boolean in arithmetic | `#item1.value * #item1.checked` | `true` is `1`, `false` is `0` — the line-item pattern: price when ticked, `0` when not |
+| `this` | `this.value`, `this.checked`, `this.height`, `this.width` | Reads the element the formula is on — a row cloned from a template computes from its own value with no id. The four properties read the same as `#id`. A bare `this` is a parse error: `reference this needs .value, .checked, .height or .width` |
+| Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"1a"`. An empty `.value` operand is an empty-operand error, not a silent `""` join — unless a string literal makes the join explicit (`'' + #a.value` stays a join, `#a.value + 1` errors). `-`, `*`, `/`, unary `-` are always arithmetic; `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers |
+| Boolean in arithmetic | `this.value * this.checked` | `true` is `1`, `false` is `0` — the line-item pattern: price when ticked, `0` when not |
 | Arithmetic is strict | `#qty.value * #price.value` | `-`, `*`, `/`, unary `-`, and `+` between numbers require number or boolean operands; an empty `.value` operand under `+` is the same empty-operand error, never a silent join. An empty or non-numeric operand is an error, and so is division by zero; both are written to the console and shown as `modifiable-invalid-value` — no `NaN`, no `Infinity`, no silent zero |
 
 `#id` references and `sum(...)`/`count(...)` selectors resolve against the whole document — scope a set by putting its container's id in the selector (`sum('#list .amount')`).

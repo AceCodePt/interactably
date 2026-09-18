@@ -299,6 +299,22 @@ test("modifiable-formula evaluates against #id references at fire time", async (
   assert.equal(total.textContent, "13");
 });
 
+test("a modifiable-formula using this.value computes on connect and on compute()", async () => {
+  const self = hostElement("input", {
+    implements: "modifiable",
+    "modifiable-formula": "this.value * 2",
+    value: "21",
+  }) as HTMLInputElement;
+  document.body.appendChild(self);
+  await flush();
+
+  assert.equal(self.value, "42");
+
+  self.value = "5";
+  interact(self, "compute");
+  assert.equal(self.value, "10");
+});
+
 test("compute writes the derived value without dispatching a synthetic input event", async () => {
   const total = hostElement("output", {
     implements: "modifiable",
