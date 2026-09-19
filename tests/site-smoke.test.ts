@@ -13,7 +13,7 @@ import {
 const siteDir = new URL("../site/", import.meta.url);
 const examplesUrl = new URL("examples.html", siteDir);
 const docsUrl = new URL("docs.html", siteDir);
-const siteDistDemo = new URL("../site-dist/demo.js", import.meta.url);
+const siteBundle = new URL("../dist/site/demo.js", import.meta.url);
 const cdnDir = new URL("../dist/cdn/", import.meta.url);
 
 const KNOWN_BUNDLES = new Set([
@@ -82,14 +82,14 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   }
 
   assert.ok(
-    existsSync(fileURLToPath(siteDistDemo)),
-    "site-dist/demo.js is missing; run pnpm build && pnpm build:site first",
+    existsSync(fileURLToPath(siteBundle)),
+    "dist/site/demo.js is missing; run pnpm build first",
   );
-  const bundle = readFileSync(fileURLToPath(siteDistDemo), "utf8");
+  const bundle = readFileSync(fileURLToPath(siteBundle), "utf8");
   assert.equal(
     /^import /m.test(bundle),
     false,
-    "site-dist/demo.js is a single file: it imports nothing, so the chain is depth two",
+    "dist/site/demo.js is a single file: it imports nothing, so the chain is depth two",
   );
 
   const dom: JSDOM = setupJsdom();
@@ -118,7 +118,7 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   holder.innerHTML = bodyMarkup(examples);
   document.body.appendChild(holder);
 
-  await import(siteDistDemo.href);
+  await import(siteBundle.href);
 
   await flush();
   document.dispatchEvent(new Event("DOMContentLoaded"));
@@ -337,8 +337,8 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
 
   const coreUrl = new URL("interactably-core.js", cdnDir);
   assert.ok(
-    existsSync(fileURLToPath(siteDistDemo)),
-    "site-dist/demo.js is missing; run pnpm build && pnpm build:site first",
+    existsSync(fileURLToPath(siteBundle)),
+    "dist/site/demo.js is missing; run pnpm build first",
   );
 
   const dom: JSDOM = setupJsdom();
