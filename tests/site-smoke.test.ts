@@ -46,6 +46,11 @@ const EXAMPLE_PAGES = [
   "open-focus",
   "character-mask",
   "reveal-secret",
+  "paste-transform",
+  "dirty-tracking",
+  "dynamic-list",
+  "number-format",
+  "logging",
 ];
 
 function examplePagesBody(): string {
@@ -482,6 +487,70 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.equal(byId("pw-show").classList.contains("active"), true, "classable marks the active button");
   await click(byId("pw-hide"));
   assert.equal(pw.type, "password", "and back to masked");
+
+  // Paste transform (pastable)
+  const ptSrc = byId("pt-src") as HTMLTextAreaElement;
+  const ptClean = byId("pt-clean") as HTMLOutputElement;
+  ptSrc.value = "  line one\n\n\tline two   with  spaces  ";
+  ptSrc.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertFromPaste" }));
+  assert.equal(ptSrc.value, "line one line two with spaces", "on-pasted collapses whitespace to single spaces");
+  assert.equal(ptClean.textContent, "line one line two with spaces", "the cleaned preview mirrors the transform");
+  ptSrc.value = "kept\nnewline";
+  ptSrc.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText" }));
+  assert.equal(ptSrc.value, "kept\nnewline", "plain typing leaves newlines alone");
+
+  // Unsaved changes (dirtyable)
+  const dtStatus = byId("dt-status") as HTMLOutputElement;
+  const dtName = byId("dt-name") as HTMLInputElement;
+  assert.equal(dtStatus.getAttribute("data-state"), "clean", "the status starts clean");
+  dtName.value = "Sagi";
+  dtName.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(dtStatus.textContent.includes("Unsaved changes"), true, "typing fires dirty and updates the status");
+  assert.equal(dtStatus.getAttribute("data-state"), "dirty", "setAttr marks the status");
+  dtName.value = "";
+  dtName.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(dtStatus.textContent.includes("All saved"), true, "returning to the default fires clean");
+  assert.equal(dtStatus.hasAttribute("data-state"), false, "removeAttr clears the mark");
+
+  // A list you can grow and shrink (listable)
+  const dlList = byId("dl-list") as HTMLUListElement;
+  const dlCount = byId("dl-count") as HTMLOutputElement;
+  assert.equal(dlList.children.length, 1);
+  await click(byId("dl-add"));
+  assert.equal(dlList.children.length, 2, "adopt clones a template row");
+  assert.equal(dlCount.textContent, "2", "count() tracks the rows");
+  await click(dlList.querySelectorAll("li button")[0]!);
+  assert.equal(dlList.children.length, 1);
+  await click(dlList.querySelector("li button")!);
+  assert.equal(dlList.children.length, 1, "min-rows keeps the floor");
+  await click(byId("dl-clear"));
+  assert.equal(dlList.children.length, 1, "clear empties down to the floor");
+  assert.equal(dlCount.textContent, "1");
+
+  // Format a number or date (formattable)
+  const nfUsd = byId("nf-usd") as HTMLOutputElement;
+  assert.equal(nfUsd.textContent, "$0.00", "formattable formats the authored number at attach");
+  const nfPrice = byId("nf-price") as HTMLInputElement;
+  nfPrice.value = "1234.5";
+  nfPrice.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(nfUsd.textContent, "$1,234.50", "a write through modifiable goes through the formatter");
+  const nfEur = byId("nf-eur") as HTMLOutputElement;
+  assert.equal(nfEur.textContent.includes("1.234,50"), true, "the locale option is passed to Intl");
+  const nfWhen = byId("nf-when") as HTMLOutputElement;
+  assert.equal(nfWhen.textContent.includes("September 22, 2026"), true, "the authored date formats on load");
+  const nfDate = byId("nf-date") as HTMLInputElement;
+  nfDate.value = "2026-01-05";
+  nfDate.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(nfWhen.textContent.includes("January 5, 2026"), true, "a date write re-formats");
+
+  // Log from a phrase (logger)
+  await click(byId("lg-hello"));
+  assert.ok(
+    consoleLogs.some((line) => line.includes("hello from a button") && line.includes("lg-hello")),
+    "logger prints the message and names the element",
+  );
+  await click(byId("lg-math"));
+  assert.ok(consoleLogs.some((line) => line.includes("5")), "log() accepts a computed number");
 });
 
 test("site: docs.html sidebar lights each section's own link", async (t) => {
