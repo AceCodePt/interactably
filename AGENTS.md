@@ -12,7 +12,7 @@ A change to any implementation's tags, verbs, config, state or events updates th
 - `pnpm` is the package manager.
 - `node:test` is the only test runner.
 - `jsdom` is a dev-only dependency, for tests.
-- The only runtime dependencies are `auto-wc` and `tsyntax`.
+- The only runtime dependency is `tsyntax`.
 
 ## Signatures
 
