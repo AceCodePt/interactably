@@ -84,6 +84,9 @@ function parsePhrase(raw: string, eventName?: string): Phrase {
     } else if (!KEY.test(keyText)) {
       throw new Error(`invalid key "${keyText}"`);
     }
+    if (keyText.includes("+") && keyText.length > 1) {
+      throw new Error(`invalid key "${keyText}": modifier keys are not supported`);
+    }
     key = keyText;
     body = raw.slice(colon + 1);
   }

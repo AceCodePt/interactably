@@ -11,7 +11,6 @@ export { preventDefault } from "@behaviors/prevent-default/prevent-default.ts";
 export { revealable } from "@behaviors/revealable/revealable.ts";
 export { autoGrow } from "@behaviors/auto-grow/auto-grow.ts";
 export { storable } from "@behaviors/storable/storable.ts";
-export { pasteTransform } from "@behaviors/paste-transform/paste-transform.ts";
+export { pastable } from "@behaviors/pastable/pastable.ts";
 export { copyable } from "@behaviors/copyable/copyable.ts";
-export { jsonTemplate } from "@behaviors/json-template/json-template.ts";
 export { formattable } from "@behaviors/formattable/formattable.ts";

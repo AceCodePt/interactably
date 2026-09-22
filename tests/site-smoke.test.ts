@@ -23,12 +23,11 @@ const KNOWN_BUNDLES = new Set([
   "copyable",
   "dirtyable",
   "formattable",
-  "json-template",
   "listable",
   "logger",
   "modifiable",
   "no-propagate",
-  "paste-transform",
+  "pastable",
   "prevent-default",
   "requestable",
   "revealable",
@@ -287,10 +286,6 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   await flush();
   assert.equal(signup.getAttribute("data-signed"), "true", "validate() passes and setAttr() runs");
   assert.equal(signupAlert.hidden, true, "the || branch does not run on a valid submit");
-
-  const members = document.querySelectorAll(".member");
-  assert.equal(members.length, 3, "json-template renders one article per item");
-  assert.equal(members[0]!.querySelector("h3")!.textContent, "Ada");
 
   consoleLogs.length = 0;
   await click(byId("bubbles-btn"));

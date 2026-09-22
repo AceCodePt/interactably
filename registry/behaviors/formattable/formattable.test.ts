@@ -61,7 +61,7 @@ test("formattable refuses an editable tag through the registry's tag check", asy
 
   const logged = error.mock.calls.map((call) => String(call.arguments[0]));
   assert.ok(
-    logged.some((message) => message.includes("formattable attaches to") && message.includes("skipped on input")),
+    logged.some((message) => message.includes("formattable attaches to") && message.includes('skipped on <input implements="formattable">')),
     `expected a tag-rejection log, got: ${logged.join(" | ")}`,
   );
 });
@@ -126,6 +126,24 @@ test("invalid text passes through unchanged and formattable-value stays equal to
   interact(total, "set", "nope");
   assert.equal(total.textContent, "nope");
   assert.equal(total.getAttribute("formattable-value"), "nope");
+});
+
+test("an unclosed formattable-format logs once naming the attribute value and passes through", async (t) => {
+  const error = t.mock.method(console, "error");
+  const total = formatted({ "formattable-format": "{style: currency" }, "42");
+  await flush();
+
+  const logged = error.mock.calls.map((call) => String(call.arguments[0]));
+  assert.equal(total.textContent, "42");
+  assert.ok(
+    logged.some((message) => message.includes('formattable-format "{style: currency"')),
+    `expected a format-error log naming the attribute value, got: ${logged.join(" | ")}`,
+  );
+
+  error.mock.resetCalls();
+  interact(total, "set", 7);
+  assert.equal(total.textContent, "7");
+  assert.equal(error.mock.calls.length, 0, "the same bad format does not log twice");
 });
 
 test("formattable creates no MutationObserver of its own", async () => {

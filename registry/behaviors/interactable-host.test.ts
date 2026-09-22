@@ -215,6 +215,35 @@ test("an on-<type> the element has no event for warns once, including custom eve
   dispose();
 });
 
+test("an unknown on-* attribute warns naming the element and attribute but the element still works", async (t) => {
+  const dispose = start();
+  const warn = t.mock.method(console, "warn");
+  const receiver = hostElement("div", { id: "recv-d2", implements: "alpha" });
+  const div = hostElement("div", {
+    id: "half",
+    "on-intersect-half": "#recv-d2.go()",
+    "on-click": "#recv-d2.go()",
+  });
+  document.body.append(receiver, div);
+  await flush();
+
+  const warned = warn.mock.calls.map((call) => String(call.arguments[0]));
+  assert.equal(
+    warned.filter((message) => message.includes('has no "intersect-half" event')).length,
+    1,
+    `expected exactly one unknown-event warning, got: ${warned.join(" | ")}`,
+  );
+  assert.ok(
+    warned.some((message) => message.includes('on-intersect-half on <div#half>')),
+    `the warning should name the element and the attribute, got: ${warned.join(" | ")}`,
+  );
+
+  calls.length = 0;
+  div.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  assert.deepEqual(calls, ["alpha.go"], "the working on-click still fires beside the unknown attribute");
+  dispose();
+});
+
 test("a native action that will also run warns at attach", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
@@ -330,7 +359,7 @@ test("a tag mismatch is reported and that implements name is skipped", async (t)
 
   assert.ok(
     error.mock.calls.some((call) =>
-      String(call.arguments[0]).includes("inputonly attaches to <input>; skipped on div#mismatch"),
+      String(call.arguments[0]).includes('inputonly attaches to <input>; skipped on <div#mismatch implements="inputonly">'),
     ),
   );
   const event = dispatchInteraction(receiver, "focusIt");

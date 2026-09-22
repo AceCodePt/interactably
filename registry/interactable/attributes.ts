@@ -49,7 +49,7 @@ function readAttribute(el: Element, attribute: string, slot: AttributeSlot): unk
   try {
     return slot.sig.validate(value);
   } catch (err) {
-    throw new Error(`[Interactable] ${attribute} on <${describeElement(el)}>: ${(err as Error).message}`);
+    throw new Error(`[Interactable] ${attribute} on ${describeElement(el)}: ${(err as Error).message}`);
   }
 }
 
@@ -71,6 +71,6 @@ function coerceAttribute(slot: AttributeSlot, el: Element, attribute: string, at
     } catch {}
   }
   throw new Error(
-    `[Interactable] ${attribute}="${attributeValue}" on <${describeElement(el)}>: not a valid value for "${slot.raw}"`,
+    `[Interactable] ${attribute}="${attributeValue}" on ${describeElement(el)}: not a valid value for "${slot.raw}"`,
   );
 }

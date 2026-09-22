@@ -332,17 +332,18 @@
         <p class="ex-note">
           Type something and it grows with your text (<code class="inline-code">auto-grow</code>) and gains an amber
           outline while it differs from the authored default (<code class="inline-code">dirtyable</code>). Paste a
-          paragraph and runs of whitespace are collapsed (<code class="inline-code">paste-transform</code>).
+          paragraph and runs of whitespace are collapsed (<code class="inline-code">on-pasted</code> cleaning
+          via <code class="inline-code">replace()</code>).
         </p>
       </div>
       <div class="example-body">
         <div class="demo">
           <textarea id="note" aria-label="Note"
-                    implements="auto-grow dirtyable attributable paste-transform"
+                    implements="auto-grow dirtyable attributable pastable modifiable"
                     rows="2"
                     on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                     on-clean="this.removeAttr('data-dirty')"
-paste-transform-pattern="\s+" paste-transform-replace=" "
+                    on-pasted="this.set(replace(this.value, '\s+', ' '))"
                     placeholder="Type or paste some text&hellip;"></textarea>
         </div>
       </div>
@@ -357,11 +358,11 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
             </button>
           </div>
           <pre class="code" id="code-ex-note" data-lang="html"><code>&lt;textarea id="note"
-          implements="auto-grow dirtyable attributable paste-transform"
+          implements="auto-grow dirtyable attributable pastable modifiable"
           rows="2"
           on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
           on-clean="this.removeAttr('data-dirty')"
-          paste-transform-pattern="\s+" paste-transform-replace=" "
+          on-pasted="this.set(replace(this.value, '\s+', ' '))"
           placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;</code></pre>
         </div>
       </details>
@@ -732,63 +733,6 @@ paste-transform-pattern="\s+" paste-transform-replace=" "
   &lt;p class="success" hidden&gt;Thanks &mdash; that address looks valid.&lt;/p&gt;
   &lt;div id="signup-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
 &lt;/form&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-json">A team roster from JSON</h2>
-        <p class="ex-note">
-          <code class="inline-code">json-template</code> renders a JSON data source through a child
-          <code class="inline-code">&lt;template&gt;</code> and re-renders when the source changes. <code class="inline-code">{field}</code>
-          interpolates; a nested template carrying <code class="inline-code">data-array</code> repeats per item.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <script type="application/json" id="team-data">
-          [
-            { "name": "Ada", "role": "Engineer", "location": "London" },
-            { "name": "Grace", "role": "Admiral", "location": "Arlington" },
-            { "name": "Alan", "role": "Cryptanalyst", "location": "Bletchley" }
-          ]
-          </script>
-          <div implements="json-template" json-template-for="team-data">
-            <template>
-              <article class="member">
-                <h3>{name}</h3>
-                <p>{role} &middot; {location}</p>
-              </article>
-            </template>
-          </div>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-json)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-json" data-lang="html"><code>&lt;script type="application/json" id="team-data"&gt;
-[
-  { "name": "Ada",   "role": "Engineer",      "location": "London" },
-  { "name": "Grace", "role": "Admiral",       "location": "Arlington" },
-  { "name": "Alan",  "role": "Cryptanalyst",  "location": "Bletchley" }
-]
-&lt;/script&gt;
-&lt;div implements="json-template" json-template-for="team-data"&gt;
-  &lt;template&gt;
-    &lt;article class="member"&gt;
-      &lt;h3&gt;{name}&lt;/h3&gt;
-      &lt;p&gt;{role} &amp;middot; {location}&lt;/p&gt;
-    &lt;/article&gt;
-  &lt;/template&gt;
-&lt;/div&gt;</code></pre>
         </div>
       </details>
     </section>

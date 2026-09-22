@@ -44,7 +44,6 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
   - [`prevent-default` and `no-propagate`](#prevent-default)
   - [Revealable](#revealable)
   - [Storable](#storable)
-  - [json-template](#json-template)
 - [Writing an implementation](#writing-an-implementation)
   - [Signatures](#signatures)
   - [Declare only what you invent](#declare-only)
@@ -181,7 +180,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)
 7. **`once()` spends on passing through, not on completion.** The gate is about entry: the moment the walk reaches the `once` it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.
 8. **References are late-bound.** `#id`, `this` and reads resolve at fire time (after any debounce), never at parse time.
 9. **One argument per verb.** A string signature takes one scalar (`set(5)`); a record signature takes one object literal (`setAttr({name: 'aria-expanded', value: 'true'})`); `"undefined"` takes none. Two bare arguments is a grammar error.
-10. **Exactly six properties may be read off a ref** — `value`, `checked`, `min`, `max`, `step`, plus `height`/`width` inside expressions — with the type the element declares, no coercion. `this.parentElement` and friends are not legal; relative navigation lives in implementation code.
+10. **Five properties may be read off a ref** — `value`, `checked`, `min`, `max`, `step` — and two more, `height` and `width`, inside expressions only; each with the type the element declares, no coercion. `this.parentElement` and friends are not legal; relative navigation lives in implementation code.
 11. **Selectors appear only inside string arguments** (`'.amount'`, `':scope > li'`). The grammar sees a string; the implementation's schema types it as a selector.
 12. **Errors are local.** A missing `#id`, a grammar error, or an argument that fails the signature logs once and skips that phrase/link; the rest of the value runs.
 
@@ -222,6 +221,8 @@ Sharp edge: a checkbox's `value="..."` attribute is unreachable through `.value`
 Sharp edge: `set()` does not clamp. Say it: `min(#q.max, …)`. Writing past a bound is a real state (`:out-of-range`, `validity.rangeOverflow`), and `validatable` is where it is reported.
 
 Syntax is checked at parse time: `#total.set(1 +)` is a trigger parse error naming the position, reported once per attribute like every other parse error. Fire time only ever carries data errors — empty, not-a-number, division by zero, not-a-string, invalid pattern, a missing reference — each a failed unit, exactly like a throwing verb, reported as `on-<event> on <element>, argument 1 of <verb>(): <reason>`.
+
+Mask on `on-input`, clean on `on-pasted`, same input: `on-input="this.set(replace(this.value, '\D', ''))"` filters keys as you type, and `on-pasted="this.set(replace(this.value, '\D', ''))"` catches what a paste inserts whole — `on-pasted` runs after `on-input` for the same paste, so if both write the value, `on-pasted` wins.
 
 ---
 
@@ -320,9 +321,8 @@ The attachment and executor report through `console.error` / `console.warn`; the
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([below](#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script or restored by `storable` is sized on the next input |
 | `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key; `restore()` reads it back and fires `restore` only when it matches |
-| `paste-transform` | input, textarea | — | `pattern`, `replace` | rewrite pasted text with a regex; fires `input` like a native paste |
+| `pastable` | input, textarea | — | no config | fires `pasted` after a paste has landed, so `this.value` is the new value |
 | `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
-| `json-template` | any | — | `for`, `slice` | render a JSON data source through a child `<template>` |
 
 ### The pause mechanism
 
@@ -385,21 +385,6 @@ Nothing closes a panel unless a phrase says `show(false)`. Mutually exclusive pa
 `storable` persists a declared slot under a declared key through three verbs: `save()`, `restore()` and `clear()`. `storable-key` names the key and `storable-value` the slot that is stored — both are required, and an element missing either is a signature error at attach that names the attribute. The default scope is `local`; `storable-scope="session"` uses `sessionStorage`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup.
 
 Nothing is restored without `on-load="this.restore()"` on the element. `restore()` reads the slot under the key back and fires the `restore` event only when it matches — the stored value equals the authored `storable-value` — at most once per `restore()` call, never from `save()`; a different stored value changes nothing. `save()` writes the slot under the key; `clear()` removes it. The package-manager example is nine buttons that each say everything they do — `storable-key="pm"`, `storable-value="pnpm"`, an `on-click` naming the three panels it opens, the six it closes and `this.save()`, and `on-load="this.restore()"`.
-
-### json-template
-
-`json-template` renders a JSON data source through a child `<template>`. `json-template-for` names the element whose text content is the JSON (typically a `<script type="application/json">`); the template is cloned and its text and attribute values are interpolated, and the whole thing re-renders when the source changes.
-
-```
-interpolation := '{' expression '}'
-expression    := path | path ('||' | '??' | '&&') fallback
-path          := segment ('.' segment | '[' (index | "'" key "'" | '"' key '"') ']')*
-fallback      := quoted | number | true | false | bare
-```
-
-`path` is dot and bracket notation — `name`, `user.profile.email`, `items[1].title`, `obj["first-name"]`, `items[-1]` (from the end). A path that does not resolve interpolates to the empty string. `path || fallback` substitutes the fallback when the value is falsy (`""`, `0`, `false`, `null`, `undefined`); `path ?? fallback` only when it is `null` or `undefined`, so `0` and `""` survive; `path && fallback` renders the fallback when the value is truthy and nothing when it is falsy. A fallback may be a quoted string, a number, `true`/`false`, or a bare word. Whitespace around the operator is ignored, and operators inside a quoted fallback are literal. Every `{`…`}` pair is an interpolation, except inside `on-*` attributes, which carry the command grammar and are preserved verbatim. There is no `{{#each}}`-style directive; a nested `<template data-array="path">` repeats per item, an empty array renders nothing (root or nested), and `json-template-slice="start:end"` trims a root array (`1:3`, or a bare `2`).
-
----
 
 ## Writing an implementation
 
@@ -882,7 +867,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | --- | --- |
 | `defineImplementation(name, decl, factory)` | Declare an implementation ([§ Writing an implementation](#writing-an-implementation)) |
 | `start(root = document)` | Attach every participant under root and watch it for insertions and removals; idempotent per root; returns a dispose function. Defers the initial scan to `DOMContentLoaded` when called during parse ([§ Attachment](#attachment)) |
-| `registerImplementation(def)` | Register a normalized definition (used by `defineImplementation`) |
+| `registerImplementation(def)` | Register a normalized definition (used by `defineImplementation`). Throws if the name is already registered — the realistic cause is two copies of a behaviour in one page (a CDN bundle plus a re-export); dev-server HMR without a page reload is not supported |
 | `getImplementationDef(name)` | Look up a registered definition |
 | `runPhrases(el, value, ev)` | Run an attribute string against an element and a DOM event; the one entry point |
 | `parse(value, eventName?)` | Parse an attribute string into phrases (cached by event name and value) |
@@ -901,7 +886,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `readValue(el, property = "value")` | The element's value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read `.value` (a string), display elements read `formattable-value` as a number under a numeric format, else `textContent` (a string); `readValue(el, "checked")` is the checked boolean; `readValue(el, "min" | "max" | "step")` is the platform bound — a number on number/range inputs (absent `min`/`max` is `""`, absent `step` is `1`), the string as written elsewhere |
 | `writeValue(el, v)` | Write helper: sets `.value` where the element has one, else `textContent` |
 | `NotReadyError` | Error set on `e.error` when a dispatch reaches an attached element whose `implements` names an implementation that has not registered yet |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pasteTransform`, `copyable`, `jsonTemplate`, `formattable` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pastable`, `copyable`, `formattable` |
 
 ---
 
@@ -948,7 +933,7 @@ Input masks and format-as-you-type belong in a component library built on the sa
 
 ## Not supported
 
-Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `min` / `max` / `step` (and `height` / `width` in expressions) · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · a template-literal type over a whole `on-*` value (possible, not needed for v1).
+Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `min` / `max` / `step` (and `height` / `width` in expressions) · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · rendering data through a template (the behaviour was removed; `listable.adopt(#tpl)` stamps a template as written, and the triggers work from there) · the native paste event (`on-paste` is not a trigger; `on-pasted` fires after the insertion) · a template-literal type over a whole `on-*` value (possible, not needed for v1).
 
 `on-load` always means attach, including on `<img>`, `<iframe>`, `<body>`, `<link>`, `<script>`; it is never the native `load` event — bytes-arrived is `addEventListener('load', …)`.
 

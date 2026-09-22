@@ -82,6 +82,18 @@ test("a key may not contain the phrase punctuation", (t) => {
   assert.ok(String(spy.mock.calls[7]!.arguments[0]).includes('invalid key "#a"'));
 });
 
+test("a key name longer than one character may not contain +; a bare + stays legal", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("ctrl+k: #f.send()"), [], "modifier keys are not supported");
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes('invalid key "ctrl+k": modifier keys are not supported'),
+  );
+
+  const [plus] = parse("+: #f.send()");
+  assert.ok(plus);
+  assert.equal(plus.key, "+");
+});
+
 test("rule 3: one receiver per phrase; groups and broadcasts are errors", () => {
   assert.equal(parse("#a.hide(); #b.hide()").length, 2);
   assert.deepEqual(parse("#a, #b.hide()"), []);

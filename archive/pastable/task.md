@@ -6,6 +6,8 @@ dependencies: [expressions-inline]
 
 # Task: the `pasted` event; delete `paste-transform`
 
+> Superseded — folded into cleanup-sweep Part E after being archived unrun.
+
 ## Metadata
 
 - **Complexity:** Low
