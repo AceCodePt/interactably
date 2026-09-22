@@ -13,6 +13,7 @@ import "@behaviors/no-propagate/no-propagate.ts";
 import "@behaviors/auto-grow/auto-grow.ts";
 import "@behaviors/pastable/pastable.ts";
 import "@behaviors/formattable/formattable.ts";
+import "@behaviors/focusable/focusable.ts";
 import { start } from "@/core.ts";
 
 start();
