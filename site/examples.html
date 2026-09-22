@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably examples — every card below is plain HTML: implements, on-* triggers and verbs.">
+  <meta name="description" content="Interactably examples — a list of plain HTML examples; each example is its own page.">
   <title>Examples — Interactably</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -31,1047 +31,143 @@
   <main class="wrap">
     <h1 class="doc-title">Examples</h1>
     <p class="doc-lede">
-      Every card below is a real, working UI built entirely from the HTML you see &mdash; tabs, a price calculator,
-      an age gate, a form that submits over the network. Click things, open the console (a few examples log), and hit
-      <em>Show the markup</em> to copy any example straight into your own page.
+      A list of the working examples. Every one is a real UI built entirely from the HTML on its own page &mdash; open a
+      page, click things, and hit <em>Show the markup</em> to copy the example straight into your own site. Several pages
+      compose two or more implementations into one flow; each entry names the implementations involved.
     </p>
 
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-auto">One button, one panel</h2>
-        <p class="ex-note">
-          The whole idea in a few lines: a <code class="inline-code">start()</code> call, a trigger with
-          <code class="inline-code">on-click="#panel.toggle()"</code>, and a receiver. No
-          <code class="inline-code">is=</code>, no per-tag setup &mdash; the button is live one microtask after
-          <code class="inline-code">start()</code> sees it.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <button id="auto-demo-btn" type="button" on-click="#auto-demo-panel.toggle()"
-                    aria-expanded="false" aria-controls="auto-demo-panel">Toggle panel</button>
-          </div>
-          <section id="auto-demo-panel" implements="revealable" hidden>
-            <p>This panel is a plain <code class="inline-code">&lt;section implements="revealable"&gt;</code>. The button&rsquo;s
-              phrase is <code class="inline-code">on-click="#auto-demo-panel.toggle()"</code>, and
-              <code class="inline-code">revealable</code> keeps the <code class="inline-code">aria-expanded</code> state in sync.</p>
-          </section>
-        </div>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-auto)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-auto" data-lang="html"><code>&lt;script type="module"&gt;
-  import { start } from "interactably/dist/cdn/interactably-core.js";
-  import "interactably/dist/cdn/revealable.js";
-  start();
-&lt;/script&gt;
+    <h2 class="section-label" style="margin-top:2.25rem">Single implementations</h2>
+    <ul class="examples-list">
+      <li>
+        <a class="examples-title" href="./examples/one-panel.html">One button, one panel</a>
+        <p class="examples-blurb">A trigger, a receiver, and a start() call — the whole idea in a few lines.</p>
+        <span class="examples-tags">revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/price-calculator.html">Price calculator</a>
+        <p class="examples-blurb">Rows, quantities and a total recomputed from sum('#list .amount') after every change.</p>
+        <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; listable &middot; formattable &middot; prevent-default</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/collapsible-help.html">A collapsible help panel</a>
+        <p class="examples-blurb">toggle() figures out the element's own open state — details, dialog, popover or attribute.</p>
+        <span class="examples-tags">revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/live-preview.html">Live preview: debounce, keys & once</a>
+        <p class="examples-blurb">Debounce, enter/escape keys, and a once() that spends itself on the first click.</p>
+        <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; prevent-default &middot; revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/roving-focus.html">Roving focus, written out</a>
+        <p class="examples-blurb">Arrow keys move real focus through a list; the ids are positional and the wrap is written out.</p>
+        <span class="examples-tags">focusable &middot; prevent-default</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/theme-switcher.html">Theme & attribute switcher</a>
+        <p class="examples-blurb">setAttr, toggleAttr and removeAttr against a live swatch, plus a logger.</p>
+        <span class="examples-tags">attributable &middot; logger</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/class-toggle.html">Toggle one class, keep the rest</a>
+        <p class="examples-blurb">classList writes through three verbs, one class name per call.</p>
+        <span class="examples-tags">classable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/growing-note.html">A note that grows with you</a>
+        <p class="examples-blurb">A textarea that grows with your text, marks edits as dirty, and cleans pastes.</p>
+        <span class="examples-tags">auto-grow &middot; dirtyable &middot; attributable &middot; pastable &middot; modifiable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/character-counter.html">A character counter</a>
+        <p class="examples-blurb">length() counts in UTF-16 units — the same unit maxlength uses.</p>
+        <span class="examples-tags">attributable &middot; modifiable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/age-gate.html">An age gate</a>
+        <p class="examples-blurb">A guard verb: validate() passes the min=18 constraint and && then shows the consent panel.</p>
+        <span class="examples-tags">validatable &middot; revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/reveal-strategies.html">Details, dialog & popover</a>
+        <p class="examples-blurb">Three revealable strategies in one row, each driven through the platform's own open state.</p>
+        <span class="examples-tags">revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/tabs.html">Tabs</a>
+        <p class="examples-blurb">Three buttons, three panels, no JavaScript.</p>
+        <span class="examples-tags">revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/synced-sections.html">Three synchronized sections, written out</a>
+        <p class="examples-blurb">Nine panels, three tab bars, one stored selection — the honest price of push.</p>
+        <span class="examples-tags">storable &middot; revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/signup-guard.html">Sign-up form with a guard</a>
+        <p class="examples-blurb">validate() stops the chain on an invalid submit; the || branch shows the alert.</p>
+        <span class="examples-tags">prevent-default &middot; validatable &middot; attributable &middot; revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/click-bubbling.html">Click bubbling, made explicit</a>
+        <p class="examples-blurb">Nested triggers bubble like nested onclick — until no-propagate stops one.</p>
+        <span class="examples-tags">logger &middot; no-propagate</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/order-form.html">Order form — the asynchronous seam</a>
+        <p class="examples-blurb">send() posts the form; on-response swaps the receipt in — the asynchronous seam.</p>
+        <span class="examples-tags">prevent-default &middot; requestable &middot; revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/network-quote.html">Load a quote over the network</a>
+        <p class="examples-blurb">A GET fragment that arrives with its own trigger inside, so the wiring is already live.</p>
+        <span class="examples-tags">requestable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/copy-snippet.html">Copy a snippet — the flash is delayable</a>
+        <p class="examples-blurb">copy() copies a target's text and fires copy; the flash is setAttr, delay, removeAttr.</p>
+        <span class="examples-tags">copyable &middot; attributable</span>
+      </li>
+    </ul>
 
-&lt;button on-click="#panel.toggle()" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
-&lt;section id="panel" implements="revealable" hidden&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
-&lt;/section&gt;</code></pre>
-        </div>
-      </div>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-calc">Price calculator</h2>
-        <p class="ex-note">
-          Add rows, adjust quantities, and watch the total recompute from the expression
-          <code class="inline-code">sum('#list .amount')</code> after every change. Press Escape in a field to reset it;
-          <code class="inline-code">prevent-default</code> cancels the browser&rsquo;s own revert first.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <label>Qty
-              <input id="qty" implements="modifiable dirtyable attributable prevent-default"
-                     type="number" value="1" min="1" max="10"
-                     on-input="#preview.set(this.value)"
-                     on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-                     on-clean="this.removeAttr('data-dirty')"
-                     on-keydown="escape: this.reset(); #preview.set(#qty.value)">
-            </label>
-            <button id="dec" on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)" type="button">&minus;</button>
-            <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)" type="button">+</button>
-            <button id="inc5" on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)" type="button">+5</button>
-            <button id="reset" on-click="#qty.reset(); #preview.set(#qty.value)" type="button">Reset</button>
-            <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
-          </div>
-
-          <ul id="list" implements="listable" listable-min-rows="1">
-            <li>
-              <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
-              <button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
-            </li>
-          </ul>
-          <button id="add-row" on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount:valid'))" type="button">Add row</button>
-          <template id="row-tpl">
-            <li>
-              <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
-              <button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
-            </li>
-          </template>
-          <p class="total">
-            Total:
-            <output id="total" implements="modifiable formattable"
-                    on-load="this.set(sum('#list .amount:valid'))"
-                    formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
-          </p>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-calc)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-calc" data-lang="html"><code>&lt;div class="demo"&gt;
-  &lt;div class="row"&gt;
-    &lt;label&gt;Qty
-      &lt;input id="qty" implements="modifiable dirtyable attributable prevent-default"
-             type="number" value="1" min="1" max="10"
-             on-input="#preview.set(this.value)"
-             on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-             on-clean="this.removeAttr('data-dirty')"
-             on-keydown="escape: this.reset(); #preview.set(#qty.value)"&gt;
-    &lt;/label&gt;
-    &lt;button on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)"&gt;&minus;&lt;/button&gt;
-    &lt;button on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
-    &lt;button on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)"&gt;+5&lt;/button&gt;
-    &lt;button on-click="#qty.reset(); #preview.set(#qty.value)"&gt;Reset&lt;/button&gt;
-    &lt;output id="preview" implements="modifiable" on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;
-  &lt;/div&gt;
-
-  &lt;ul id="list" implements="listable" listable-min-rows="1"&gt;
-    &lt;li&gt;
-      &lt;input class="amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))"&gt;
-      &lt;button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
-    &lt;/li&gt;
-  &lt;/ul&gt;
-  &lt;button on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount:valid'))"&gt;Add row&lt;/button&gt;
-  &lt;template id="row-tpl"&gt;
-    &lt;li&gt;
-      &lt;input class="amount" type="number" value="3.25" step="any" required on-input="#total.set(sum('#list .amount:valid'))"&gt;
-      &lt;button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
-    &lt;/li&gt;
-  &lt;/template&gt;
-  &lt;p class="total"&gt;Total:
-    &lt;output id="total" implements="modifiable formattable"
-            on-load="this.set(sum('#list .amount:valid'))"
-            formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;
-  &lt;/p&gt;
-&lt;/div&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-reveal">A collapsible help panel</h2>
-        <p class="ex-note">
-          One button, one phrase: <code class="inline-code">on-click="#panel.toggle()"</code>.
-          <code class="inline-code">revealable</code> figures out the element on its own — it toggles a
-          <code class="inline-code">revealable-open</code> attribute here, <code class="inline-code">el.open</code> on a
-          <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>, popover state on a
-          <code class="inline-code">[popover]</code>. The button&rsquo;s <code class="inline-code">aria-expanded</code> stays in sync automatically.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <button id="panel-toggle" on-click="#panel.toggle()"
-                    aria-expanded="false" aria-controls="panel" type="button">Toggle panel</button>
-          </div>
-          <section id="panel" implements="revealable" hidden>
-            <p>
-              This panel is a <code class="inline-code">&lt;section implements="revealable"&gt;</code>.
-              <code class="inline-code">revealable</code> reads the element: <code class="inline-code">revealable-open</code> here,
-              <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
-              popover state on a <code class="inline-code">[popover]</code>. The trigger is
-              <code class="inline-code">on-click="#panel.toggle()"</code>, and the implementation keeps the button&rsquo;s
-              <code class="inline-code">aria-expanded</code> in sync.
-            </p>
-          </section>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-reveal)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-reveal" data-lang="html"><code>&lt;button on-click="#panel.toggle()"
-        aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
-&lt;section id="panel" implements="revealable" hidden&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
-&lt;/section&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-grammar">Live preview: debounce, keys &amp; once</h2>
-        <p class="ex-note">
-          Type into the field and the preview follows — but only 300ms after you stop. Enter echoes instantly,
-          Escape clears, and the &ldquo;Toggle tip&rdquo; button spends its <code class="inline-code">once()</code> as the
-          walk passes it: the second click is a no-op.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <label>Type
-              <input id="typer" implements="modifiable dirtyable attributable prevent-default"
-                     on-input="#mirror.debounce(300).set(this.value)"
-                     on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-                     on-clean="this.removeAttr('data-dirty')"
-                     on-keydown="enter: #mirror.set(this.value); escape: this.clear()">
-            </label>
-            <output id="mirror" implements="modifiable">&hellip;</output>
-          </div>
-          <button id="tip-button" type="button" on-click="#tip.once().toggle()">Toggle tip (once)</button>
-          <section id="tip" implements="revealable" hidden>
-            This sentence appears the first time the chain runs; the second click is a no-op.
-          </section>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-grammar)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-grammar" data-lang="html"><code>&lt;input id="typer" implements="modifiable dirtyable attributable prevent-default"
-       on-input="#mirror.debounce(300).set(this.value)"
-       on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-       on-clean="this.removeAttr('data-dirty')"
-       on-keydown="enter: #mirror.set(this.value); escape: this.clear()"&gt;
-&lt;output id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
-
-&lt;button on-click="#tip.once().toggle()"&gt;Toggle tip (once)&lt;/button&gt;
-&lt;section id="tip" implements="revealable" hidden&gt;
-  This sentence appears the first time the chain runs; the second click is a no-op.
-&lt;/section&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-combobox">Roving focus, written out</h2>
-        <p class="ex-note">
-          A combobox is roving focus, written out: every hop is a phrase on the element it leaves from, the ids are
-          positional, and the wrap-around is whatever the last option&rsquo;s phrase points at.
-          <code class="inline-code">aria-activedescendant</code> is not set because real focus moves &mdash; the screen
-          reader announces the option as the current item. The list is static here; a <code class="inline-code">requestable</code>
-          response would regenerate the same ids.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <input id="cb-search" type="search" role="combobox" aria-controls="cb-results" aria-expanded="true"
-                   implements="focusable prevent-default"
-                   on-keydown="arrowdown: #cb-results-1.focus()"
-                   placeholder="Search a city&hellip;">
-          </div>
-          <ul id="cb-results" role="listbox">
-            <li role="option"><button id="cb-results-1" type="button" implements="focusable prevent-default"
-                on-keydown="arrowdown: #cb-results-2.focus(); arrowup: #cb-search.focus()">Berlin</button></li>
-            <li role="option"><button id="cb-results-2" type="button" implements="focusable prevent-default"
-                on-keydown="arrowdown: #cb-results-3.focus(); arrowup: #cb-results-1.focus()">Lisbon</button></li>
-            <li role="option"><button id="cb-results-3" type="button" implements="focusable prevent-default"
-                on-keydown="arrowdown: #cb-results-4.focus(); arrowup: #cb-results-2.focus()">London</button></li>
-            <li role="option"><button id="cb-results-4" type="button" implements="focusable prevent-default"
-                on-keydown="arrowdown: #cb-results-5.focus(); arrowup: #cb-results-3.focus()">Paris</button></li>
-            <li role="option"><button id="cb-results-5" type="button" implements="focusable prevent-default"
-                on-keydown="arrowdown: #cb-results-1.focus(); arrowup: #cb-results-4.focus()">Tokyo</button></li>
-          </ul>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-combobox)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-combobox" data-lang="html"><code>&lt;input id="search" type="search" role="combobox" aria-controls="results" aria-expanded="true"
-       implements="focusable prevent-default"
-       on-keydown="arrowdown: #results-1.focus()"&gt;
-
-&lt;!-- the list is what a requestable response would return: ids are positional
-     and regenerated with each response, so #results-1 is always current --&gt;
-&lt;ul id="results" role="listbox"&gt;
-  &lt;li role="option"&gt;&lt;button id="results-1" implements="focusable prevent-default"
-      on-keydown="arrowdown: #results-2.focus(); arrowup: #search.focus()"&gt;Berlin&lt;/button&gt;&lt;/li&gt;
-  &lt;li role="option"&gt;&lt;button id="results-2" implements="focusable prevent-default"
-      on-keydown="arrowdown: #results-3.focus(); arrowup: #results-1.focus()"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
-  &lt;li role="option"&gt;&lt;button id="results-3" implements="focusable prevent-default"
-      on-keydown="arrowdown: #results-1.focus(); arrowup: #results-2.focus()"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
-&lt;/ul&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-attr">Theme &amp; attribute switcher</h2>
-        <p class="ex-note">
-          <code class="inline-code">attributable</code> writes attributes from a phrase: <code class="inline-code">setAttr({name, value})</code>
-          for one thing, <code class="inline-code">toggleAttr</code> / <code class="inline-code">removeAttr</code> for simpler ones.
-          Try <em>Dark</em>, then <em>Toggle border</em> — the card below reacts. The last button uses
-          <code class="inline-code">logger</code>, so open the console. Attributes are scalars; <code class="inline-code">class</code>
-          is a list, so it has its own example below.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <button id="swatch-dark" type="button"
-                    on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})">Dark</button>
-            <button id="swatch-light" type="button"
-                    on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})">Light</button>
-            <button id="swatch-border" type="button"
-                    on-click="#swatch.toggleAttr('data-bordered')">Toggle border</button>
-            <button id="swatch-clear" type="button"
-                    on-click="#swatch.removeAttr('data-theme')">Clear theme</button>
-            <button id="swatch-log" type="button"
-                    on-click="#swatch.log('button clicked')">Log</button>
-          </div>
-          <div id="swatch" class="swatch" implements="attributable logger" data-theme="light">Swatch</div>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-attr)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-attr" data-lang="html"><code>&lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
-&lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
-&lt;button on-click="#swatch.toggleAttr('data-bordered')"&gt;Toggle border&lt;/button&gt;
-&lt;button on-click="#swatch.removeAttr('data-theme')"&gt;Clear theme&lt;/button&gt;
-&lt;button on-click="#swatch.log('button clicked')"&gt;Log&lt;/button&gt;
-
-&lt;div id="swatch" class="swatch" implements="attributable logger" data-theme="light"&gt;Swatch&lt;/div&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-class">Toggle one class, keep the rest</h2>
-        <p class="ex-note">
-          <code class="inline-code">classable</code> exposes <code class="inline-code">classList</code> through three verbs,
-          one class name per call. Two decisions are fixed: there is no <code class="inline-code">force</code> argument on
-          <code class="inline-code">toggle()</code> &mdash; <code class="inline-code">add()</code>/<code class="inline-code">remove()</code>
-          are the forced forms &mdash; and the browser&rsquo;s own rules decide what a name may be, so a multi-token string
-          reaches <code class="inline-code">classList</code> whole and throws its own error.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <button id="cls-open" type="button" on-click="#cls-menu.toggle('open')">Toggle open</button>
-            <button id="cls-add" type="button" on-click="#cls-menu.add('compact')">Compact</button>
-            <button id="cls-remove" type="button" on-click="#cls-menu.remove('compact')">Spacious</button>
-            <button id="cls-both" type="button" on-click="#cls-menu.toggle('open').toggle('compact')">Toggle both</button>
-          </div>
-          <nav id="cls-menu" class="menu" implements="classable">
-            <a href="#docs">Docs</a>
-            <a href="#examples">Examples</a>
-            <a href="#reference">Reference</a>
-          </nav>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-class)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-class" data-lang="html"><code>&lt;button on-click="#menu.toggle('open')"&gt;Toggle open&lt;/button&gt;
-&lt;button on-click="#menu.add('compact')"&gt;Compact&lt;/button&gt;
-&lt;button on-click="#menu.remove('compact')"&gt;Spacious&lt;/button&gt;
-&lt;button on-click="#menu.toggle('open').toggle('compact')"&gt;Toggle both&lt;/button&gt;
-
-&lt;nav id="menu" class="menu" implements="classable"&gt;
-  &lt;a href="#docs"&gt;Docs&lt;/a&gt;&lt;a href="#examples"&gt;Examples&lt;/a&gt;&lt;a href="#reference"&gt;Reference&lt;/a&gt;
-&lt;/nav&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-note">A note that grows with you</h2>
-        <p class="ex-note">
-          Type something and it grows with your text (<code class="inline-code">auto-grow</code>) and gains an amber
-          outline while it differs from the authored default (<code class="inline-code">dirtyable</code>). Paste a
-          paragraph and runs of whitespace are collapsed (<code class="inline-code">on-pasted</code> cleaning
-          via <code class="inline-code">replace()</code>).
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <textarea id="note" aria-label="Note"
-                    implements="auto-grow dirtyable attributable pastable modifiable"
-                    rows="2"
-                    on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-                    on-clean="this.removeAttr('data-dirty')"
-                    on-pasted="this.set(replace(this.value, '\s+', ' '))"
-                    placeholder="Type or paste some text&hellip;"></textarea>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-note)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-note" data-lang="html"><code>&lt;textarea id="note"
-          implements="auto-grow dirtyable attributable pastable modifiable"
-          rows="2"
-          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-          on-clean="this.removeAttr('data-dirty')"
-          on-pasted="this.set(replace(this.value, '\s+', ' '))"
-          placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-counter">A character counter</h2>
-        <p class="ex-note">
-          <code class="inline-code">length()</code> counts a string in UTF-16 code units &mdash; the same unit
-          <code class="inline-code">maxlength</code> uses &mdash; so the counter and the platform bound always agree.
-          On a <code class="inline-code">type="number"</code> field it is a <code class="inline-code">not-a-string</code>
-          error, never a digit count. The edge style is an exact-match attribute read &mdash; it fires only at the limit.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <label>Bio
-            <textarea id="cnt-bio" rows="3" maxlength="200" implements="attributable"
-                      on-input="#cnt-out.set(length(this.value) + ' of 200'); this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))})"
-                      placeholder="Up to 200 characters&hellip;"></textarea>
-          </label>
-          <output id="cnt-out" implements="modifiable">0 of 200</output>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-counter)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-counter" data-lang="html"><code>&lt;textarea id="bio" maxlength="200" implements="attributable"
-          on-input="#count.set(length(this.value) + ' of 200');
-                    this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))})"&gt;&lt;/textarea&gt;
-&lt;output id="count" implements="modifiable"&gt;0 of 200&lt;/output&gt;
-
-&lt;!-- the edge style is an exact match, not a prefix match --&gt;
-&lt;!-- #bio[data-remaining="0"] { border-color: #b91c1c } fires only at 200 --&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-age">An age gate</h2>
-        <p class="ex-note">
-          Raise the age to 18 and the message appears — no button, no script.
-          The guard verb <code class="inline-code">validate()</code> passes when the field&rsquo;s
-          <code class="inline-code">min="18"</code> constraint holds, and <code class="inline-code">&amp;&amp;</code> then runs
-          <code class="inline-code">show()</code> on the consent panel. It triggers on
-          <code class="inline-code">on-change</code>, so the check happens when you commit the value — not on every keystroke.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <label>Age
-              <input id="age" type="number" value="17" min="18" implements="validatable"
-                     on-change="this.validate() &amp;&amp; #consent.show()">
-            </label>
-          </div>
-          <section id="consent" implements="revealable" hidden>
-            Thanks &mdash; you&rsquo;re old enough to continue.
-          </section>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-age)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-age" data-lang="html"><code>&lt;input id="age" type="number" value="17" min="18" implements="validatable"
-       on-change="this.validate() &amp;&amp; #consent.show()"&gt;
-&lt;section id="consent" implements="revealable" hidden&gt;
-  Thanks &mdash; you&rsquo;re old enough to continue.
-&lt;/section&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-strat">Details, dialog &amp; popover</h2>
-        <p class="ex-note">
-          Three <code class="inline-code">revealable</code> strategies in one row: a <code class="inline-code">&lt;details&gt;</code>,
-          a modal <code class="inline-code">&lt;dialog&gt;</code> and a <code class="inline-code">[popover]</code>. Each is detected at connect
-          and driven through the platform&rsquo;s own open state — so focus trapping, the top layer, light dismiss and
-          Escape come for free.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <button id="faq-toggle" type="button" on-click="#faq.toggle()"
-                    aria-expanded="false" aria-controls="faq">Toggle details</button>
-            <button type="button" on-click="#dlg.show()">Open dialog</button>
-            <button type="button" on-click="#pop.toggle()"
-                    aria-expanded="false" aria-controls="pop">Toggle popover</button>
-          </div>
-          <details id="faq" implements="revealable">
-            <summary>Why not just use <code>hidden</code>?</summary>
-            <p>Because each platform element already exposes its own open state.</p>
-          </details>
-          <dialog id="dlg" implements="revealable">
-            <p>A native <code class="inline-code">&lt;dialog&gt;</code>, opened with <code class="inline-code">showModal()</code>.</p>
-            <button type="button" on-click="#dlg.show(false)">Close</button>
-          </dialog>
-          <div id="pop" implements="revealable" popover>
-            A popover in the top layer, toggled through <code class="inline-code">showPopover()</code>.
-          </div>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-strat)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-strat" data-lang="html"><code>&lt;button on-click="#faq.toggle()" aria-expanded="false" aria-controls="faq"&gt;Toggle details&lt;/button&gt;
-&lt;button on-click="#dlg.show()"&gt;Open dialog&lt;/button&gt;
-&lt;button on-click="#pop.toggle()" aria-expanded="false" aria-controls="pop"&gt;Toggle popover&lt;/button&gt;
-
-&lt;details id="faq" implements="revealable"&gt;
-  &lt;summary&gt;Why not just use &lt;code&gt;hidden&lt;/code&gt;?&lt;/summary&gt;
-  &lt;p&gt;Because each platform element already exposes its own open state.&lt;/p&gt;
-&lt;/details&gt;
-
-&lt;dialog id="dlg" implements="revealable"&gt;
-  &lt;p&gt;A native &lt;code&gt;&amp;lt;dialog&amp;gt;&lt;/code&gt;, opened with &lt;code&gt;showModal()&lt;/code&gt;.&lt;/p&gt;
-  &lt;button on-click="#dlg.show(false)"&gt;Close&lt;/button&gt;
-&lt;/dialog&gt;
-
-&lt;div id="pop" implements="revealable" popover&gt;
-  A popover in the top layer, toggled through &lt;code&gt;showPopover()&lt;/code&gt;.
-&lt;/div&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-tabs">Tabs</h2>
-        <p class="ex-note">
-          Three buttons, three panels, no JavaScript. Each button shows one panel and hides the other two — a phrase is
-          just <code class="inline-code">;</code>-separated verbs. <code class="inline-code">revealable</code> toggles each
-          panel&rsquo;s <code class="inline-code">hidden</code> state.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="tabbar">
-            <button type="button"
-                    on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)">Overview</button>
-            <button type="button"
-                    on-click="#tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false)">Specs</button>
-            <button type="button"
-                    on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()">Notes</button>
-          </div>
-          <section id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true">
-            <p><strong>Overview.</strong> A plain <code class="inline-code">&lt;section&gt;</code> whose visibility is driven by
-            <code class="inline-code">revealable</code>. The other two panels stay <code class="inline-code">hidden</code> until you pick them.</p>
-          </section>
-          <section id="tab-specs" implements="revealable" class="tabpanel" hidden>
-            <p><strong>Specs.</strong> One phrase, three verbs: <code class="inline-code">#tab-specs.show(); #tab-overview.show(false); #tab-notes.show(false)</code>.</p>
-          </section>
-          <section id="tab-notes" implements="revealable" class="tabpanel" hidden>
-            <p><strong>Notes.</strong> The verbs can be anything — <code class="inline-code">set()</code>, <code class="inline-code">setAttr()</code>,
-            even a <code class="inline-code">send()</code> to fetch a tab&rsquo;s content over the network.</p>
-          </section>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-tabs)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-tabs" data-lang="html"><code>&lt;div class="tabbar"&gt;
-  &lt;button
-          on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)"&gt;Overview&lt;/button&gt;
-  &lt;button
-          on-click="#tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false)"&gt;Specs&lt;/button&gt;
-  &lt;button
-          on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()"&gt;Notes&lt;/button&gt;
-&lt;/div&gt;
-
-&lt;section id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true"&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="tab-specs" implements="revealable" class="tabpanel" hidden&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
-&lt;/section&gt;
-&lt;section id="tab-notes" implements="revealable" class="tabpanel" hidden&gt;
-  &lt;p&gt;&hellip;&lt;/p&gt;
-&lt;/section&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-pkg">Three synchronized sections, written out</h2>
-        <p class="ex-note">
-          Three sections &mdash; install, config, troubleshooting &mdash; each with its own tab bar. Every button
-          names the three panels it opens, the six it closes, and <code class="inline-code">this.save()</code>; its
-          <code class="inline-code">on-restore</code> repeats the nine <code class="inline-code">show</code> /
-          <code class="inline-code">show(false)</code> receivers without the save, and <code class="inline-code">on-load="this.restore()"</code>
-          replays the stored selection when the page loads. With <code class="inline-code">implements</code>, <code class="inline-code">storable-key</code>,
-          <code class="inline-code">storable-value</code> and two phrases, a button is around a dozen lines &mdash;
-          that is the point: this is what a template would emit, and <code class="inline-code">aria-controls</code>
-          on each button is filled in by <code class="inline-code">revealable</code> from the phrase. Adding a fourth
-          section means editing every phrase; that is the price of push.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="demo-section">
-            <div class="tabbar">
-              <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
-                      on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                      on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
-              <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                      on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                      on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
-              <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
-                      on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                      on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
-            </div>
-            <div id="install-npm" implements="revealable" class="tabpanel" revealable-open="true">
-              <p><code class="inline-code">npm install</code> ships with Node.</p>
-            </div>
-            <div id="install-pnpm" implements="revealable" class="tabpanel" hidden>
-              <p><code class="inline-code">pnpm install</code> is the fast, disk-efficient one.</p>
-            </div>
-            <div id="install-bun" implements="revealable" class="tabpanel" hidden>
-              <p><code class="inline-code">bun install</code> is the all-in-one runtime.</p>
-            </div>
-          </div>
-          <div class="demo-section">
-            <div class="tabbar">
-              <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
-                      on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                      on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
-              <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                      on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                      on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
-              <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
-                      on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                      on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
-            </div>
-            <div id="config-npm" implements="revealable" class="tabpanel" revealable-open="true">
-              <p><code class="inline-code">npm config</code> &mdash; <code class="inline-code">.npmrc</code> lives in your home directory.</p>
-            </div>
-            <div id="config-pnpm" implements="revealable" class="tabpanel" hidden>
-              <p><code class="inline-code">pnpm config</code> &mdash; the store lives outside each project.</p>
-            </div>
-            <div id="config-bun" implements="revealable" class="tabpanel" hidden>
-              <p><code class="inline-code">bunfig.toml</code> is where bun is configured.</p>
-            </div>
-          </div>
-          <div class="demo-section">
-            <div class="tabbar">
-              <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
-                      on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                      on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
-              <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                      on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                      on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
-              <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
-                      on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                      on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
-            </div>
-            <div id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true">
-              <p>npm troubleshooting &mdash; <code class="inline-code">npm cache clean --force</code> clears the cache.</p>
-            </div>
-            <div id="trouble-pnpm" implements="revealable" class="tabpanel" hidden>
-              <p>pnpm troubleshooting &mdash; <code class="inline-code">pnpm store prune</code> reclaims disk.</p>
-            </div>
-            <div id="trouble-bun" implements="revealable" class="tabpanel" hidden>
-              <p>bun troubleshooting &mdash; <code class="inline-code">bun pm cache rm</code> clears the cache.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-pkg)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-pkg" data-lang="html"><code>&lt;div class="demo-section"&gt;
-  &lt;div class="tabbar"&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
-            on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-            on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-            on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
-            on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-            on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
-  &lt;/div&gt;
-  &lt;div id="install-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-  &lt;div id="install-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-  &lt;div id="install-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-&lt;/div&gt;
-
-&lt;div class="demo-section"&gt;
-  &lt;div class="tabbar"&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
-            on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-            on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-            on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
-            on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-            on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
-  &lt;/div&gt;
-  &lt;div id="config-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-  &lt;div id="config-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-  &lt;div id="config-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-&lt;/div&gt;
-
-&lt;div class="demo-section"&gt;
-  &lt;div class="tabbar"&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
-            on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-            on-restore="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-            on-restore="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
-    &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
-            on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-            on-restore="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
-  &lt;/div&gt;
-  &lt;div id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-  &lt;div id="trouble-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-  &lt;div id="trouble-bun" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-&lt;/div&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-valid">Sign-up form with a guard</h2>
-        <p class="ex-note">
-          <code class="inline-code">validate()</code> checks the form and stops the chain when it&rsquo;s invalid.
-          <code class="inline-code">&amp;&amp;</code> continues on completion, <code class="inline-code">||</code> continues
-          only on a guard abort: <code class="inline-code">setAttr</code> runs when the form is valid, the alert shows when
-          it is not. The field uses <code class="inline-code">pattern</code>
-          rather than <code class="inline-code">type="email"</code>, so the browser only complains when you submit, not while you type.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <form id="signup" novalidate implements="prevent-default validatable attributable"
-                on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()">
-            <div class="row">
-              <label>Email
-                <input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com">
-              </label>
-              <button type="submit">Sign up</button>
-            </div>
-            <p class="success" hidden>Thanks &mdash; that address looks valid.</p>
-            <div id="signup-alert" implements="revealable" hidden role="alert">Enter a valid email address.</div>
-          </form>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-valid)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-valid" data-lang="html"><code>&lt;form id="signup" novalidate
-      implements="prevent-default validatable attributable"
-      on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()"&gt;
-  &lt;label&gt;Email
-    &lt;input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com"&gt;
-  &lt;/label&gt;
-  &lt;button type="submit"&gt;Sign up&lt;/button&gt;
-  &lt;p class="success" hidden&gt;Thanks &mdash; that address looks valid.&lt;/p&gt;
-  &lt;div id="signup-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
-&lt;/form&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-bubble">Click bubbling, made explicit</h2>
-        <p class="ex-note">
-          A click on the inner button fires its own phrase and bubbles up to the card&rsquo;s — like nested
-          <code class="inline-code">onclick</code>. <code class="inline-code">no-propagate</code> on the second button stops the bubble.
-          Watch the console to see each line.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div id="outer" implements="logger"
-               on-click="#outer.log('outer card')">
-            <p class="lede-line">Clicking the plain area logs the outer line.</p>
-            <div class="row">
-              <button id="bubbles-btn" type="button"
-                      on-click="#outer.log('plain inner button')">Inner button (bubbles)</button>
-              <button id="no-propagate-btn" implements="no-propagate" type="button"
-                      on-click="#outer.log('stopped inner button')">Inner button (no-propagate)</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-bubble)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-bubble" data-lang="html"><code>&lt;div id="outer" implements="logger"
-     on-click="#outer.log('outer card')"&gt;
-  &lt;p&gt;Clicking the plain area logs the outer line.&lt;/p&gt;
-  &lt;button on-click="#outer.log('plain inner button')"&gt;Inner button (bubbles)&lt;/button&gt;
-  &lt;button implements="no-propagate"
-          on-click="#outer.log('stopped inner button')"&gt;Inner button (no-propagate)&lt;/button&gt;
-&lt;/div&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-order">Order form — the asynchronous seam</h2>
-        <p class="ex-note">
-          <code class="inline-code">on-submit="this.send()"</code> POSTs the form; the response swaps into the receipt and
-          <code class="inline-code">on-response</code> reveals it. This site has no backend, so you&rsquo;ll see the failure path —
-          the alert — which is the honest behavior. Point <code class="inline-code">requestable-url</code> at a real endpoint and the same
-          markup works; the button disables itself via
-          <code class="inline-code">form[aria-busy="true"] button { pointer-events: none }</code>.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <form id="order" novalidate implements="prevent-default requestable"
-                requestable-url="/api/orders" requestable-method="post"
-                requestable-target="#receipt"
-                on-response="#receipt.show(); #alert.show(false)"
-                on-request-error="#alert.show()"
-                on-submit="this.send()">
-            <label>Qty
-              <input name="qty" type="number" min="1" required value="2">
-            </label>
-            <button type="submit">Place order</button>
-          </form>
-          <section id="receipt" implements="revealable" hidden></section>
-          <div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-order)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-order" data-lang="html"><code>&lt;form id="order" novalidate
-      implements="prevent-default requestable"
-      requestable-url="/api/orders" requestable-method="post"
-      requestable-target="#receipt"
-      on-response="#receipt.show(); #alert.show(false)"
-      on-request-error="#alert.show()"
-      on-submit="this.send()"&gt;
-  &lt;label&gt;Qty
-    &lt;input name="qty" type="number" min="1" required value="2"&gt;
-  &lt;/label&gt;
-  &lt;button type="submit"&gt;Place order&lt;/button&gt;
-&lt;/form&gt;
-&lt;section id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
-&lt;div id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-quote">Load a quote over the network</h2>
-        <p class="ex-note">
-          The asynchronous seam, working end to end on this static site: <code class="inline-code">send()</code> GETs a
-          fragment and swaps it in. The fragment even carries its own <code class="inline-code">on-click="#quote.send()"</code>
-          button, so the trigger arrives with the response — no extra wiring.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="row">
-            <button id="load-quote" type="button" on-click="#quote.send()">Load a quote</button>
-          </div>
-          <div id="quote" implements="requestable"
-               requestable-url="./fragments/quote.html" requestable-method="get">
-            Nothing loaded yet &mdash; click the button above.
-          </div>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-quote)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-quote" data-lang="html"><code>&lt;button on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
-&lt;div id="quote" implements="requestable"
-     requestable-url="./fragments/quote.html" requestable-method="get"&gt;
-  Nothing loaded yet &mdash; click the button above.
-&lt;/div&gt;</code></pre>
-        </div>
-      </details>
-    </section>
-
-    <section class="example">
-      <div class="example-head">
-        <h2 id="ex-copy">Copy a snippet &mdash; the flash is delayable</h2>
-        <p class="ex-note">
-          <code class="inline-code">copyable</code> copies a target's text and fires
-          <code class="inline-code">copy</code>; it never touches attributes. The flash is the trigger attribute's job:
-          here <code class="inline-code">on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"</code>
-          marks the button, pauses the chain for 1.5&nbsp;s, then removes the attribute, so <em>Copied</em> reverts to <em>Copy</em>.
-        </p>
-      </div>
-      <div class="example-body">
-        <div class="demo">
-          <div class="codeblock">
-            <div class="codeblock-bar">
-              <span class="codeblock-lang">text</span>
-              <button class="copy-btn" implements="copyable attributable"
-                      on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                      on-click="this.copy(#demo-snippet)" type="button">
-                <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-              </button>
-            </div>
-            <pre class="code" id="demo-snippet" data-lang="text">Copy this line and watch the label &mdash; it reverts to Copy after 1.5&nbsp;s.</pre>
-          </div>
-        </div>
-      </div>
-      <details class="example-code">
-        <summary>Show the markup</summary>
-        <div class="codeblock">
-          <div class="codeblock-bar">
-            <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-ex-copy)" type="button">
-              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
-            </button>
-          </div>
-          <pre class="code" id="code-ex-copy" data-lang="html"><code>&lt;button class="copy-btn" implements="copyable attributable"
-        on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-        on-click="this.copy(#snippet)" type="button"&gt;
-  &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;
-&lt;/button&gt;
-
-&lt;pre class="code" id="snippet"&gt;Copy this line and watch the label &mdash; it reverts to Copy after 1.5&amp;nbsp;s.&lt;/pre&gt;</code></pre>
-        </div>
-      </details>
-    </section>
+    <h2 class="section-label" style="margin-top:2.75rem">Compositions</h2>
+    <ul class="examples-list">
+      <li>
+        <a class="examples-title" href="./examples/suggest-as-you-type.html">Suggest as you type</a>
+        <p class="examples-blurb">A debounced send() swaps options into a listbox; arrows rove real focus through them.</p>
+        <span class="examples-tags">requestable &middot; focusable &middot; revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/guarded-submit.html">Validate, then send</a>
+        <p class="examples-blurb">this.validate().send() || #alert.show() — the guard meets the async seam.</p>
+        <span class="examples-tags">validatable &middot; requestable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/remember-theme.html">Remember my theme</a>
+        <p class="examples-blurb">A stored choice paints data-theme on the card and flashes a toast on restore.</p>
+        <span class="examples-tags">storable &middot; attributable &middot; revealable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/remembered-tab.html">One tab bar, remembered</a>
+        <p class="examples-blurb">The open tab persists and refocuses on reload — a three-way intersection.</p>
+        <span class="examples-tags">storable &middot; revealable &middot; focusable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/open-focus.html">Open, and focus lands</a>
+        <p class="examples-blurb">One chain does both: show() opens the dialog, focus() lands in the field.</p>
+        <span class="examples-tags">revealable &middot; focusable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/character-mask.html">Only the characters you allow</a>
+        <p class="examples-blurb">on-input rewrites the value to keep only the characters you allow.</p>
+        <span class="examples-tags">modifiable &middot; pastable &middot; dirtyable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/reveal-secret.html">A secret you can reveal</a>
+        <p class="examples-blurb">Swap type between password and text — two buttons, because the grammar can't read type.</p>
+        <span class="examples-tags">attributable &middot; classable</span>
+      </li>
+    </ul>
   </main>
 
   <footer class="footer">

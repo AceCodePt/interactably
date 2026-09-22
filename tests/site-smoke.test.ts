@@ -19,6 +19,41 @@ const readmeUrl = new URL("../README.md", import.meta.url);
 const siteBundle = new URL("../dist/site/demo.js", import.meta.url);
 const cdnDir = new URL("../dist/cdn/", import.meta.url);
 
+const examplesDir = new URL("examples/", siteDir);
+const EXAMPLE_PAGES = [
+  "one-panel",
+  "price-calculator",
+  "collapsible-help",
+  "live-preview",
+  "roving-focus",
+  "theme-switcher",
+  "class-toggle",
+  "growing-note",
+  "character-counter",
+  "age-gate",
+  "reveal-strategies",
+  "tabs",
+  "synced-sections",
+  "signup-guard",
+  "click-bubbling",
+  "order-form",
+  "network-quote",
+  "copy-snippet",
+  "suggest-as-you-type",
+  "guarded-submit",
+  "remember-theme",
+  "remembered-tab",
+  "open-focus",
+  "character-mask",
+  "reveal-secret",
+];
+
+function examplePagesBody(): string {
+  return EXAMPLE_PAGES.map((name) =>
+    bodyMarkup(readFileSync(fileURLToPath(new URL(`${name}.html`, examplesDir)), "utf8")),
+  ).join("\n");
+}
+
 const EXPORT_NAMES: Record<string, string> = {
   "auto-grow": "autoGrow",
   "no-propagate": "noPropagate",
@@ -93,8 +128,6 @@ function setReadyState(state: DocumentReadyState): void {
 }
 
 test("site: no is= anywhere, the demo ships as one file, and the demo interacts under jsdom", async (t) => {
-  const examples = readFileSync(fileURLToPath(examplesUrl), "utf8");
-
   for (const file of ["docs.html", "examples.html", "index.html", "reference.html"]) {
     const html = readFileSync(fileURLToPath(new URL(file, siteDir)), "utf8");
     assert.equal(html.includes("interactable-"), false, `${file} carries no interactable- mentions`);
@@ -114,6 +147,30 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   const dom: JSDOM = setupJsdom();
   t.after(() => teardownJsdom(dom));
 
+  // jsdom does not implement the dialog API; the revealable dialog strategy
+  // drives showModal()/show()/close(), so stub them like the behaviour tests do.
+  const dialogProto = HTMLDialogElement.prototype as unknown as Record<
+    string,
+    ((this: HTMLDialogElement) => void) | undefined
+  >;
+  const originalShowModal = dialogProto["showModal"];
+  const originalShow = dialogProto["show"];
+  const originalClose = dialogProto["close"];
+  dialogProto["showModal"] = function (this: HTMLDialogElement) {
+    this.open = true;
+  };
+  dialogProto["show"] = function (this: HTMLDialogElement) {
+    this.open = true;
+  };
+  dialogProto["close"] = function (this: HTMLDialogElement) {
+    this.open = false;
+  };
+  t.after(() => {
+    dialogProto["showModal"] = originalShowModal;
+    dialogProto["show"] = originalShow;
+    dialogProto["close"] = originalClose;
+  });
+
   const originalFetch = globalThis.fetch;
   const fetchCalls: FetchCall[] = [];
   globalThis.fetch = ((...args: Parameters<typeof fetch>): Promise<Response> => {
@@ -132,9 +189,11 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   // DOMContentLoaded, which is when on-load="this.restore()" replays the stored
   // selection and the matching buttons' on-restore phrases flip the panels.
   localStorage.setItem("pm", "pnpm");
+  localStorage.setItem("theme", "sepia");
+  localStorage.setItem("maintab", "notes");
   setReadyState("loading");
   const holder = document.createElement("div");
-  holder.innerHTML = bodyMarkup(examples);
+  holder.innerHTML = examplePagesBody();
   document.body.appendChild(holder);
 
   await import(siteBundle.href);
@@ -142,6 +201,8 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   await flush();
   document.dispatchEvent(new Event("DOMContentLoaded"));
   await flush();
+
+  assert.equal(document.activeElement, byId("mp-tab-notes"), "on-load restore returns focus to the remembered tab");
 
   const pmNpm = document.querySelector('button[storable-value="npm"]') as HTMLButtonElement;
   const pmBun = document.querySelector('button[storable-value="bun"]') as HTMLButtonElement;
@@ -329,6 +390,98 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.equal(receipt.hidden, false);
   assert.equal(byId("alert").hidden, true);
   assert.equal(form.hasAttribute("requestable-status"), false);
+
+  // Guarded submit (validatable × requestable): invalid aborts before the network
+  const gsForm = byId("gs-form") as HTMLFormElement;
+  const gsOk = byId("gs-ok");
+  const gsAlert = byId("gs-alert");
+  gsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  assert.equal(gsOk.hidden, true, "an invalid guarded submit never reaches the network");
+  assert.equal(gsAlert.hidden, false, "validate() aborts the chain and the || branch shows the alert");
+  assert.equal(fetchCalls.length, 1, "an invalid submit never calls send()");
+  const gsEmail = gsForm.querySelector("input") as HTMLInputElement;
+  gsEmail.value = "you@example.com";
+  gsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  assert.equal(gsAlert.hidden, true, "the alert closes on a valid submit");
+  assert.equal(fetchCalls.length, 2, "a valid submit posts");
+  assert.equal(fetchCalls[1]!.url, "/api/signup");
+  assert.equal(fetchCalls[1]!.init.method, "POST");
+  fetchCalls[1]!.resolve(fakeResponse(true, 200, "<p>signed up</p>"));
+  await flush();
+  assert.equal(gsOk.hidden, false, "on-response reveals the success panel");
+
+  // Suggestions (requestable × focusable × revealable)
+  const city = byId("city") as HTMLInputElement;
+  const cityList = byId("city-list");
+  city.value = "li";
+  city.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(fetchCalls.length, 2, "the suggestions query is debounced");
+  await new Promise((resolve) => setTimeout(resolve, 280));
+  assert.equal(fetchCalls.length, 3, "after the quiet period the fragment is fetched");
+  assert.equal(cityList.hidden, true, "the listbox stays hidden until the response lands");
+  const options = [
+    `<li role="option"><button id="sug-1" implements="focusable prevent-default" on-click="#city.set('Lisbon'); #city-list.show(false)" on-keydown="arrowdown: #sug-2.focus(); arrowup: #city.focus()">Lisbon</button></li>`,
+    `<li role="option"><button id="sug-2" implements="focusable prevent-default" on-click="#city.set('London'); #city-list.show(false)" on-keydown="arrowdown: #city.focus(); arrowup: #sug-1.focus()">London</button></li>`,
+  ];
+  fetchCalls[2]!.resolve(fakeResponse(true, 200, options.join("")));
+  await flush();
+  assert.equal(cityList.hidden, false, "on-response reveals the populated listbox");
+  assert.equal(byId("sug-1").hasAttribute("implements"), true, "the swapped-in option attaches its implementations");
+  city.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", cancelable: true }));
+  await flush();
+  assert.equal(document.activeElement, byId("sug-1"), "arrowdown roves focus to the first option");
+  await click(byId("sug-1"));
+  assert.equal(city.value, "Lisbon", "clicking an option picks the city into the field");
+  assert.equal(cityList.hidden, true, "and closes the listbox");
+
+  // Theme (storable × attributable × revealable): on-load restore paints the stored theme
+  const stage = byId("stage") as HTMLElement;
+  assert.equal(stage.getAttribute("data-theme"), "sepia", "on-load restore paints the stored theme");
+  assert.equal(byId("theme-toast").hidden, false, "restore reveals the toast");
+  await click(byId("theme-dark"));
+  assert.equal(stage.getAttribute("data-theme"), "dark", "the button paints immediately");
+  assert.equal(localStorage.getItem("theme"), "dark", "and saves the choice");
+  await click(byId("theme-forget"));
+  assert.equal(localStorage.getItem("theme"), null, "Forget clears the key");
+  assert.equal(stage.getAttribute("data-theme"), "light", "and reverts the card to its authored theme");
+
+  // Remembered tab (storable × revealable × focusable): restore flips and refocuses
+  assert.equal(byId("mp-notes").hidden, false, "the stored tab's panel is open on load");
+  assert.equal(byId("mp-overview").hidden, true, "and the authored default is closed");
+  await click(byId("mp-tab-overview"));
+  assert.equal(localStorage.getItem("maintab"), "overview", "the live switch saves the new tab");
+  assert.equal(byId("mp-notes").hidden, true, "and closes the remembered panel");
+
+  // Open + focus (revealable × focusable × modifiable)
+  const ofDlg = byId("of-dlg") as HTMLDialogElement;
+  assert.equal(ofDlg.open, false);
+  await click(byId("of-opener"));
+  assert.equal(ofDlg.open, true, "the dialog opens through showModal");
+  assert.equal(document.activeElement, byId("of-name"), "the chained focus() lands in the field");
+  await click(ofDlg.querySelector("button")!);
+  assert.equal(ofDlg.open, false, "show(false) closes the dialog");
+  assert.equal(document.activeElement, byId("of-opener"), "closing returns focus to the opener");
+
+  // Mask (modifiable × pastable × dirtyable): only digits survive input
+  const phone = byId("phone") as HTMLInputElement;
+  phone.value = "12a34";
+  phone.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(phone.value, "1234", "on-input strips non-digits");
+  assert.equal(phone.hasAttribute("data-dirty"), true, "dirtyable flags the edited field");
+  phone.value = "";
+  phone.dispatchEvent(new Event("input", { bubbles: true }));
+  assert.equal(phone.hasAttribute("data-dirty"), false, "returning to the default fires clean");
+
+  // Secret reveal (attributable × classable)
+  const pw = byId("pw") as HTMLInputElement;
+  assert.equal(pw.type, "password");
+  await click(byId("pw-show"));
+  assert.equal(pw.type, "text", "setAttr swaps the type to reveal");
+  assert.equal(byId("pw-show").classList.contains("active"), true, "classable marks the active button");
+  await click(byId("pw-hide"));
+  assert.equal(pw.type, "password", "and back to masked");
 });
 
 test("site: docs.html sidebar lights each section's own link", async (t) => {
@@ -480,4 +633,23 @@ test("site: the README stays a hook", () => {
   const readme = readFileSync(fileURLToPath(readmeUrl), "utf8");
   const lines = (readme.match(/\n/g) ?? []).length;
   assert.ok(lines <= 260, `README.md is ${lines} lines; the ceiling is 260`);
+});
+
+test("site: examples.html lists every example page, and each page is standalone", () => {
+  const index = readFileSync(fileURLToPath(examplesUrl), "utf8");
+  const css = readFileSync(fileURLToPath(new URL("styles.css", siteDir)), "utf8");
+  assert.ok(index.includes('<ul class="examples-list">'), "examples.html has the list");
+  assert.ok(css.includes(".examples-list"), "styles.css styles the list");
+  assert.ok(index.includes("interactable-") === false, "the index carries no interactable- mentions");
+  for (const name of EXAMPLE_PAGES) {
+    const page = readFileSync(fileURLToPath(new URL(`${name}.html`, examplesDir)), "utf8");
+    assert.ok(index.includes(`./examples/${name}.html`), `examples.html links to ${name}`);
+    assert.equal(page.includes("interactable-"), false, `${name} carries no interactable- mentions`);
+    assert.ok(page.includes('href="../examples.html"'), `${name} links back to the list`);
+    assert.ok(page.includes('href="../styles.css"'), `${name} loads the stylesheet`);
+    assert.ok(page.includes('src="../demo.js"'), `${name} loads the site bundle`);
+    assert.ok(/<title>[^<]+<\/title>/.test(page), `${name} has a title`);
+    assert.ok(page.includes("<main"), `${name} has a main`);
+    assert.ok(page.includes("</main>"), `${name} closes its main`);
+  }
 });

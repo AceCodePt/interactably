@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably example — A collapsible help panel.">
+  <title>A collapsible help panel — Examples — Interactably</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body data-page="examples">
+  <header class="topnav">
+    <div class="topnav-inner">
+      <a class="brand" href="../" aria-label="Interactably home">
+        <span class="brand-mark">&lt;/&gt;</span>
+        <span class="brand-name">interactably</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html" class="active">Examples</a>
+        <a href="../reference.html">Reference</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="gh-link" href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
+    <h1 class="doc-title">A collapsible help panel</h1>
+    <p class="doc-lede">
+          One button, one phrase: <code class="inline-code">on-click="#panel.toggle()"</code>.
+          <code class="inline-code">revealable</code> figures out the element on its own — it toggles a
+          <code class="inline-code">revealable-open</code> attribute here, <code class="inline-code">el.open</code> on a
+          <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>, popover state on a
+          <code class="inline-code">[popover]</code>. The button&rsquo;s <code class="inline-code">aria-expanded</code> stays in sync automatically.
+        </p>
+    <div class="example-body">
+
+              <div class="demo">
+                <div class="row">
+                  <button id="panel-toggle" on-click="#panel.toggle()"
+                          aria-expanded="false" aria-controls="panel" type="button">Toggle panel</button>
+                </div>
+                <section id="panel" implements="revealable" hidden>
+                  <p>
+                    This panel is a <code class="inline-code">&lt;section implements="revealable"&gt;</code>.
+                    <code class="inline-code">revealable</code> reads the element: <code class="inline-code">revealable-open</code> here,
+                    <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
+                    popover state on a <code class="inline-code">[popover]</code>. The trigger is
+                    <code class="inline-code">on-click="#panel.toggle()"</code>, and the implementation keeps the button&rsquo;s
+                    <code class="inline-code">aria-expanded</code> in sync.
+                  </p>
+                </section>
+              </div>
+    </div>
+        <details class="example-code">
+            <summary>Show the markup</summary>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                        on-click="this.copy(#code-ex-reveal)" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="code-ex-reveal" data-lang="html"><code>&lt;button on-click="#panel.toggle()"
+            aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
+    &lt;section id="panel" implements="revealable" hidden&gt;
+      &lt;p&gt;&hellip;&lt;/p&gt;
+    &lt;/section&gt;</code></pre>
+            </div>
+          </details>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>Built with <a href="../">Interactably</a> &middot; MIT licensed</div>
+      <div class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html">Examples</a>
+        <a href="../reference.html">Reference</a>
+        <a href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">Source</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../demo.js"></script>
+</body>
+</html>

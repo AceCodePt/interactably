@@ -1,0 +1,15 @@
+<li role="option"><button id="sug-1" type="button" implements="focusable prevent-default"
+    on-click="#city.set('Lisbon'); #city-list.show(false)"
+    on-keydown="arrowdown: #sug-2.focus(); arrowup: #city.focus()">Lisbon</button></li>
+<li role="option"><button id="sug-2" type="button" implements="focusable prevent-default"
+    on-click="#city.set('London'); #city-list.show(false)"
+    on-keydown="arrowdown: #sug-3.focus(); arrowup: #sug-1.focus()">London</button></li>
+<li role="option"><button id="sug-3" type="button" implements="focusable prevent-default"
+    on-click="#city.set('Paris'); #city-list.show(false)"
+    on-keydown="arrowdown: #sug-4.focus(); arrowup: #sug-2.focus()">Paris</button></li>
+<li role="option"><button id="sug-4" type="button" implements="focusable prevent-default"
+    on-click="#city.set('Tokyo'); #city-list.show(false)"
+    on-keydown="arrowdown: #sug-5.focus(); arrowup: #sug-3.focus()">Tokyo</button></li>
+<li role="option"><button id="sug-5" type="button" implements="focusable prevent-default"
+    on-click="#city.set('Berlin'); #city-list.show(false)"
+    on-keydown="arrowdown: #city.focus(); arrowup: #sug-4.focus()">Berlin</button></li>

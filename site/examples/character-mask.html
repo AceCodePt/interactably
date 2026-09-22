@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably example — Only the characters you allow.">
+  <title>Only the characters you allow — Examples — Interactably</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body data-page="examples">
+  <header class="topnav">
+    <div class="topnav-inner">
+      <a class="brand" href="../" aria-label="Interactably home">
+        <span class="brand-mark">&lt;/&gt;</span>
+        <span class="brand-name">interactably</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html" class="active">Examples</a>
+        <a href="../reference.html">Reference</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="gh-link" href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
+    <h1 class="doc-title">Only the characters you allow</h1>
+    <p class="doc-lede">
+          <code class="inline-code">modifiable</code> &times; <code class="inline-code">pastable</code> &times;
+          <code class="inline-code">dirtyable</code>. This is the declarative share of an input mask:
+          <code class="inline-code">on-input="this.set(replace(this.value, '[^0-9]', ''))"</code> rewrites the value to keep
+          only digits, <code class="inline-code">on-pasted</code> does the same for a paste, and <code class="inline-code">dirtyable</code>
+          flags the field until it returns to its authored default. Caret-preserving mask-as-you-type is not declarative &mdash;
+          the rewrite lands the caret at the end of the value, which is why that formatting belongs in a component library.
+        </p>
+    <div class="example-body">
+
+              <div class="demo">
+                <label>Phone
+                  <input id="phone" implements="modifiable pastable attributable dirtyable"
+                         type="text" inputmode="numeric" placeholder="Digits only &mdash; letters get stripped"
+                         on-input="this.set(replace(this.value, '[^0-9]', ''))"
+                         on-pasted="this.set(replace(this.value, '[^0-9]', ''))"
+                         on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+                         on-clean="this.removeAttr('data-dirty')">
+                </label>
+                <p class="demo-note">Type a letter and it vanishes; paste a blob and only the digits survive.</p>
+              </div>
+    </div>
+        <details class="example-code">
+            <summary>Show the markup</summary>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                        on-click="this.copy(#code-ex-mask)" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="code-ex-mask" data-lang="html"><code>&lt;label&gt;Phone
+      &lt;input id="phone" implements="modifiable pastable attributable dirtyable"
+             type="text" inputmode="numeric" placeholder="Digits only"
+             on-input="this.set(replace(this.value, '[^0-9]', ''))"
+             on-pasted="this.set(replace(this.value, '[^0-9]', ''))"
+             on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
+             on-clean="this.removeAttr('data-dirty')"&gt;
+    &lt;/label&gt;</code></pre>
+            </div>
+          </details>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>Built with <a href="../">Interactably</a> &middot; MIT licensed</div>
+      <div class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html">Examples</a>
+        <a href="../reference.html">Reference</a>
+        <a href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">Source</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../demo.js"></script>
+</body>
+</html>

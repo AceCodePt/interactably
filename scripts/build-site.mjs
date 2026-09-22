@@ -151,9 +151,19 @@ for (const name of readdirSync(site)) {
 copyFileSync(siteBundle, path.join(out, "demo.js"));
 
 let highlighted = 0;
-for (const name of readdirSync(out)) {
-  if (!name.endsWith(".html")) continue;
-  const file = path.join(out, name);
+const htmlFiles = [];
+function collectHtml(dir) {
+  for (const name of readdirSync(dir)) {
+    const file = path.join(dir, name);
+    if (statSync(file).isDirectory()) {
+      collectHtml(file);
+    } else if (name.endsWith(".html")) {
+      htmlFiles.push(file);
+    }
+  }
+}
+collectHtml(out);
+for (const file of htmlFiles) {
   const result = highlightHtml(await readFile(file, "utf8"));
   if (result.count > 0) await writeFile(file, result.html);
   highlighted += result.count;
