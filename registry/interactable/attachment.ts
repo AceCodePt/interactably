@@ -204,7 +204,7 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
   if (!isImplementationEvent(el, type)) {
     if (!(("on" + type) in el) && !LEGACY_EVENTS_WITHOUT_IDL.has(type)) {
       console.warn(
-        `[Interactable] on-${type} on ${describeElement(el)}: <${el.localName}> has no "${type}" ` +
+        `[Interactable] on-${type} on ${describeElement(el)}: has no "${type}" ` +
           `event; custom events are fine, but check the spelling and case`,
       );
     }
@@ -283,13 +283,13 @@ function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string): void {
   const implementsValue = el.getAttribute("implements") ?? "";
   if (implementsValue.split(/\s+/).includes("prevent-default")) return;
   if (el instanceof HTMLFormElement && type === "submit") {
-    console.warn(`[Interactable] on-submit on ${describeElement(el)}: <form> also submits natively; add implements="prevent-default" to cancel it`);
+    console.warn(`[Interactable] on-submit on ${describeElement(el)}: also submits natively; add implements="prevent-default" to cancel it`);
   } else if (el instanceof HTMLAnchorElement && el.href && type === "click") {
-    console.warn(`[Interactable] on-click on ${describeElement(el)}: <a href> also navigates; add implements="prevent-default" to cancel it`);
+    console.warn(`[Interactable] on-click on ${describeElement(el)}: also navigates; add implements="prevent-default" to cancel it`);
   } else if (el instanceof HTMLButtonElement && (type === "keydown" || type === "keyup")) {
     const phrases = parse(el.getAttribute(`on-${type}`) ?? "", type);
     if (phrases.some((phrase) => phrase.key === undefined)) {
-      console.warn(`[Interactable] on-${type} on ${describeElement(el)}: <button> also activates on Enter/Space; add implements="prevent-default" to cancel it`);
+      console.warn(`[Interactable] on-${type} on ${describeElement(el)}: also activates on Enter/Space; add implements="prevent-default" to cancel it`);
     }
   }
 }

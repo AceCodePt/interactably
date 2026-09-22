@@ -19,7 +19,7 @@ export const requestable = defineImplementation(
     state: { status: "'idle' | 'loading' | 'error' | undefined" },
     verbs: {
       send: {
-        method: "'get' | 'post' | 'put' | 'patch' | 'delete' | undefined",
+        method: "'get' | 'post' | 'put' | 'delete' | 'patch' | undefined",
         url: "string | undefined",
       },
       abort: "undefined",
@@ -106,7 +106,7 @@ function buildRequest(
   let url = resolveUrl(el, configuredUrl);
   const init: RequestInit = { method: method.toUpperCase(), signal };
   const fields = collectFields(el, include);
-  if (method === "get" || method === "head") {
+  if (method === "get") {
     const params = new URLSearchParams();
     for (const [name, value] of fields) params.append(name, typeof value === "string" ? value : value.name);
     const query = params.toString();

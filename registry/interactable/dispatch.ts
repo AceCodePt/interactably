@@ -28,10 +28,7 @@ export function dispatchInteraction(
   });
   el.dispatchEvent(event);
   if (!event.handled) {
-    const implementsValue = el.getAttribute("implements");
-    const implementsSuffix =
-      implementsValue !== null && implementsValue !== "" ? ` implements="${implementsValue}"` : "";
-    throw new Error(`no implementation on <${describeElement(el)}${implementsSuffix}> handles ${verb}()`);
+    throw new Error(`no implementation on ${describeElement(el)} handles ${verb}()`);
   }
   if (event.error !== undefined) throw event.error;
   return event.result;

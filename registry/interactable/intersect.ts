@@ -1,6 +1,7 @@
 import { parse } from "@interactable/parser.ts";
 import type { Phrase } from "@interactable/parser.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
+import { logOnce } from "@interactable/log.ts";
 import {
   readMeasured,
   registerResizeListener,
@@ -211,17 +212,4 @@ function sameKeys(
     }
   }
   return true;
-}
-
-const logged = new WeakMap<Element, Set<string>>();
-
-function logOnce(el: Element, message: string): void {
-  let set = logged.get(el);
-  if (set === undefined) {
-    set = new Set();
-    logged.set(el, set);
-  }
-  if (set.has(message)) return;
-  set.add(message);
-  console.error(`[Interactable] ${message}`);
 }

@@ -7,6 +7,8 @@ import { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { Arg, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
 import { readValue } from "@behaviors/implementation-utils.ts";
 import { evaluateFormula, FormulaError } from "@utils/formula.ts";
+import { logOnce, clearLogs } from "@interactable/log.ts";
+import { describeElement } from "@interactable/describe-element.ts";
 
 const KEYBOARD_EVENT_TYPES = new Set(["keydown", "keyup"]);
 
@@ -15,7 +17,6 @@ interface ElementPhraseState {
   debounceTimers: Map<string, ReturnType<typeof setTimeout>>;
   pending: Set<ReturnType<typeof setTimeout>>;
   throttles: Map<string, number>;
-  logged: Set<string>;
 }
 
 const stateByElement = new WeakMap<Element, ElementPhraseState>();
@@ -28,7 +29,6 @@ function stateOf(el: Element): ElementPhraseState {
       debounceTimers: new Map(),
       pending: new Set(),
       throttles: new Map(),
-      logged: new Set(),
     };
     stateByElement.set(el, state);
   }
@@ -40,6 +40,7 @@ export function clearPhraseState(el: Element): void {
   if (state === undefined) return;
   for (const timer of state.debounceTimers.values()) clearTimeout(timer);
   for (const timer of state.pending) clearTimeout(timer);
+  clearLogs(el);
   stateByElement.delete(el);
 }
 
@@ -320,27 +321,8 @@ function resolveArg(
   }
 }
 
-function logOnce(source: Element, message: string): void {
-  const state = stateOf(source);
-  if (state.logged.has(message)) return;
-  state.logged.add(message);
-  console.error(`[Interactable] ${message}`);
-}
-
 function describeRef(ref: Ref): string {
   return ref.kind === "this" ? "this" : `#${ref.id}`;
-}
-
-function describeElement(el: Element): string {
-  const localName = (el as { localName?: unknown }).localName;
-  const tag = typeof localName === "string" && localName !== "" ? localName : (el as { tagName?: unknown }).tagName;
-  const name = typeof tag === "string" && tag !== "" ? tag.toLowerCase() : "element";
-  const id = (el as { id?: unknown }).id;
-  const suffix = typeof id === "string" && id !== "" ? `#${id}` : "";
-  const implementsValue = el.getAttribute("implements");
-  const implementsSuffix =
-    implementsValue !== null && implementsValue !== "" ? ` implements="${implementsValue}"` : "";
-  return `<${name}${suffix}${implementsSuffix}>`;
 }
 
 function describeError(err: unknown): string {
