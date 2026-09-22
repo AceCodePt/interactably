@@ -14,3 +14,4 @@ export { storable } from "@behaviors/storable/storable.ts";
 export { pastable } from "@behaviors/pastable/pastable.ts";
 export { copyable } from "@behaviors/copyable/copyable.ts";
 export { formattable } from "@behaviors/formattable/formattable.ts";
+export { focusable } from "@behaviors/focusable/focusable.ts";

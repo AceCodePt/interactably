@@ -44,6 +44,7 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
   - [`prevent-default` and `no-propagate`](#prevent-default)
   - [Revealable](#revealable)
   - [Storable](#storable)
+  - [Focusable](#focusable)
 - [Writing an implementation](#writing-an-implementation)
   - [Signatures](#signatures)
   - [Declare only what you invent](#declare-only)
@@ -323,6 +324,7 @@ The attachment and executor report through `console.error` / `console.warn`; the
 | `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key; `restore()` reads it back and fires `restore` only when it matches |
 | `pastable` | input, textarea | — | no config | fires `pasted` after a paste has landed, so `this.value` is the new value |
 | `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
+| `focusable` | any | `focus`, `blur` | — | `HTMLElement.focus()` / `blur()` as verbs; reports once if focus did not take |
 
 ### The pause mechanism
 
@@ -385,6 +387,26 @@ Nothing closes a panel unless a phrase says `show(false)`. Mutually exclusive pa
 `storable` persists a declared slot under a declared key through three verbs: `save()`, `restore()` and `clear()`. `storable-key` names the key and `storable-value` the slot that is stored — both are required, and an element missing either is a signature error at attach that names the attribute. The default scope is `local`; `storable-scope="session"` uses `sessionStorage`. Nothing is stored unless a phrase calls `save()` — saving is an act you can see in the markup.
 
 Nothing is restored without `on-load="this.restore()"` on the element. `restore()` reads the slot under the key back and fires the `restore` event only when it matches — the stored value equals the authored `storable-value` — at most once per `restore()` call, never from `save()`; a different stored value changes nothing. `save()` writes the slot under the key; `clear()` removes it. The package-manager example is nine buttons that each say everything they do — `storable-key="pm"`, `storable-value="pnpm"`, an `on-click` naming the three panels it opens, the six it closes and `this.save()`, and `on-load="this.restore()"`.
+
+### Focusable
+
+`focusable` contributes two verbs that call the platform directly: `focus()` calls `HTMLElement.focus()` and `blur()` calls `blur()`; `focus()` reports once, through `console.error`, when the element stayed unfocused — the failure that would otherwise hide. It is how a combobox with a server-rendered options list roves real DOM focus, the MDN "common convention" for popups: the options list is a `<ul>` of `<li><button>`s that `requestable` re-fills on every keystroke, and each option carries an id, `implements="focusable"`, and a phrase pointing at its neighbour:
+
+```html
+<input id="search" implements="focusable prevent-default"
+       on-keydown="arrowdown: #results-1.focus()">                          <!-- ids are positional and regenerated with each response, so #results-1 is always the current first option -->
+
+<ul id="results">
+  <li id="results-1" tabindex="-1" implements="focusable prevent-default"
+      on-keydown="arrowdown: #results-2.focus(); arrowup: #search.focus()">first</li>
+  <li id="results-2" tabindex="-1" implements="focusable prevent-default"
+      on-keydown="arrowdown: #results-3.focus(); arrowup: #results-1.focus()">second</li>
+  <li id="results-3" tabindex="-1" implements="focusable prevent-default"
+      on-keydown="arrowdown: #results-1.focus(); arrowup: #results-2.focus()">third</li>
+</ul>
+```
+
+`aria-activedescendant` is not set and must not be — real focus is on the option, so the screen reader announces it as the current item. The library never walks siblings or picks a "first focusable" descendant; every hop is a phrase the server wrote when it generated the list. Wrap-around is whatever the last option's phrase points at, a choice visible in the markup, not a mode. Every keyed `on-keydown` here carries `implements="prevent-default"` so the derived `keydown:arrowdown` / `keydown:arrowup` cancel page scroll and caret movement ([§ prevent-default and no-propagate](#prevent-default)). `blur()` is legal on any receiver, logs nothing, and is a native no-op when the element is not the one focused.
 
 ## Writing an implementation
 
@@ -886,7 +908,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `readValue(el, property = "value")` | The element's value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read `.value` (a string), display elements read `formattable-value` as a number under a numeric format, else `textContent` (a string); `readValue(el, "checked")` is the checked boolean; `readValue(el, "min" | "max" | "step")` is the platform bound — a number on number/range inputs (absent `min`/`max` is `""`, absent `step` is `1`), the string as written elsewhere |
 | `writeValue(el, v)` | Write helper: sets `.value` where the element has one, else `textContent` |
 | `NotReadyError` | Error set on `e.error` when a dispatch reaches an attached element whose `implements` names an implementation that has not registered yet |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pastable`, `copyable`, `formattable` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pastable`, `copyable`, `formattable`, `focusable` |
 
 ---
 
