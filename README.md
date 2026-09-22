@@ -212,10 +212,10 @@ function   := min | max | floor | ceil | round | sum | count | replace
 | `this` | `this.set(this.value + '!')` | Reads the element the phrase was read from — a row cloned from a template computes from its own value with no id |
 | Typed `+` | `'invoice-' + #slug.value + '.pdf'` | Joins when either side is a string, adds otherwise, left to right: `'a' + 1 + 2` is `"a12"`, `1 + 2 + 'a'` is `"1a"`. An empty read operand is an empty-operand error, not a silent `""` join — unless a string literal makes the join explicit (`'' + #a.value` stays a join, `#a.value + 1` errors). `-`, `*`, `/`, unary `-` are always arithmetic; a string operand under them is not-a-number naming the reference. `min`/`max`/`floor`/`ceil`/`round`/`sum`/`count` return numbers; `replace` returns a string. A string literal escapes only the quote and itself (`\'`, `\\`); any other `\x` stays verbatim, so `'\D'` is the three characters `\D` |
 | Boolean in arithmetic | `#price.value * #tick.checked` | `true` is `1`, `false` is `0` — the line-item row keeps its shape, with the price on a number element and the tick on the checkbox |
-| `sum` / `count` | `sum('#list .amount')` | Run `querySelectorAll` at fire time; `sum` totals number-typed elements and errors on the first that is not, naming it as today; `count` counts. Over checkboxes `sum` totals the ticks as 1/0 — a count of ticked |
+| `sum` / `count` | `sum('#list .amount')` | Run `querySelectorAll` at fire time; `sum` totals number-typed elements and errors on the first that is not, naming it as today; `count` counts. Over checkboxes `sum` totals the ticks as 1/0 — a count of ticked. A `&` in the selector is the element the phrase is on — `sum('li.row:has(&) .amount')` totals the row that contains it |
 | `replace` | `replace(this.value, '\D', '')` | Regex replace, always global; the value must read as a string. The pattern is compiled `new RegExp(pattern, "g")`, so `$1`/`$&` in the replacement work as the platform defines them; an invalid pattern is a `FormulaError` naming it |
 
-`#id` references and `sum(...)`/`count(...)` selectors resolve against the whole document — scope a set by putting its container's id in the selector (`sum('#list .amount')`).
+`#id` references and `sum(...)`/`count(...)` selectors resolve against the whole document — scope a set by putting its container's id in the selector (`sum('#list .amount')`). `&` inside the selector is the element the phrase is on — `sum('li.row:has(&) .amount')` totals the row that contains it, `count('& :checked')` counts inside it.
 
 Sharp edge: a checkbox's `value="..."` attribute is unreachable through `.value` — a checkbox reads its checked boolean, whatever the spelling, so the price belongs on a number element and the tick on the checkbox.
 
@@ -578,10 +578,23 @@ There is no store, no signals, no cross-element watching. The DOM is the store; 
 | --- | --- |
 | **Dynamic triggers** (rows cloned from a template) | Rows cloned from a template are attached one microtask after insertion; `on-click="this.remove()"` / `#list.removeRow(this)` works on every clone with no generated ids |
 | **Dynamic receivers** (a row's own subtotal) | Receivers stay ids or `this`. Either address a stable ancestor and let the implementation find the relative element from `e.source` (`closest("li")`), or stamp ids in the template |
-| **Dynamic data sources** (sum whatever inputs exist) | An expression with a selector: the row's `on-input="#total.set(sum('#list .amount:valid'))"`, and `on-load="this.set(sum('#list .amount:valid'))"` on the total to compute at attach. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time. `sum` is strict; filter blanks in the selector — `sum('#list .amount:valid')` (blank `required` inputs are `:invalid`), `sum('#list .amount:not(:placeholder-shown)')` (blank inputs carrying a `placeholder`, even `placeholder=" "`), `sum('#list .amount:checked')` sums only ticked checkboxes |
+| **Dynamic data sources** (sum whatever inputs exist) | An expression with a selector: the row's `on-input="#total.set(sum('#list .amount:valid'))"`, and `on-load="this.set(sum('#list .amount:valid'))"` on the total to compute at attach. `sum(selector)` / `count(selector)` run `querySelectorAll` at fire time. `sum` is strict; filter blanks in the selector — `sum('#list .amount:valid')` (blank `required` inputs are `:invalid`), `sum('#list .amount:not(:placeholder-shown)')` (blank inputs carrying a `placeholder`, even `placeholder=" "`), `sum('#list .amount:checked')` sums only ticked checkboxes. A `&` in the selector names the element the phrase is on, so a row can total its own fields — see the row example below |
 | **Change without interaction** (server swap, external mutation) | The implementation that performed the change fires its own event (`on-response="#count.set(count('#results > li'))"`), a new synchronous chain with `this` bound to that element |
 
 **Timing is uniform.** Every element — in the initial document or inserted later, server-rendered or cloned from a template — attaches one microtask after insertion, or at `DOMContentLoaded` for the initial document. The microtask gap is the one price of the model: a programmatic `.click()` in the gap runs nothing — await a microtask or use `dispatchInteraction`. Moving an element around the document is a no-op: it stays attached, its instance survives. An element that gains `implements` or an `on-*` attribute after insertion is not attached by that attribute alone — re-insert it.
+
+A row computes its own total with `&`; the value lands on the row as an attribute, displayed by CSS. The phrase sits on the row because `input` bubbles to it; an `<output>` beside the inputs would never hear them:
+
+```html
+<li class="row" on-input="this.setAttr({name: 'data-total', value: '' + sum('& .amount')})">
+  <input class="amount" type="number" value="10">
+  <input class="amount" type="number" value="20">
+</li>
+```
+
+```css
+li.row::after { content: attr(data-total); }
+```
 
 Selector rule: **selectors may appear in arguments, never as receivers.** The dispatch graph stays 1:1 — every interaction goes to one element with one `implements`, so completion, grep (`#pop.` finds every writer) and error rules stay exact.
 
@@ -1011,3 +1024,5 @@ The platform direction that matches this design is custom attributes for all ele
 **Why not a general `<name>-after` convention for every implementation?** The word is shared, the event is not: a request failing and an upload failing call for different follow-ups. Each implementation names the moments it exposes as events (`copy`, `response`, `request-error`, `restore`); the phrase for each is a plain `on-<event>` trigger attribute, and only dispatch is shared.
 
 **Why not queue an interaction until the lazily loaded implementation arrives?** A queue is a waiting chain, and the attachment would answer the event after `dispatchEvent` returned, when the executor had already read the channels. With implementations imported before the markup, the case never occurs.
+
+**Why `&` in a selector, not a scoped-query construct?** `&` is one node, not a CSS match set: CSS's `&` inherits a match condition from the parent rule, but here the element the phrase is on is one specific node, so `& .amount` reads "my descendants" and `li.row:has(&)` reads "the row that contains me". Splitting the string at `:has(&)` and walking up with `closest` was rejected: it works for that one shape and quietly misbehaves the moment an author adds a combinator inside the `:has` or a sibling selector after it — the author wrote valid CSS, and the failure would be unexplainable. A tag/class/id descriptor standing in for `&` was rejected because every stamped row carries the same shapes — `li.row:has(input.qty)` matches every row, and clones are the whole point.

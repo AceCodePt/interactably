@@ -7,6 +7,7 @@ import {
   installFakeIntersectionObserver,
   resetFakeIntersectionObserver,
 } from "@tests/intersection-observer.ts";
+import { ANCHOR } from "@utils/formula.ts";
 
 let dom: JSDOM;
 let dispose: (() => void) | undefined;
@@ -16,6 +17,7 @@ let isAttached: typeof import("@interactable/attachment.ts").isAttached;
 let defineImplementation: typeof import("@behaviors/_implementation-definition.ts").defineImplementation;
 
 const lifecycle: string[] = [];
+const attrCalls: string[] = [];
 
 before(async () => {
   dom = setupJsdom();
@@ -45,6 +47,16 @@ before(async () => {
       },
     }),
   );
+  defineImplementation(
+    "attr-spy",
+    { tags: ["div"], verbs: { record: "number | undefined" } },
+    (_el) => ({
+      record: (_e, n) => n,
+      attributeChangedCallback: (name: string) => {
+        attrCalls.push(name);
+      },
+    }),
+  );
 });
 
 after(() => {
@@ -54,6 +66,7 @@ after(() => {
 
 beforeEach(() => {
   lifecycle.length = 0;
+  attrCalls.length = 0;
   document.body.replaceChildren();
   setReadyState("complete");
   resetFakeIntersectionObserver();
@@ -392,5 +405,52 @@ test("on-load resolves this.verb() against an implementation on the same element
   document.body.appendChild(el);
   await flush();
   assert.equal(el.getAttribute("data-s"), "yes");
+  dispose();
+});
+
+test("a row's own fields: & in sum() totals the row the phrase is on", async () => {
+  const dispose = start();
+  const holder = document.createElement("div");
+  holder.innerHTML = `
+    <li class="row" implements="attributable" on-input="this.setAttr({name: 'data-total', value: '' + sum('& .amount')})">
+      <input class="amount" type="number" value="10">
+      <input class="amount" type="number" value="20">
+    </li>
+    <li class="row" implements="attributable" on-input="this.setAttr({name: 'data-total', value: '' + sum('& .amount')})">
+      <input class="amount" type="number" value="5">
+      <input class="amount" type="number" value="7">
+    </li>`;
+  document.body.appendChild(holder);
+  await flush();
+
+  const rows = document.querySelectorAll("li.row");
+  const row1 = rows[0]!;
+  const firstAmount = row1.querySelector(".amount") as HTMLInputElement;
+  firstAmount.value = "7";
+  firstAmount.dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
+
+  assert.equal(row1.getAttribute("data-total"), "27", "the row's own sum lands on it as a string");
+  assert.equal(rows[1]!.hasAttribute("data-total"), false, "a second row is untouched");
+  dispose();
+});
+
+test("the & anchor set/remove never reaches attributeChangedCallback", async () => {
+  const dispose = start();
+  const el = document.createElement("div");
+  el.setAttribute("implements", "attr-spy");
+  el.setAttribute("on-input", "this.record(count('& *'))");
+  el.innerHTML = "<span></span><b></b>";
+  document.body.appendChild(el);
+  await flush();
+
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
+  assert.equal(el.hasAttribute(ANCHOR), false, "the anchor never survives an evaluation");
+  assert.equal(attrCalls.includes(ANCHOR), false, "the marker set/remove pair never reaches attributeChangedCallback");
+
+  el.setAttribute("data-x", "1");
+  await flush();
+  assert.ok(attrCalls.includes("data-x"), "a normal attribute still reaches attributeChangedCallback");
   dispose();
 });

@@ -3,6 +3,7 @@ import { LEGACY_EVENTS_WITHOUT_IDL, isImplementationEvent } from "@interactable/
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { INTERSECT_ATTRIBUTES, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
+import { ANCHOR } from "@utils/formula.ts";
 import { parse } from "@interactable/parser.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import { NotReadyError } from "@behaviors/implementation-utils.ts";
@@ -247,6 +248,7 @@ function wireAttributeObserver(el: Element, attachment: Attachment): void {
       if (mutation.type !== "attributes") continue;
       const name = mutation.attributeName;
       if (name === null) continue;
+      if (name === ANCHOR) continue;
       const oldValue = mutation.oldValue;
       const newValue = el.getAttribute(name);
       if (name === "implements") {

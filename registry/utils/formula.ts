@@ -1,6 +1,8 @@
 import { readValue } from "@behaviors/implementation-utils.ts";
 import { readMeasured } from "@interactable/measure.ts";
 
+export const ANCHOR = "data-interactably-anchor";
+
 export interface FormulaResult {
   value: number | string;
 }
@@ -419,7 +421,7 @@ function selectorArg(value: Value, dryRun?: boolean): string {
 function sum(selector: string, formula: string, context: EvalContext): number {
   if (context.dryRun === true) return 0;
   let total = 0;
-  const matches = Array.from(context.document!.querySelectorAll(selector));
+  const matches = resolveSelector(selector, context);
   matches.forEach((element, index) => {
     total += requireNumber(
       { value: readValue(element), origin: element.id !== "" ? `#${element.id}` : `match ${index + 1}` },
@@ -432,7 +434,26 @@ function sum(selector: string, formula: string, context: EvalContext): number {
 
 function count(selector: string, context: EvalContext): number {
   if (context.dryRun === true) return 0;
-  return context.document!.querySelectorAll(selector).length;
+  return resolveSelector(selector, context).length;
+}
+
+function resolveSelector(selector: string, context: EvalContext): Element[] {
+  if (!selector.includes("&")) return Array.from(context.document!.querySelectorAll(selector));
+  if (context.source === undefined) {
+    if (context.dryRun === true) return [];
+    throw new Error("& in a selector needs an element to stand for");
+  }
+  const source = context.source;
+  source.setAttribute(ANCHOR, "");
+  try {
+    try {
+      return Array.from(context.document!.querySelectorAll(selector.replaceAll("&", `[${ANCHOR}]`)));
+    } catch {
+      throw new Error(`invalid selector ${JSON.stringify(selector)}`);
+    }
+  } finally {
+    source.removeAttribute(ANCHOR);
+  }
 }
 
 function requireNumber(operand: Operand, meta: Meta, dryRun?: boolean): number {

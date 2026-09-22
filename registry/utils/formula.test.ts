@@ -7,7 +7,7 @@ import {
   installFakeResizeObserver,
   resetFakeResizeObserver,
 } from "@tests/resize-observer.ts";
-import { FormulaError, evaluateFormula, parseFormula } from "@utils/formula.ts";
+import { ANCHOR, FormulaError, evaluateFormula, parseFormula } from "@utils/formula.ts";
 import { MEASURED } from "@interactable/measure.ts";
 
 let dom: JSDOM;
@@ -320,6 +320,69 @@ test("sum skips a blank placeholder row when filtered by :not(:placeholder-shown
 
 test("count over an empty selection is 0, no throw", () => {
   assert.equal(evaluateFormula("count('#list .none')").value, 0);
+});
+
+test("& in a sum/count selector is the element the phrase is on: :has(&) scopes to its row", () => {
+  const list = document.createElement("ul");
+  list.id = "list";
+  list.innerHTML = `
+    <li class="row"><input class="qty" type="number" value="2"><input class="amount" type="number" value="10"></li>
+    <li class="row"><input class="qty" type="number" value="5"><input class="amount" type="number" value="20"></li>`;
+  document.body.appendChild(list);
+  const rows = list.querySelectorAll("li.row");
+  const row2Qty = rows[1]!.querySelector(".qty")!;
+
+  assert.equal(evaluateFormula("sum('li.row:has(&) .amount')", { document, source: row2Qty }).value, 20);
+  assert.equal(evaluateFormula("count('li.row:has(&) .qty')", { document, source: row2Qty }).value, 1);
+  assert.equal(row2Qty.hasAttribute(ANCHOR), false, "the anchor never survives an evaluation");
+
+  const row2 = rows[1]!;
+  assert.equal(evaluateFormula("sum('& .amount')", { document, source: row2 }).value, 20);
+  assert.equal(row2.hasAttribute(ANCHOR), false, "the anchor never survives an evaluation");
+});
+
+test("every & in a selector is substituted", () => {
+  const list = document.createElement("ul");
+  list.id = "list";
+  list.innerHTML = `
+    <li class="row"><input class="qty" type="number" value="2"><input class="amount" type="number" value="10"></li>
+    <li class="row"><input class="qty" type="number" value="5"><input class="amount" type="number" value="20"></li>`;
+  document.body.appendChild(list);
+  const row2Qty = list.querySelectorAll("li.row")[1]!.querySelector(".qty")!;
+
+  assert.equal(
+    evaluateFormula("sum('li.row:has(&) .amount, li.row:has(&) .qty')", { document, source: row2Qty }).value,
+    25,
+  );
+  assert.equal(row2Qty.hasAttribute(ANCHOR), false);
+});
+
+test("sum('&') totals the element itself and count('&') is 1", () => {
+  const self = document.createElement("input");
+  self.type = "number";
+  self.value = "7";
+  document.body.appendChild(self);
+
+  assert.equal(evaluateFormula("sum('&')", { document, source: self }).value, 7);
+  assert.equal(evaluateFormula("count('&')", { document, source: self }).value, 1);
+});
+
+test("an invalid selector after & substitution is reported with the author's original text, anchor removed", () => {
+  const self = document.createElement("input");
+  self.type = "number";
+  self.value = "7";
+  document.body.appendChild(self);
+
+  assert.throws(() => evaluateFormula("sum('& [')", { document, source: self }), (err: unknown) => {
+    assert.ok(err instanceof Error);
+    assert.equal(err.message, 'invalid selector "& ["');
+    return true;
+  });
+  assert.equal(self.hasAttribute(ANCHOR), false, "even a thrown invalid selector removes the anchor");
+});
+
+test("& in a selector without a source element names the need", () => {
+  assert.throws(() => evaluateFormula("count('& *')"), /& in a selector needs an element to stand for/);
 });
 
 test("an empty .value operand is an error marked (empty)", () => {
@@ -753,6 +816,8 @@ test("parseFormula validates syntax without a document or source, gating data er
   assert.doesNotThrow(() => parseFormula("1 / 0"));
   assert.doesNotThrow(() => parseFormula("replace(#num.value, '\\D', '')"));
   assert.doesNotThrow(() => parseFormula("sum('.amount')"));
+  assert.doesNotThrow(() => parseFormula("sum('& .amount')"));
+  assert.doesNotThrow(() => parseFormula("count('& *')"));
   assert.doesNotThrow(() => parseFormula("'invoice-' + #slug.value + '.pdf'"));
 
   assert.throws(() => parseFormula("1 +"), /unexpected "end of formula"/);
