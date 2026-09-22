@@ -38,6 +38,28 @@ There are no host-level verbs and this task does not introduce any: a receiver a
 - [ ] `site/index.html` (~l.202): change the count **Fifteen** to **Sixteen** and add a `focusable` chip in the chip row (after `copyable`).
 - [ ] `site/docs.html`: `grep -n copyable site/docs.html` — it does carry an `Implementations` table row (~l.1066) listing every implementation; add `focusable` to that row.
 
+## The worked example (goes in the README verbatim, adjust ids only if the section needs it)
+
+```html
+<input id="search" type="search" role="combobox" aria-controls="results" aria-expanded="true"
+       implements="requestable focusable prevent-default"
+       requestable-url="/api/options" requestable-target="#results"
+       on-input="this.debounce(150).send()"
+       on-keydown="arrowdown: #results-1.focus()">
+
+<ul id="results" role="listbox">
+  <!-- server-rendered; ids are positional and regenerated with every response -->
+  <li role="option"><button id="results-1" implements="focusable prevent-default"
+        on-keydown="arrowdown: #results-2.focus(); arrowup: #search.focus()">Apples</button></li>
+  <li role="option"><button id="results-2" implements="focusable prevent-default"
+        on-keydown="arrowdown: #results-3.focus(); arrowup: #results-1.focus()">Apricots</button></li>
+  <li role="option"><button id="results-3" implements="focusable prevent-default"
+        on-keydown="arrowdown: #results-1.focus(); arrowup: #results-2.focus()">Avocados</button></li>
+</ul>
+```
+
+`requestable-url` / `requestable-target` and bare `send()` match the current `requestable` declaration; re-check only if that file has moved.
+
 ## Verification
 
 `pnpm check`, `pnpm build`, `pnpm test` all green on the committed tree. The focusable test asserts: focus moves onto a focusable element and an `tabindex="-1"` `<li>`; an unfocusable `<li>` logs exactly once per element per message containing `did not take` (a repeat on the same element logs nothing, a different element logs once more); blur clears focus with nothing logged; the keyed ArrowDown/ArrowUp combobox fixture roves focus through `#results-1` → `#results-2` → `#results-3` → wrap to `#results-1`, ArrowUp returns to `#search`, and ArrowLeft changes nothing; a wholesale `<ul>` re-fill re-focuses the new `#results-1`. The site smoke test knows `focusable` as a bundle and loads every site page without new console warnings or errors. `rg -n "focusable" src/index.ts rolldown.config.mjs site/demo.src.js tests/site-smoke.test.ts` shows the four registration sites.
