@@ -4,6 +4,7 @@ export { dirtyable } from "@behaviors/dirtyable/dirtyable.ts";
 export { listable } from "@behaviors/listable/listable.ts";
 export { requestable } from "@behaviors/requestable/requestable.ts";
 export { attributable } from "@behaviors/attributable/attributable.ts";
+export { classable } from "@behaviors/classable/classable.ts";
 export { logger } from "@behaviors/logger/logger.ts";
 export { validatable } from "@behaviors/validatable/validatable.ts";
 export { noPropagate } from "@behaviors/no-propagate/no-propagate.ts";

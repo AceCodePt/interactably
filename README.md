@@ -318,6 +318,7 @@ The attachment and executor report through `console.error` / `console.warn`; the
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
 | `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
+| `classable` | any | `add`, `remove`, `toggle` | — | `classList` writes, one class name per call; `toggle` has no force argument — `add`/`remove` are the forced forms |
 | `logger` | any | `log` | — | `console.log` from a phrase |
 | `validatable` | form, input, select, textarea | `validate` | — | guard verb: `reportValidity()`, `preventDefault()` on failure |
 | `no-propagate` | any | — | `events` (default `"click"`) | `stopPropagation` on listed events |
@@ -328,6 +329,8 @@ The attachment and executor report through `console.error` / `console.warn`; the
 | `pastable` | input, textarea | — | no config | fires `pasted` after a paste has landed, so `this.value` is the new value |
 | `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
 | `focusable` | any | `focus`, `blur` | — | `HTMLElement.focus()` / `blur()` as verbs; reports once if focus did not take |
+
+`attributable` writes attributes whole. `class` is a token list, so `classable` exposes `classList` instead — `#menu.toggle('open')`, one name per call, browser rules for what a name may be.
 
 ### The pause mechanism
 
@@ -911,7 +914,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `readValue(el, property = "value")` | The element's value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read `.value` (a string), display elements read `formattable-value` as a number under a numeric format, else `textContent` (a string); `readValue(el, "checked")` is the checked boolean; `readValue(el, "min" | "max" | "step")` is the platform bound — a number on number/range inputs (absent `min`/`max` is `""`, absent `step` is `1`), the string as written elsewhere |
 | `writeValue(el, v)` | Write helper: sets `.value` where the element has one, else `textContent` |
 | `NotReadyError` | Error set on `e.error` when a dispatch reaches an attached element whose `implements` names an implementation that has not registered yet |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pastable`, `copyable`, `formattable`, `focusable` |
+| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `classable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pastable`, `copyable`, `formattable`, `focusable` |
 
 ---
 

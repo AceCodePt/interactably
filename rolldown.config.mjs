@@ -10,6 +10,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const implementations = [
   "attributable",
   "auto-grow",
+  "classable",
   "copyable",
   "dirtyable",
   "focusable",

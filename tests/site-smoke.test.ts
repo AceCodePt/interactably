@@ -20,6 +20,7 @@ const KNOWN_BUNDLES = new Set([
   "interactably-core",
   "attributable",
   "auto-grow",
+  "classable",
   "copyable",
   "dirtyable",
   "focusable",

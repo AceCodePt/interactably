@@ -5,6 +5,7 @@ import "@behaviors/revealable/revealable.ts";
 import "@behaviors/requestable/requestable.ts";
 import "@behaviors/prevent-default/prevent-default.ts";
 import "@behaviors/attributable/attributable.ts";
+import "@behaviors/classable/classable.ts";
 import "@behaviors/logger/logger.ts";
 import "@behaviors/validatable/validatable.ts";
 import "@behaviors/storable/storable.ts";
