@@ -807,6 +807,85 @@ test("replace nests inside + with a non-numeric-looking value", () => {
   assert.equal(evaluateFormula("'tel:' + replace(#phone.value, '\\D', '')").value, "tel:5551234567");
 });
 
+test("length('hello') is 5 and length('') is 0, the empty literal counting as a string", () => {
+  assert.equal(evaluateFormula("length('hello')").value, 5);
+  assert.equal(evaluateFormula("length('')").value, 0);
+});
+
+test("length counts UTF-16 code units: 'héllo 👋' is 8, the wave being two", () => {
+  assert.equal(evaluateFormula("length('héllo 👋')").value, 8);
+});
+
+test("length(this.value) counts a text input's value and a textarea's newline", () => {
+  const self = document.createElement("input");
+  self.value = "abc";
+  document.body.appendChild(self);
+
+  assert.equal(evaluateFormula("length(this.value)", { document, source: self }).value, 3);
+
+  const area = document.createElement("textarea");
+  area.value = "a\nb";
+  document.body.appendChild(area);
+
+  assert.equal(evaluateFormula("length(this.value)", { document, source: area }).value, 3);
+});
+
+test("length(this.value) on a number input is not-a-string naming how it read", () => {
+  const num = document.createElement("input");
+  num.id = "num";
+  num.type = "number";
+  num.value = "12";
+  document.body.appendChild(num);
+
+  assert.throws(() => evaluateFormula("length(#num.value)"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "not-a-string");
+    assert.ok(err.message.includes("length()"), err.message);
+    assert.ok(err.message.includes("read as a number"), err.message);
+    assert.ok(err.message.includes("see the .value rule"), err.message);
+    return true;
+  });
+});
+
+test("length(#tick.checked) is not-a-string reading a boolean", () => {
+  const tick = document.createElement("input");
+  tick.id = "tick";
+  tick.type = "checkbox";
+  tick.checked = true;
+  document.body.appendChild(tick);
+
+  assert.throws(() => evaluateFormula("length(#tick.checked)"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "not-a-string");
+    assert.ok(err.message.includes("length()"), err.message);
+    assert.ok(err.message.includes("read as a boolean"), err.message);
+    return true;
+  });
+});
+
+test("length(5) — a number literal — is not-a-string", () => {
+  assert.throws(() => evaluateFormula("length(5)"), (err: unknown) => {
+    assert.ok(err instanceof FormulaError);
+    assert.equal(err.reason, "not-a-string");
+    assert.ok(err.message.includes("length()"), err.message);
+    return true;
+  });
+});
+
+test("length takes exactly one argument", () => {
+  assert.throws(() => evaluateFormula("length()"), /length\(\) takes 1 argument/);
+  assert.throws(() => evaluateFormula("length('a', 'b')"), /length\(\) takes 1 argument/);
+});
+
+test("length joins to a string with + and arithmetics with -", () => {
+  const self = document.createElement("input");
+  self.value = "abc";
+  document.body.appendChild(self);
+
+  assert.equal(evaluateFormula("length(this.value) + ' of 200'", { document, source: self }).value, "3 of 200");
+  assert.equal(evaluateFormula("200 - length(this.value)", { document, source: self }).value, 197);
+});
+
 test("parseFormula validates syntax without a document or source, gating data errors", () => {
   assert.doesNotThrow(() => parseFormula("1 + 2"));
   assert.doesNotThrow(() => parseFormula("min(#a.value, 3)"));
@@ -815,6 +894,7 @@ test("parseFormula validates syntax without a document or source, gating data er
   assert.doesNotThrow(() => parseFormula("this.value * 2"));
   assert.doesNotThrow(() => parseFormula("1 / 0"));
   assert.doesNotThrow(() => parseFormula("replace(#num.value, '\\D', '')"));
+  assert.doesNotThrow(() => parseFormula("length(this.value)"));
   assert.doesNotThrow(() => parseFormula("sum('.amount')"));
   assert.doesNotThrow(() => parseFormula("sum('& .amount')"));
   assert.doesNotThrow(() => parseFormula("count('& *')"));

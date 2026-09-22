@@ -401,6 +401,9 @@ function applyFunction(name: string, args: Operand[], formula: string, context: 
       }
       return source.replace(regex, replacement);
     }
+    case "length":
+      requireArity(name, args.length, 1);
+      return requireString(args[0]!, functionMeta(formula, name), context.dryRun).length;
     default:
       throw new Error(`unknown function ${name}()`);
   }

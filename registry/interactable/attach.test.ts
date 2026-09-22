@@ -454,3 +454,21 @@ test("the & anchor set/remove never reaches attributeChangedCallback", async () 
   assert.ok(attrCalls.includes("data-x"), "a normal attribute still reaches attributeChangedCallback");
   dispose();
 });
+
+test("length() drives a live character counter from a bounded textarea", async () => {
+  const dispose = start();
+  const holder = document.createElement("div");
+  holder.innerHTML = `
+    <textarea id="bio" maxlength="200" on-input="#bio-count.set(length(this.value) + ' of 200')"></textarea>
+    <output id="bio-count" implements="modifiable"></output>`;
+  document.body.appendChild(holder);
+  await flush();
+
+  const bio = document.getElementById("bio") as HTMLTextAreaElement;
+  bio.value = "x".repeat(42);
+  bio.dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
+
+  assert.equal(document.getElementById("bio-count")!.textContent, "42 of 200");
+  dispose();
+});
