@@ -4,7 +4,7 @@ wait_human_merge: false
 dependencies: []
 ---
 
-# Task: Close review 2 — delete `json-template`, one `describeElement`, one `logOnce`, the small-item sweep, and `pastable`
+# Task: Cleanup sweep — delete `json-template`, one `describeElement`, one `logOnce`, the small-item sweep, and `pastable`
 
 ## Metadata
 
