@@ -1077,6 +1077,51 @@ code, pre, kbd {
   border-color: var(--accent);
 }
 
+.demo #cb-results {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.demo .menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.demo .menu a {
+  color: var(--muted);
+}
+
+.demo .menu.open {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.demo .menu.open a {
+  color: var(--accent-strong);
+}
+
+.demo .menu.compact {
+  gap: 0.25rem;
+  padding: 0.15rem 0.4rem;
+}
+
+.demo .menu.compact a {
+  font-size: 0.85rem;
+}
+
+.demo #cnt-bio[data-remaining="0"] {
+  border-color: var(--err);
+}
+
 .demo #signup .success {
   display: none;
   margin: 0.5rem 0 0;

@@ -13,8 +13,26 @@ import {
 const siteDir = new URL("../site/", import.meta.url);
 const examplesUrl = new URL("examples.html", siteDir);
 const docsUrl = new URL("docs.html", siteDir);
+const referenceUrl = new URL("reference.html", siteDir);
+const indexUrl = new URL("index.html", siteDir);
+const readmeUrl = new URL("../README.md", import.meta.url);
 const siteBundle = new URL("../dist/site/demo.js", import.meta.url);
 const cdnDir = new URL("../dist/cdn/", import.meta.url);
+
+const EXPORT_NAMES: Record<string, string> = {
+  "auto-grow": "autoGrow",
+  "no-propagate": "noPropagate",
+  "prevent-default": "preventDefault",
+};
+
+function slugifyHeading(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/`/g, "")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
 
 const KNOWN_BUNDLES = new Set([
   "interactably-core",
@@ -389,4 +407,77 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
 
   assert.deepEqual(warns, [], "the docs body loads without console.warn");
   assert.deepEqual(errors, [], "the docs body loads without console.error");
+});
+
+test("site: every implementation is in all four homes and both API rows", () => {
+  const docs = readFileSync(fileURLToPath(docsUrl), "utf8");
+  const reference = readFileSync(fileURLToPath(referenceUrl), "utf8");
+  const index = readFileSync(fileURLToPath(indexUrl), "utf8");
+  const readme = readFileSync(fileURLToPath(readmeUrl), "utf8");
+
+  const names = [...KNOWN_BUNDLES].filter((name) => name !== "interactably-core");
+
+  for (const name of names) {
+    assert.ok(
+      docs.includes(`<tr><td><code class="inline-code">${name}</code></td>`),
+      `docs.html's implementation table has a ${name} row`,
+    );
+    assert.ok(
+      reference.includes(`<h3><code class="inline-code">${name}</code></h3>`),
+      `reference.html has a ${name} card`,
+    );
+    assert.ok(
+      index.includes(`<span class="chip-dot"></span>${name}</a>`),
+      `index.html has a ${name} chip`,
+    );
+    assert.match(
+      readme,
+      new RegExp("^\\| `" + name + "` \\|", "m"),
+      `README.md's implementation table has a ${name} row`,
+    );
+  }
+
+  const docsApi = /<tr><td>Implementations<\/td><td>([\s\S]*?)<\/td><\/tr>/.exec(docs);
+  assert.ok(docsApi !== null, "docs.html has an API Implementations row");
+  const readmeApi = /^\| Implementations \|([^\n]*)\|/m.exec(readme);
+  assert.ok(readmeApi !== null, "README.md has an API Implementations row");
+
+  for (const name of names) {
+    const exported = EXPORT_NAMES[name] ?? name;
+    assert.ok(
+      docsApi![1]!.includes(`>${exported}</code>`),
+      `docs.html's API Implementations row lists ${exported}`,
+    );
+    assert.ok(
+      readmeApi![1]!.includes("`" + exported + "`"),
+      `README.md's API Implementations row lists ${exported}`,
+    );
+  }
+});
+
+test("site: README anchors resolve to README headings and docs.html ids", () => {
+  const readme = readFileSync(fileURLToPath(readmeUrl), "utf8");
+  const docs = readFileSync(fileURLToPath(docsUrl), "utf8");
+
+  const headings = new Set(
+    [...readme.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)].map((match) => slugifyHeading(match[1]!)),
+  );
+  const selfAnchors = [...readme.matchAll(/\]\(#([a-z0-9-]+)\)/g)].map((match) => match[1]!);
+  for (const anchor of selfAnchors) {
+    assert.ok(headings.has(anchor), `README.md's #${anchor} resolves to a heading in README.md`);
+  }
+
+  const docAnchors = [...readme.matchAll(/docs\.html#([a-z0-9-]+)/g)].map((match) => match[1]!);
+  for (const anchor of docAnchors) {
+    assert.ok(
+      docs.includes(`id="${anchor}"`),
+      `README.md's docs.html#${anchor} resolves to an id in site/docs.html`,
+    );
+  }
+});
+
+test("site: the README stays a hook", () => {
+  const readme = readFileSync(fileURLToPath(readmeUrl), "utf8");
+  const lines = (readme.match(/\n/g) ?? []).length;
+  assert.ok(lines <= 260, `README.md is ${lines} lines; the ceiling is 260`);
 });

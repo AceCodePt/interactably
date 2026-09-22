@@ -2,7 +2,9 @@
 
 ## Design source of truth
 
-README.md is the single source of truth for the design of Interactably. Reference its sections rather than restating the design here. Its directory layout is authoritative: `registry/interactable/` (parser, executor, keys, events, signature, attributes) and `registry/behaviors/` (the host, the registry, and the implementations).
+`site/docs.html` is the design document, `site/reference.html` the implementation catalogue, and `site/examples.html` the working examples. `README.md` is the package entry point: it summarises the site and links into it, and it must never be the only place a fact lives. Its directory layout is authoritative: `registry/interactable/` (parser, executor, keys, events, signature, attributes) and `registry/behaviors/` (the host, the registry, and the implementations).
+
+A change to any implementation's tags, verbs, config, state or events updates the table in `docs.html`, the card in `reference.html`, the row in the README table, and the chip in `index.html` — the parity test in `tests/site-smoke.test.ts` enforces all four.
 
 ## Working constraints
 

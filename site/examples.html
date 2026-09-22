@@ -280,12 +280,74 @@
 
     <section class="example">
       <div class="example-head">
+        <h2 id="ex-combobox">Roving focus, written out</h2>
+        <p class="ex-note">
+          A combobox is roving focus, written out: every hop is a phrase on the element it leaves from, the ids are
+          positional, and the wrap-around is whatever the last option&rsquo;s phrase points at.
+          <code class="inline-code">aria-activedescendant</code> is not set because real focus moves &mdash; the screen
+          reader announces the option as the current item. The list is static here; a <code class="inline-code">requestable</code>
+          response would regenerate the same ids.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <input id="cb-search" type="search" role="combobox" aria-controls="cb-results" aria-expanded="true"
+                   implements="focusable prevent-default"
+                   on-keydown="arrowdown: #cb-results-1.focus()"
+                   placeholder="Search a city&hellip;">
+          </div>
+          <ul id="cb-results" role="listbox">
+            <li role="option"><button id="cb-results-1" type="button" implements="focusable prevent-default"
+                on-keydown="arrowdown: #cb-results-2.focus(); arrowup: #cb-search.focus()">Berlin</button></li>
+            <li role="option"><button id="cb-results-2" type="button" implements="focusable prevent-default"
+                on-keydown="arrowdown: #cb-results-3.focus(); arrowup: #cb-results-1.focus()">Lisbon</button></li>
+            <li role="option"><button id="cb-results-3" type="button" implements="focusable prevent-default"
+                on-keydown="arrowdown: #cb-results-4.focus(); arrowup: #cb-results-2.focus()">London</button></li>
+            <li role="option"><button id="cb-results-4" type="button" implements="focusable prevent-default"
+                on-keydown="arrowdown: #cb-results-5.focus(); arrowup: #cb-results-3.focus()">Paris</button></li>
+            <li role="option"><button id="cb-results-5" type="button" implements="focusable prevent-default"
+                on-keydown="arrowdown: #cb-results-1.focus(); arrowup: #cb-results-4.focus()">Tokyo</button></li>
+          </ul>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-ex-combobox)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-combobox" data-lang="html"><code>&lt;input id="search" type="search" role="combobox" aria-controls="results" aria-expanded="true"
+       implements="focusable prevent-default"
+       on-keydown="arrowdown: #results-1.focus()"&gt;
+
+&lt;!-- the list is what a requestable response would return: ids are positional
+     and regenerated with each response, so #results-1 is always current --&gt;
+&lt;ul id="results" role="listbox"&gt;
+  &lt;li role="option"&gt;&lt;button id="results-1" implements="focusable prevent-default"
+      on-keydown="arrowdown: #results-2.focus(); arrowup: #search.focus()"&gt;Berlin&lt;/button&gt;&lt;/li&gt;
+  &lt;li role="option"&gt;&lt;button id="results-2" implements="focusable prevent-default"
+      on-keydown="arrowdown: #results-3.focus(); arrowup: #results-1.focus()"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
+  &lt;li role="option"&gt;&lt;button id="results-3" implements="focusable prevent-default"
+      on-keydown="arrowdown: #results-1.focus(); arrowup: #results-2.focus()"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+        </div>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
         <h2 id="ex-attr">Theme &amp; attribute switcher</h2>
         <p class="ex-note">
           <code class="inline-code">attributable</code> writes attributes from a phrase: <code class="inline-code">setAttr({name, value})</code>
           for one thing, <code class="inline-code">toggleAttr</code> / <code class="inline-code">removeAttr</code> for simpler ones.
           Try <em>Dark</em>, then <em>Toggle border</em> — the card below reacts. The last button uses
-          <code class="inline-code">logger</code>, so open the console.
+          <code class="inline-code">logger</code>, so open the console. Attributes are scalars; <code class="inline-code">class</code>
+          is a list, so it has its own example below.
         </p>
       </div>
       <div class="example-body">
@@ -328,6 +390,54 @@
 
     <section class="example">
       <div class="example-head">
+        <h2 id="ex-class">Toggle one class, keep the rest</h2>
+        <p class="ex-note">
+          <code class="inline-code">classable</code> exposes <code class="inline-code">classList</code> through three verbs,
+          one class name per call. Two decisions are fixed: there is no <code class="inline-code">force</code> argument on
+          <code class="inline-code">toggle()</code> &mdash; <code class="inline-code">add()</code>/<code class="inline-code">remove()</code>
+          are the forced forms &mdash; and the browser&rsquo;s own rules decide what a name may be, so a multi-token string
+          reaches <code class="inline-code">classList</code> whole and throws its own error.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <div class="row">
+            <button id="cls-open" type="button" on-click="#cls-menu.toggle('open')">Toggle open</button>
+            <button id="cls-add" type="button" on-click="#cls-menu.add('compact')">Compact</button>
+            <button id="cls-remove" type="button" on-click="#cls-menu.remove('compact')">Spacious</button>
+            <button id="cls-both" type="button" on-click="#cls-menu.toggle('open').toggle('compact')">Toggle both</button>
+          </div>
+          <nav id="cls-menu" class="menu" implements="classable">
+            <a href="#docs">Docs</a>
+            <a href="#examples">Examples</a>
+            <a href="#reference">Reference</a>
+          </nav>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-ex-class)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-class" data-lang="html"><code>&lt;button on-click="#menu.toggle('open')"&gt;Toggle open&lt;/button&gt;
+&lt;button on-click="#menu.add('compact')"&gt;Compact&lt;/button&gt;
+&lt;button on-click="#menu.remove('compact')"&gt;Spacious&lt;/button&gt;
+&lt;button on-click="#menu.toggle('open').toggle('compact')"&gt;Toggle both&lt;/button&gt;
+
+&lt;nav id="menu" class="menu" implements="classable"&gt;
+  &lt;a href="#docs"&gt;Docs&lt;/a&gt;&lt;a href="#examples"&gt;Examples&lt;/a&gt;&lt;a href="#reference"&gt;Reference&lt;/a&gt;
+&lt;/nav&gt;</code></pre>
+        </div>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
         <h2 id="ex-note">A note that grows with you</h2>
         <p class="ex-note">
           Type something and it grows with your text (<code class="inline-code">auto-grow</code>) and gains an amber
@@ -364,6 +474,47 @@
           on-clean="this.removeAttr('data-dirty')"
           on-pasted="this.set(replace(this.value, '\s+', ' '))"
           placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;</code></pre>
+        </div>
+      </details>
+    </section>
+
+    <section class="example">
+      <div class="example-head">
+        <h2 id="ex-counter">A character counter</h2>
+        <p class="ex-note">
+          <code class="inline-code">length()</code> counts a string in UTF-16 code units &mdash; the same unit
+          <code class="inline-code">maxlength</code> uses &mdash; so the counter and the platform bound always agree.
+          On a <code class="inline-code">type="number"</code> field it is a <code class="inline-code">not-a-string</code>
+          error, never a digit count. The edge style is an exact-match attribute read &mdash; it fires only at the limit.
+        </p>
+      </div>
+      <div class="example-body">
+        <div class="demo">
+          <label>Bio
+            <textarea id="cnt-bio" rows="3" maxlength="200" implements="attributable"
+                      on-input="#cnt-out.set(length(this.value) + ' of 200'); this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))})"
+                      placeholder="Up to 200 characters&hellip;"></textarea>
+          </label>
+          <output id="cnt-out" implements="modifiable">0 of 200</output>
+        </div>
+      </div>
+      <details class="example-code">
+        <summary>Show the markup</summary>
+        <div class="codeblock">
+          <div class="codeblock-bar">
+            <span class="codeblock-lang">HTML</span>
+            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
+                    on-click="this.copy(#code-ex-counter)" type="button">
+              <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+            </button>
+          </div>
+          <pre class="code" id="code-ex-counter" data-lang="html"><code>&lt;textarea id="bio" maxlength="200" implements="attributable"
+          on-input="#count.set(length(this.value) + ' of 200');
+                    this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))})"&gt;&lt;/textarea&gt;
+&lt;output id="count" implements="modifiable"&gt;0 of 200&lt;/output&gt;
+
+&lt;!-- the edge style is an exact match, not a prefix match --&gt;
+&lt;!-- #bio[data-remaining="0"] { border-color: #b91c1c } fires only at 200 --&gt;</code></pre>
         </div>
       </details>
     </section>
