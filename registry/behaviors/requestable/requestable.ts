@@ -1,5 +1,7 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
+import type { ImplementationEventInit } from "@interactable/implementation-event.ts";
+import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
 type Policy = "latest" | "first" | "all";
 
@@ -15,6 +17,8 @@ export const requestable = defineImplementation(
         "'innerHTML' | 'outerHTML' | 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend' | 'delete' | 'none' | undefined",
       include: "string | undefined",
       concurrency: "'latest' | 'first' | 'all' | undefined",
+      timeout: "number | undefined",
+      errors: "string | undefined",
     },
     state: { status: "'idle' | 'loading' | 'error' | undefined" },
     verbs: {
@@ -27,22 +31,50 @@ export const requestable = defineImplementation(
   },
   (el, attrs) => {
     const inflight = new Set<AbortController>();
+    const timeoutTimers = new WeakMap<AbortController, ReturnType<typeof setTimeout>>();
     let latest: AbortController | undefined;
 
     const policy = (method: string): Policy =>
       attrs.concurrency ?? (method === "get" ? "latest" : "first");
 
+    const clearTimeoutTimer = (controller: AbortController): void => {
+      const timer = timeoutTimers.get(controller);
+      if (timer === undefined) return;
+      clearTimeout(timer);
+      timeoutTimers.delete(controller);
+    };
+
     const finish = (controller: AbortController, failed: boolean): void => {
       if (!inflight.delete(controller)) return;
+      clearTimeoutTimer(controller);
       if (inflight.size > 0) return;
       attrs.status = failed ? "error" : undefined;
       el.removeAttribute("aria-busy");
     };
 
+    const armTimeout = (controller: AbortController, ms: number | undefined): void => {
+      if (ms === undefined) return;
+      const timer = setTimeout(() => {
+        timeoutTimers.delete(controller);
+        controller.abort(timeoutError());
+      }, ms);
+      timeoutTimers.set(controller, timer);
+    };
+
+    const dispatchError = (e: InteractionEvent, key: string | undefined): void => {
+      if (!el.isConnected) return;
+      const init: ImplementationEventInit = { originalEvent: e.originalEvent };
+      if (key !== undefined) init.key = key;
+      el.dispatchEvent(new ImplementationEvent("request-error", init));
+    };
+
     return {
       abort: () => {
         if (inflight.size === 0) return;
-        for (const controller of inflight) controller.abort();
+        for (const controller of inflight) {
+          clearTimeoutTimer(controller);
+          controller.abort();
+        }
         inflight.clear();
         attrs.status = undefined;
         el.removeAttribute("aria-busy");
@@ -50,6 +82,8 @@ export const requestable = defineImplementation(
       send: (e, opts) => {
         const method = (opts?.method ?? attrs.method ?? "get").toLowerCase();
         const current = policy(method);
+        const timeout = attrs.timeout;
+        const errorMap = parseErrorMap(attrs.errors);
         if (inflight.size > 0) {
           if (current === "first") return;
           if (current === "latest") {
@@ -61,16 +95,21 @@ export const requestable = defineImplementation(
         if (current === "latest") latest = controller;
         attrs.status = "loading";
         el.setAttribute("aria-busy", "true");
+        armTimeout(controller, timeout);
 
         const request = buildRequest(el, method, opts?.url ?? attrs.url, attrs.include, controller.signal);
         fetch(request.url, request.init)
           .then(async (response) => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const html = await response.text();
             if (current === "latest" && controller !== latest) {
               finish(controller, false);
               return;
             }
+            if (!response.ok) {
+              finish(controller, true);
+              dispatchError(e, errorMap?.get(response.status));
+              return;
+            }
+            const html = await response.text();
             applySwap(el, attrs.swap, attrs.target, html);
             finish(controller, false);
             if (el.isConnected) {
@@ -82,19 +121,67 @@ export const requestable = defineImplementation(
               finish(controller, false);
               return;
             }
+            if (isTimeout(err)) {
+              finish(controller, true);
+              dispatchError(e, "timeout");
+              return;
+            }
             if (current === "latest" && controller !== latest) {
               finish(controller, false);
               return;
             }
             finish(controller, true);
-            if (el.isConnected) {
-              el.dispatchEvent(new ImplementationEvent("request-error", { originalEvent: e.originalEvent }));
-            }
+            dispatchError(e, isTypeError(err) ? "offline" : undefined);
           });
       },
     };
   },
 );
+
+function parseErrorMap(raw: string | undefined): Map<number, string> | undefined {
+  if (raw === undefined) return undefined;
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    throw new Error("requestable-errors: not valid JSON");
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("requestable-errors: expected a JSON object of status to name");
+  }
+  const map = new Map<number, string>();
+  for (const [status, name] of Object.entries(value)) {
+    if (typeof name !== "string") {
+      throw new Error(`requestable-errors: status "${status}" maps to a non-string name`);
+    }
+    const numeric = Number(status);
+    if (!Number.isInteger(numeric)) {
+      throw new Error(`requestable-errors: status "${status}" is not an integer`);
+    }
+    map.set(numeric, name);
+  }
+  return map;
+}
+
+function timeoutError(): Error {
+  return new DOMException("request timed out", "TimeoutError");
+}
+
+function isAbort(err: unknown): boolean {
+  return isNamedError(err, "AbortError");
+}
+
+function isTimeout(err: unknown): boolean {
+  return isNamedError(err, "TimeoutError");
+}
+
+function isNamedError(err: unknown, name: string): boolean {
+  return typeof err === "object" && err !== null && (err as { name?: unknown }).name === name;
+}
+
+function isTypeError(err: unknown): boolean {
+  return err instanceof TypeError;
+}
 
 function buildRequest(
   el: HTMLElement,
@@ -200,8 +287,4 @@ function applySwap(
 function resolveTarget(el: HTMLElement, target: string | undefined): Element | null {
   if (target === undefined) return el;
   return document.querySelector(target);
-}
-
-function isAbort(err: unknown): boolean {
-  return typeof err === "object" && err !== null && (err as { name?: unknown }).name === "AbortError";
 }

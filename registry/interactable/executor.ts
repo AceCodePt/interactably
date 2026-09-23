@@ -1,7 +1,7 @@
 import { isAttached } from "@interactable/attachment.ts";
 import { parse } from "@interactable/parser.ts";
 import { matchesKey } from "@interactable/keys.ts";
-import { normaliseRootMargin } from "@interactable/intersect.ts";
+import { normaliseRootMargin, INTERSECT_EVENT_NAMES } from "@interactable/intersect.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { Arg, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
@@ -68,7 +68,11 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
       if (typeof keyboardEvent.key !== "string" || !matchesKey(keyboardEvent, phrase.key)) return;
     }
   } else if (ev instanceof ImplementationEvent && ev.key !== undefined) {
-    if (normaliseRootMargin(phrase.key) !== ev.key) return;
+    if (INTERSECT_EVENT_NAMES.has(ev.type)) {
+      if (normaliseRootMargin(phrase.key) !== ev.key) return;
+    } else if (phrase.key !== ev.key) {
+      return;
+    }
   } else if (phrase.key !== undefined) {
     logOnce(source, `key "${phrase.key}" on non-keyboard event "${ev.type}"; phrase skipped`);
     return;

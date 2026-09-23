@@ -107,7 +107,7 @@ The rules, one line each:
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`, `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#`. Class or attribute selectors are never receivers.
 3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form.
-4. **Keys are legal only under `on-keydown`/`on-keyup` and the three intersect triggers**, one per phrase; two keyboard keys is two phrases. Key names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under the intersect triggers the key is that phrase's `rootMargin`.
+4. **Keys are legal only under `on-keydown`/`on-keyup`, the three intersect triggers, and a keyed implementation event**, one per phrase; two keyboard keys is two phrases. Key names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under the intersect triggers the key is that phrase's `rootMargin`; under `on-request-error` it is the failure kind (`timeout`, `offline`, or a mapped status name), matched exactly.
 5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** It never crosses `&&`. `debounce`/`throttle` are legal only right after the ref; `once` and `delay` may sit anywhere. `once()` must be followed by a call. At most one `debounce`/`throttle` per receiver chain.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops on a `preventDefault()`-ed event, a throw, or an unowned verb. `||` fires only on a guard's abort; errors and unowned verbs stop both.
 7. **`once()` spends on passing through, not on completion.** A spent gate cuts the chain where it sits — links before it still run, links after it never do.
@@ -129,7 +129,7 @@ The rules, one line each:
 | `dirtyable` | input, textarea, select, output | — | `dirty-on`; events `dirty`, `clean` | compares the element's current value with its platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); fires `dirty` / `clean` on transition; writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
-| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events |
+| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency`, `timeout`, `errors` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events partitioned by failure kind |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
 | `classable` | any | `add`, `remove`, `toggle` | — | `classList` writes, one class name per call; `toggle` has no force argument — `add`/`remove` are the forced forms |
 | `logger` | any | `log` | — | `console.log` from a phrase |
@@ -195,7 +195,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `parse(value, eventName?)` | Parse an attribute string into phrases (cached by event name and value) |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](https://acecodept.github.io/interactably/docs.html#interaction-event)) |
-| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `restore`); a synthetic intersect event carries the observed margin as `key` |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `restore`); a synthetic intersect event carries the observed margin as `key`, and `request-error` carries the failure kind |
 | `isImplementationEvent(el, type)` | True when `type` is an intersect name or an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per `rootMargin` |

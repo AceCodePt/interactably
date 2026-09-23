@@ -58,8 +58,9 @@ function installFetch(): void {
         reject,
       });
       if (signal !== null) {
-        if (signal.aborted) reject(abortError());
-        else signal.addEventListener("abort", () => reject(abortError()));
+        const rejectReason = (): void => reject(signal.reason ?? abortError());
+        if (signal.aborted) rejectReason();
+        else signal.addEventListener("abort", rejectReason);
       }
     });
   }) as typeof fetch;
@@ -69,6 +70,10 @@ function abortError(): Error {
   const error = new Error("aborted");
   error.name = "AbortError";
   return error;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function response(ok: boolean, status: number, body: string): FakeResponse {
@@ -406,4 +411,112 @@ test("requestable-include spreads a matched form's fields as FormData would", as
 
   interact(el, "send");
   assert.equal(fetchCalls[0]!.url, "/api/search?a=1&b=2");
+});
+
+test("an offline fetch rejection fires on-request-error with the reserved key offline", async () => {
+  const el = await mount({
+    "requestable-url": "/api",
+    "on-request-error": "offline: #alert.show()",
+  });
+  const alert = revealable("div", "alert");
+  document.body.appendChild(alert);
+  await flush();
+
+  interact(el, "send");
+  fetchCalls[0]!.reject(new TypeError("network down"));
+  await flush();
+  assert.equal(el.getAttribute("requestable-status"), "error");
+  assert.equal(el.hasAttribute("aria-busy"), false);
+  assert.equal(alert.hidden, false, "the offline keyed phrase runs");
+});
+
+test("a timeout fires on-request-error with the reserved key timeout, exactly once, and the element stays usable", async () => {
+  const el = await mount({
+    "requestable-url": "/api",
+    "requestable-timeout": "10",
+    "on-request-error": "timeout: #alert.show()",
+  });
+  const alert = revealable("div", "alert");
+  document.body.appendChild(alert);
+  await flush();
+
+  interact(el, "send");
+  assert.equal(fetchCalls.length, 1);
+  await delay(30);
+  assert.equal(el.getAttribute("requestable-status"), "error");
+  assert.equal(el.hasAttribute("aria-busy"), false);
+  assert.equal(alert.hidden, false, "the timeout keyed phrase runs");
+
+  interact(el, "send");
+  assert.equal(fetchCalls.length, 2, "the timed-out request finished; a new send is not refused or superseded");
+  assert.equal(el.getAttribute("requestable-status"), "loading");
+  fetchCalls[1]!.resolve(response(true, 200, "<p>ok</p>"));
+  await flush();
+  assert.equal(el.innerHTML, "<p>ok</p>");
+  assert.equal(el.hasAttribute("aria-busy"), false);
+});
+
+test("requestable-errors maps a status to the author's failure key", async () => {
+  const el = await mount({
+    "requestable-url": "/api",
+    "requestable-errors": '{"401": "unauthorized"}',
+    "on-request-error": "unauthorized: #alert.show()",
+  });
+  const alert = revealable("div", "alert");
+  document.body.appendChild(alert);
+  await flush();
+
+  interact(el, "send");
+  fetchCalls[0]!.resolve(response(false, 401, "denied"));
+  await flush();
+  assert.equal(el.getAttribute("requestable-status"), "error");
+  assert.equal(el.hasAttribute("aria-busy"), false);
+  assert.equal(alert.hidden, false, "the mapped-name keyed phrase runs");
+});
+
+test("an unmapped status fires on-request-error with no key: the unfiltered phrase runs, no keyed phrase does", async () => {
+  const el = await mount({
+    "requestable-url": "/api",
+    "on-request-error": "#alert.show(); timeout: #timeout-alert.show()",
+  });
+  const alert = revealable("div", "alert");
+  const timeoutAlert = revealable("div", "timeout-alert");
+  document.body.appendChild(alert);
+  document.body.appendChild(timeoutAlert);
+  await flush();
+
+  interact(el, "send");
+  fetchCalls[0]!.resolve(response(false, 503, "boom"));
+  await flush();
+  assert.equal(el.getAttribute("requestable-status"), "error");
+  assert.equal(el.hasAttribute("aria-busy"), false);
+  assert.equal(alert.hidden, false, "the unfiltered on-request-error phrase still runs");
+  assert.equal(timeoutAlert.hidden, true, "no keyed phrase matches a keyless failure");
+});
+
+test("a user abort() is silent: no request-error, and a timeout is not an abort", async () => {
+  const el = await mount({
+    "requestable-url": "/api",
+    "on-request-error": "#alert.show()",
+  });
+  const alert = revealable("div", "alert");
+  document.body.appendChild(alert);
+  await flush();
+
+  interact(el, "send");
+  interact(el, "abort");
+  assert.equal(fetchCalls[0]!.signal?.aborted, true);
+  await flush();
+  assert.equal(alert.hidden, true, "abort() dispatches nothing");
+  assert.equal(el.hasAttribute("requestable-status"), false);
+  assert.equal(el.hasAttribute("aria-busy"), false);
+});
+
+test("a malformed requestable-errors is rejected before anything is sent", async () => {
+  const el = await mount({ "requestable-url": "/api", "requestable-errors": "{nope" });
+  const event = interact(el, "send");
+  assert.ok(event.error instanceof Error);
+  assert.equal(fetchCalls.length, 0);
+  assert.equal(el.hasAttribute("aria-busy"), false);
+  assert.equal(el.hasAttribute("requestable-status"), false);
 });
