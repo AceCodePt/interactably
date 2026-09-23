@@ -135,8 +135,8 @@ The rules, one line each:
 | `logger` | any | `log` | — | `console.log` from a phrase |
 | `validatable` | form, input, select, textarea | `validate` | — | guard verb: `reportValidity()`, `preventDefault()` on failure |
 | `no-propagate` | any | — | `events` (default `"click"`) | `stopPropagation` on listed events |
-| `prevent-default` | any | — | `events` (derived, see below) | `preventDefault` on listed events |
-| `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([below](https://acecodept.github.io/interactably/docs.html#revealable)) |
+| `prevent-default` | any | — | `events` (derived: the element's `on-submit`/`on-click`/keyed `on-keydown`, else submit on a form, click on a[href]/button) | `preventDefault` on listed events |
+| `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([§ revealable](https://acecodept.github.io/interactably/docs.html#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script or restored by `storable` is sized on the next input |
 | `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key; `restore()` reads it back and fires `restore` only when it matches |
 | `pastable` | input, textarea | — | — | fires `pasted` after a paste has landed, so `this.value` is the new value |
