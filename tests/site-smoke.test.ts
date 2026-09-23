@@ -51,6 +51,7 @@ const EXAMPLE_PAGES = [
   "dynamic-list",
   "number-format",
   "logging",
+  "offline-fallback",
 ];
 
 function examplePagesBody(): string {
@@ -83,12 +84,12 @@ const KNOWN_BUNDLES = new Set([
   "dirtyable",
   "focusable",
   "formattable",
-  "listable",
   "logger",
   "modifiable",
   "no-propagate",
   "pastable",
   "prevent-default",
+  "renderable",
   "requestable",
   "revealable",
   "storable",
@@ -122,6 +123,7 @@ interface FetchCall {
   url: string;
   init: RequestInit;
   resolve(response: FakeResponse): void;
+  reject(error: unknown): void;
 }
 
 function fakeResponse(ok: boolean, status: number, body: string): FakeResponse {
@@ -180,8 +182,13 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   const fetchCalls: FetchCall[] = [];
   globalThis.fetch = ((...args: Parameters<typeof fetch>): Promise<Response> => {
     const [input, init] = args;
-    return new Promise<Response>((resolve) => {
-      fetchCalls.push({ url: String(input), init: init ?? {}, resolve: (response) => resolve(response as unknown as Response) });
+    return new Promise<Response>((resolve, reject) => {
+      fetchCalls.push({
+        url: String(input),
+        init: init ?? {},
+        resolve: (response) => resolve(response as unknown as Response),
+        reject: (error: unknown) => reject(error),
+      });
     });
   }) as typeof fetch;
   t.after(() => {
@@ -512,20 +519,37 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.equal(dtStatus.textContent.includes("All saved"), true, "returning to the default fires clean");
   assert.equal(dtStatus.hasAttribute("data-state"), false, "removeAttr clears the mark");
 
-  // A list you can grow and shrink (listable)
+  // A list you can grow and shrink (renderable): render, delete and undo
   const dlList = byId("dl-list") as HTMLUListElement;
   const dlCount = byId("dl-count") as HTMLOutputElement;
   assert.equal(dlList.children.length, 1);
   await click(byId("dl-add"));
-  assert.equal(dlList.children.length, 2, "adopt clones a template row");
+  assert.equal(dlList.children.length, 2, "render stamps a template row");
   assert.equal(dlCount.textContent, "2", "count() tracks the rows");
   await click(dlList.querySelectorAll("li button")[0]!);
-  assert.equal(dlList.children.length, 1);
+  assert.equal(dlList.children.length, 1, "delete targets the row by id");
   await click(dlList.querySelector("li button")!);
-  assert.equal(dlList.children.length, 1, "min-rows keeps the floor");
-  await click(byId("dl-clear"));
-  assert.equal(dlList.children.length, 1, "clear empties down to the floor");
-  assert.equal(dlCount.textContent, "1");
+  assert.equal(dlList.children.length, 0, "the last row can be deleted too; there is no floor");
+  assert.equal(dlCount.textContent, "0");
+  await click(byId("dl-add"));
+  assert.equal(dlList.children.length, 1);
+  await click(byId("dl-undo"));
+  assert.equal(dlList.children.length, 0, "undo removes the last stamped row");
+  assert.equal(dlCount.textContent, "0");
+
+  // Offline fallback (renderable × requestable): render optimistically, then undo on the offline key
+  const ofList = byId("of-list") as HTMLUListElement;
+  const ofText = byId("of-text") as HTMLInputElement;
+  ofText.value = "offline message";
+  assert.equal(ofList.children.length, 0);
+  const offlineFetch = fetchCalls.length;
+  await click(byId("of-send"));
+  assert.equal(ofList.children.length, 1, "render stamps the row before the request");
+  assert.equal(fetchCalls.length, offlineFetch + 1, "send fires after render in the same chain");
+  assert.equal(fetchCalls[offlineFetch]!.url, "/api/messages");
+  fetchCalls[offlineFetch]!.reject(new TypeError("network down"));
+  await flush();
+  assert.equal(ofList.children.length, 0, "request-error with the offline key runs undo and restores");
 
   // Format a number or date (formattable)
   const nfUsd = byId("nf-usd") as HTMLOutputElement;

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
+import { optionalCtor } from "@interactable/signature.ts";
 import { getImplementationDef } from "@behaviors/implementation-registry.ts";
 
 let dom: JSDOM;
@@ -99,4 +100,36 @@ test("a record signature compiles field by field", () => {
   assert.ok(verb !== undefined);
   assert.doesNotThrow(() => verb.validate({ root: document.createElement("div"), select: ".amount" }));
   assert.throws(() => verb.validate({ root: document.createElement("div") }));
+});
+
+test("a record signature with a '*' rest key validates undeclared keys at runtime", () => {
+  defineImplementation(
+    "with-rest",
+    { verbs: { render: { root: HTMLElement, "*": "string | number | boolean" } } },
+    (_el) => ({ render: (_e, args) => void args }),
+  );
+  const verb = getImplementationDef("with-rest")?.verbs["render"];
+  assert.ok(verb !== undefined);
+  const value = verb.validate({ root: document.createElement("div"), title: "x", n: 3 }) as Record<
+    string,
+    unknown
+  >;
+  assert.equal(value["title"], "x");
+  assert.equal(value["n"], 3);
+  assert.throws(() => verb.validate({ root: document.createElement("div"), title: { a: 1 } }));
+});
+
+test("an optional-Ctor field may be omitted from a record argument but is instance-checked when present", () => {
+  defineImplementation(
+    "with-optional-ctor",
+    { verbs: { render: { template: optionalCtor(HTMLTemplateElement), "*": "string" } } },
+    (_el) => ({ render: (_e, args) => void args }),
+  );
+  const verb = getImplementationDef("with-optional-ctor")?.verbs["render"];
+  assert.ok(verb !== undefined);
+  assert.doesNotThrow(() => verb.validate({ title: "x" }));
+  assert.doesNotThrow(() =>
+    verb.validate({ template: document.createElement("template"), title: "x" }),
+  );
+  assert.throws(() => verb.validate({ template: document.createElement("div"), title: "x" }));
 });

@@ -1,12 +1,12 @@
 import { SUPPORTED_KEYWORDS, dslString } from "tsyntax";
 import type { DSLValidate } from "tsyntax";
-import { compileSignature } from "@interactable/signature.ts";
+import { compileSignature, isOptionalCtor } from "@interactable/signature.ts";
 import type { CompiledSignature, Sig } from "@interactable/signature.ts";
 import { registerImplementation } from "@behaviors/implementation-registry.ts";
 import type { NormalizedImplementationDef } from "@behaviors/implementation-registry.ts";
 import type { Attrs, El, Implementation, ImplementationDef, KW, Tag, Validated, ValidatedSigs } from "@behaviors/types.ts";
 
-export type { Ctor, Sig, Tag, El, Slot, KW, ArgOf, Attrs, Implementation, ValidatedSigs, ImplementationDef } from "@behaviors/types.ts";
+export type { Ctor, OptionalCtor, Sig, Tag, El, Slot, KW, ArgOf, Attrs, Implementation, ValidatedSigs, ImplementationDef } from "@behaviors/types.ts";
 
 export function defineImplementation<
   const T extends readonly Tag[] | undefined,
@@ -78,7 +78,7 @@ function validateSlots(
 function validateVerbSlot(name: string, verb: string, sig: Sig): void {
   if (typeof sig === "string") {
     validateScalar(name, `verb ${verb}()`, sig);
-  } else if (typeof sig !== "function") {
+  } else if (typeof sig !== "function" && !isOptionalCtor(sig)) {
     for (const [key, slot] of Object.entries(sig)) validateVerbSlot(name, `${verb}.${key}`, slot);
   }
 }

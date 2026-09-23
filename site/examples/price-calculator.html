@@ -55,17 +55,17 @@
                   <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
                 </div>
 
-                <ul id="list" implements="listable" listable-min-rows="1">
-                  <li>
+                <ul id="list" implements="renderable">
+                  <li id="row-1">
                     <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
-                    <button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
+                    <button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
                   </li>
                 </ul>
-                <button id="add-row" on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount:valid'))" type="button">Add row</button>
+                <button id="add-row" on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid'))" type="button">Add row</button>
                 <template id="row-tpl">
-                  <li>
+                  <li id="row-{id}">
                     <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
-                    <button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
+                    <button on-click="#list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
                   </li>
                 </template>
                 <p class="total">
@@ -103,17 +103,17 @@
         &lt;output id="preview" implements="modifiable" on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;
       &lt;/div&gt;
 
-      &lt;ul id="list" implements="listable" listable-min-rows="1"&gt;
-        &lt;li&gt;
+      &lt;ul id="list" implements="renderable"&gt;
+        &lt;li id="row-1"&gt;
           &lt;input class="amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))"&gt;
-          &lt;button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
+          &lt;button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
         &lt;/li&gt;
       &lt;/ul&gt;
-      &lt;button on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount:valid'))"&gt;Add row&lt;/button&gt;
+      &lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid'))"&gt;Add row&lt;/button&gt;
       &lt;template id="row-tpl"&gt;
-        &lt;li&gt;
+        &lt;li id="row-{id}"&gt;
           &lt;input class="amount" type="number" value="3.25" step="any" required on-input="#total.set(sum('#list .amount:valid'))"&gt;
-          &lt;button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
+          &lt;button on-click="#list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
         &lt;/li&gt;
       &lt;/template&gt;
       &lt;p class="total"&gt;Total:

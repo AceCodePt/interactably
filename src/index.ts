@@ -1,7 +1,7 @@
 export * from "@/core.ts";
 export { modifiable } from "@behaviors/modifiable/modifiable.ts";
 export { dirtyable } from "@behaviors/dirtyable/dirtyable.ts";
-export { listable } from "@behaviors/listable/listable.ts";
+export { renderable } from "@behaviors/renderable/renderable.ts";
 export { requestable } from "@behaviors/requestable/requestable.ts";
 export { attributable } from "@behaviors/attributable/attributable.ts";
 export { classable } from "@behaviors/classable/classable.ts";

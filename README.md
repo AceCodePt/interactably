@@ -53,7 +53,7 @@ Every click on `+` runs `#qty.set(#qty.value + 1)` and then `#preview.set(#qty.v
 | Bundle | Contents |
 | --- | --- |
 | `interactably-core.js` | parser, executor, event, attachment, registry. No implementations. |
-| `modifiable.js`, `dirtyable.js`, `listable.js`, … | one implementation per file, registering into the core's registry on import |
+| `modifiable.js`, `dirtyable.js`, `renderable.js`, … | one implementation per file, registering into the core's registry on import |
 
 > **The participation rule.** An element is a participant — something `start()` attaches — when it has `implements`, any `on-*` attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new `implements` or `on-*` attribute to an element after insertion does not attach it; re-insert the element.
 
@@ -92,7 +92,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | And | `#form.validate() && #hint.show()` | Next unit only if this one completed |
 | Or | `#form.validate().send() \|\| #alert.show()` | Next unit only if a guard aborted this one |
 | Scalar arg | `#qty.set(#qty.value + 5)` | Numbers, `'strings'`, `true` / `false` |
-| Element arg | `#list.removeRow(this)` | A ref resolves to the element at fire time |
+| Element arg | `#clip.copy(#snippet)` | A ref resolves to the element at fire time |
 | Property read | `#preview.set(this.value)` | `value`/`checked`/`min`/`max`/`step`, typed by the element |
 | Key | `on-keydown="enter: #f.send()"` | Filter *which* events reach the phrase |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
@@ -128,7 +128,7 @@ The rules, one line each:
 | `modifiable` | input, textarea, output, select | `set`, `clear`, `reset` | — | typed writes; `set` takes a string, a number, or an expression evaluated at fire time |
 | `dirtyable` | input, textarea, select, output | — | `dirty-on`; events `dirty`, `clean` | compares the element's current value with its platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); fires `dirty` / `clean` on transition; writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
-| `listable` | ul, ol, tbody | `removeRow`, `adopt`, `clear` | `min-rows` | row removal / template adoption / clear, keeping `min-rows` |
+| `renderable` | any | `render`, `undo` | — | stamps a template with flat scalar slots into text and attributes; swap modes mirror `requestable`; `undo` reverses the one last render |
 | `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency`, `timeout`, `errors` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events partitioned by failure kind |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
 | `classable` | any | `add`, `remove`, `toggle` | — | `classList` writes, one class name per call; `toggle` has no force argument — `add`/`remove` are the forced forms |
@@ -175,7 +175,7 @@ Input masks and format-as-you-type belong in a component library built on the sa
 
 ## Not supported
 
-Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `min` / `max` / `step` (and `height` / `width` in expressions) · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · rendering data through a template (the behaviour was removed; `listable.adopt(#tpl)` stamps a template as written, and the triggers work from there) · the native paste event (`on-paste` is not a trigger; `on-pasted` fires after the insertion) · a template-literal type over a whole `on-*` value (possible, not needed for v1).
+Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `min` / `max` / `step` (and `height` / `width` in expressions) · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · renderable slots are flat scalars only — `{name}` placeholders in text nodes and attribute values, substituted as strings, no nested objects or arrays as slot values · the native paste event (`on-paste` is not a trigger; `on-pasted` fires after the insertion) · a template-literal type over a whole `on-*` value (possible, not needed for v1).
 
 `on-load` always means attach, including on `<img>`, `<iframe>`, `<body>`, `<link>`, `<script>`; it is never the native `load` event — bytes-arrived is `addEventListener('load', …)`.
 
@@ -204,11 +204,12 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `INTERSECT_EVENT_NAMES` | The synthetic intersect names (`intersect-enter`, `intersect-leave`, `intersect-full`) |
 | `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
+| `optionalCtor(Ctor)` | Mark an element-constructor signature slot optional: the key may be omitted, and a present value is instance-checked (`render`'s `template` field) |
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `readValue(el, property = "value")` | The element's value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read `.value` (a string), display elements read `formattable-value` as a number under a numeric format, else `textContent` (a string); `readValue(el, "checked")` is the checked boolean; `readValue(el, "min" | "max" | "step")` is the platform bound — a number on number/range inputs (absent `min`/`max` is `""`, absent `step` is `1`), the string as written elsewhere |
 | `writeValue(el, v)` | Write helper: sets `.value` where the element has one, else `textContent` |
 | `NotReadyError` | Error set on `e.error` when a dispatch reaches an attached element whose `implements` names an implementation that has not registered yet |
-| Implementations | `modifiable`, `dirtyable`, `listable`, `requestable`, `attributable`, `classable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pastable`, `copyable`, `formattable`, `focusable` |
+| Implementations | `modifiable`, `dirtyable`, `renderable`, `requestable`, `attributable`, `classable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pastable`, `copyable`, `formattable`, `focusable` |
 
 ---
 

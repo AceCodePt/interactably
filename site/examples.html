@@ -46,7 +46,7 @@
       <li>
         <a class="examples-title" href="./examples/price-calculator.html">Price calculator</a>
         <p class="examples-blurb">Rows, quantities and a total recomputed from sum('#list .amount') after every change.</p>
-        <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; listable &middot; formattable &middot; prevent-default</span>
+        <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; renderable &middot; formattable &middot; prevent-default</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/collapsible-help.html">A collapsible help panel</a>
@@ -140,8 +140,8 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/dynamic-list.html">A list you can grow and shrink</a>
-        <p class="examples-blurb">adopt clones a template row, removeRow deletes to the min-rows floor, clear empties to it.</p>
-        <span class="examples-tags">listable</span>
+        <p class="examples-blurb">render stamps a template row with an author id, the × button deletes its own row by targeting that id, and undo removes the last stamped row.</p>
+        <span class="examples-tags">renderable</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/number-format.html">Format a number or date</a>
@@ -186,6 +186,11 @@
         <a class="examples-title" href="./examples/character-mask.html">Only the characters you allow</a>
         <p class="examples-blurb">on-input rewrites the value to keep only the characters you allow.</p>
         <span class="examples-tags">modifiable &middot; pastable &middot; dirtyable</span>
+      </li>
+      <li>
+        <a class="examples-title" href="./examples/offline-fallback.html">Optimistic send, offline fallback</a>
+        <p class="examples-blurb">render stamps the message, send fires in the same chain, and a network failure keys request-error with offline so undo rolls the row back.</p>
+        <span class="examples-tags">renderable &middot; requestable &middot; prevent-default</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/reveal-secret.html">A secret you can reveal</a>

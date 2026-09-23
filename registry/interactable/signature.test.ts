@@ -2,7 +2,7 @@ import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
-import { compileSignature } from "@interactable/signature.ts";
+import { compileSignature, optionalCtor } from "@interactable/signature.ts";
 import type { Ctor } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
@@ -94,6 +94,49 @@ test("record slot fields may themselves be records of mixed slots", () => {
   const value = sig.validate({ root: new Widget(), threshold: 2 }) as { threshold: number };
   assert.equal(value.threshold, 2);
   assert.throws(() => sig.validate({ root: new Widget(), threshold: "2" }));
+});
+
+test("the '*' rest key validates every undeclared key and keeps declared keys on their own slots", () => {
+  const sig = compileSignature({ count: "number", "*": "string | number | boolean" });
+  const value = sig.validate({ count: 2, title: "hi", id: 5 }) as Record<string, unknown>;
+  assert.equal(value["count"], 2);
+  assert.equal(value["title"], "hi");
+  assert.equal(value["id"], 5);
+  assert.throws(() => sig.validate({ count: "2", title: "hi" }));
+  assert.throws(() => sig.validate({ count: 2, title: { nested: 1 } }));
+  assert.throws(() => sig.validate({ count: 2, title: ["array"] }));
+  assert.throws(() => sig.validate({ title: "hi" }));
+});
+
+test("a record whose fields are all optional may be omitted even with a '*' rest key", () => {
+  const sig = compileSignature({ method: "'get' | undefined", "*": "string | number" });
+  assert.equal(sig.validate(undefined), undefined);
+  assert.deepEqual(sig.validate({ q: "x" }), { q: "x" });
+});
+
+test("an optional-Ctor slot may be omitted but instance-checks when present", () => {
+  const sig = compileSignature({ template: optionalCtor(WidgetCtor), name: "string" });
+  assert.deepEqual(sig.validate({ name: "x" }), { name: "x" });
+  const withTemplate = sig.validate({ template: new Widget(), name: "x" }) as {
+    template: Widget;
+  };
+  assert.ok(withTemplate.template instanceof Widget);
+  assert.throws(() => sig.validate({ template: new Gadget(), name: "x" }));
+  assert.throws(() => sig.validate({ template: "tpl", name: "x" }));
+  assert.throws(() => sig.validate({ template: 5, name: "x" }));
+});
+
+test("a record whose only field is an optional Ctor is itself optional", () => {
+  const sig = compileSignature({ template: optionalCtor(WidgetCtor) });
+  assert.equal(sig.validate(undefined), undefined);
+  const withTemplate = sig.validate({ template: new Widget() }) as { template: Widget };
+  assert.ok(withTemplate.template instanceof Widget);
+});
+
+test("a required Ctor slot stays required", () => {
+  const sig = compileSignature({ root: WidgetCtor, select: "string" });
+  assert.throws(() => sig.validate({ select: ".x" }));
+  assert.throws(() => sig.validate({ root: undefined, select: ".x" }));
 });
 
 test("record slot keys whose signature admits undefined may be omitted", () => {

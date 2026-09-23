@@ -2,6 +2,7 @@ import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import type { ImplementationEventInit } from "@interactable/implementation-event.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
+import { resolveTarget, SWAP_SLOT } from "@behaviors/swap.ts";
 
 type Policy = "latest" | "first" | "all";
 
@@ -13,8 +14,7 @@ export const requestable = defineImplementation(
       url: "string | undefined",
       method: "'get' | 'post' | 'put' | 'delete' | 'patch' | undefined",
       target: "string | undefined",
-      swap:
-        "'innerHTML' | 'outerHTML' | 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend' | 'delete' | 'none' | undefined",
+      swap: SWAP_SLOT,
       include: "string | undefined",
       concurrency: "'latest' | 'first' | 'all' | undefined",
       timeout: "number | undefined",
@@ -282,9 +282,4 @@ function applySwap(
       destination.insertAdjacentHTML(mode, html);
       return;
   }
-}
-
-function resolveTarget(el: HTMLElement, target: string | undefined): Element | null {
-  if (target === undefined) return el;
-  return document.querySelector(target);
 }

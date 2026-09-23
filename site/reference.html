@@ -69,13 +69,13 @@
       </article>
 
       <article class="ref-card">
-        <h3><code class="inline-code">listable</code></h3>
-        <p class="ref-tags">ul &middot; ol &middot; tbody</p>
-        <p class="ref-desc">Row removal, template adoption and clear, keeping <code class="inline-code">min-rows</code>.</p>
+        <h3><code class="inline-code">renderable</code></h3>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc">Stamps a template with flat scalar slots into text nodes and attribute values. Swap modes mirror <code class="inline-code">requestable</code>; <code class="inline-code">undo()</code> reverses the one last render (removes appended rows, restores displaced markup).</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">removeRow</span><span class="verb-tag">adopt</span><span class="verb-tag">clear</span></div>
+        <div><span class="verb-tag">render</span><span class="verb-tag">undo</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">min-rows</span></div>
+        <div><span class="verb-tag">&mdash;</span></div>
       </article>
 
       <article class="ref-card">
@@ -239,6 +239,7 @@
           <tr><td><code class="inline-code">INTERSECT_EVENT_NAMES</code></td><td>The synthetic intersect names (<code class="inline-code">intersect-enter</code>, <code class="inline-code">intersect-leave</code>, <code class="inline-code">intersect-full</code>)</td></tr>
           <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive)</td></tr>
           <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
+          <tr><td><code class="inline-code">optionalCtor(Ctor)</code></td><td>Mark an element-constructor signature slot optional</td></tr>
           <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
           <tr><td><code class="inline-code">readValue(el, property = "value")</code></td><td>The element&rsquo;s value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read <code class="inline-code">.value</code> (a string), display elements read <code class="inline-code">formattable-value</code> as a number under a numeric format, else <code class="inline-code">textContent</code> (a string); <code class="inline-code">readValue(el, "checked")</code> is the checked boolean; <code class="inline-code">readValue(el, "min" | "max" | "step")</code> is the platform bound — a number on number/range inputs (absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code>, absent <code class="inline-code">step</code> is <code class="inline-code">1</code>), the string as written elsewhere</td></tr>
           <tr><td><code class="inline-code">writeValue(el, v)</code></td><td>Write helper: sets <code class="inline-code">.value</code> where the element has one, else <code class="inline-code">textContent</code></td></tr>
@@ -291,11 +292,13 @@ modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')
         <tbody>
           <tr><td><strong>Scalar</strong></td><td>a tsyntax DSL string</td><td><code class="inline-code">"string"</code>, <code class="inline-code">"number | undefined"</code>, <code class="inline-code">"'upper' | 'lower'"</code>, <code class="inline-code">"`${number}px`"</code></td></tr>
           <tr><td><strong>Element</strong></td><td>an element constructor</td><td><code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, <code class="inline-code">HTMLButtonElement</code></td></tr>
+          <tr><td><strong>Optional element</strong></td><td><code class="inline-code">optionalCtor(Ctor)</code></td><td><code class="inline-code">optionalCtor(HTMLTemplateElement)</code> — key may be omitted, present value is instance-checked</td></tr>
           <tr><td><strong>Record</strong></td><td>one flat object literal of slots</td><td><code class="inline-code">{ name: "string", value: "string" }</code></td></tr>
+          <tr><td><strong>Rest key</strong></td><td>a <code class="inline-code">"*"</code> slot in a record</td><td><code class="inline-code">{ template: &hellip;, "*": "string | number | boolean" }</code> — validates every undeclared key</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="note">A record key whose slot admits <code class="inline-code">undefined</code> may be omitted from the object literal; any other key is required.</p>
+    <p class="note">A record key whose slot admits <code class="inline-code">undefined</code> may be omitted from the object literal; any other key is required. A <code class="inline-code">"*"</code> rest key validates every key the record does not declare.</p>
   </main>
 
   <footer class="footer">
