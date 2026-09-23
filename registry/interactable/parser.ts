@@ -1,4 +1,3 @@
-import { INTERSECT_EVENT_NAMES, normaliseRootMargin } from "@interactable/intersect.ts";
 import { parseFormula } from "@utils/formula.ts";
 
 export type Ref = { kind: "id"; id: string } | { kind: "this" };
@@ -48,6 +47,7 @@ const CALL = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*\(([\s\S]*)\)$/;
 const NUMBER = /^-?\d+(?:\.\d+)?$/;
 const STRING = /^'([^']*)'$/;
 const IDENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+const DECL_NAME = /^[A-Za-z_$][A-Za-z0-9_$-]*$/;
 const ID = /^[^\s,;.()&|{}:'"#]+$/;
 const KEY = /^[^\s.,;()&|{}:'"#]+$/;
 const TIMING = /^(debounce|throttle|delay)\(([^)]*)\)$/;
@@ -66,7 +66,7 @@ export function parse(value: string, eventName?: string): Phrase[] {
     const trimmed = raw.trim();
     if (trimmed === "") continue;
     try {
-      phrases.push(parsePhrase(trimmed, eventName));
+      phrases.push(parsePhrase(trimmed));
     } catch (err) {
       errors.push(`"${trimmed}": ${(err as Error).message}`);
     }
@@ -77,16 +77,14 @@ export function parse(value: string, eventName?: string): Phrase[] {
   return phrases;
 }
 
-function parsePhrase(raw: string, eventName?: string): Phrase {
+function parsePhrase(raw: string): Phrase {
   const colon = findKeyColon(raw);
   let key: string | undefined;
   let body = raw;
   if (colon !== -1) {
     const keyText = raw.slice(0, colon).trim();
     if (keyText === "") throw new Error(`empty key before ":"`);
-    if (eventName !== undefined && INTERSECT_EVENT_NAMES.has(eventName)) {
-      normaliseRootMargin(keyText);
-    } else if (!KEY.test(keyText)) {
+    if (!KEY.test(keyText)) {
       throw new Error(`invalid key "${keyText}"`);
     }
     if (keyText.includes("+") && keyText.length > 1) {
@@ -209,7 +207,7 @@ export function parseEventAttribute(name: string): EventAttribute {
     if (colon === -1) throw new Error(`value ${index + 1} in "${name}": expected "name:type", got "${part}"`);
     const declName = part.slice(0, colon).trim();
     const rhs = part.slice(colon + 1).trim();
-    if (!IDENT.test(declName)) {
+    if (!DECL_NAME.test(declName)) {
       throw new Error(`value ${index + 1} in "${name}": "${declName}" is not a valid value name`);
     }
     if (rhs === "") throw new Error(`value ${index + 1} in "${name}": missing type for "${declName}"`);

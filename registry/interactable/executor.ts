@@ -2,7 +2,7 @@ import { isAttached } from "@interactable/attachment.ts";
 import { parse, isNumericUnion } from "@interactable/parser.ts";
 import { getEventFieldTypes } from "@interactable/events.ts";
 import { matchesKey } from "@interactable/keys.ts";
-import { normaliseRootMargin, INTERSECT_EVENT_NAMES } from "@interactable/intersect.ts";
+import { INTERSECT_EVENT_NAMES } from "@interactable/intersect.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { Arg, EventAttribute, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
@@ -77,9 +77,7 @@ function runPhrase(
       if (typeof keyboardEvent.key !== "string" || !matchesKey(keyboardEvent, phrase.key)) return;
     }
   } else if (ev instanceof ImplementationEvent && ev.key !== undefined) {
-    if (INTERSECT_EVENT_NAMES.has(ev.type)) {
-      if (normaliseRootMargin(phrase.key) !== ev.key) return;
-    } else if (phrase.key !== ev.key) {
+    if (!INTERSECT_EVENT_NAMES.has(ev.type) && phrase.key !== ev.key) {
       return;
     }
   } else if (phrase.key !== undefined) {

@@ -56,10 +56,9 @@ test("isImplementationEvent ignores unknown names and undeclared events", () => 
 
 test("isImplementationEvent consults the synthetic intersect table as a second source", () => {
   const el = document.createElement("div");
-  assert.equal(isImplementationEvent(el, "intersect-enter"), true);
-  assert.equal(isImplementationEvent(el, "intersect-leave"), true);
-  assert.equal(isImplementationEvent(el, "intersect-half"), false);
-  assert.equal(isImplementationEvent(el, "intersect-full"), true);
-  assert.equal(isImplementationEvent(el, "intersect"), false);
+  assert.equal(isImplementationEvent(el, "intersect"), true);
+  assert.equal(isImplementationEvent(el, "intersect-enter"), false);
+  assert.equal(isImplementationEvent(el, "intersect-leave"), false);
+  assert.equal(isImplementationEvent(el, "intersect-full"), false);
   assert.equal(isImplementationEvent(el, "click"), false);
 });

@@ -395,39 +395,24 @@ test("parse results are cached by attribute string", () => {
   assert.notStrictEqual(other, firstParse);
 });
 
-test("under the intersect names the phrase key is a CSS margin", () => {
-  const [phrase] = parse("0px 0px -50% 0px: #nav.bump()", "intersect-enter");
+test("intersect carries no margin key any more: the body is the whole phrase", () => {
+  const [phrase] = parse("#nav.bump()", "intersect");
   assert.ok(phrase);
-  assert.equal(phrase.key, "0px 0px -50% 0px");
-
-  const [half] = parse("10px 20px: #a.show()", "intersect-enter");
-  assert.ok(half);
-  assert.equal(half.key, "10px 20px");
-
-  const [bare] = parse("#a.show()", "intersect-full");
-  assert.ok(bare);
-  assert.equal(bare.key, undefined);
+  assert.equal(phrase.key, undefined);
 });
 
-test("an invalid margin under an intersect name drops and logs the phrase", (t) => {
-  const spy = errorsOf(t);
-  const phrases = parse("red: #a.show(); 10px: #b.show()", "intersect-enter");
-  assert.equal(phrases.length, 1);
-  assert.equal(phrases[0]!.key, "10px");
-  assert.equal(spy.mock.callCount(), 1);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("red"));
-});
-
-test("a margin key is a parse error under non-intersect events", () => {
-  assert.deepEqual(parse("10px 20px: #a.show()", "click"), []);
-  assert.deepEqual(parse("enter: #f.send()", "intersect-enter"), []);
+test("a colon prefix is an ordinary key under intersect, no longer a margin", () => {
+  const [phrase] = parse("enter: #a.show()", "intersect");
+  assert.ok(phrase);
+  assert.equal(phrase.key, "enter");
+  assert.deepEqual(parse("10px 20px: #a.show()", "intersect"), [], "a spaced margin is no longer a legal key");
 });
 
 test("the parse cache key includes the event name", () => {
-  const enter = parse("10px 20px: #a.show()", "intersect-enter");
-  const full = parse("10px 20px: #a.show()", "intersect-full");
+  const enter = parse("#a.show()", "intersect");
+  const full = parse("#a.show()", "click");
   assert.notStrictEqual(enter, full, "different event names parse separately");
-  assert.strictEqual(parse("10px 20px: #a.show()", "intersect-enter"), enter);
+  assert.strictEqual(parse("#a.show()", "intersect"), enter);
 });
 
 test("parseEventAttribute: an unparenthesised name is the whole type", () => {
@@ -483,6 +468,17 @@ test("parseEventAttribute: a declaration cannot mix literals and types", () => {
     () => parseEventAttribute("keydown(code:`Escape`,key:string)"),
     /either matches literals or binds types/,
   );
+});
+
+test("parseEventAttribute: declaration names may be hyphenated", () => {
+  assert.deepEqual(parseEventAttribute("intersect(block-start:`-#nav.height`,full:`true`)"), {
+    type: "intersect",
+    declaration: [
+      { kind: "literal", name: "block-start", literal: "-#nav.height" },
+      { kind: "literal", name: "full", literal: "true" },
+    ],
+  });
+  assert.throws(() => parseEventAttribute("intersect(-bad:`x`)"), /is not a valid value name/);
 });
 
 test("parseEventAttribute rejects a malformed literal", () => {

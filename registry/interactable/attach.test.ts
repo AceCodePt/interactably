@@ -194,7 +194,7 @@ test("removing an element detaches it: listeners gone, phrase state cleared, int
   const trigger = document.createElement("section");
   trigger.id = "s";
   trigger.setAttribute("implements", "traceable");
-  trigger.setAttribute("on-intersect-enter", "#r.go()");
+  trigger.setAttribute("on-intersect", "#r.go()");
   const receiver = document.createElement("div");
   receiver.id = "r";
   receiver.setAttribute("implements", "traceable");

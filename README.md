@@ -87,7 +87,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | --- | --- | --- |
 | Trigger | `on-click="#pop.show()"` | On `click`, run the phrase |
 | Implementation event | `on-copy="#flash.show()"` | An implementation's own event (`copy-error`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`); copyable also re-dispatches the native `copy`, which shares the attribute |
-| Synthetic trigger | `on-intersect-enter="#link.mark()"` | `IntersectionObserver` against the viewport: `enter`/`leave`/`full` |
+| Synthetic trigger | ``on-intersect(state:`enter`)="#link.mark()"`` | `IntersectionObserver` against the viewport; `state` matches `enter`/`leave`, `full` matches `true`/`false`, and the four logical margin slots configure the observer |
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from |
 | Chain | `#pop.show().focus()` | `.show()` then `.focus()` on the same receiver, in order |
@@ -110,7 +110,7 @@ The rules, one line each:
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`, `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#`. Class or attribute selectors are never receivers.
 3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form.
-4. **Keys are legal only under `on-keydown`/`on-keyup` and the three intersect triggers**, one per phrase; two keyboard keys is two phrases. Key names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under the intersect triggers the key is that phrase's `rootMargin`, matched exactly.
+4. **Keys are legal only under `on-keydown`/`on-keyup` and a keyed implementation event**, one per phrase; two keyboard keys is two phrases. Key names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. `intersect` is not keyed: its `state`, `full` and margin slots live in the attribute name.
 5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** It never crosses `&&`. `debounce`/`throttle` are legal only right after the ref; `once` and `delay` may sit anywhere. `once()` must be followed by a call. At most one `debounce`/`throttle` per receiver chain.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops on a `preventDefault()`-ed event, a throw, or an unowned verb. `||` fires only on a guard's abort; errors and unowned verbs stop both.
 7. **`once()` spends on passing through, not on completion.** A spent gate cuts the chain where it sits — links before it still run, links after it never do.
@@ -198,13 +198,13 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `parse(value, eventName?)` | Parse an attribute string into phrases (cached by event name and value) |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](https://acecodept.github.io/interactably/docs.html#interaction-event)) |
-| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`); a synthetic intersect event carries the observed margin as `key`, and an event may carry declared values as `values` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
-| `isImplementationEvent(el, type)` | True when `type` is an intersect name or an event some implementation on `el` declares |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`), and the event `intersect` carries `state` (`enter`/`leave`) and/or `full` (`true`/`false`) as declared values `values`; an event may also carry a routing `key` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
+| `isImplementationEvent(el, type)` | True when `type` is the intersect event or an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
-| `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per `rootMargin` |
-| `normaliseRootMargin(margin?)` | Normalise and validate a CSS root-margin string: `px`/`%` lengths or `#id.height`/`#id.width` references, 1–4 tokens (`undefined`/empty → `"0px"`; throws otherwise) |
+| `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per resolved `rootMargin` |
+| `normaliseRootMargin(token?)` | Validate one root-margin token: a `px`/`%` length or a `#id.height`/`#id.width` reference (`undefined`/empty → `"0px"`; throws otherwise) |
 | `readMeasured(el, dim)` | The element's border-box `height`/`width` in CSS pixels as of the last layout the browser reported — the cache behind `#id.height`/`#id.width` |
-| `INTERSECT_EVENT_NAMES` | The synthetic intersect names (`intersect-enter`, `intersect-leave`, `intersect-full`) |
+| `INTERSECT_EVENT_NAMES` | The synthetic intersect event name (`intersect`) |
 | `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
 | `optionalCtor(Ctor)` | Mark an element-constructor signature slot optional: the key may be omitted, and a present value is instance-checked (`render`'s `template` field) |

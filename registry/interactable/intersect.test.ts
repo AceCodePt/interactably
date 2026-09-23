@@ -16,13 +16,18 @@ import {
 
 let dom: JSDOM;
 let INTERSECT_EVENT_NAMES: ReadonlySet<string>;
-let normaliseRootMargin: (key?: string) => string;
+let normaliseRootMargin: (token?: string) => string;
+let isIntersectAttribute: (name: string) => boolean;
+let readIntersectSpec: (declaration?: readonly import("@interactable/parser.ts").EventValueDeclaration[]) => {
+  margin: string;
+  slots: Readonly<Record<string, string>>;
+  match: readonly import("@interactable/parser.ts").EventValueDeclaration[];
+};
 let syncIntersect: (el: Element) => void;
 let teardownIntersect: (el: Element) => void;
 let isImplementationEvent: (el: Element, type: string) => boolean;
-let parse: (value: string, eventName?: string) => import("@interactable/parser.ts").Phrase[];
-let runPhrases: (source: Element, value: string, ev: Event) => void;
 let InteractionEvent: typeof import("@interactable/interaction-event.ts").InteractionEvent;
+let ImplementationEvent: typeof import("@interactable/implementation-event.ts").ImplementationEvent;
 let attach: (el: Element) => void;
 
 before(async () => {
@@ -32,12 +37,13 @@ before(async () => {
   resetFakeResizeObserver();
   ({ INTERSECT_EVENT_NAMES } = await import("@interactable/intersect.ts"));
   ({ normaliseRootMargin } = await import("@interactable/intersect.ts"));
+  ({ isIntersectAttribute } = await import("@interactable/intersect.ts"));
+  ({ readIntersectSpec } = await import("@interactable/intersect.ts"));
   ({ syncIntersect } = await import("@interactable/intersect.ts"));
   ({ teardownIntersect } = await import("@interactable/intersect.ts"));
   ({ isImplementationEvent } = await import("@interactable/events.ts"));
-  ({ parse } = await import("@interactable/parser.ts"));
-  ({ runPhrases } = await import("@interactable/executor.ts"));
   ({ InteractionEvent } = await import("@interactable/interaction-event.ts"));
+  ({ ImplementationEvent } = await import("@interactable/implementation-event.ts"));
   ({ attach } = await import("@interactable/attachment.ts"));
 });
 
@@ -50,34 +56,25 @@ beforeEach(() => {
   document.body.replaceChildren();
 });
 
-function wireTrigger(el: Element, type: string): void {
-  el.addEventListener(type, (ev) => {
-    runPhrases(el, el.getAttribute(`on-${type}`) ?? "", ev);
-  });
+function attr(name: string): string {
+  return name.replace(/\(([^)]*)\)/, (_match, inner: string) => `(${inner.replace(/\s+/g, "")})`);
 }
 
-function wireReceiver(el: Element, into: string[]): void {
-  attach(el);
-  el.addEventListener("interaction", (raw) => {
-    const event = raw as InstanceType<typeof InteractionEvent>;
-    event.handled = true;
-    into.push(event.verb);
-  });
+function make(declaration: string, value: string): HTMLElement {
+  const holder = document.createElement("div");
+  holder.innerHTML = `<div ${attr(`on-intersect(${declaration})`)}=${JSON.stringify(value)}></div>`;
+  document.body.append(holder);
+  return holder.firstElementChild as HTMLElement;
 }
 
-function make(type: string, value: string): HTMLElement {
-  const el = document.createElement("div");
-  el.setAttribute(`on-${type}`, value);
-  document.body.append(el);
-  return el;
-}
-
-function makeBoth(): HTMLElement {
-  const el = document.createElement("div");
-  el.setAttribute("on-intersect-enter", "#a.show()");
-  el.setAttribute("on-intersect-leave", "#b.show()");
-  document.body.append(el);
-  return el;
+function makeEl(attributes: Readonly<Record<string, string>>, tag = "div"): HTMLElement {
+  const attrs = Object.entries(attributes)
+    .map(([name, value]) => ` ${attr(name)}=${JSON.stringify(value)}`)
+    .join("");
+  const holder = document.createElement("div");
+  holder.innerHTML = `<${tag}${attrs}></${tag}>`;
+  document.body.append(holder);
+  return holder.firstElementChild as HTMLElement;
 }
 
 function box(top: number, height: number, left = 0, width = 100): RectLike {
@@ -110,375 +107,278 @@ function seenAt(target: Element, top: number, height: number, root: RectLike = v
   return { target, boundingClientRect: elBox, rootBounds: root, intersectionRect: overlap(root, elBox) };
 }
 
-test("the three intersect names are enter, leave and full", () => {
-  assert.deepEqual([...INTERSECT_EVENT_NAMES].sort(), [
-    "intersect-enter",
-    "intersect-full",
-    "intersect-leave",
-  ]);
-  assert.equal(INTERSECT_EVENT_NAMES.has("intersect-half"), false);
+function observerFor(el: Element): FakeIntersectionObserver {
+  const observer = FakeIntersectionObserver.instances.find((instance) => instance.observed.includes(el));
+  assert.ok(observer !== undefined, "the element observes itself");
+  return observer;
+}
+
+test("there is one intersect event and one attribute shape", () => {
+  assert.deepEqual([...INTERSECT_EVENT_NAMES], ["intersect"]);
+  assert.equal(isIntersectAttribute("on-intersect"), true);
+  assert.equal(isIntersectAttribute("on-intersect(state:`enter`)"), true);
+  assert.equal(isIntersectAttribute("on-intersect-enter"), false);
+  assert.equal(isIntersectAttribute("on-click"), false);
 });
 
-test("normaliseRootMargin: a missing or empty key means 0px", () => {
+test("isImplementationEvent knows intersect but not the retired names", () => {
+  const el = document.createElement("div");
+  assert.equal(isImplementationEvent(el, "intersect"), true);
+  assert.equal(isImplementationEvent(el, "intersect-enter"), false);
+  assert.equal(isImplementationEvent(el, "intersect-leave"), false);
+  assert.equal(isImplementationEvent(el, "intersect-full"), false);
+});
+
+test("normaliseRootMargin validates one token at a time", () => {
   assert.equal(normaliseRootMargin(undefined), "0px");
   assert.equal(normaliseRootMargin(""), "0px");
   assert.equal(normaliseRootMargin("   "), "0px");
-});
-
-test("normaliseRootMargin: px lengths and percentages pass through, whitespace collapses", () => {
   assert.equal(normaliseRootMargin("10px"), "10px");
-  assert.equal(normaliseRootMargin(" 10px  20px "), "10px 20px");
-  assert.equal(normaliseRootMargin("-50%"), "-50%");
-  assert.equal(normaliseRootMargin("0px 0px -50% 0px"), "0px 0px -50% 0px");
+  assert.equal(normaliseRootMargin(" -50% "), "-50%");
   assert.equal(normaliseRootMargin("0"), "0");
-});
-
-test("normaliseRootMargin: only px or % is legal, and the error names the restriction", () => {
-  assert.throws(() => normaliseRootMargin("red"));
-  assert.throws(() => normaliseRootMargin("10px auto"));
-  assert.throws(() => normaliseRootMargin("calc(100% - 10px)"));
-  assert.throws(() => normaliseRootMargin("10px 20px 30px 40px 50px"));
-  assert.throws(() => normaliseRootMargin("10"));
+  assert.equal(normaliseRootMargin("-#nav.height"), "-#nav.height");
+  assert.equal(normaliseRootMargin("#nav.width"), "#nav.width");
+  assert.throws(() => normaliseRootMargin("red"), /rootMargin accepts only px or %/);
   assert.throws(() => normaliseRootMargin("4.6rem"), /rootMargin accepts only px or %/);
-  assert.throws(() => normaliseRootMargin("1.5rem"), /rootMargin accepts only px or %/);
+  assert.throws(() => normaliseRootMargin("10px 20px"), /rootMargin accepts only px or %/);
 });
 
-test("under the intersect names an invalid margin key drops and logs the phrase", (t) => {
-  const spy = t.mock.method(console, "error");
-  const phrases = parse("red: #a.show(); 10px: #b.show()", "intersect-enter");
-  assert.equal(phrases.length, 1);
-  assert.equal(phrases[0]!.key, "10px");
-  assert.equal(spy.mock.callCount(), 1);
+test("readIntersectSpec defaults omitted margin slots to 0px and keeps state/full as matchers", () => {
+  const spec = readIntersectSpec([
+    { kind: "literal", name: "state", literal: "enter" },
+    { kind: "literal", name: "block-start", literal: "-#nav.height" },
+  ]);
+  assert.equal(spec.margin, "-#nav.height 0px 0px 0px");
+  assert.deepEqual(spec.slots, {
+    "block-start": "-#nav.height",
+    "block-end": "0px",
+    "inline-start": "0px",
+    "inline-end": "0px",
+  });
+  assert.deepEqual(spec.match, [{ kind: "literal", name: "state", literal: "enter" }]);
 });
 
-test("a 4.6rem intersect key is a parse error naming px or %", (t) => {
-  const spy = t.mock.method(console, "error");
-  const phrases = parse("4.6rem: #a.show(); 10px: #b.show()", "intersect-enter");
-  assert.equal(phrases.length, 1);
-  assert.equal(phrases[0]!.key, "10px");
-  assert.equal(spy.mock.callCount(), 1);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("4.6rem"), spy.mock.calls[0]!.arguments[0] as string);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("rootMargin accepts only px or %"));
+test("readIntersectSpec rejects unknown slots, wrong literal kinds and bad values", () => {
+  assert.throws(() => readIntersectSpec([{ kind: "literal", name: "side", literal: "0px" }]), /is not a slot/);
+  assert.throws(
+    () => readIntersectSpec([{ kind: "type", name: "state", type: "string" }]),
+    /"state" matches only/,
+  );
+  assert.throws(
+    () => readIntersectSpec([{ kind: "literal", name: "state", literal: "maybe" }]),
+    /"state" matches only/,
+  );
+  assert.throws(
+    () => readIntersectSpec([{ kind: "literal", name: "full", literal: "yes" }]),
+    /"full" matches only/,
+  );
+  assert.throws(
+    () => readIntersectSpec([{ kind: "type", name: "block-start", type: "string" }]),
+    /configures the observer/,
+  );
+  assert.throws(
+    () => readIntersectSpec([{ kind: "literal", name: "block-start", literal: "red" }]),
+    /rootMargin accepts only px or %/,
+  );
+  assert.throws(
+    () =>
+      readIntersectSpec([
+        { kind: "literal", name: "state", literal: "enter" },
+        { kind: "literal", name: "state", literal: "leave" },
+      ]),
+    /declared twice/,
+  );
 });
 
-test("per-; phrases under one attribute observe separate margins", () => {
-  const el = make("intersect-enter", "10px: #a.show(); 20px: #b.show()");
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 2);
+test("a bare on-intersect has a 0px margin and no state filter", () => {
+  const el = makeEl({ "on-intersect": "#x.go()" });
+  attach(el);
+  assert.equal(observerFor(el).rootMargin, "0px 0px 0px 0px");
+});
+
+test("distinct margins make distinct observers; a shared margin makes one", () => {
+  const two = makeEl({
+    "on-intersect(state:`enter`, block-start:`10px`)": "#a.go()",
+    "on-intersect(state:`enter`, block-start:`20px`)": "#b.go()",
+  });
+  attach(two);
   const margins = FakeIntersectionObserver.instances.map((o) => o.rootMargin).sort();
-  assert.deepEqual(margins, ["10px", "20px"]);
-  for (const observer of FakeIntersectionObserver.instances) {
-    assert.ok(observer.observed.includes(el));
-  }
+  assert.deepEqual(margins, ["10px 0px 0px 0px", "20px 0px 0px 0px"]);
+  for (const observer of FakeIntersectionObserver.instances) assert.ok(observer.observed.includes(two));
+  resetFakeIntersectionObserver();
+
+  const shared = makeEl({
+    "on-intersect(state:`enter`, block-start:`0px`)": "#a.go()",
+    "on-intersect(state:`leave`, block-start:`0px`)": "#b.go()",
+  });
+  attach(shared);
+  assert.equal(FakeIntersectionObserver.instances.length, 1, "enter and leave on one margin share one observer");
+  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "0px 0px 0px 0px");
 });
 
-test("phrases sharing a rootMargin share one observer", () => {
-  const el = make("intersect-enter", "0px: #a.show(); 0px: #b.show()");
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 1);
-  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "0px");
+test("every observer is constructed with the viewport as root and the 101-value threshold list", () => {
+  const el = make("state:`enter`", "#a.go()");
+  attach(el);
+  const observer = observerFor(el);
+  assert.equal(observer.root, null);
+  assert.equal(observer.thresholds.length, 101);
+  assert.equal(observer.thresholds[0], 0);
+  assert.equal(observer.thresholds[100], 1);
+  assert.equal(observer.thresholds[50], 0.5);
 });
 
-test("the viewport is the root: no root element is passed", () => {
-  const el = make("intersect-full", "#a.show()");
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances[0]!.root, null);
+test("the logical slots map to physical sides for horizontal ltr", () => {
+  const el = make(
+    "block-start:`1px`, block-end:`2px`, inline-start:`3px`, inline-end:`4px`",
+    "#a.go()",
+  );
+  attach(el);
+  assert.equal(observerFor(el).rootMargin, "1px 4px 2px 3px");
 });
 
-test("every observer is constructed with the 101-value threshold list", () => {
-  const el = make("intersect-enter", "#a.show()");
-  syncIntersect(el);
-  const thresholds = FakeIntersectionObserver.instances[0]!.thresholds;
-  assert.equal(thresholds.length, 101);
-  assert.equal(thresholds[0], 0);
-  assert.equal(thresholds[100], 1);
-  assert.equal(thresholds[50], 0.5);
+test("inline slots follow direction rtl", () => {
+  const el = make(
+    "block-start:`1px`, block-end:`2px`, inline-start:`3px`, inline-end:`4px`",
+    "#a.go()",
+  );
+  el.style.direction = "rtl";
+  attach(el);
+  assert.equal(observerFor(el).rootMargin, "1px 3px 2px 4px");
 });
 
-test("enter fires on the initial intersecting report; leave never fires on the initial report", () => {
-  const el = makeBoth();
+test("vertical writing modes swap the axes", () => {
+  const rl = make(
+    "block-start:`1px`, block-end:`2px`, inline-start:`3px`, inline-end:`4px`",
+    "#a.go()",
+  );
+  rl.style.writingMode = "vertical-rl";
+  attach(rl);
+  assert.equal(observerFor(rl).rootMargin, "3px 1px 4px 2px");
+  resetFakeIntersectionObserver();
+
+  const lr = make(
+    "block-start:`1px`, block-end:`2px`, inline-start:`3px`, inline-end:`4px`",
+    "#b.go()",
+  );
+  lr.style.writingMode = "vertical-lr";
+  attach(lr);
+  assert.equal(observerFor(lr).rootMargin, "3px 2px 4px 1px");
+});
+
+test("state:`enter` fires on enter and state:`leave` on leave, from one observer", () => {
+  const receiver = document.createElement("div");
+  receiver.id = "r";
+  const el = makeEl({
+    "on-intersect(state:`enter`)": "#r.entered()",
+    "on-intersect(state:`leave`)": "#r.left()",
+  });
+  document.body.append(receiver);
+  attach(el);
+  attach(receiver);
   const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  const observer = FakeIntersectionObserver.instances[0]!;
+  receiver.addEventListener("interaction", (raw) => {
+    const event = raw as InstanceType<typeof InteractionEvent>;
+    event.handled = true;
+    seen.push(event.verb);
+  });
+
+  const observer = observerFor(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 1, "enter and leave share one observer");
   observer.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(seen, ["enter"]);
+  assert.deepEqual(seen, ["entered"]);
+  observer.trigger([seenAt(el, 700, 100)]);
+  assert.deepEqual(seen, ["entered", "left"]);
+  observer.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["entered", "left", "entered"]);
 });
 
 test("an initial non-intersecting report fires nothing", () => {
-  const el = makeBoth();
+  const el = makeEl({
+    "on-intersect(state:`enter`)": "#a.go()",
+    "on-intersect(state:`leave`)": "#b.go()",
+  });
+  attach(el);
   const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  FakeIntersectionObserver.instances[0]!.trigger([seenAt(el, 700, 100)]);
+  el.addEventListener("intersect", (ev) => {
+    const event = ev as InstanceType<typeof ImplementationEvent>;
+    seen.push(`${event.values["state"] ?? ""}:${event.values["full"] ?? ""}`);
+  });
+  observerFor(el).trigger([seenAt(el, 700, 100)]);
   assert.deepEqual(seen, []);
 });
 
-test("a true then false report fires enter then leave", () => {
-  const el = makeBoth();
+test("full is a boolean slot: full:`true` on becoming full and full:`false` on leaving fullness", () => {
+  const el = makeEl({
+    "on-intersect(full:`true`)": "#a.go()",
+    "on-intersect(full:`false`)": "#b.go()",
+  });
+  attach(el);
   const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  const observer = FakeIntersectionObserver.instances[0]!;
+  el.addEventListener("intersect", (ev) => {
+    const event = ev as InstanceType<typeof ImplementationEvent>;
+    if (event.values["full"] !== undefined) seen.push(event.values["full"]!);
+  });
+  const observer = observerFor(el);
   observer.trigger([seenAt(el, 100, 100)]);
-  observer.trigger([seenAt(el, 700, 100)]);
-  assert.deepEqual(seen, ["enter", "leave"]);
-});
-
-test("false then true then false fires enter then leave, with no leave off the first false", () => {
-  const el = makeBoth();
-  const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  const observer = FakeIntersectionObserver.instances[0]!;
-  observer.trigger([seenAt(el, 700, 100)]);
-  observer.trigger([seenAt(el, 100, 100)]);
-  observer.trigger([seenAt(el, 700, 100)]);
-  assert.deepEqual(seen, ["enter", "leave"]);
-});
-
-test("short element sliding in from the bottom: enter once, full once in each direction, leave once", () => {
-  const el = document.createElement("div");
-  el.setAttribute("on-intersect-enter", "#a.show()");
-  el.setAttribute("on-intersect-full", "#b.show()");
-  el.setAttribute("on-intersect-leave", "#c.show()");
-  document.body.append(el);
-  const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-full", () => seen.push("full"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  const observer = FakeIntersectionObserver.instances[0]!;
-
-  observer.trigger([seenAt(el, 700, 100)]);
-  assert.deepEqual(seen, [], "below the box: nothing fires");
-
-  observer.trigger([seenAt(el, 550, 100)]);
-  assert.deepEqual(seen, ["enter"], "leading edge enters the box");
-
-  observer.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(seen, ["enter", "full"], "entirely inside: full becomes true");
-
+  assert.deepEqual(seen, ["true"], "entirely inside: full becomes true");
   observer.trigger([seenAt(el, -50, 100)]);
-  assert.deepEqual(seen, ["enter", "full", "full"], "leaving through the top: full flips false");
-
-  observer.trigger([seenAt(el, -150, 100)]);
-  assert.deepEqual(seen, ["enter", "full", "full", "leave"], "out the top: leave fires once");
+  assert.deepEqual(seen, ["true", "false"], "leaving through the top: full flips false");
 });
 
-test("full fires at the one position where an exactly-box-height element's edges coincide", () => {
-  const el = make("intersect-full", "#a.show()");
+test("one dispatch carries the union of what changed", () => {
+  const el = make("state:`enter`, full:`true`", "#a.go()");
+  attach(el);
+  const seen: Array<Record<string, string>> = [];
+  el.addEventListener("intersect", (ev) => {
+    seen.push({ ...(ev as InstanceType<typeof ImplementationEvent>).values });
+  });
+  observerFor(el).trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, [{ state: "enter", full: "true" }]);
+});
+
+test("a state literal that does not match the crossing is skipped", () => {
+  const el = make("state:`enter`", "#a.go()");
+  attach(el);
   const seen: string[] = [];
-  el.addEventListener("intersect-full", (ev) => seen.push((ev as Event & { key?: string }).key ?? ""));
-  syncIntersect(el);
-  const observer = FakeIntersectionObserver.instances[0]!;
-
-  observer.trigger([seenAt(el, 600, 600)]);
-  assert.deepEqual(seen, [], "edges apart: not full");
-
-  observer.trigger([seenAt(el, 0, 600)]);
-  assert.deepEqual(seen, ["0px"], "edges coincide: full fires");
-
-  observer.trigger([seenAt(el, -50, 600)]);
-  assert.deepEqual(seen, ["0px", "0px"], "off by a hair: full flips back");
-});
-
-test("an element taller than the box: enter once, leave once, full never", () => {
-  const el = document.createElement("div");
-  el.setAttribute("on-intersect-enter", "#a.show()");
-  el.setAttribute("on-intersect-full", "#b.show()");
-  el.setAttribute("on-intersect-leave", "#c.show()");
-  document.body.append(el);
-  const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-full", () => seen.push("full"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  const observer = FakeIntersectionObserver.instances[0]!;
-
-  observer.trigger([seenAt(el, 800, 1000)]);
-  observer.trigger([seenAt(el, 550, 1000)]);
-  assert.deepEqual(seen, ["enter"], "a taller section enters once");
-
-  observer.trigger([seenAt(el, -200, 1000)]);
-  observer.trigger([seenAt(el, -400, 1000)]);
-  assert.deepEqual(seen, ["enter"], "covering the box: full never fires, no repeats");
-
-  observer.trigger([seenAt(el, -1000, 1000)]);
-  assert.deepEqual(seen, ["enter", "leave"], "leaves once out the top");
-});
-
-test("a -50% top margin on enter fires when the element's edge crosses the viewport's vertical centre", () => {
-  const bottomHalf = { top: 300, right: 800, bottom: 600, left: 0, width: 800, height: 300 };
-
-  const shortEl = make("intersect-enter", "-50% 0px 0px 0px: #a.show()");
-  const shortSeen: string[] = [];
-  shortEl.addEventListener("intersect-enter", () => shortSeen.push("enter"));
-  syncIntersect(shortEl);
-  const shortObserver = FakeIntersectionObserver.instances[0]!;
-  assert.equal(shortObserver.rootMargin, "-50% 0px 0px 0px");
-  shortObserver.trigger([seenAt(shortEl, 100, 100, bottomHalf)]);
-  assert.deepEqual(shortSeen, [], "above the centre line: not entered");
-  shortObserver.trigger([seenAt(shortEl, 250, 100, bottomHalf)]);
-  assert.deepEqual(shortSeen, ["enter"], "bottom edge crosses the centre: entered");
-  shortObserver.trigger([seenAt(shortEl, 400, 100, bottomHalf)]);
-  assert.deepEqual(shortSeen, ["enter"], "still inside: no repeat");
-
-  const tallEl = make("intersect-enter", "-50% 0px 0px 0px: #a.show()");
-  const tallSeen: string[] = [];
-  tallEl.addEventListener("intersect-enter", () => tallSeen.push("enter"));
-  syncIntersect(tallEl);
-  const tallObserver = FakeIntersectionObserver.instances[1]!;
-  tallObserver.trigger([seenAt(tallEl, -500, 800, bottomHalf)]);
-  assert.deepEqual(tallSeen, [], "taller element ending above the line: not entered");
-  tallObserver.trigger([seenAt(tallEl, -480, 800, bottomHalf)]);
-  assert.deepEqual(tallSeen, ["enter"], "taller element's bottom edge crosses the centre: entered");
-});
-
-test("two margins on one element make two observers; a shared margin makes one", () => {
-  const two = make("intersect-enter", "0px: #a.show(); -74px 0px 0px 0px: #b.show()");
-  syncIntersect(two);
-  assert.equal(FakeIntersectionObserver.instances.length, 2);
-  const margins = FakeIntersectionObserver.instances.map((o) => o.rootMargin).sort();
-  assert.deepEqual(margins, ["-74px 0px 0px 0px", "0px"]);
-  resetFakeIntersectionObserver();
-
-  const shared = document.createElement("div");
-  shared.setAttribute("on-intersect-enter", "0px: #a.show()");
-  shared.setAttribute("on-intersect-full", "0px: #b.show()");
-  document.body.append(shared);
-  const seen: string[] = [];
-  shared.addEventListener("intersect-enter", () => seen.push("enter"));
-  shared.addEventListener("intersect-full", () => seen.push("full"));
-  syncIntersect(shared);
-  assert.equal(FakeIntersectionObserver.instances.length, 1, "enter and full on one margin share one observer");
-  const observer = FakeIntersectionObserver.instances[0]!;
-  assert.equal(observer.rootMargin, "0px");
-  observer.trigger([seenAt(shared, 100, 100)]);
-  assert.deepEqual(seen, ["enter", "full"], "the shared observer evaluates both types");
-});
-
-test("on-intersect-half is an unknown attribute: no observer, no event, no error", (t) => {
-  const spy = t.mock.method(console, "error");
-  const el = make("intersect-half", "#a.show()");
-  const seen: string[] = [];
-  el.addEventListener("intersect-half", () => seen.push("half"));
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 0);
-  assert.equal(seen.length, 0);
-  assert.equal(spy.mock.callCount(), 0);
-});
-
-test("enter and leave on one element share a single observer", () => {
-  const el = makeBoth();
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 1);
-  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "0px");
-  assert.equal(FakeIntersectionObserver.instances[0]!.thresholds.length, 101);
-  assert.ok(FakeIntersectionObserver.instances[0]!.observed.includes(el));
-});
-
-test("syncIntersect is idempotent and teardownIntersect disconnects", () => {
-  const el = make("intersect-enter", "10px: #a.show()");
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 1);
-
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 1, "unchanged state creates no new observer");
-  assert.equal(FakeIntersectionObserver.instances[0]!.observed.length, 1);
-
-  teardownIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances[0]!.observed.length, 0);
-});
-
-test("the margin key filter routes each crossing to its own observer", () => {
-  const el = make("intersect-enter", "10px: #a.show(); 20px: #b.show()");
-  const verbs: string[] = [];
-  const a = document.createElement("div");
-  a.id = "a";
-  const b = document.createElement("div");
-  b.id = "b";
-  document.body.append(a, b);
-  wireReceiver(a, verbs);
-  wireReceiver(b, verbs);
-  wireTrigger(el, "intersect-enter");
-
-  syncIntersect(el);
-  const ten = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "10px")!;
-  const twenty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "20px")!;
-  ten.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(verbs, ["show"]);
-  twenty.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(verbs, ["show", "show"]);
-});
-
-test("on-intersect-leave observes each margin and keys its phrases like the others", () => {
-  const el = make("intersect-leave", "10px: #a.show(); 20px: #b.show()");
-  const verbs: string[] = [];
-  const a = document.createElement("div");
-  a.id = "a";
-  const b = document.createElement("div");
-  b.id = "b";
-  document.body.append(a, b);
-  wireReceiver(a, verbs);
-  wireReceiver(b, verbs);
-  wireTrigger(el, "intersect-leave");
-
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 2);
-  const ten = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "10px")!;
-  const twenty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "20px")!;
-  ten.trigger([seenAt(el, 100, 100)]);
-  ten.trigger([seenAt(el, 700, 100)]);
-  assert.deepEqual(verbs, ["show"], "only the 10px phrase runs on the 10px observer's leave");
-  twenty.trigger([seenAt(el, 100, 100)]);
-  twenty.trigger([seenAt(el, 700, 100)]);
-  assert.deepEqual(verbs, ["show", "show"], "the 20px phrase runs on the 20px observer's leave");
-});
-
-test("once() is the only phrase-level gate for intersect crossings", () => {
-  const el = make("intersect-enter", "#probe.once().show()");
-  const probe = document.createElement("div");
-  probe.id = "probe";
-  document.body.append(probe);
-  const verbs: string[] = [];
-  wireReceiver(probe, verbs);
-  wireTrigger(el, "intersect-enter");
-
-  syncIntersect(el);
-  const observer = FakeIntersectionObserver.instances[0]!;
-  observer.trigger([seenAt(el, 100, 100)]);
+  el.addEventListener("intersect", () => seen.push("any"));
+  const observer = observerFor(el);
   observer.trigger([seenAt(el, 700, 100)]);
-  observer.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(verbs, ["show"], "once() gates the phrase across every later crossing");
+  assert.deepEqual(seen, [], "a leave crossing runs no enter phrase");
 });
 
-test("there is no bare on-intersect: only the three names are synthetic", () => {
-  assert.equal(INTERSECT_EVENT_NAMES.has("intersect"), false);
-  const el = document.createElement("div");
-  assert.equal(isImplementationEvent(el, "intersect"), false);
-  assert.deepEqual(parse("10px 20px: #a.show()", "intersect"), []);
-});
+test("the declared margin routes each crossing to its own observer's phrases", () => {
+  const receiver = document.createElement("div");
+  receiver.id = "r";
+  const el = makeEl({
+    "on-intersect(state:`enter`, block-start:`10px`)": "#r.ten()",
+    "on-intersect(state:`enter`, block-start:`20px`)": "#r.twenty()",
+  });
+  document.body.append(receiver);
+  attach(el);
+  attach(receiver);
+  const seen: string[] = [];
+  receiver.addEventListener("interaction", (raw) => {
+    const event = raw as InstanceType<typeof InteractionEvent>;
+    event.handled = true;
+    seen.push(event.verb);
+  });
 
-test("normaliseRootMargin accepts a #id.height/#id.width reference token", () => {
-  assert.equal(normaliseRootMargin("-#nav.height 0px 0px 0px"), "-#nav.height 0px 0px 0px");
-  assert.equal(normaliseRootMargin("#nav.width"), "#nav.width");
-  assert.equal(normaliseRootMargin("-#topnav.height 0px 0px 0px"), "-#topnav.height 0px 0px 0px");
-  assert.throws(() => normaliseRootMargin("-#topnav.height 0px 0px 0px 1px"), /at most 4 values/);
+  const ten = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "10px 0px 0px 0px")!;
+  const twenty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "20px 0px 0px 0px")!;
+  ten.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["ten"]);
+  twenty.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["ten", "twenty"]);
 });
 
 test("a #id.height margin resolves to the measured height and rebuilds on resize", () => {
   const nav = document.createElement("header");
   nav.id = "nav";
   document.body.append(nav);
-  const el = make("intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
-  syncIntersect(el);
+  const el = make("state:`enter`, block-start:`-#nav.height`", "#a.go()");
+  attach(el);
   assert.equal(FakeIntersectionObserver.instances.length, 1);
-  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "0px 0px 0px 0px", "unmeasured resolves to 0");
+  assert.equal(observerFor(el).rootMargin, "0px 0px 0px 0px", "unmeasured resolves to 0");
   const resize = FakeResizeObserver.instances[0]!;
   assert.ok(resize.observed.includes(nav), "the referenced element is observed");
 
@@ -494,151 +394,89 @@ test("a #id.height margin resolves to the measured height and rebuilds on resize
   assert.equal(FakeIntersectionObserver.instances.length, 3, "sub-pixel churn is a no-op");
 });
 
-test("phrases sharing a referenced margin share one observer", () => {
-  const nav = document.createElement("header");
-  nav.id = "nav";
-  document.body.append(nav);
-  const el = make("intersect-enter", "-#nav.height 0px 0px 0px: #a.show(); -#nav.height 0px 0px 0px: #b.show()");
+test("a referenced margin whose id is missing drops the phrase and logs once", (t) => {
+  const spy = t.mock.method(console, "error");
+  const el = make("state:`enter`, block-start:`-#ghost.height`", "#a.go()");
+  attach(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 0, "no observer for a missing reference");
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("#ghost"));
   syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 1);
-  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "0px 0px 0px 0px");
+  assert.equal(spy.mock.callCount(), 1, "the report is logged once");
 });
 
-test("two sections referencing #nav share one observation; the last teardown unobserves", () => {
-  const nav = document.createElement("header");
-  nav.id = "nav";
-  document.body.append(nav);
-  const one = make("intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
-  const two = make("intersect-enter", "-#nav.height 0px 0px 0px: #b.show()");
-  syncIntersect(one);
-  syncIntersect(two);
-  const resize = FakeResizeObserver.instances[0]!;
-  assert.equal(
-    resize.observed.filter((target) => target === nav).length,
-    1,
-    "observe() is idempotent, so two referrers share one observation",
-  );
-
-  teardownIntersect(one);
-  assert.ok(resize.observed.includes(nav), "one referrer left: still observed");
-  teardownIntersect(two);
-  assert.equal(resize.observed.includes(nav), false, "last referrer torn down: unobserved");
+test("syncIntersect is idempotent and teardownIntersect disconnects", () => {
+  const el = make("state:`enter`, block-start:`10px`", "#a.go()");
+  attach(el);
+  const observer = observerFor(el);
+  const count = FakeIntersectionObserver.instances.length;
+  syncIntersect(el);
+  assert.equal(FakeIntersectionObserver.instances.length, count, "unchanged state creates no new observer");
+  teardownIntersect(el);
+  assert.equal(observer.observed.length, 0, "teardown disconnects the observer");
 });
 
 test("a rebuild keeps entered state: the rebuilt observer's first non-overlap leaves once", () => {
   const nav = document.createElement("header");
   nav.id = "nav";
   document.body.append(nav);
-  const el = document.createElement("div");
-  el.setAttribute("on-intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
-  el.setAttribute("on-intersect-leave", "-#nav.height 0px 0px 0px: #b.show()");
-  document.body.append(el);
+  const el = makeEl({
+    "on-intersect(state:`enter`, block-start:`-#nav.height`)": "#a.go()",
+    "on-intersect(state:`leave`, block-start:`-#nav.height`)": "#b.go()",
+  });
+  attach(el);
   const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  const first = FakeIntersectionObserver.instances[0]!;
-  assert.equal(first.rootMargin, "0px 0px 0px 0px", "unmeasured resolves to 0");
-  first.trigger([seenAt(el, 100, 100)]);
+  el.addEventListener("intersect", (ev) => {
+    const event = ev as InstanceType<typeof ImplementationEvent>;
+    seen.push(event.values["state"] ?? "");
+  });
+  observerFor(el).trigger([seenAt(el, 100, 100)]);
   assert.deepEqual(seen, ["enter"]);
 
   const resize = FakeResizeObserver.instances[0]!;
   resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 74, inlineSize: 100 }] }]);
-  assert.deepEqual(seen, ["enter"], "teardown fires no event; only the new report knows");
+  assert.deepEqual(seen, ["enter"], "teardown fires no event");
   assert.equal(FakeIntersectionObserver.instances.length, 2, "the resize rebuilt the observer");
   const rebuilt = FakeIntersectionObserver.instances[1]!;
   assert.equal(rebuilt.rootMargin, "-74px 0px 0px 0px");
-
   rebuilt.trigger([seenAt(el, 700, 100)]);
   assert.deepEqual(seen, ["enter", "leave"], "the rebuilt observer's first report leaves once");
-  rebuilt.trigger([seenAt(el, 700, 100)]);
-  assert.deepEqual(seen, ["enter", "leave"], "and never repeats");
 });
 
-test("a rebuild while the element still overlaps emits no event", () => {
-  const nav = document.createElement("header");
-  nav.id = "nav";
-  document.body.append(nav);
-  const el = document.createElement("div");
-  el.setAttribute("on-intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
-  el.setAttribute("on-intersect-leave", "-#nav.height 0px 0px 0px: #b.show()");
-  document.body.append(el);
+test("once() gates the phrase across later crossings", () => {
+  const receiver = document.createElement("div");
+  receiver.id = "r";
+  const el = make("state:`enter`", "#r.once().go()");
+  document.body.append(receiver);
+  attach(el);
+  attach(receiver);
   const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  FakeIntersectionObserver.instances[0]!.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(seen, ["enter"]);
-
-  const resize = FakeResizeObserver.instances[0]!;
-  resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 74, inlineSize: 100 }] }]);
-  const rebuilt = FakeIntersectionObserver.instances[1]!;
-  rebuilt.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(seen, ["enter"], "still overlapping: no leave and no second enter");
+  receiver.addEventListener("interaction", (raw) => {
+    const event = raw as InstanceType<typeof InteractionEvent>;
+    event.handled = true;
+    seen.push(event.verb);
+  });
+  const observer = observerFor(el);
+  observer.trigger([seenAt(el, 100, 100)]);
+  observer.trigger([seenAt(el, 700, 100)]);
+  observer.trigger([seenAt(el, 100, 100)]);
+  assert.deepEqual(seen, ["go"]);
 });
 
-test("a rebuild preserves full state: a full that becomes false emits one full transition", () => {
-  const nav = document.createElement("header");
-  nav.id = "nav";
-  document.body.append(nav);
-  const el = document.createElement("div");
-  el.setAttribute("on-intersect-full", "-#nav.height 0px 0px 0px: #a.show()");
-  document.body.append(el);
-  const seen: string[] = [];
-  el.addEventListener("intersect-full", () => seen.push("full"));
-  syncIntersect(el);
-  FakeIntersectionObserver.instances[0]!.trigger([seenAt(el, 0, 100)]);
-  assert.deepEqual(seen, ["full"], "entirely inside: full becomes true");
-
-  const resize = FakeResizeObserver.instances[0]!;
-  resize.trigger([{ target: nav, borderBoxSize: [{ blockSize: 74, inlineSize: 100 }] }]);
-  const rebuilt = FakeIntersectionObserver.instances[1]!;
-  assert.equal(rebuilt.rootMargin, "-74px 0px 0px 0px");
-
-  rebuilt.trigger([seenAt(el, 300, 400)]);
-  assert.deepEqual(seen, ["full", "full"], "no longer full: exactly one transition");
-  rebuilt.trigger([seenAt(el, 300, 400)]);
-  assert.deepEqual(seen, ["full", "full"], "and no repeat");
-});
-
-test("a rebuild that adds a margin key keeps the survivor's state and starts the new key fresh", () => {
-  const nav = document.createElement("header");
-  nav.id = "nav";
-  document.body.append(nav);
-  const el = document.createElement("div");
-  el.setAttribute("on-intersect-enter", "-#nav.height 0px 0px 0px: #a.show()");
-  el.setAttribute("on-intersect-leave", "-#nav.height 0px 0px 0px: #b.show()");
-  document.body.append(el);
-  const seen: string[] = [];
-  el.addEventListener("intersect-enter", () => seen.push("enter"));
-  el.addEventListener("intersect-leave", () => seen.push("leave"));
-  syncIntersect(el);
-  FakeIntersectionObserver.instances[0]!.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(seen, ["enter"]);
-
-  el.setAttribute("on-intersect-enter", "-#nav.height 0px 0px 0px: #a.show(); 20px: #c.show()");
-  syncIntersect(el);
-  const rebuilt = FakeIntersectionObserver.instances.slice(1);
-  assert.equal(rebuilt.length, 2, "both keys observe after the edit");
-  const survivor = rebuilt.find((o) => o.rootMargin === "0px 0px 0px 0px")!;
-  const added = rebuilt.find((o) => o.rootMargin === "20px")!;
-  assert.ok(survivor !== undefined && added !== undefined, "both keys observe after the edit");
-
-  survivor.trigger([seenAt(el, 700, 100)]);
-  assert.deepEqual(seen, ["enter", "leave"], "the surviving key remembered it had entered");
-
-  added.trigger([seenAt(el, 100, 100)]);
-  assert.deepEqual(seen, ["enter", "leave", "enter"], "the added key starts unentered");
-});
-
-test("a referenced margin whose id is missing drops the phrase and logs once", (t) => {
+test("an unknown intersect slot is a wire-time error and creates no observer", (t) => {
   const spy = t.mock.method(console, "error");
-  const el = make("intersect-enter", "-#ghost.height 0px 0px 0px: #a.show(); 10px: #b.show()");
-  syncIntersect(el);
-  assert.equal(FakeIntersectionObserver.instances.length, 1, "only the literal-margin phrase survives");
-  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "10px");
+  const el = make("side:`0px`", "#a.go()");
+  attach(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 0);
   assert.equal(spy.mock.callCount(), 1);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("#ghost"), spy.mock.calls[0]!.arguments[0] as string);
-  syncIntersect(el);
-  assert.equal(spy.mock.callCount(), 1, "the report is logged once");
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("is not a slot"));
+});
+
+test("a type-binding intersect slot is a wire-time error", (t) => {
+  const spy = t.mock.method(console, "error");
+  const el = make("state:string", "#a.go()");
+  attach(el);
+  assert.equal(FakeIntersectionObserver.instances.length, 0);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('"state" matches only'));
 });

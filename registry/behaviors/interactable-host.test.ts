@@ -133,9 +133,32 @@ function setReadyState(state: DocumentReadyState): void {
 }
 
 function hostElement<T extends HTMLElement>(tag: string, attributes: Record<string, string>): T {
-  const el = document.createElement(tag) as T;
-  for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
-  return el;
+  const attrs = Object.entries(attributes)
+    .map(([name, value]) => ` ${stripDeclarationSpaces(name)}=${JSON.stringify(value)}`)
+    .join("");
+  const holder = document.createElement("div");
+  holder.innerHTML = `<${tag}${attrs}></${tag}>`;
+  document.body.append(holder);
+  return holder.firstElementChild as T;
+}
+
+function stripDeclarationSpaces(name: string): string {
+  return name.replace(/\(([^)]*)\)/, (_match, inner: string) => `(${inner.replace(/\s+/g, "")})`);
+}
+
+function replaceAttribute(el: Element, remove: string, add: string): Element {
+  const holder = document.createElement("div");
+  holder.innerHTML = `<${el.localName} ${add}=${JSON.stringify(el.getAttribute(remove) ?? "")}></${el.localName}>`;
+  const replacement = holder.firstElementChild!;
+  for (const name of el.getAttributeNames()) {
+    if (name === remove) continue;
+    if (name === add) continue;
+    const clone = document.createElement("div");
+    clone.innerHTML = `<x ${name}=${JSON.stringify(el.getAttribute(name)!)}></x>`;
+    replacement.setAttribute(name, clone.firstElementChild!.getAttribute(name)!);
+  }
+  el.replaceWith(replacement);
+  return replacement;
 }
 
 function dispatchInteraction(
@@ -613,10 +636,10 @@ test("a name still missing when the turn settles is reported once", async () => 
   dispose();
 });
 
-test("on-intersect-* needs no implements and never warns about a missing event", (t) => {
+test("on-intersect needs no implements and never warns about a missing event", (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const trigger = hostElement("section", { "on-intersect-enter": "#recv.go()" });
+  const trigger = hostElement("section", { "on-intersect(state:`enter`)": "#recv.go()" });
   document.body.appendChild(trigger);
   assert.equal(warn.mock.callCount(), 0);
   trigger.remove();
@@ -626,12 +649,15 @@ test("on-intersect-* needs no implements and never warns about a missing event",
 test("an intersect crossing runs only the phrases whose margin matches", async () => {
   const dispose = start();
   const receiver = hostElement("div", { id: "spy", implements: "alpha" });
-  const trigger = hostElement("section", { "on-intersect-enter": "0px: #spy.go(); 50px: #spy.go()" });
+  const trigger = hostElement("section", {
+    "on-intersect(state:`enter`, block-start:`0px`)": "#spy.go()",
+    "on-intersect(state:`enter`, block-start:`50px`)": "#spy.go()",
+  });
   document.body.append(trigger, receiver);
   await flush();
 
-  const zero = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px");
-  const fifty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "50px");
+  const zero = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px 0px 0px 0px");
+  const fifty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "50px 0px 0px 0px");
   assert.ok(zero && fifty);
 
   zero!.trigger([{ target: trigger, isIntersecting: true }]);
@@ -646,8 +672,8 @@ test("enter fires on entering and leave on leaving from one observer", async () 
   const dispose = start();
   const receiver = hostElement("div", { id: "both", implements: "alpha" });
   const trigger = hostElement("section", {
-    "on-intersect-enter": "#both.go()",
-    "on-intersect-leave": "#both.go()",
+    "on-intersect(state:`enter`)": "#both.go()",
+    "on-intersect(state:`leave`)": "#both.go()",
   });
   document.body.append(trigger, receiver);
   await flush();
@@ -666,11 +692,11 @@ test("enter fires on entering and leave on leaving from one observer", async () 
 test("once() is the only filter for intersect crossings", async () => {
   const dispose = start();
   const receiver = hostElement("div", { id: "once", implements: "alpha" });
-  const trigger = hostElement("section", { "on-intersect-enter": "#once.once().go()" });
+  const trigger = hostElement("section", { "on-intersect(state:`enter`)": "#once.once().go()" });
   document.body.append(trigger, receiver);
   await flush();
 
-  const observer = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px")!;
+  const observer = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px 0px 0px 0px")!;
   observer.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 1 }]);
   observer.trigger([{ target: trigger, isIntersecting: false, intersectionRatio: 0 }]);
   observer.trigger([{ target: trigger, isIntersecting: true, intersectionRatio: 1 }]);
@@ -680,19 +706,22 @@ test("once() is the only filter for intersect crossings", async () => {
 
 test("intersect observers are rebuilt on attribute change and torn down on disconnect", async () => {
   const dispose = start();
-  const trigger = hostElement("section", { "on-intersect-enter": "10px: #recv.go()" });
-  document.body.appendChild(trigger);
+  const trigger = hostElement("section", { "on-intersect(state:`enter`, block-start:`10px`)": "#recv.go()" });
   await flush();
   assert.equal(FakeIntersectionObserver.instances.length, 1);
-  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "10px");
+  assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "10px 0px 0px 0px");
 
-  trigger.setAttribute("on-intersect-enter", "20px: #recv.go()");
+  const replaced = replaceAttribute(
+    trigger,
+    "on-intersect(state:`enter`,block-start:`10px`)",
+    "on-intersect(state:`enter`,block-start:`20px`)",
+  );
   await flush();
   assert.equal(FakeIntersectionObserver.instances.length, 2);
   assert.equal(FakeIntersectionObserver.instances[0]!.observed.length, 0, "the old observer was disconnected");
-  assert.equal(FakeIntersectionObserver.instances[1]!.rootMargin, "20px");
+  assert.equal(FakeIntersectionObserver.instances[1]!.rootMargin, "20px 0px 0px 0px");
 
-  trigger.remove();
+  replaced.remove();
   await flush();
   assert.equal(FakeIntersectionObserver.instances[1]!.observed.length, 0, "disconnect tears down the observer");
   dispose();

@@ -1,7 +1,7 @@
 import { describeElement } from "@interactable/describe-element.ts";
 import { LEGACY_EVENTS_WITHOUT_IDL, getEventSpec, isImplementationEvent } from "@interactable/events.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
-import { INTERSECT_ATTRIBUTES, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
+import { isIntersectAttribute, readIntersectSpec, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 import { ANCHOR } from "@utils/formula.ts";
 import { isBareNumber, isNumberLiteral, isNumericUnion, parse, parseEventAttribute } from "@interactable/parser.ts";
@@ -209,9 +209,25 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
     return;
   }
   if (declaration !== undefined) validateTriggerDeclaration(el, attribute, type, declaration);
+  let intersectMargin: string | undefined;
+  let fireDeclaration: readonly EventValueDeclaration[] | undefined = declaration;
+  if (isIntersectAttribute(attribute)) {
+    try {
+      const spec = readIntersectSpec(declaration);
+      intersectMargin = spec.margin;
+      fireDeclaration = spec.match;
+    } catch (err) {
+      console.error(`[Interactable] on ${describeElement(el)}, "${attribute}": ${(err as Error).message}`);
+      return;
+    }
+  }
   const handler = (ev: Event): void => {
     if (!(ev instanceof ImplementationEvent) && isImplementationEvent(el, type)) return;
-    const eventAttribute = parseFireTimeAttribute(attribute);
+    if (intersectMargin !== undefined) {
+      if (!(ev instanceof ImplementationEvent) || ev.key !== intersectMargin) return;
+    }
+    const eventAttribute: EventAttribute | undefined =
+      intersectMargin !== undefined ? { type, declaration: fireDeclaration } : parseFireTimeAttribute(attribute);
     runPhrases(el, el.getAttribute(attribute) ?? "", ev, eventAttribute);
   };
   el.addEventListener(type, handler, { passive: true });
@@ -363,7 +379,7 @@ function wireAttributeObserver(el: Element, attachment: Attachment): void {
       const newValue = el.getAttribute(name);
       if (name === "implements") {
         ensureImplementations(el, attachment);
-      } else if (INTERSECT_ATTRIBUTES.includes(name)) {
+      } else if (isIntersectAttribute(name)) {
         syncIntersect(el);
         handleTriggerAttribute(el, attachment, name, oldValue, newValue);
       } else if (name.startsWith("on-")) {

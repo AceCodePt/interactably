@@ -1,5 +1,5 @@
-import { parse } from "@interactable/parser.ts";
-import type { Phrase } from "@interactable/parser.ts";
+import { parseEventAttribute } from "@interactable/parser.ts";
+import type { EventValueDeclaration } from "@interactable/parser.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { logOnce } from "@interactable/log.ts";
 import {
@@ -8,29 +8,77 @@ import {
   unregisterResizeListener,
 } from "@interactable/measure.ts";
 
-export const INTERSECT_EVENT_NAMES: ReadonlySet<string> = new Set([
-  "intersect-enter",
-  "intersect-leave",
-  "intersect-full",
-]);
+export const INTERSECT_EVENT_NAMES: ReadonlySet<string> = new Set(["intersect"]);
 
-export const INTERSECT_ATTRIBUTES: readonly string[] = [...INTERSECT_EVENT_NAMES].map(
-  (name) => `on-${name}`,
-);
+export function isIntersectAttribute(name: string): boolean {
+  return name === "on-intersect" || name.startsWith("on-intersect(");
+}
 
 const MARGIN_TOKEN =
   /^(?:0|-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|%)|-?#[\w-]+\.(?:height|width))$/;
 
-export function normaliseRootMargin(key?: string): string {
-  if (key === undefined || key.trim() === "") return "0px";
-  const tokens = key.trim().split(/\s+/);
-  if (tokens.length > 4) throw new Error(`invalid root margin "${key}": at most 4 values`);
-  for (const token of tokens) {
-    if (!MARGIN_TOKEN.test(token)) {
-      throw new Error(`invalid root margin "${key}": rootMargin accepts only px or %`);
-    }
+export function normaliseRootMargin(token?: string): string {
+  const value = token === undefined ? "" : token.trim();
+  if (value === "") return "0px";
+  if (!MARGIN_TOKEN.test(value)) {
+    throw new Error(`invalid root margin "${token}": rootMargin accepts only px or %`);
   }
-  return tokens.join(" ");
+  return value;
+}
+
+export const MARGIN_SLOTS = ["block-start", "block-end", "inline-start", "inline-end"] as const;
+
+export type MarginSlot = (typeof MARGIN_SLOTS)[number];
+
+const STATE_VALUES: ReadonlySet<string> = new Set(["enter", "leave"]);
+const FULL_VALUES: ReadonlySet<string> = new Set(["true", "false"]);
+
+export interface IntersectSpec {
+  margin: string;
+  slots: Readonly<Record<MarginSlot, string>>;
+  match: readonly EventValueDeclaration[];
+}
+
+export function readIntersectSpec(declaration?: readonly EventValueDeclaration[]): IntersectSpec {
+  const slots: Record<MarginSlot, string> = {
+    "block-start": "0px",
+    "block-end": "0px",
+    "inline-start": "0px",
+    "inline-end": "0px",
+  };
+  const match: EventValueDeclaration[] = [];
+  const seen = new Set<string>();
+  for (const value of declaration ?? []) {
+    if (seen.has(value.name)) throw new Error(`slot "${value.name}" is declared twice`);
+    seen.add(value.name);
+    if ((MARGIN_SLOTS as readonly string[]).includes(value.name)) {
+      if (value.kind !== "literal") {
+        throw new Error(`"${value.name}" configures the observer; write a backticked margin literal`);
+      }
+      slots[value.name as MarginSlot] = normaliseRootMargin(value.literal);
+      continue;
+    }
+    if (value.name === "state") {
+      if (value.kind !== "literal" || !STATE_VALUES.has(value.literal)) {
+        throw new Error(`"state" matches only \`enter\` or \`leave\``);
+      }
+      match.push(value);
+      continue;
+    }
+    if (value.name === "full") {
+      if (value.kind !== "literal" || !FULL_VALUES.has(value.literal)) {
+        throw new Error(`"full" matches only \`true\` or \`false\``);
+      }
+      match.push(value);
+      continue;
+    }
+    throw new Error(
+      `"${value.name}" is not a slot of intersect; ` +
+        `expected state, full, block-start, block-end, inline-start or inline-end`,
+    );
+  }
+  const margin = MARGIN_SLOTS.map((slot) => slots[slot]).join(" ");
+  return { margin, slots, match };
 }
 
 const MARGIN_REF = /^(-?)#([\w-]+)\.(height|width)$/;
@@ -38,14 +86,13 @@ const MARGIN_REF = /^(-?)#([\w-]+)\.(height|width)$/;
 const THRESHOLDS: readonly number[] = Array.from({ length: 101 }, (_, index) => index / 100);
 
 interface ObserverSpec {
-  rootMargin: string;
-  types: Set<string>;
+  margin: string;
+  slots: Readonly<Record<MarginSlot, string>>;
 }
 
 interface ResolvedSpec {
-  rootMargin: string;
+  margin: string;
   resolvedRootMargin: string;
-  types: Set<string>;
   referenced: readonly Element[];
 }
 
@@ -56,7 +103,6 @@ interface IntersectState {
 
 interface ManagedObserver {
   observer: IntersectionObserver;
-  types: ReadonlySet<string>;
   resolvedRootMargin: string;
   refListeners: ReadonlyArray<{ ref: Element; listener: () => void }>;
   state: IntersectState;
@@ -66,7 +112,8 @@ const observersByElement = new WeakMap<Element, Map<string, ManagedObserver>>();
 
 export function syncIntersect(el: Element): void {
   if (typeof IntersectionObserver === "undefined") return;
-  const desired = resolveSpecs(collectSpecs(el), el);
+  const { writingMode, direction } = readWritingMode(el);
+  const desired = resolveSpecs(collectSpecs(el), el, writingMode, direction);
   const existing = observersByElement.get(el);
   if (existing !== undefined && sameKeys(existing, desired)) return;
   teardownIntersect(el);
@@ -91,12 +138,12 @@ export function syncIntersect(el: Element): void {
             box !== null && elRect !== null && elRect.top >= box.top && elRect.bottom <= box.bottom;
           const fullChanged = isFull !== state.wasFull;
           state.wasFull = isFull;
-          for (const type of spec.types) {
-            if (type === "intersect-enter" && !entered) continue;
-            if (type === "intersect-leave" && !left) continue;
-            if (type === "intersect-full" && !fullChanged) continue;
-            el.dispatchEvent(new ImplementationEvent(type, { key: spec.rootMargin }));
-          }
+          const values: Record<string, string> = {};
+          if (entered) values["state"] = "enter";
+          else if (left) values["state"] = "leave";
+          if (fullChanged) values["full"] = isFull ? "true" : "false";
+          if (Object.keys(values).length === 0) continue;
+          el.dispatchEvent(new ImplementationEvent("intersect", { key: spec.margin, values }));
         }
       },
       { rootMargin: spec.resolvedRootMargin, threshold: [...THRESHOLDS] },
@@ -109,7 +156,6 @@ export function syncIntersect(el: Element): void {
     });
     map.set(key, {
       observer,
-      types: spec.types,
       resolvedRootMargin: spec.resolvedRootMargin,
       refListeners,
       state,
@@ -133,21 +179,22 @@ export function teardownIntersect(el: Element): void {
 
 function collectSpecs(el: Element): Map<string, ObserverSpec> {
   const specs = new Map<string, ObserverSpec>();
-  for (const type of INTERSECT_EVENT_NAMES) {
-    const value = el.getAttribute(`on-${type}`);
-    if (value === null) continue;
-    let phrases: Phrase[];
+  for (const attribute of el.getAttributeNames()) {
+    if (!isIntersectAttribute(attribute)) continue;
+    let parsed;
     try {
-      phrases = parse(value, type);
+      parsed = parseEventAttribute(attribute.slice(3));
     } catch {
       continue;
     }
-    for (const phrase of phrases) {
-      const rootMargin = normaliseRootMargin(phrase.key);
-      const spec = specs.get(rootMargin);
-      if (spec === undefined) specs.set(rootMargin, { rootMargin, types: new Set([type]) });
-      else spec.types.add(type);
+    if (parsed.type !== "intersect") continue;
+    let info: IntersectSpec;
+    try {
+      info = readIntersectSpec(parsed.declaration);
+    } catch {
+      continue;
     }
+    if (!specs.has(info.margin)) specs.set(info.margin, { margin: info.margin, slots: info.slots });
   }
   return specs;
 }
@@ -155,35 +202,72 @@ function collectSpecs(el: Element): Map<string, ObserverSpec> {
 // Resolution before first layout (the header not yet laid out at connect) yields 0.
 // That is acceptable: the first ResizeObserver report rebuilds with the right number,
 // and the element's initial-report enter fires against the corrected box.
-function resolveSpecs(specs: Map<string, ObserverSpec>, el: Element): Map<string, ResolvedSpec> {
+function resolveSpecs(
+  specs: Map<string, ObserverSpec>,
+  el: Element,
+  writingMode: string,
+  direction: string,
+): Map<string, ResolvedSpec> {
   const resolved = new Map<string, ResolvedSpec>();
   for (const [key, spec] of specs) {
-    const result = resolveMargin(spec.rootMargin);
+    const physical = mapToPhysical(spec.slots, writingMode, direction);
+    const result = resolvePhysicalMargin(physical);
     if (result === null) {
-      logOnce(el, `margin "${spec.rootMargin}" references an id that is not in the document`);
+      logOnce(el, `margin "${spec.margin}" references an id that is not in the document`);
       continue;
     }
     resolved.set(key, {
-      rootMargin: spec.rootMargin,
+      margin: spec.margin,
       resolvedRootMargin: result.resolved,
-      types: spec.types,
       referenced: result.referenced,
     });
   }
   return resolved;
 }
 
-function resolveMargin(margin: string): { resolved: string; referenced: Element[] } | null {
-  const tokens = margin.split(/\s+/);
-  const parts: string[] = [];
+function mapToPhysical(
+  slots: Readonly<Record<MarginSlot, string>>,
+  writingMode: string,
+  direction: string,
+): string[] {
+  const blockStart = slots["block-start"];
+  const blockEnd = slots["block-end"];
+  const inlineStart = slots["inline-start"];
+  const inlineEnd = slots["inline-end"];
+  if (writingMode === "vertical-rl" || writingMode === "sideways-rl") {
+    return [inlineStart, blockStart, inlineEnd, blockEnd];
+  }
+  if (writingMode === "vertical-lr" || writingMode === "sideways-lr") {
+    return [inlineStart, blockEnd, inlineEnd, blockStart];
+  }
+  return direction === "rtl"
+    ? [blockStart, inlineStart, blockEnd, inlineEnd]
+    : [blockStart, inlineEnd, blockEnd, inlineStart];
+}
+
+function readWritingMode(el: Element): { writingMode: string; direction: string } {
+  try {
+    const view = el.ownerDocument?.defaultView;
+    const style = view?.getComputedStyle(el);
+    return {
+      writingMode: style?.writingMode || "horizontal-tb",
+      direction: style?.direction || "ltr",
+    };
+  } catch {
+    return { writingMode: "horizontal-tb", direction: "ltr" };
+  }
+}
+
+function resolvePhysicalMargin(parts: readonly string[]): { resolved: string; referenced: Element[] } | null {
+  const resolvedParts: string[] = [];
   const referenced: Element[] = [];
-  for (const token of tokens) {
+  for (const token of parts) {
     const resolved = resolveMarginToken(token);
     if (resolved === null) return null;
-    parts.push(resolved.resolved);
+    resolvedParts.push(resolved.resolved);
     if (resolved.ref !== undefined && !referenced.includes(resolved.ref)) referenced.push(resolved.ref);
   }
-  return { resolved: parts.join(" "), referenced };
+  return { resolved: resolvedParts.join(" "), referenced };
 }
 
 function resolveMarginToken(
@@ -206,10 +290,6 @@ function sameKeys(
     const managed = existing.get(key);
     if (managed === undefined) return false;
     if (managed.resolvedRootMargin !== spec.resolvedRootMargin) return false;
-    if (managed.types.size !== spec.types.size) return false;
-    for (const type of spec.types) {
-      if (!managed.types.has(type)) return false;
-    }
   }
   return true;
 }
