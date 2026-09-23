@@ -1,10 +1,11 @@
 import { isAttached } from "@interactable/attachment.ts";
-import { parse } from "@interactable/parser.ts";
+import { parse, isNumericUnion } from "@interactable/parser.ts";
+import { getEventFieldTypes } from "@interactable/events.ts";
 import { matchesKey } from "@interactable/keys.ts";
 import { normaliseRootMargin, INTERSECT_EVENT_NAMES } from "@interactable/intersect.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
-import type { Arg, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
+import type { Arg, EventAttribute, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
 import { readValue } from "@behaviors/implementation-utils.ts";
 import { evaluateFormula, FormulaError } from "@utils/formula.ts";
 import { logOnce, clearLogs } from "@interactable/log.ts";
@@ -44,7 +45,7 @@ export function clearPhraseState(el: Element): void {
   stateByElement.delete(el);
 }
 
-export function runPhrases(source: Element, value: string, ev: Event): void {
+export function runPhrases(source: Element, value: string, ev: Event, eventAttribute?: EventAttribute): void {
   let phrases: Phrase[];
   try {
     phrases = parse(value, ev.type);
@@ -54,14 +55,22 @@ export function runPhrases(source: Element, value: string, ev: Event): void {
   }
   for (let index = 0; index < phrases.length; index++) {
     try {
-      runPhrase(source, value, index, phrases[index]!, ev);
+      runPhrase(source, value, index, phrases[index]!, ev, eventAttribute);
     } catch (err) {
       console.error("[Interactable] phrase skipped:", err);
     }
   }
 }
 
-function runPhrase(source: Element, value: string, index: number, phrase: Phrase, ev: Event): void {
+function runPhrase(
+  source: Element,
+  value: string,
+  index: number,
+  phrase: Phrase,
+  ev: Event,
+  eventAttribute?: EventAttribute,
+): void {
+  if (eventAttribute !== undefined && !matchesLiteralDeclarations(source, eventAttribute, ev)) return;
   if (KEYBOARD_EVENT_TYPES.has(ev.type)) {
     if (phrase.key !== undefined) {
       const keyboardEvent = ev as KeyboardEvent;
@@ -96,6 +105,34 @@ function runPhrase(source: Element, value: string, index: number, phrase: Phrase
   } catch (err) {
     console.error("[Interactable]", err);
   }
+}
+
+function matchesLiteralDeclarations(source: Element, eventAttribute: EventAttribute, ev: Event): boolean {
+  const declaration = eventAttribute.declaration;
+  if (declaration === undefined) return true;
+  const fields = getEventFieldTypes(source, ev.type);
+  for (const value of declaration) {
+    if (value.kind !== "literal") continue;
+    const raw = fieldValue(ev, value.name);
+    if (raw === undefined) return false;
+    const fieldType = fields?.[value.name];
+    if (fieldType !== undefined && isNumericUnion(fieldType)) {
+      const numeric = Number(raw);
+      if (!Number.isFinite(numeric) || numeric !== Number(value.literal)) return false;
+    } else if (raw.toLowerCase() !== value.literal.toLowerCase()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function fieldValue(ev: Event, name: string): string | undefined {
+  if (KEYBOARD_EVENT_TYPES.has(ev.type) && (name === "key" || name === "code")) {
+    const value = (ev as KeyboardEvent)[name];
+    return typeof value === "string" ? value : undefined;
+  }
+  if (ev instanceof ImplementationEvent) return ev.values[name];
+  return undefined;
 }
 
 type Outcome = "completed" | "guard" | "failed" | "paused";
@@ -305,6 +342,10 @@ function resolveArg(
       return readValue(el, arg.property);
     }
     case "name": {
+      if (KEYBOARD_EVENT_TYPES.has(context.ev.type)) {
+        if (arg.name === "key") return (context.ev as KeyboardEvent).key;
+        if (arg.name === "code") return (context.ev as KeyboardEvent).code;
+      }
       if (context.ev instanceof ImplementationEvent) {
         const value = context.ev.values[arg.name];
         if (value !== undefined) return value;

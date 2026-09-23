@@ -183,10 +183,9 @@ export function parseRefOrRead(text: string): RefOrRead | undefined {
   return undefined;
 }
 
-export interface EventValueDeclaration {
-  name: string;
-  type: string;
-}
+export type EventValueDeclaration =
+  | { kind: "type"; name: string; type: string }
+  | { kind: "literal"; name: string; literal: string };
 
 export interface EventAttribute {
   type: string;
@@ -205,18 +204,46 @@ export function parseEventAttribute(name: string): EventAttribute {
     .map((part) => part.trim())
     .filter((part) => part !== "");
   if (parts.length === 0) throw new Error(`empty value declaration in "${name}"; expected "name:type"`);
-  const declaration = parts.map((part, index) => {
+  const declaration = parts.map((part, index): EventValueDeclaration => {
     const colon = part.indexOf(":");
     if (colon === -1) throw new Error(`value ${index + 1} in "${name}": expected "name:type", got "${part}"`);
     const declName = part.slice(0, colon).trim();
-    const declType = part.slice(colon + 1).trim();
+    const rhs = part.slice(colon + 1).trim();
     if (!IDENT.test(declName)) {
       throw new Error(`value ${index + 1} in "${name}": "${declName}" is not a valid value name`);
     }
-    if (declType === "") throw new Error(`value ${index + 1} in "${name}": missing type for "${declName}"`);
-    return { name: declName, type: declType };
+    if (rhs === "") throw new Error(`value ${index + 1} in "${name}": missing type for "${declName}"`);
+    if (rhs.startsWith("`")) {
+      if (!rhs.endsWith("`")) {
+        throw new Error(`value ${index + 1} in "${name}": unterminated backtick in literal for "${declName}"`);
+      }
+      const literal = rhs.slice(1, -1);
+      if (literal === "") throw new Error(`value ${index + 1} in "${name}": empty literal for "${declName}"`);
+      if (literal.includes("`")) {
+        throw new Error(`value ${index + 1} in "${name}": literal for "${declName}" contains a backtick`);
+      }
+      return { kind: "literal", name: declName, literal };
+    }
+    return { kind: "type", name: declName, type: rhs };
   });
+  const literalCount = declaration.reduce((count, value) => (value.kind === "literal" ? count + 1 : count), 0);
+  if (literalCount > 0 && literalCount < declaration.length) {
+    throw new Error(`value declaration in "${name}": a declaration either matches literals or binds types, not both`);
+  }
   return { type, declaration };
+}
+
+export function isNumberLiteral(text: string): boolean {
+  return NUMBER.test(text);
+}
+
+export function isNumericUnion(type: string): boolean {
+  const parts = type.split("|").map((part) => part.trim());
+  return parts.length > 0 && parts.every(isNumberLiteral);
+}
+
+export function isBareNumber(type: string): boolean {
+  return type.trim() === "number";
 }
 
 type ModifierSpec =

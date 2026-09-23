@@ -74,14 +74,14 @@ arg       := number | "'" string "'" | 'true' | 'false' | ref | read | name | ex
 read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
-value-decl:= name ':' tsyntax-scalar
+value-decl:= name ':' (tsyntax-scalar | '`' literal '`')
 expr      := <expression>  (see § Expressions)
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'
 ```
 
 Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`, `:`, `&`, `|`, `{`, `}`, `'`, `"`, `#`. `this` is the only keyword; an element with `id="this"` is addressed as `#this`. A `unit` must contain at least one call; `debounce`/`throttle` are legal only before the first call, at most one per unit, while `once`/`delay` may sit anywhere. `&&` and `||` are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. `debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb; `value`, `checked`, `min`, `max`, `step` are property reads, not verbs (a verb called `value()` is still legal, distinguished by its parens).
 
-**An event may declare values on the attribute.** `on-<type>(<name>:<tsyntax-scalar>, …)` names the values the event carries, and each declared name resolves as an argument inside that phrase — a bare argument (`this.set(html)`) or an object-field value (`#list.render({body: html})`) — and nowhere else. It is written without spaces, because attribute names cannot contain whitespace; names are validated as flat tsyntax scalars at wire time. Coloned and bracketed attribute names trip HTML validators and need escaping in CSS selectors, but the runtime preserves them intact. A name the event does not declare is an error when the element is wired, not when the event fires; declared names never resolve inside formula expressions (`replace(html, …)` stays an error).
+**An event may declare values on the attribute.** `on-<type>(<name>:<tsyntax-scalar>, …)` names the values the event carries, and each declared name resolves as an argument inside that phrase — a bare argument (`this.set(html)`) or an object-field value (`#list.render({body: html})`) — and nowhere else. It is written without spaces, because attribute names cannot contain whitespace; names are validated as flat tsyntax scalars at wire time. Coloned and bracketed attribute names trip HTML validators and need escaping in CSS selectors, but the runtime preserves them intact. A name the event does not declare is an error when the element is wired, not when the event fires; declared names never resolve inside formula expressions (`replace(html, …)` stays an error). The right-hand side may instead be a backticked literal to match, not a type to bind: ``on-keydown(code:`Escape`)`` runs the phrase only when the key's `code` is `Escape`. A declaration is all literals or all types, never mixed; every matching declaration fires, with no most-specific rule. (See [the docs](https://acecodept.github.io/interactably/docs.html#trigger-grammar) for the field allowlist, the key-versus-code trade, and how literals compare.)
 
 | Construct | Example | Meaning |
 | --- | --- | --- |

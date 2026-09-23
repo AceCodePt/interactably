@@ -4,7 +4,7 @@ import { compileSignature, exclusivePair, isExclusiveSlot, isOptionalCtor } from
 import type { CompiledSignature, Sig } from "@interactable/signature.ts";
 import { registerImplementation } from "@behaviors/implementation-registry.ts";
 import type { NormalizedImplementationDef } from "@behaviors/implementation-registry.ts";
-import type { Attrs, El, Implementation, ImplementationDef, KW, Tag, Validated, ValidatedSigs } from "@behaviors/types.ts";
+import type { Attrs, El, EventSpec, Implementation, ImplementationDef, KW, Tag, Validated, ValidatedSigs } from "@behaviors/types.ts";
 
 export type { Ctor, OptionalCtor, Sig, Tag, El, Slot, KW, ArgOf, Attrs, Implementation, ValidatedSigs, ImplementationDef } from "@behaviors/types.ts";
 
@@ -20,11 +20,11 @@ export function defineImplementation<
     config?: Validated<C>;
     state?: Validated<S>;
     verbs: V & ValidatedSigs<V>;
-    events?: readonly string[];
+    events?: Readonly<Record<string, EventSpec>>;
   },
   factory: (el: El<T>, attrs: Attrs<C, S>) => Implementation<V>,
 ): ImplementationDef<T, C, S, V> {
-  const events = decl.events ?? [];
+  const events = decl.events ?? {};
   validateEvents(name, events);
   validateSlots(name, decl.config ?? {}, decl.state ?? {}, decl.verbs);
   registerImplementation({
@@ -39,10 +39,16 @@ export function defineImplementation<
   return { name, tags: decl.tags, config: decl.config, state: decl.state, verbs: decl.verbs, events, factory };
 }
 
-function validateEvents(name: string, events: readonly string[]): void {
-  for (const event of events) {
-    if (typeof event !== "string" || event.trim() === "") {
-      throw new Error(`[Interactable] ${name} events: "${String(event)}" is not a valid event name`);
+function validateEvents(name: string, events: Readonly<Record<string, EventSpec>>): void {
+  for (const [eventName, spec] of Object.entries(events)) {
+    if (eventName.trim() === "") {
+      throw new Error(`[Interactable] ${name} events: "" is not a valid event name`);
+    }
+    for (const [field, raw] of Object.entries(spec.fields ?? {})) {
+      if (field.trim() === "") {
+        throw new Error(`[Interactable] ${name} event "${eventName}": "" is not a valid field name`);
+      }
+      validateScalar(name, `event "${eventName}" field "${field}"`, raw);
     }
   }
 }

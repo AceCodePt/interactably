@@ -161,3 +161,21 @@ test("an exclusive field naming an undeclared key is a definition-time error", (
     /not a declared key/,
   );
 });
+
+test("an event field signature is validated at definition time", () => {
+  assert.throws(() =>
+    defineImplementation(
+      "bad-event-field",
+      { events: { ping: { fields: { n: "number |" } } }, verbs: {} },
+      () => ({}),
+    ),
+  );
+  defineImplementation(
+    "good-event-field",
+    { events: { ping: { fields: { n: "number" }, open: true }, pong: {} }, verbs: {} },
+    () => ({}),
+  );
+  assert.equal(getImplementationDef("good-event-field")?.events["ping"]?.fields?.["n"], "number");
+  assert.equal(getImplementationDef("good-event-field")?.events["ping"]?.open, true);
+  assert.deepEqual(getImplementationDef("good-event-field")?.events["pong"], {});
+});

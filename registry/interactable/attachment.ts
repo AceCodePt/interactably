@@ -1,11 +1,11 @@
 import { describeElement } from "@interactable/describe-element.ts";
-import { LEGACY_EVENTS_WITHOUT_IDL, isImplementationEvent } from "@interactable/events.ts";
+import { LEGACY_EVENTS_WITHOUT_IDL, getEventSpec, isImplementationEvent } from "@interactable/events.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { INTERSECT_ATTRIBUTES, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 import { ANCHOR } from "@utils/formula.ts";
-import { parse, parseEventAttribute } from "@interactable/parser.ts";
-import type { Arg, EventValueDeclaration } from "@interactable/parser.ts";
+import { isBareNumber, isNumberLiteral, isNumericUnion, parse, parseEventAttribute } from "@interactable/parser.ts";
+import type { Arg, EventAttribute, EventValueDeclaration } from "@interactable/parser.ts";
 import { compileSignature } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import { NotReadyError } from "@behaviors/implementation-utils.ts";
@@ -211,7 +211,8 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
   if (declaration !== undefined) validateTriggerDeclaration(el, attribute, type, declaration);
   const handler = (ev: Event): void => {
     if (!(ev instanceof ImplementationEvent) && isImplementationEvent(el, type)) return;
-    runPhrases(el, el.getAttribute(attribute) ?? "", ev);
+    const eventAttribute = parseFireTimeAttribute(attribute);
+    runPhrases(el, el.getAttribute(attribute) ?? "", ev, eventAttribute);
   };
   el.addEventListener(type, handler, { passive: true });
   if (!isImplementationEvent(el, type)) {
@@ -226,6 +227,14 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
   attachment.triggers.set(attribute, () => el.removeEventListener(type, handler));
 }
 
+function parseFireTimeAttribute(attribute: string): EventAttribute | undefined {
+  try {
+    return parseEventAttribute(attribute.slice(3));
+  } catch {
+    return undefined;
+  }
+}
+
 function validateTriggerDeclaration(
   el: Element,
   attribute: string,
@@ -233,12 +242,46 @@ function validateTriggerDeclaration(
   declaration: readonly EventValueDeclaration[],
 ): void {
   const declared = new Set<string>();
+  const spec = getEventSpec(el, type);
+  const closed = spec !== undefined && spec.open !== true;
   for (const value of declaration) {
     if (declared.has(value.name)) {
       console.error(`[Interactable] on ${describeElement(el)}, "${attribute}": value "${value.name}" is declared twice`);
       return;
     }
     declared.add(value.name);
+    if (value.kind === "literal") {
+      if (closed) {
+        const fieldType = spec.fields?.[value.name];
+        if (fieldType === undefined) {
+          console.error(
+            `[Interactable] on ${describeElement(el)}, "${attribute}": "${value.name}" is not a field of event "${type}"`,
+          );
+          return;
+        }
+        if (isBareNumber(fieldType)) {
+          console.error(
+            `[Interactable] on ${describeElement(el)}, "${attribute}": cannot match a literal against "${value.name}"; ` +
+              `numbers bind but do not match`,
+          );
+          return;
+        }
+        if (isNumericUnion(fieldType) && !isNumberLiteral(value.literal)) {
+          console.error(
+            `[Interactable] on ${describeElement(el)}, "${attribute}": \`${value.literal}\` is not a number; ` +
+              `"${value.name}" is declared ${fieldType}`,
+          );
+          return;
+        }
+      }
+      continue;
+    }
+    if (closed && !(value.name in (spec.fields ?? {}))) {
+      console.error(
+        `[Interactable] on ${describeElement(el)}, "${attribute}": "${value.name}" is not a field of event "${type}"`,
+      );
+      return;
+    }
     try {
       compileSignature(value.type);
     } catch (err) {

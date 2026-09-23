@@ -27,7 +27,7 @@ export const renderable = defineImplementation(
       },
       undo: "undefined",
     },
-    events: ["rendered"],
+    events: { rendered: {} },
   },
   (el, attrs) => {
     let last: Undo | undefined;

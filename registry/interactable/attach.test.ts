@@ -31,6 +31,7 @@ before(async () => {
   await import("@behaviors/storable/storable.ts");
   await import("@behaviors/modifiable/modifiable.ts");
   await import("@behaviors/attributable/attributable.ts");
+  await import("@behaviors/requestable/requestable.ts");
   defineImplementation(
     "traceable",
     { tags: ["div", "section"], verbs: { go: "undefined", ping: "undefined" } },
@@ -58,6 +59,18 @@ before(async () => {
         attrCalls.push(name);
       },
     }),
+  );
+  defineImplementation(
+    "statusful",
+    {
+      tags: ["div"],
+      events: {
+        status: { fields: { code: "200 | 404 | 500", kind: "string", count: "number" } },
+        note: {},
+      },
+      verbs: {},
+    },
+    () => ({}),
   );
 });
 
@@ -619,5 +632,107 @@ test("several declared values resolve inside the phrase", async () => {
   trigger.dispatchEvent(new ImplementationEventClass("response", { values: { html: "h", text: "t" } }));
   assert.equal(byId("target").getAttribute("data-a"), "h");
   assert.equal(byId("target").getAttribute("data-b"), "t");
+  dispose();
+});
+
+test("a literal keydown declaration fires only when code matches, and a type declaration binds", async () => {
+  const dispose = start();
+  mountMarkup(
+    `<div id="t" implements="traceable"></div>
+     <div id="target" implements="attributable"></div>
+     <div id="kbd-lit" on-keydown(code:\`Escape\`)="#t.go()"></div>
+     <div id="kbd-bind" on-keydown(code:string)="#target.setAttr({name: 'data-code', value: code})"></div>`,
+  );
+  await flush();
+  const goCount = (): number => lifecycle.filter((entry) => entry === "traceable.go").length;
+
+  byId("kbd-lit").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape" }));
+  assert.equal(goCount(), 1, "the literal phrase fires when KeyboardEvent.code is Escape");
+  byId("kbd-lit").dispatchEvent(new KeyboardEvent("keydown", { key: "a", code: "KeyA" }));
+  assert.equal(goCount(), 1, "a non-matching code is filtered before the phrase runs");
+
+  byId("kbd-bind").dispatchEvent(new KeyboardEvent("keydown", { key: "b", code: "KeyB" }));
+  assert.equal(byId("target").getAttribute("data-code"), "KeyB", "the type declaration binds the code value");
+  dispose();
+});
+
+test("two overlapping literal declarations on the same element both fire", async () => {
+  const dispose = start();
+  mountMarkup(
+    `<div id="a" implements="attributable"></div>
+     <div id="b" implements="attributable"></div>
+     <div id="st" implements="statusful"
+          on-status(code:\`404\`)="#a.setAttr({name: 'data-hit', value: 'code'})"
+          on-status(kind:\`not-found\`)="#b.setAttr({name: 'data-hit', value: 'kind'})"></div>`,
+  );
+  await flush();
+  byId("st").dispatchEvent(
+    new ImplementationEventClass("status", { values: { code: "404", kind: "not-found" } }),
+  );
+  assert.equal(byId("a").getAttribute("data-hit"), "code", "the first matching declaration fires");
+  assert.equal(byId("b").getAttribute("data-hit"), "kind", "the second matching declaration also fires; nothing wins");
+  dispose();
+});
+
+test("a numeric literal matches the declared numeric value, compared by type", async () => {
+  const dispose = start();
+  mountMarkup(
+    `<div id="t" implements="attributable"></div>
+     <div id="st" implements="statusful" on-status(code:\`404\`)="#t.setAttr({name: 'data-code', value: ''})"></div>`,
+  );
+  await flush();
+  byId("st").dispatchEvent(new ImplementationEventClass("status", { values: { code: "404" } }));
+  assert.equal(byId("t").getAttribute("data-code"), "", "the string 404 matches the number 404");
+  byId("t").removeAttribute("data-code");
+  byId("st").dispatchEvent(new ImplementationEventClass("status", { values: { code: "500" } }));
+  assert.equal(byId("t").hasAttribute("data-code"), false, "500 does not match the 404 literal");
+  dispose();
+});
+
+test("wire-time rejects an unknown field, a wrong-typed literal, and a literal on a bare number for a closed event", async () => {
+  const dispose = start();
+  const cases = [
+    `<div id="t" implements="attributable"></div><div implements="statusful" on-status(nope:\`404\`)="#t.setAttr({name: 'data-x', value: ''})"></div>`,
+    `<div id="t" implements="attributable"></div><div implements="statusful" on-status(code:\`abc\`)="#t.setAttr({name: 'data-x', value: ''})"></div>`,
+    `<div id="t" implements="attributable"></div><div implements="statusful" on-status(count:\`3\`)="#t.setAttr({name: 'data-x', value: ''})"></div>`,
+    `<div id="t" implements="attributable"></div><div implements="statusful" on-note(foo:string)="#t.setAttr({name: 'data-x', value: ''})"></div>`,
+  ];
+  const messages = [
+    '"nope" is not a field of event "status"',
+    '`abc` is not a number; "code" is declared 200 | 404 | 500',
+    'cannot match a literal against "count"',
+    '"foo" is not a field of event "note"',
+  ];
+  for (let i = 0; i < cases.length; i++) {
+    document.body.replaceChildren();
+    const { errors, restore } = captureErrors();
+    try {
+      mountMarkup(cases[i]!);
+      await flush();
+    } finally {
+      restore();
+    }
+    assert.ok(
+      errors.some((m) => m.includes(messages[i]!)),
+      `case ${i}: expected ${JSON.stringify(messages[i])}, got: ${JSON.stringify(errors)}`,
+    );
+  }
+  dispose();
+});
+
+test("open events accept any field and literal at wire time", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  mountMarkup(
+    `<div id="t" implements="attributable"></div>
+     <div implements="requestable" on-response(code:\`404\`)="#t.setAttr({name: 'data-r', value: ''})"></div>
+     <div implements="storable" storable-key="k" storable-value="v" on-restore(code:\`404\`)="#t.setAttr({name: 'data-s', value: ''})"></div>`,
+  );
+  try {
+    await flush();
+  } finally {
+    restore();
+  }
+  assert.deepEqual(errors, [], `open events accept any field and literal: ${JSON.stringify(errors)}`);
   dispose();
 });

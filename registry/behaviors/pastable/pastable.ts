@@ -7,7 +7,7 @@ export const pastable = defineImplementation(
     tags: ["input", "textarea"],
     config: {},
     verbs: {},
-    events: ["pasted"],
+    events: { pasted: { fields: { text: "string" } } },
   },
   (el) => ({
     onInput: (e: Event) => {
