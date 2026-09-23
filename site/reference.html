@@ -71,11 +71,13 @@
       <article class="ref-card">
         <h3><code class="inline-code">renderable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">Stamps a template with flat scalar slots into text nodes and attribute values. Swap modes mirror <code class="inline-code">requestable</code>; <code class="inline-code">undo()</code> reverses the one last render (removes appended rows, restores displaced markup).</p>
+        <p class="ref-desc">Stamps a template with flat scalar slots into text nodes and attribute values. Swap modes mirror <code class="inline-code">requestable</code>; <code class="inline-code">undo()</code> reverses the one last render (removes appended rows, restores displaced markup). Every successful swap animates as a same-document view transition and fires <code class="inline-code">rendered</code> when it settles; <code class="inline-code">renderable-disable-view-transition</code> opts out.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">render</span><span class="verb-tag">undo</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">disable-view-transition</span></div>
+        <p class="ref-labels">Events</p>
+        <div><span class="verb-tag">rendered</span></div>
       </article>
 
       <article class="ref-card">

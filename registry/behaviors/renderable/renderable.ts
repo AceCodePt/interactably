@@ -1,5 +1,6 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { optionalCtor } from "@interactable/signature.ts";
+import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { resolveTarget, SWAP_SLOT } from "@behaviors/swap.ts";
 import type { SwapMode } from "@behaviors/swap.ts";
 
@@ -13,6 +14,9 @@ type Undo =
 export const renderable = defineImplementation(
   "renderable",
   {
+    config: {
+      "disable-view-transition": "boolean | undefined",
+    },
     verbs: {
       render: {
         template: optionalCtor(HTMLTemplateElement),
@@ -22,9 +26,13 @@ export const renderable = defineImplementation(
       },
       undo: "undefined",
     },
+    events: ["rendered"],
   },
-  (el) => {
+  (el, attrs) => {
     let last: Undo | undefined;
+    const announce = (): void => {
+      el.dispatchEvent(new ImplementationEvent("rendered"));
+    };
     return {
       render: (_e, opts) => {
         const options = opts ?? {};
@@ -37,53 +45,68 @@ export const renderable = defineImplementation(
           last = undefined;
           return;
         }
+        const { template: _template, swap: _swap, target: _target, ...slots } = options;
+        let mutate: () => void;
         if (swap === "delete") {
           const parent = destination.parentNode;
           if (parent === null) throw new Error("renderable: cannot delete a detached element");
           const reference = destination.nextSibling;
-          destination.remove();
-          last = { kind: "replaced", parent, reference, inserted: [], original: destination };
-          return;
-        }
-        const template = options.template;
-        if (!(template instanceof HTMLTemplateElement)) {
-          throw new Error(`renderable: template is required for swap "${swap}"`);
-        }
-        const { template: _template, swap: _swap, target: _target, ...slots } = options;
-        const fragment = stamp(template, slots);
-        assertUniqueIds(fragment);
-        const nodes = Array.from(fragment.childNodes);
-        switch (swap) {
-          case "innerHTML": {
-            const before = Array.from(destination.childNodes);
-            destination.replaceChildren(fragment);
-            last = { kind: "children", target: destination, before };
-            return;
+          mutate = () => {
+            destination.remove();
+            last = { kind: "replaced", parent, reference, inserted: [], original: destination };
+          };
+        } else {
+          const template = options.template;
+          if (!(template instanceof HTMLTemplateElement)) {
+            throw new Error(`renderable: template is required for swap "${swap}"`);
           }
-          case "outerHTML": {
-            const parent = destination.parentNode;
-            if (parent === null) throw new Error("renderable: cannot replace a detached element");
-            const reference = destination.nextSibling;
-            destination.replaceWith(fragment);
-            last = { kind: "replaced", parent, reference, inserted: nodes, original: destination };
-            return;
-          }
-          case "beforebegin":
-            destination.before(fragment);
-            last = { kind: "inserted", nodes };
-            return;
-          case "afterbegin":
-            destination.prepend(fragment);
-            last = { kind: "inserted", nodes };
-            return;
-          case "beforeend":
-            destination.append(fragment);
-            last = { kind: "inserted", nodes };
-            return;
-          case "afterend":
-            destination.after(fragment);
-            last = { kind: "inserted", nodes };
-            return;
+          const fragment = stamp(template, slots);
+          assertUniqueIds(fragment);
+          const nodes = Array.from(fragment.childNodes);
+          mutate = () => {
+            switch (swap) {
+              case "innerHTML": {
+                const before = Array.from(destination.childNodes);
+                destination.replaceChildren(fragment);
+                last = { kind: "children", target: destination, before };
+                return;
+              }
+              case "outerHTML": {
+                const parent = destination.parentNode;
+                if (parent === null) throw new Error("renderable: cannot replace a detached element");
+                const reference = destination.nextSibling;
+                destination.replaceWith(fragment);
+                last = { kind: "replaced", parent, reference, inserted: nodes, original: destination };
+                return;
+              }
+              case "beforebegin":
+                destination.before(fragment);
+                last = { kind: "inserted", nodes };
+                return;
+              case "afterbegin":
+                destination.prepend(fragment);
+                last = { kind: "inserted", nodes };
+                return;
+              case "beforeend":
+                destination.append(fragment);
+                last = { kind: "inserted", nodes };
+                return;
+              case "afterend":
+                destination.after(fragment);
+                last = { kind: "inserted", nodes };
+                return;
+            }
+          };
+        }
+        const canTransition =
+          attrs["disable-view-transition"] !== true &&
+          typeof document !== "undefined" &&
+          typeof document.startViewTransition === "function";
+        if (canTransition) {
+          document.startViewTransition(mutate).finished.then(announce);
+        } else {
+          mutate();
+          announce();
         }
       },
       undo: () => {

@@ -34,25 +34,26 @@
     <p class="doc-lede">
           <code class="inline-code">render()</code> stamps a template row with an author-supplied <code class="inline-code">id</code>
           slot, the <code class="inline-code">&times;</code> button deletes its own row by targeting that id, and
-          <code class="inline-code">undo()</code> removes the last stamped row. <code class="inline-code">count('#dl-list li')</code> keeps
-          the total in sync after each change.
+          <code class="inline-code">undo()</code> removes the last stamped row. The swap animates as a same-document view
+          transition, and <code class="inline-code">on-rendered</code> refreshes <code class="inline-code">count('#dl-list li')</code>
+          once it settles.
         </p>
     <div class="example-body">
 
               <div class="demo">
-                <button id="dl-add" type="button" on-click="#dl-list.render({template: #dl-tpl, swap: 'beforeend', id: now()}); #dl-count.set(count('#dl-list li'))">Add a row</button>
+                <button id="dl-add" type="button" on-click="#dl-list.render({template: #dl-tpl, swap: 'beforeend', id: now()})">Add a row</button>
                 <button id="dl-undo" type="button" on-click="#dl-list.undo(); #dl-count.set(count('#dl-list li'))">Undo last</button>
-                <ul id="dl-list" implements="renderable">
+                <ul id="dl-list" implements="renderable" on-rendered="#dl-count.set(count('#dl-list li'))">
                   <li id="dl-row-1">
                     <input class="dl-item" placeholder="Type in this row">
-                    <button type="button" on-click="#dl-list.render({swap: 'delete', target: '#dl-row-1'}); #dl-count.set(count('#dl-list li'))">&times;</button>
+                    <button type="button" on-click="#dl-list.render({swap: 'delete', target: '#dl-row-1'})">&times;</button>
                   </li>
                 </ul>
                 <p class="demo-note">Rows: <output id="dl-count" implements="modifiable">1</output></p>
                 <template id="dl-tpl">
                   <li id="dl-row-{id}">
                     <input class="dl-item" placeholder="Type in the new row">
-                    <button type="button" on-click="#dl-list.render({swap: 'delete', target: '#dl-row-{id}'}); #dl-count.set(count('#dl-list li'))">&times;</button>
+                    <button type="button" on-click="#dl-list.render({swap: 'delete', target: '#dl-row-{id}'})">&times;</button>
                   </li>
                 </template>
               </div>
@@ -67,19 +68,19 @@
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-dl" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #count.set(count('#list li'))"&gt;Add a row&lt;/button&gt;
+              <pre class="code" id="code-ex-dl" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()})"&gt;Add a row&lt;/button&gt;
 &lt;button on-click="#list.undo(); #count.set(count('#list li'))"&gt;Undo last&lt;/button&gt;
-&lt;ul id="list" implements="renderable"&gt;
+&lt;ul id="list" implements="renderable" on-rendered="#count.set(count('#list li'))"&gt;
   &lt;li id="row-1"&gt;
     &lt;input class="item" placeholder="Type in this row"&gt;
-    &lt;button on-click="#list.render({swap: 'delete', target: '#row-1'}); #count.set(count('#list li'))"&gt;&times;&lt;/button&gt;
+    &lt;button on-click="#list.render({swap: 'delete', target: '#row-1'})"&gt;&times;&lt;/button&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Rows: &lt;output id="count" implements="modifiable"&gt;1&lt;/output&gt;&lt;/p&gt;
 &lt;template id="row-tpl"&gt;
   &lt;li id="row-{id}"&gt;
     &lt;input class="item" placeholder="Type in the new row"&gt;
-    &lt;button on-click="#list.render({swap: 'delete', target: '#row-{id}'}); #count.set(count('#list li'))"&gt;&times;&lt;/button&gt;
+    &lt;button on-click="#list.render({swap: 'delete', target: '#row-{id}'})"&gt;&times;&lt;/button&gt;
   &lt;/li&gt;
 &lt;/template&gt;</code></pre>
             </div>
