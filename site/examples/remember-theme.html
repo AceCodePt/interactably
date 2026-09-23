@@ -46,15 +46,15 @@
                   <button id="theme-light" type="button" implements="storable" storable-key="theme" storable-value="light"
                           on-load="this.restore()"
                           on-click="#stage.setAttr({name: 'data-theme', value: 'light'}); this.save()"
-                          on-restore="#stage.setAttr({name: 'data-theme', value: 'light'}); #theme-toast.show()">Light</button>
+                          on-restore="light: #stage.setAttr({name: 'data-theme', value: 'light'}); light: #theme-toast.show()">Light</button>
                   <button id="theme-dark" type="button" implements="storable" storable-key="theme" storable-value="dark"
                           on-load="this.restore()"
                           on-click="#stage.setAttr({name: 'data-theme', value: 'dark'}); this.save()"
-                          on-restore="#stage.setAttr({name: 'data-theme', value: 'dark'}); #theme-toast.show()">Dark</button>
+                          on-restore="dark: #stage.setAttr({name: 'data-theme', value: 'dark'}); dark: #theme-toast.show()">Dark</button>
                   <button id="theme-sepia" type="button" implements="storable" storable-key="theme" storable-value="sepia"
                           on-load="this.restore()"
                           on-click="#stage.setAttr({name: 'data-theme', value: 'sepia'}); this.save()"
-                          on-restore="#stage.setAttr({name: 'data-theme', value: 'sepia'}); #theme-toast.show()">Sepia</button>
+                          on-restore="sepia: #stage.setAttr({name: 'data-theme', value: 'sepia'}); sepia: #theme-toast.show()">Sepia</button>
                   <button id="theme-forget" type="button" on-click="#theme-light.clear(); #stage.setAttr({name: 'data-theme', value: 'light'})">Forget</button>
                 </div>
                 <div id="stage" class="stage" implements="attributable" data-theme="light">
@@ -78,7 +78,7 @@
               <pre class="code" id="code-ex-theme" data-lang="html"><code>&lt;button implements="storable" storable-key="theme" storable-value="dark"
             on-load="this.restore()"
             on-click="#stage.setAttr({name: 'data-theme', value: 'dark'}); this.save()"
-            on-restore="#stage.setAttr({name: 'data-theme', value: 'dark'}); #theme-toast.show()"&gt;Dark&lt;/button&gt;
+            on-restore="dark: #stage.setAttr({name: 'data-theme', value: 'dark'}); dark: #theme-toast.show()"&gt;Dark&lt;/button&gt;
     &lt;!-- Light and Sepia buttons repeat the same shape with their own value --&gt;
 
     &lt;div id="stage" class="stage" implements="attributable" data-theme="light"&gt;

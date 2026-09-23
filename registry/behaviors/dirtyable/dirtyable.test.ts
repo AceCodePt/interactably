@@ -239,7 +239,7 @@ test("an on-restore baseline move after a matching restore counts as pristine", 
     implements: "dirtyable storable attributable",
     "storable-key": "draft",
     "storable-value": "initial",
-    "on-restore": "this.setAttr({name: 'value', value: this.value})",
+    "on-restore": "initial: this.setAttr({name: 'value', value: this.value})",
   }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();

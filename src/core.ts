@@ -6,7 +6,8 @@ export type { NormalizedImplementationDef } from "@behaviors/implementation-regi
 export { NotReadyError, bindEvents, formatWrite, readValue, registerFormatter, writeValue } from "@behaviors/implementation-utils.ts";
 export type { BindEventsOptions, BoundEvents, ImplementationInstance } from "@behaviors/implementation-utils.ts";
 export { clearPhraseState, runPhrases } from "@interactable/executor.ts";
-export { parse } from "@interactable/parser.ts";
+export { parse, parseRefOrRead } from "@interactable/parser.ts";
+export type { RefOrRead } from "@interactable/parser.ts";
 export {
   INTERSECT_EVENT_NAMES,
   normaliseRootMargin,

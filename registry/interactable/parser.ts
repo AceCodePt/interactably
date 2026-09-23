@@ -16,6 +16,10 @@ export type Arg =
   | { kind: "expr"; source: string; position: number }
   | { kind: "object"; fields: ReadonlyArray<{ name: string; value: Arg }> };
 
+export type RefOrRead =
+  | { kind: "ref"; ref: Ref }
+  | { kind: "read"; ref: Ref; property: ReadProperty };
+
 export interface Call {
   verb: string;
   arg?: Arg;
@@ -157,6 +161,25 @@ function validateId(id: string): void {
       `invalid id "${id}" in #${id}; ids used in phrases may not contain : & | { } ' " #`,
     );
   }
+}
+
+export function parseRefOrRead(text: string): RefOrRead | undefined {
+  if (text === "this") return { kind: "ref", ref: { kind: "this" } };
+  const read = READ.exec(text);
+  if (read !== null) {
+    const ref = parseRef(read[1]!);
+    const property = read[2]!;
+    if ((READABLE_PROPERTIES as readonly string[]).includes(property)) {
+      return { kind: "read", ref, property: property as ReadProperty };
+    }
+    return undefined;
+  }
+  if (text.startsWith("#") && !text.includes(".")) {
+    const id = text.slice(1);
+    validateId(id);
+    return { kind: "ref", ref: { kind: "id", id } };
+  }
+  return undefined;
 }
 
 type ModifierSpec =
