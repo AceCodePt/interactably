@@ -472,3 +472,25 @@ test("length() drives a live character counter from a bounded textarea", async (
   assert.equal(document.getElementById("bio-count")!.textContent, "42 of 200");
   dispose();
 });
+
+test("now() supplies a distinct row id on each click", async () => {
+  const dispose = start();
+  const row = document.createElement("div");
+  row.setAttribute("implements", "attributable");
+  row.setAttribute("on-click", "this.setAttr({name: 'id', value: 'row-' + now()})");
+  document.body.appendChild(row);
+  await flush();
+
+  row.dispatchEvent(new Event("click", { bubbles: true }));
+  await flush();
+  const first = row.getAttribute("id")!;
+  assert.ok(first.startsWith("row-"), first);
+
+  row.dispatchEvent(new Event("click", { bubbles: true }));
+  await flush();
+  const second = row.getAttribute("id")!;
+  assert.ok(second.startsWith("row-"), second);
+  assert.notEqual(first, second, "two clicks within one evaluation are distinct ids");
+
+  dispose();
+});

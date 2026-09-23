@@ -387,6 +387,9 @@ function applyFunction(name: string, args: Operand[], formula: string, context: 
     case "count":
       requireArity(name, args.length, 1);
       return count(selectorArg(args[0]!.value, context.dryRun), context);
+    case "now":
+      requireArity(name, args.length, 0);
+      return context.dryRun === true ? 0 : Date.now();
     case "replace": {
       requireArity(name, args.length, 3);
       const meta = functionMeta(formula, name);
