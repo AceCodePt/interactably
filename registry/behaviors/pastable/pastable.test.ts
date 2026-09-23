@@ -2,6 +2,7 @@ import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
+import type { ImplementationEvent } from "@interactable/implementation-event.ts";
 
 let dom: JSDOM;
 let dispose: () => void;
@@ -64,6 +65,21 @@ test("insertFromPaste fires pasted once; typed and dropped text fire nothing", a
   paste(el, "insertText");
   paste(el, "insertFromDrop");
   assert.equal(pasted, 2, "insertText and insertFromDrop fire nothing");
+  dispose();
+});
+
+test("pasted carries the post-paste value as text", async () => {
+  const dispose = start();
+  const el = pastableElement("input");
+  document.body.appendChild(el);
+  await flush();
+
+  const seen: string[] = [];
+  el.addEventListener("pasted", (e) => seen.push((e as ImplementationEvent).values["text"] ?? ""));
+
+  el.value = "pasted-value";
+  paste(el, "insertFromPaste");
+  assert.deepEqual(seen, ["pasted-value"]);
   dispose();
 });
 

@@ -15,6 +15,7 @@ let start: typeof import("@interactable/start.ts").start;
 let getAttachment: typeof import("@interactable/attachment.ts").getAttachment;
 let isAttached: typeof import("@interactable/attachment.ts").isAttached;
 let defineImplementation: typeof import("@behaviors/_implementation-definition.ts").defineImplementation;
+let ImplementationEventClass: typeof import("@interactable/implementation-event.ts").ImplementationEvent;
 
 const lifecycle: string[] = [];
 const attrCalls: string[] = [];
@@ -25,6 +26,7 @@ before(async () => {
   ({ start } = await import("@interactable/start.ts"));
   ({ getAttachment, isAttached } = await import("@interactable/attachment.ts"));
   ({ defineImplementation } = await import("@behaviors/_implementation-definition.ts"));
+  ({ ImplementationEvent: ImplementationEventClass } = await import("@interactable/implementation-event.ts"));
   await import("@behaviors/revealable/revealable.ts");
   await import("@behaviors/storable/storable.ts");
   await import("@behaviors/modifiable/modifiable.ts");
@@ -492,5 +494,130 @@ test("now() supplies a distinct row id on each click", async () => {
   assert.ok(second.startsWith("row-"), second);
   assert.notEqual(first, second, "two clicks within one evaluation are distinct ids");
 
+  dispose();
+});
+
+function captureErrors(): { errors: string[]; restore: () => void } {
+  const errors: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+    original(...args);
+  };
+  return { errors, restore: () => (console.error = original) };
+}
+
+function mountMarkup(markup: string): void {
+  const holder = document.createElement("div");
+  holder.innerHTML = markup;
+  document.body.appendChild(holder);
+}
+
+function byAttribute(name: string): HTMLElement {
+  for (const el of Array.from(document.body.querySelectorAll("*"))) {
+    if (el.hasAttribute(name)) return el as HTMLElement;
+  }
+  throw new Error(`no element with attribute "${name}"`);
+}
+
+test("a parenthesised trigger with an undeclared name in the phrase is a wire-time error", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  try {
+    mountMarkup(`<div on-response(html:string)="#target.set(text)"></div>`);
+    await flush();
+  } finally {
+    restore();
+  }
+  assert.ok(
+    errors.some((m) => m.includes('"text" is not declared by this event') && m.includes("declared: html")),
+    `expected an undeclared-name wire-time error, got: ${JSON.stringify(errors)}`,
+  );
+  dispose();
+});
+
+test("a declared name used in a parenthesised trigger raises nothing at wire time and resolves at fire time", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  mountMarkup(
+    `<div id="target" implements="attributable"></div><div on-response(html:string)="#target.setAttr({name: 'data-body', value: html})"></div>`,
+  );
+  try {
+    await flush();
+  } finally {
+    restore();
+  }
+  assert.deepEqual(errors, [], `no wire-time error for a correctly declared name, got: ${JSON.stringify(errors)}`);
+
+  const trigger = byAttribute("on-response(html:string)");
+  trigger.dispatchEvent(new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } }));
+  assert.equal(byId("target").getAttribute("data-body"), "<p>hi</p>", "the declared name resolves at fire time");
+  dispose();
+});
+
+test("an unparenthesised trigger raises nothing at wire time for a bare identifier", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  try {
+    const el = document.createElement("div");
+    el.setAttribute("on-click", "#target.set(html)");
+    document.body.appendChild(el);
+    await flush();
+  } finally {
+    restore();
+  }
+  assert.deepEqual(errors, [], `unparenthesised error timing is unchanged: ${JSON.stringify(errors)}`);
+  dispose();
+});
+
+test("a malformed parenthesised declaration is a wire-time error", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  try {
+    mountMarkup(`<div on-response(html:string="#target.set(html)"></div>`);
+    await flush();
+  } finally {
+    restore();
+  }
+  assert.ok(
+    errors.some((m) => m.includes("missing \")\"")),
+    `expected an unterminated-declaration error, got: ${JSON.stringify(errors)}`,
+  );
+  dispose();
+});
+
+test("a non-scalar declared type is a wire-time error", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  try {
+    mountMarkup(`<div on-response(html:{name:string})="#target.set(html)"></div>`);
+    await flush();
+  } finally {
+    restore();
+  }
+  assert.ok(
+    errors.some((m) => m.includes("not a valid value type")),
+    `expected a malformed-type wire-time error, got: ${JSON.stringify(errors)}`,
+  );
+  dispose();
+});
+
+test("several declared values resolve inside the phrase", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  mountMarkup(
+    `<div id="target" implements="attributable"></div><div on-response(html:string,text:string)="#target.setAttr({name: 'data-a', value: html}); #target.setAttr({name: 'data-b', value: text})"></div>`,
+  );
+  try {
+    await flush();
+  } finally {
+    restore();
+  }
+  assert.deepEqual(errors, [], `two declared values raise nothing at wire time: ${JSON.stringify(errors)}`);
+
+  const trigger = byAttribute("on-response(html:string,text:string)");
+  trigger.dispatchEvent(new ImplementationEventClass("response", { values: { html: "h", text: "t" } }));
+  assert.equal(byId("target").getAttribute("data-a"), "h");
+  assert.equal(byId("target").getAttribute("data-b"), "t");
   dispose();
 });

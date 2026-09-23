@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import type { TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { parse } from "@interactable/parser.ts";
+import { parse, parseEventAttribute } from "@interactable/parser.ts";
 import type { Phrase, Unit } from "@interactable/parser.ts";
 
 function errorsOf(t: TestContext) {
@@ -428,6 +428,71 @@ test("the parse cache key includes the event name", () => {
   const full = parse("10px 20px: #a.show()", "intersect-full");
   assert.notStrictEqual(enter, full, "different event names parse separately");
   assert.strictEqual(parse("10px 20px: #a.show()", "intersect-enter"), enter);
+});
+
+test("parseEventAttribute: an unparenthesised name is the whole type", () => {
+  assert.deepEqual(parseEventAttribute("response"), { type: "response", declaration: undefined });
+  assert.deepEqual(parseEventAttribute("click"), { type: "click", declaration: undefined });
+});
+
+test("parseEventAttribute: the parenthesised form splits type from declaration", () => {
+  assert.deepEqual(parseEventAttribute("response(html:string)"), {
+    type: "response",
+    declaration: [{ name: "html", type: "string" }],
+  });
+  assert.deepEqual(parseEventAttribute("pasted(text:string)"), {
+    type: "pasted",
+    declaration: [{ name: "text", type: "string" }],
+  });
+});
+
+test("parseEventAttribute: several values differ only in arity", () => {
+  assert.deepEqual(parseEventAttribute("response(html:string,text:string)"), {
+    type: "response",
+    declaration: [
+      { name: "html", type: "string" },
+      { name: "text", type: "string" },
+    ],
+  });
+});
+
+test("parseEventAttribute: whitespace around the declaration is trimmed", () => {
+  assert.deepEqual(parseEventAttribute("response( html : string )"), {
+    type: "response",
+    declaration: [{ name: "html", type: "string" }],
+  });
+});
+
+test("parseEventAttribute rejects a malformed declaration", () => {
+  assert.throws(() => parseEventAttribute("response(html)"), /expected "name:type"/);
+  assert.throws(() => parseEventAttribute("response(html:string"), /missing "\)"/);
+  assert.throws(() => parseEventAttribute("response()"), /empty value declaration/);
+  assert.throws(() => parseEventAttribute("(html:string)"), /empty event type/);
+  assert.throws(() => parseEventAttribute("response(1bad:string)"), /not a valid value name/);
+  assert.throws(() => parseEventAttribute("response(html:)"), /missing type/);
+});
+
+test("a bare identifier parses as a name argument, not an expression", () => {
+  const [phrase] = parse("#x.set(html)");
+  assert.ok(phrase);
+  assert.deepEqual(first(phrase).calls[0]!.arg, { kind: "name", name: "html" });
+  assert.deepEqual(first(parse("#x.set(text)")[0]!).calls[0]!.arg, { kind: "name", name: "text" });
+});
+
+test("a bare identifier resolves as an object-field value", () => {
+  const [phrase] = parse("#x.render({body: html})");
+  assert.ok(phrase);
+  assert.deepEqual(first(phrase).calls[0]!.arg, {
+    kind: "object",
+    fields: [{ name: "body", value: { kind: "name", name: "html" } }],
+  });
+});
+
+test("a bare identifier inside an expression stays an expression parse error", (t) => {
+  const spy = errorsOf(t);
+  assert.deepEqual(parse("#x.set(replace(html, 'a', ''))"), []);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes("unknown token"));
 });
 
 test("&& and || separate top-level units", () => {

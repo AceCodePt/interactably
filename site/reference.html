@@ -83,7 +83,7 @@
       <article class="ref-card">
         <h3><code class="inline-code">requestable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">Fetch, swap the response into the DOM, fire its own events. GET is latest-wins; anything else is first-wins. <code class="inline-code">request-error</code> carries a failure key (<code class="inline-code">timeout</code>, <code class="inline-code">offline</code>, or a mapped status name) for keyed <code class="inline-code">on-request-error</code> phrases.</p>
+        <p class="ref-desc">Fetch, swap the response into the DOM, fire its own events. GET is latest-wins; anything else is first-wins. <code class="inline-code">request-error</code> carries a failure key (<code class="inline-code">timeout</code>, <code class="inline-code">offline</code>, or a mapped status name) for keyed <code class="inline-code">on-request-error</code> phrases; <code class="inline-code">response</code> carries the response body text as <code class="inline-code">html</code>, so <code class="inline-code">on-response(html:string)="#receipt.set(html)"</code> names it.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">send</span><span class="verb-tag">abort</span></div>
         <p class="ref-labels">Config / state</p>
@@ -175,7 +175,7 @@
       <article class="ref-card">
         <h3><code class="inline-code">storable</code></h3>
         <p class="ref-tags">input &middot; select &middot; textarea</p>
-        <p class="ref-desc">Persists a declared slot under a declared key to <code class="inline-code">local</code> or <code class="inline-code">session</code> storage &mdash; nothing is stored unless a phrase calls <code class="inline-code">save()</code>. <code class="inline-code">storable-value</code> is a literal, or a ref: a bare ref (<code class="inline-code">this</code>, <code class="inline-code">#cart</code>) means the element's contents, <code class="inline-code">this.value</code> means that property. <code class="inline-code">restore()</code> writes a ref slot back and fires <code class="inline-code">restore</code> carrying the stored string as its key; <code class="inline-code">on-restore</code> phrases filter with the colon prefix. Nothing restores without <code class="inline-code">on-load="this.restore()"</code>. <code class="inline-code">clear()</code> removes the key.</p>
+        <p class="ref-desc">Persists a declared slot under a declared key to <code class="inline-code">local</code> or <code class="inline-code">session</code> storage &mdash; nothing is stored unless a phrase calls <code class="inline-code">save()</code>. <code class="inline-code">storable-value</code> is a literal, or a ref: a bare ref (<code class="inline-code">this</code>, <code class="inline-code">#cart</code>) means the element's contents, <code class="inline-code">this.value</code> means that property. <code class="inline-code">restore()</code> writes a ref slot back and fires <code class="inline-code">restore</code> carrying the stored string as its key and as the declared value <code class="inline-code">value</code> (<code class="inline-code">on-restore(value:string)</code>); <code class="inline-code">on-restore</code> phrases filter with the colon prefix. Nothing restores without <code class="inline-code">on-load="this.restore()"</code>. <code class="inline-code">clear()</code> removes the key.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">save</span><span class="verb-tag">restore</span><span class="verb-tag">clear</span></div>
         <p class="ref-labels">Config / state</p>
@@ -185,7 +185,7 @@
       <article class="ref-card">
         <h3><code class="inline-code">pastable</code></h3>
         <p class="ref-tags">input &middot; textarea</p>
-        <p class="ref-desc">Fires <code class="inline-code">pasted</code> after a paste has landed, so <code class="inline-code">this.value</code> is the new value.</p>
+        <p class="ref-desc">Fires <code class="inline-code">pasted</code> after a paste has landed, carrying the post-paste value as <code class="inline-code">text</code> (<code class="inline-code">on-pasted(text:string)</code>), so <code class="inline-code">this.value</code> is the new value.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">&mdash;</span></div>
         <p class="ref-labels">Config / state</p>
@@ -232,7 +232,7 @@
           <tr><td><code class="inline-code">parse(value, eventName?)</code></td><td>Parse an attribute string into phrases (cached by event name and value)</td></tr>
           <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
           <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class</td></tr>
-          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code>, and <code class="inline-code">request-error</code> carries the failure kind</td></tr>
+          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code>, <code class="inline-code">request-error</code> carries the failure kind, and an event may carry declared values as <code class="inline-code">values</code> alongside <code class="inline-code">key</code></td></tr>
           <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is an intersect name or an event some implementation on <code class="inline-code">el</code> declares</td></tr>
           <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
           <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s <code class="inline-code">IntersectionObserver</code>s, one per <code class="inline-code">rootMargin</code></td></tr>
@@ -272,20 +272,21 @@
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>
       </div>
-      <pre class="code" id="code-reference-grammar" data-lang="text"><code>attribute := 'on-' event-type
+      <pre class="code" id="code-reference-grammar" data-lang="text"><code>attribute := 'on-' event-type [ '(' value-decl (',' value-decl)* ')' ]
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
-arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
+arg       := number | "'" string "'" | 'true' | 'false' | ref | read | name | expr
 read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
+value-decl:= name ':' tsyntax-scalar
 expr      := <expression>   (see the docs)
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'</code></pre>
     </div>
-    <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
+    <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar. A parenthesised attribute (<code class="inline-code">on-response(html:string)</code>) declares the values the event carries, resolved by name inside that phrase; the form is written without spaces, and each declared type is a flat tsyntax scalar.</p>
 
     <h2 id="signatures">Signature slots</h2>
     <div class="tbl-wrap">

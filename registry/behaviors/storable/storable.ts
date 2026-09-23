@@ -1,6 +1,5 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
-import type { ImplementationEventInit } from "@interactable/implementation-event.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { ReadProperty, Ref } from "@interactable/parser.ts";
 import { parseRefOrRead } from "@interactable/parser.ts";
@@ -97,9 +96,13 @@ export const storable = defineImplementation(
         const stored = read(key);
         if (stored === null) return;
         writeSlot(stored);
-        const init: ImplementationEventInit = { originalEvent: e.originalEvent };
-        init.key = stored;
-        el.dispatchEvent(new ImplementationEvent("restore", init));
+        el.dispatchEvent(
+          new ImplementationEvent("restore", {
+            originalEvent: e.originalEvent,
+            key: stored,
+            values: { value: stored },
+          }),
+        );
       },
       clear: (): void => {
         remove(key);

@@ -304,6 +304,16 @@ function resolveArg(
       if (el === null) throw new Error(`${describeRef(arg.ref)} not found`);
       return readValue(el, arg.property);
     }
+    case "name": {
+      if (context.ev instanceof ImplementationEvent) {
+        const value = context.ev.values[arg.name];
+        if (value !== undefined) return value;
+      }
+      throw new Error(
+        `"${arg.name}" is not a value of event "${context.ev.type}"; ` +
+          `declare it on the attribute, e.g. on-${context.ev.type}(${arg.name}: string)`,
+      );
+    }
     case "expr": {
       try {
         return evaluateFormula(arg.source, { document: source.ownerDocument, source }).value;

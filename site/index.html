@@ -141,7 +141,7 @@
           <span class="why-n">4</span>
           <div>
             <span class="why-q">Why should &ldquo;when the request finishes&rdquo; hide in a callback?</span>
-            <span class="why-a">The work that takes time owns its moment. The follow-up is a trigger attribute in the markup: <code class="inline-code">on-response="#receipt.show()"</code>.</span>
+            <span class="why-a">The work that takes time owns its moment. The follow-up is a trigger attribute in the markup: <code class="inline-code">on-response="#receipt.show()"</code>. An event may also name its values on the attribute &mdash; <code class="inline-code">on-response(html:string)="#receipt.set(html)"</code> &mdash; written without spaces, because attribute names cannot hold them; the coloned, bracketed name is legal HTML but trips validators and needs escaping in CSS selectors.</span>
           </div>
         </li>
         <li>

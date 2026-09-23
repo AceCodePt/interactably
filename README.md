@@ -64,21 +64,24 @@ Every click on `+` runs `#qty.set(#qty.value + 1)` and then `#preview.set(#qty.v
 One attribute per interaction; the value is the phrase language:
 
 ```
-attribute := 'on-' event-type
+attribute := 'on-' event-type [ '(' value-decl (',' value-decl)* ')' ]
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&&' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
-arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
+arg       := number | "'" string "'" | 'true' | 'false' | ref | read | name | expr
 read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
-expr      := <expression>  (see § Expressions)
 object    := '{' field (',' field)* '}'
 field     := name ':' arg
+value-decl:= name ':' tsyntax-scalar
+expr      := <expression>  (see § Expressions)
 modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'
 ```
 
 Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`, `:`, `&`, `|`, `{`, `}`, `'`, `"`, `#`. `this` is the only keyword; an element with `id="this"` is addressed as `#this`. A `unit` must contain at least one call; `debounce`/`throttle` are legal only before the first call, at most one per unit, while `once`/`delay` may sit anywhere. `&&` and `||` are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. `debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb; `value`, `checked`, `min`, `max`, `step` are property reads, not verbs (a verb called `value()` is still legal, distinguished by its parens).
+
+**An event may declare values on the attribute.** `on-<type>(<name>:<tsyntax-scalar>, …)` names the values the event carries, and each declared name resolves as an argument inside that phrase — a bare argument (`this.set(html)`) or an object-field value (`#list.render({body: html})`) — and nowhere else. It is written without spaces, because attribute names cannot contain whitespace; names are validated as flat tsyntax scalars at wire time. Coloned and bracketed attribute names trip HTML validators and need escaping in CSS selectors, but the runtime preserves them intact. A name the event does not declare is an error when the element is wired, not when the event fires; declared names never resolve inside formula expressions (`replace(html, …)` stays an error).
 
 | Construct | Example | Meaning |
 | --- | --- | --- |
@@ -96,6 +99,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | Property read | `#preview.set(this.value)` | `value`/`checked`/`min`/`max`/`step`, typed by the element |
 | Key | `on-keydown="enter: #f.send()"` | Filter *which* events reach the phrase |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
+| Event value | `on-response(html:string)="#receipt.set(html)"` | The event's own value, declared on the attribute and resolved by name inside that phrase |
 | Debounce | `#echo.debounce(300).set(this.value)` | Defers this receiver's chain; a re-fire restarts the timer |
 | Throttle | `#viewport.throttle(16).zoom(this)` | Leading-edge throttle of this receiver's chain |
 | Once | `#tour.once().show()` | Gates the rest of the chain; spent when the walk passes it |
@@ -129,7 +133,7 @@ The rules, one line each:
 | `dirtyable` | input, textarea, select, output | — | `dirty-on`; events `dirty`, `clean` | compares the element's current value with its platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); fires `dirty` / `clean` on transition; writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `renderable` | any | `render`, `undo` | `disable-view-transition`; event `rendered` | stamps a template with flat scalar slots into text and attributes; swap modes mirror `requestable`; every successful swap animates as a same-document view transition and fires `rendered` when it settles; `undo` reverses the one last render |
-| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency`, `timeout`, `errors` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events partitioned by failure kind |
+| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `target`, `swap`, `include`, `concurrency`, `timeout`, `errors` + `status` state; events `response`, `request-error` | fetch, swap the response into the DOM, fire `response` / `request-error` events partitioned by failure kind; `response` carries the response body text as `html` |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
 | `classable` | any | `add`, `remove`, `toggle` | — | `classList` writes, one class name per call; `toggle` has no force argument — `add`/`remove` are the forced forms |
 | `logger` | any | `log` | — | `console.log` from a phrase |
@@ -138,8 +142,8 @@ The rules, one line each:
 | `prevent-default` | any | — | `events` (derived: the element's `on-submit`/`on-click`/keyed `on-keydown`, else submit on a form, click on a[href]/button) | `preventDefault` on listed events |
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([§ revealable](https://acecodept.github.io/interactably/docs.html#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script or restored by `storable` is sized on the next input |
-| `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key — a literal, or a ref (`#cart`/`this` for contents, `this.value` for a property); `restore()` writes a ref slot back and fires `restore` carrying the stored string, filtered by the colon prefix |
-| `pastable` | input, textarea | — | — | fires `pasted` after a paste has landed, so `this.value` is the new value |
+| `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key — a literal, or a ref (`#cart`/`this` for contents, `this.value` for a property); `restore()` writes a ref slot back and fires `restore` carrying the stored string as `key` and as the declared value `value`, filtered by the colon prefix |
+| `pastable` | input, textarea | — | — | fires `pasted` after a paste has landed, carrying the post-paste value as `text`, so `this.value` is the new value |
 | `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
 | `focusable` | any | `focus`, `blur` | — | `HTMLElement.focus()` / `blur()` as verbs; reports once if focus did not take |
 
@@ -195,7 +199,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `parse(value, eventName?)` | Parse an attribute string into phrases (cached by event name and value) |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](https://acecodept.github.io/interactably/docs.html#interaction-event)) |
-| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `restore`); a synthetic intersect event carries the observed margin as `key`, and `request-error` carries the failure kind |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `restore`); a synthetic intersect event carries the observed margin as `key`, `request-error` carries the failure kind, and an event may carry declared values as `values` (`response` → `html`, `pasted` → `text`, `restore` → `value`) |
 | `isImplementationEvent(el, type)` | True when `type` is an intersect name or an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per `rootMargin` |

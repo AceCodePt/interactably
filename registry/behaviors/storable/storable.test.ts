@@ -2,6 +2,7 @@ import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
+import type { ImplementationEvent } from "@interactable/implementation-event.ts";
 
 let dom: JSDOM;
 let start: typeof import("@interactable/start.ts").start;
@@ -634,5 +635,24 @@ test("restore event routes through the element and is catchable, never a native 
   await flush();
   interact(el, "restore");
   assert.deepEqual(seen, ["restore"], "restore fires one restore and no native change");
+  dispose();
+});
+
+test("restore carries the stored string as both the key and the value", async () => {
+  const dispose = start();
+  localStorage.setItem("draft", "saved");
+  const el = hostElement<HTMLInputElement>("input", {
+    "storable-key": "draft",
+    "storable-value": "saved",
+  });
+  const seen: Array<{ key: string | undefined; value: string | undefined }> = [];
+  el.addEventListener("restore", (e) => {
+    const event = e as ImplementationEvent;
+    seen.push({ key: event.key, value: event.values["value"] });
+  });
+  document.body.appendChild(el);
+  await flush();
+  interact(el, "restore");
+  assert.deepEqual(seen, [{ key: "saved", value: "saved" }], "key dispatch is kept and value is declared alongside");
   dispose();
 });
