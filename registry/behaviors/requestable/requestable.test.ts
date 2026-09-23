@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom, flush } from "@tests/jsdom.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
+import type { ImplementationEvent } from "@interactable/implementation-event.ts";
 
 interface FakeResponse {
   ok: boolean;
@@ -519,4 +520,14 @@ test("a malformed requestable-errors is rejected before anything is sent", async
   assert.equal(fetchCalls.length, 0);
   assert.equal(el.hasAttribute("aria-busy"), false);
   assert.equal(el.hasAttribute("requestable-status"), false);
+});
+
+test("on-response carries the response body as the html value", async () => {
+  const el = await mount({ "requestable-url": "/api" });
+  const seen: string[] = [];
+  el.addEventListener("response", (e) => seen.push((e as ImplementationEvent).values["html"] ?? ""));
+  interact(el, "send");
+  fetchCalls[0]!.resolve(response(true, 200, "<b>hi</b>"));
+  await flush();
+  assert.deepEqual(seen, ["<b>hi</b>"]);
 });

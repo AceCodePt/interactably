@@ -4,7 +4,9 @@ import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { INTERSECT_ATTRIBUTES, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
 import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 import { ANCHOR } from "@utils/formula.ts";
-import { parse } from "@interactable/parser.ts";
+import { parse, parseEventAttribute } from "@interactable/parser.ts";
+import type { Arg, EventValueDeclaration } from "@interactable/parser.ts";
+import { compileSignature } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import { NotReadyError } from "@behaviors/implementation-utils.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
@@ -196,7 +198,17 @@ function wireTriggers(el: Element, attachment: Attachment): void {
 function bindTrigger(el: Element, attachment: Attachment, attribute: string): void {
   if (attribute === "on-load") return;
   if (attachment.triggers.has(attribute)) return;
-  const type = attribute.slice(3);
+  let type: string;
+  let declaration: readonly EventValueDeclaration[] | undefined;
+  try {
+    const parsed = parseEventAttribute(attribute.slice(3));
+    type = parsed.type;
+    declaration = parsed.declaration;
+  } catch (err) {
+    console.error(`[Interactable] on ${describeElement(el)}, "${attribute}": ${(err as Error).message}`);
+    return;
+  }
+  if (declaration !== undefined) validateTriggerDeclaration(el, attribute, type, declaration);
   const handler = (ev: Event): void => {
     if (!(ev instanceof ImplementationEvent) && isImplementationEvent(el, type)) return;
     runPhrases(el, el.getAttribute(attribute) ?? "", ev);
@@ -212,6 +224,61 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
     warnIfNativeActionLikelyUnwanted(el as HTMLElement, type);
   }
   attachment.triggers.set(attribute, () => el.removeEventListener(type, handler));
+}
+
+function validateTriggerDeclaration(
+  el: Element,
+  attribute: string,
+  type: string,
+  declaration: readonly EventValueDeclaration[],
+): void {
+  const declared = new Set<string>();
+  for (const value of declaration) {
+    if (declared.has(value.name)) {
+      console.error(`[Interactable] on ${describeElement(el)}, "${attribute}": value "${value.name}" is declared twice`);
+      return;
+    }
+    declared.add(value.name);
+    try {
+      compileSignature(value.type);
+    } catch (err) {
+      console.error(
+        `[Interactable] on ${describeElement(el)}, "${attribute}": "${value.type}" is not a valid value type for "${value.name}" ` +
+          `(${(err as Error).message})`,
+      );
+      return;
+    }
+  }
+  const value = el.getAttribute(attribute);
+  if (value === null) return;
+  const phrases = parse(value, type);
+  for (const phrase of phrases) {
+    for (const unit of phrase.units) {
+      for (const call of unit.calls) {
+        for (const name of namesInArg(call.arg)) {
+          if (!declared.has(name)) {
+            console.error(
+              `[Interactable] on ${describeElement(el)}, "${attribute}": "${name}" is not declared by this event; ` +
+                `declared: ${[...declared].join(", ")}`,
+            );
+            return;
+          }
+        }
+      }
+    }
+  }
+}
+
+function namesInArg(arg: Arg | undefined): string[] {
+  if (arg === undefined) return [];
+  switch (arg.kind) {
+    case "name":
+      return [arg.name];
+    case "object":
+      return arg.fields.flatMap((field) => namesInArg(field.value));
+    default:
+      return [];
+  }
 }
 
 function unbindTrigger(attachment: Attachment, attribute: string): void {

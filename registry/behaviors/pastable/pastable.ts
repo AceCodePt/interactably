@@ -12,7 +12,7 @@ export const pastable = defineImplementation(
   (el) => ({
     onInput: (e: Event) => {
       if (e instanceof InputEvent && e.inputType.startsWith("insertFromPaste")) {
-        el.dispatchEvent(new ImplementationEvent("pasted"));
+        el.dispatchEvent(new ImplementationEvent("pasted", { values: { text: el.value } }));
       }
     },
   }),

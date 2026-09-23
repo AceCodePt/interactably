@@ -13,6 +13,7 @@ export type Arg =
   | { kind: "boolean"; value: boolean }
   | { kind: "ref"; ref: Ref }
   | { kind: "read"; ref: Ref; property: ReadProperty }
+  | { kind: "name"; name: string }
   | { kind: "expr"; source: string; position: number }
   | { kind: "object"; fields: ReadonlyArray<{ name: string; value: Arg }> };
 
@@ -182,6 +183,42 @@ export function parseRefOrRead(text: string): RefOrRead | undefined {
   return undefined;
 }
 
+export interface EventValueDeclaration {
+  name: string;
+  type: string;
+}
+
+export interface EventAttribute {
+  type: string;
+  declaration: readonly EventValueDeclaration[] | undefined;
+}
+
+export function parseEventAttribute(name: string): EventAttribute {
+  const open = name.indexOf("(");
+  if (open === -1) return { type: name, declaration: undefined };
+  const type = name.slice(0, open);
+  if (type === "") throw new Error(`empty event type before "(" in "${name}"`);
+  if (!name.endsWith(")")) throw new Error(`unterminated value declaration in "${name}": missing ")"`);
+  const parts = name
+    .slice(open + 1, -1)
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part !== "");
+  if (parts.length === 0) throw new Error(`empty value declaration in "${name}"; expected "name:type"`);
+  const declaration = parts.map((part, index) => {
+    const colon = part.indexOf(":");
+    if (colon === -1) throw new Error(`value ${index + 1} in "${name}": expected "name:type", got "${part}"`);
+    const declName = part.slice(0, colon).trim();
+    const declType = part.slice(colon + 1).trim();
+    if (!IDENT.test(declName)) {
+      throw new Error(`value ${index + 1} in "${name}": "${declName}" is not a valid value name`);
+    }
+    if (declType === "") throw new Error(`value ${index + 1} in "${name}": missing type for "${declName}"`);
+    return { name: declName, type: declType };
+  });
+  return { type, declaration };
+}
+
 type ModifierSpec =
   | { kind: "debounce"; ms: number }
   | { kind: "throttle"; ms: number }
@@ -252,6 +289,7 @@ function parseArg(text: string, position: number): Arg {
     validateId(id);
     return { kind: "ref", ref: { kind: "id", id } };
   }
+  if (IDENT.test(text)) return { kind: "name", name: text };
   return expressionArg(text, position);
 }
 

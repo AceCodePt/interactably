@@ -113,7 +113,7 @@ export const requestable = defineImplementation(
             applySwap(el, attrs.swap, attrs.target, html);
             finish(controller, false);
             if (el.isConnected) {
-              el.dispatchEvent(new ImplementationEvent("response", { originalEvent: e.originalEvent }));
+              el.dispatchEvent(new ImplementationEvent("response", { originalEvent: e.originalEvent, values: { html } }));
             }
           })
           .catch((err: unknown) => {

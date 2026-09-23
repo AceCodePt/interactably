@@ -1191,3 +1191,55 @@ test("a keyed ImplementationEvent on a non-intersect type matches phrase.key exa
   run(trigger, "timeout: #alert.show()", new ImplementationEventClass("request-error", { key: "Timeout" }));
   assert.equal(showCalls, 2, "impl-event keys match case-sensitively, unlike keyboard keys");
 });
+
+test("a declared name resolves as a bare argument from the event's values", () => {
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+
+  run(el(), "#total.set(html)", new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } }));
+  assert.deepEqual(seen, ["<p>hi</p>"]);
+});
+
+test("a declared name resolves as an object-field value", () => {
+  const receiver = el("list");
+  const seen: unknown[] = [];
+  wireHost(receiver, { render: (_, arg) => void seen.push(arg) });
+
+  run(el(), "#list.render({body: html})", new ImplementationEventClass("response", { values: { html: "<li>one</li>" } }));
+  assert.deepEqual(seen, [{ body: "<li>one</li>" }]);
+});
+
+test("a declared name inside a formula expression stays an error", (t) => {
+  const spy = t.mock.method(console, "error");
+  const receiver = el("total");
+  let setCalls = 0;
+  wireHost(receiver, { set: () => void setCalls++ });
+
+  run(el(), "#total.set(replace(html, 'a', ''))", new ImplementationEventClass("response", { values: { html: "ab" } }));
+  assert.equal(setCalls, 0, "the formula never resolves the declared name");
+  assert.equal(spy.mock.callCount(), 1);
+});
+
+test("a name the event does not carry fails at fire time with a helpful error", (t) => {
+  const spy = t.mock.method(console, "error");
+  const receiver = el("total");
+  let setCalls = 0;
+  wireHost(receiver, { set: () => void setCalls++ });
+
+  run(el(), "#total.set(text)", new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } }));
+  assert.equal(setCalls, 0);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('"text" is not a value of event "response"'));
+});
+
+test("a name on a plain DOM event fails at fire time", (t) => {
+  const spy = t.mock.method(console, "error");
+  const receiver = el("total");
+  let setCalls = 0;
+  wireHost(receiver, { set: () => void setCalls++ });
+
+  run(el(), "#total.set(html)", new Event("click"));
+  assert.equal(setCalls, 0);
+  assert.equal(spy.mock.callCount(), 1);
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('"html" is not a value of event "click"'));
+});
