@@ -81,11 +81,11 @@
       <article class="ref-card">
         <h3><code class="inline-code">requestable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">Fetch, swap the response into the DOM, fire its own events. GET is latest-wins; anything else is first-wins.</p>
+        <p class="ref-desc">Fetch, swap the response into the DOM, fire its own events. GET is latest-wins; anything else is first-wins. <code class="inline-code">request-error</code> carries a failure key (<code class="inline-code">timeout</code>, <code class="inline-code">offline</code>, or a mapped status name) for keyed <code class="inline-code">on-request-error</code> phrases.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">send</span><span class="verb-tag">abort</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">url</span><span class="verb-tag">method</span><span class="verb-tag">target</span><span class="verb-tag">swap</span><span class="verb-tag">include</span><span class="verb-tag">concurrency</span><span class="verb-tag">status (state)</span></div>
+        <div><span class="verb-tag">url</span><span class="verb-tag">method</span><span class="verb-tag">target</span><span class="verb-tag">swap</span><span class="verb-tag">include</span><span class="verb-tag">concurrency</span><span class="verb-tag">timeout</span><span class="verb-tag">errors</span><span class="verb-tag">status (state)</span></div>
         <p class="ref-labels">Events</p>
         <div><span class="verb-tag">response</span><span class="verb-tag">request-error</span></div>
       </article>
@@ -230,7 +230,7 @@
           <tr><td><code class="inline-code">parse(value, eventName?)</code></td><td>Parse an attribute string into phrases (cached by event name and value)</td></tr>
           <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
           <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class</td></tr>
-          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code></td></tr>
+          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code>, and <code class="inline-code">request-error</code> carries the failure kind</td></tr>
           <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is an intersect name or an event some implementation on <code class="inline-code">el</code> declares</td></tr>
           <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
           <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s <code class="inline-code">IntersectionObserver</code>s, one per <code class="inline-code">rootMargin</code></td></tr>

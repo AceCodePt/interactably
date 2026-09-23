@@ -1175,3 +1175,19 @@ test("keyless phrases on keyless implementation events keep running", () => {
   run(trigger, "#copier.flash()", new ImplementationEventClass("copy", {}));
   assert.equal(copyCalls, 1, "a keyless on-copy phrase is not gated by the key guard");
 });
+
+test("a keyed ImplementationEvent on a non-intersect type matches phrase.key exactly", () => {
+  const receiver = el("alert");
+  let showCalls = 0;
+  wireHost(receiver, { show: () => void showCalls++ });
+
+  const trigger = el();
+  run(trigger, "timeout: #alert.show()", new ImplementationEventClass("request-error", { key: "timeout" }));
+  assert.equal(showCalls, 1, "an exact match runs");
+  run(trigger, "timeout: #alert.show()", new ImplementationEventClass("request-error", { key: "offline" }));
+  assert.equal(showCalls, 1, "a different key is skipped quietly");
+  run(trigger, "offline: #alert.show()", new ImplementationEventClass("request-error", { key: "offline" }));
+  assert.equal(showCalls, 2, "its own keyed phrase matches");
+  run(trigger, "timeout: #alert.show()", new ImplementationEventClass("request-error", { key: "Timeout" }));
+  assert.equal(showCalls, 2, "impl-event keys match case-sensitively, unlike keyboard keys");
+});
