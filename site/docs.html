@@ -236,6 +236,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td>Key</td><td><code class="inline-code">on-keydown="enter: #f.send()"</code></td><td>Filter <em>which</em> events reach the phrase</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
               <tr><td>Event value</td><td><code class="inline-code">on-response(html:string)="#receipt.set(html)"</code></td><td>A value the event declares on the attribute, resolved by name inside that phrase</td></tr>
+              <tr><td>Event literal</td><td><code class="inline-code">on-keydown(code:`Escape`)="#dialog.close()"</code></td><td>A backticked literal on the attribute: the phrase runs only when the event&rsquo;s field equals it; an unbackticked word is a type, binding instead</td></tr>
               <tr><td>Debounce</td><td><code class="inline-code">#echo.debounce(300).set(this.value)</code></td><td>Defers this receiver&rsquo;s chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref</td></tr>
               <tr><td>Throttle</td><td><code class="inline-code">#viewport.throttle(16).zoom(this)</code></td><td>Leading-edge throttle of this receiver&rsquo;s chain; per element</td></tr>
               <tr><td>Once</td><td><code class="inline-code">#tour.once().show()</code></td><td>Gates the rest of the chain; spent when the walk passes it</td></tr>
@@ -288,6 +289,29 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           does not declare is an error when the element is wired (<code class="inline-code">bindTrigger</code>), never a throw when the event
           fires, and a malformed declaration or declared type errors the same way.</p>
 
+        <p><strong>A declaration may match a literal instead of binding a type.</strong> The right-hand side is a
+          discriminated union: an unbackticked word is a type name and binds, a backticked one is a literal to match.
+          <code class="inline-code">on-keydown(code:`Escape`)="#dialog.close()"</code> runs the phrase only when the key&rsquo;s
+          <code class="inline-code">code</code> is <code class="inline-code">Escape</code>; backticks because quotes are illegal in
+          attribute names and entities are not substituted there, so no other delimiter survives. The comparison is typed: the literal
+          is source text and the field&rsquo;s declared type decides how to read it — a field declared <code class="inline-code">string</code>
+          compares the literal as text, case-insensitively (the HTML parser lowercases attribute names, so the author&rsquo;s
+          <code class="inline-code">Escape</code> arrives as <code class="inline-code">escape</code>), and a field declared as a small closed
+          set of numbers compares the literal as a number. A declaration is all literals or all types, never mixed, and every matching
+          declaration fires — two literal declarations on the same element that both match an event both run, with no most-specific rule
+          and no first-match-wins.</p>
+
+        <p><strong>Events expose an allowlist of fields, not their whole platform interface.</strong> <code class="inline-code">keydown</code>
+          and <code class="inline-code">keyup</code> expose <code class="inline-code">key</code> and <code class="inline-code">code</code>;
+          <code class="inline-code">pasted</code> exposes <code class="inline-code">text</code>; <code class="inline-code">dirty</code> and
+          <code class="inline-code">clean</code> expose none. Closed sets are checked when the element is wired: an unknown field name or a
+          literal that cannot read as the field&rsquo;s type is a <code class="inline-code">console.error</code> the author sees immediately.
+          Two events are open — <code class="inline-code">response</code> and <code class="inline-code">restore</code> — because their values
+          arrive as opaque strings from outside the document; the trigger-site declaration is the type there, verified only when the value
+          arrives. A bare <code class="inline-code">number</code> field binds but cannot be matched by a literal; only a small closed set of
+          numeric values (a numeric enum) can be matched, because general numeric equality is meaningless for floats and ranges are impossible
+          in an attribute name — range-shaped configuration belongs in config attributes.</p>
+
         <p><strong>Keys and keyed event lists.</strong> Key names match <code class="inline-code">KeyboardEvent.key</code> case-insensitively
           &mdash; <code class="inline-code">enter</code>, <code class="inline-code">Enter</code>, <code class="inline-code">ENTER</code> are the same key &mdash; and <code class="inline-code">space</code> means the
           space bar; there are no aliases, so <code class="inline-code">Esc</code> is not <code class="inline-code">escape</code>. A key is a keyboard-event fact:
@@ -301,6 +325,16 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           implementation event may carry its own key: <code class="inline-code">requestable</code> dispatches <code class="inline-code">request-error</code> with the failure
           kind (<code class="inline-code">timeout</code>, <code class="inline-code">offline</code>, or an author-mapped status name), and a keyed phrase matches it by exact string
           (<code class="inline-code">on-request-error="timeout: #alert.show()"</code>), so only that failure kind reaches the phrase.</p>
+
+        <p><strong>Key versus code on the keyboard events.</strong> <code class="inline-code">code</code> is the physical key — the
+          position on the keyboard — unchanged by layout, locale or modifiers. <code class="inline-code">key</code> is the character the
+          layout produces. Use <code class="inline-code">code</code> for positional things (a game control, roving focus) and
+          <code class="inline-code">key</code> when the character is what matters. Both break somewhere: <code class="inline-code">code:`KeyA`</code>
+          hits the key labelled Q on an AZERTY keyboard, and <code class="inline-code">key</code> breaks on layouts that produce different
+          characters entirely, such as Russian. <code class="inline-code">Keyboard.getLayoutMap()</code> is the usual workaround and is
+          deliberately not used here: it is Chromium-only and does not cover keys absent from a layout. Modifier and navigation keys —
+          Escape, Enter, Tab, the arrows — are the safe common case, where <code class="inline-code">code</code> and
+          <code class="inline-code">key</code> agree across layouts; most real usage is there.</p>
 
         </section>
         <section id="sec-rules" on-intersect-enter="-#topnav.height 0px 0px 0px: #toc-rules.setAttr({name: 'data-visible', value: ''})" on-intersect-leave="-#topnav.height 0px 0px 0px: #toc-rules.removeAttr('data-visible')">
@@ -482,7 +516,7 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <h3 id="reporting">Reporting <a class="anchor" href="#reporting">#</a></h3>
         <p>The host and executor report through <code class="inline-code">console.error</code> / <code class="inline-code">console.warn</code>; they do not throw (host methods run on the browser&rsquo;s stack, which owns their exceptions). <code class="inline-code">throw</code> is reserved for <code class="inline-code">defineImplementation</code> and the registry, where the exception reaches the developer who wrote the call.</p>
         <ul>
-          <li><code class="inline-code">console.error</code> when there is no legitimate reading: unknown <code class="inline-code">implements</code> name, tag outside the implementation&rsquo;s <code class="inline-code">tags</code>, receiver <code class="inline-code">#id</code> not in the document, verb no implementation owns, verb that threw, implementation that failed to attach, a parenthesised trigger whose phrase names a value the event does not declare.</li>
+          <li><code class="inline-code">console.error</code> when there is no legitimate reading: unknown <code class="inline-code">implements</code> name, tag outside the implementation&rsquo;s <code class="inline-code">tags</code>, receiver <code class="inline-code">#id</code> not in the document, verb no implementation owns, verb that threw, implementation that failed to attach, a parenthesised trigger whose phrase names a value the event does not declare, or whose declaration names a field the event does not expose or a literal that cannot read as the field&rsquo;s type.</li>
           <li><code class="inline-code">console.warn</code> when the code may well be right but the author should look: <code class="inline-code">on-&lt;type&gt;</code> the element has no event for, <code class="inline-code">&lt;form on-submit&gt;</code> without <code class="inline-code">prevent-default</code>, a verb that returned a promise, <code class="inline-code">prevent-default</code> with nothing derived.</li>
         </ul>
 

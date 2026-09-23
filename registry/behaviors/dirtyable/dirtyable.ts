@@ -13,7 +13,7 @@ export const dirtyable = defineImplementation(
       "dirty-on": "'input' | 'change' | undefined",
     },
     verbs: {},
-    events: ["dirty", "clean"],
+    events: { dirty: {}, clean: {} },
   },
   (el, attrs) => {
     const isDirty = (): boolean => {

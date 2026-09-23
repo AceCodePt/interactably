@@ -11,7 +11,7 @@ before(() => {
   dom = setupJsdom();
   defineImplementation(
     "eventful",
-    { tags: ["div"], events: ["settled", "boom"], verbs: {} },
+    { tags: ["div"], events: { settled: {}, boom: {} }, verbs: {} },
     () => ({}),
   );
 });

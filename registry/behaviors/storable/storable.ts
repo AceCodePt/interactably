@@ -29,7 +29,7 @@ export const storable = defineImplementation(
       restore: "undefined",
       clear: "undefined",
     },
-    events: ["restore"],
+    events: { restore: { open: true } },
   },
   (el, attrs) => {
     const key = attrs.key;

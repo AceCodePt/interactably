@@ -5,7 +5,7 @@ export const copyable = defineImplementation(
   "copyable",
   {
     tags: ["pre", "code", "p", "div"],
-    events: ["copy-error"],
+    events: { "copy-error": {} },
     verbs: { copy: "undefined" },
   },
   (el) => ({

@@ -48,6 +48,11 @@ export type ValidatedSig<S extends Sig> = S extends Slot
 
 export type ValidatedSigs<V extends Record<string, Sig>> = { [K in keyof V]: ValidatedSig<V[K]> };
 
+export interface EventSpec {
+  fields?: Readonly<Record<string, string>>;
+  open?: boolean;
+}
+
 export interface ImplementationDef<
   T extends readonly Tag[] | undefined,
   C extends Record<string, string>,
@@ -59,6 +64,6 @@ export interface ImplementationDef<
   readonly config: Validated<C> | undefined;
   readonly state: Validated<S> | undefined;
   readonly verbs: ValidatedSigs<V>;
-  readonly events: readonly string[];
+  readonly events: Readonly<Record<string, EventSpec>>;
   readonly factory: (el: El<T>, attrs: Attrs<C, S>) => Implementation<V>;
 }

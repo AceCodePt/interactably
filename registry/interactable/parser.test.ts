@@ -438,11 +438,11 @@ test("parseEventAttribute: an unparenthesised name is the whole type", () => {
 test("parseEventAttribute: the parenthesised form splits type from declaration", () => {
   assert.deepEqual(parseEventAttribute("response(html:string)"), {
     type: "response",
-    declaration: [{ name: "html", type: "string" }],
+    declaration: [{ kind: "type", name: "html", type: "string" }],
   });
   assert.deepEqual(parseEventAttribute("pasted(text:string)"), {
     type: "pasted",
-    declaration: [{ name: "text", type: "string" }],
+    declaration: [{ kind: "type", name: "text", type: "string" }],
   });
 });
 
@@ -450,8 +450,8 @@ test("parseEventAttribute: several values differ only in arity", () => {
   assert.deepEqual(parseEventAttribute("response(html:string,text:string)"), {
     type: "response",
     declaration: [
-      { name: "html", type: "string" },
-      { name: "text", type: "string" },
+      { kind: "type", name: "html", type: "string" },
+      { kind: "type", name: "text", type: "string" },
     ],
   });
 });
@@ -459,7 +459,49 @@ test("parseEventAttribute: several values differ only in arity", () => {
 test("parseEventAttribute: whitespace around the declaration is trimmed", () => {
   assert.deepEqual(parseEventAttribute("response( html : string )"), {
     type: "response",
-    declaration: [{ name: "html", type: "string" }],
+    declaration: [{ kind: "type", name: "html", type: "string" }],
+  });
+});
+
+test("parseEventAttribute: a backticked right-hand side is a literal, an unbackticked one a type", () => {
+  assert.deepEqual(parseEventAttribute("keydown(code:`Escape`)"), {
+    type: "keydown",
+    declaration: [{ kind: "literal", name: "code", literal: "Escape" }],
+  });
+  assert.deepEqual(parseEventAttribute("request-error(status:`404`)"), {
+    type: "request-error",
+    declaration: [{ kind: "literal", name: "status", literal: "404" }],
+  });
+  assert.deepEqual(parseEventAttribute("keydown(code:string)"), {
+    type: "keydown",
+    declaration: [{ kind: "type", name: "code", type: "string" }],
+  });
+});
+
+test("parseEventAttribute: a declaration cannot mix literals and types", () => {
+  assert.throws(
+    () => parseEventAttribute("keydown(code:`Escape`,key:string)"),
+    /either matches literals or binds types/,
+  );
+});
+
+test("parseEventAttribute rejects a malformed literal", () => {
+  assert.throws(
+    () => parseEventAttribute("keydown(code:`Escape)"),
+    /unterminated backtick/,
+  );
+  assert.throws(() => parseEventAttribute("keydown(code:``)"), /empty literal/);
+  assert.throws(
+    () => parseEventAttribute("keydown(code:`a`b`)"),
+    /contains a backtick/,
+  );
+});
+
+test("parseEventAttribute: a literal value is exact source text", () => {
+  const parsed = parseEventAttribute("keydown(code:`  Escape  `)");
+  assert.deepEqual(parsed, {
+    type: "keydown",
+    declaration: [{ kind: "literal", name: "code", literal: "  Escape  " }],
   });
 });
 

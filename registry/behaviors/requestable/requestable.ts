@@ -8,7 +8,7 @@ type Policy = "latest" | "first" | "all";
 export const requestable = defineImplementation(
   "requestable",
   {
-    events: ["response", "request-error"],
+    events: { response: { open: true }, "request-error": {} },
     config: {
       url: "string | undefined",
       method: "'get' | 'post' | 'put' | 'delete' | 'patch' | undefined",

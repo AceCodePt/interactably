@@ -3,6 +3,7 @@ import { bindAttributes } from "@interactable/attributes.ts";
 import type { CompiledSignature } from "@interactable/signature.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
 import type { Tag } from "@behaviors/_implementation-definition.ts";
+import type { EventSpec } from "@behaviors/types.ts";
 
 export interface AttributeSlot {
   raw: string;
@@ -15,7 +16,7 @@ export interface NormalizedImplementationDef {
   config: Record<string, AttributeSlot>;
   state: Record<string, AttributeSlot>;
   verbs: Record<string, CompiledSignature>;
-  events: readonly string[];
+  events: Readonly<Record<string, EventSpec>>;
   factory: (el: Element, attrs: Record<string, unknown>) => ImplementationInstance;
 }
 
@@ -38,8 +39,8 @@ export function registerImplementation(def: NormalizedImplementationDef): Normal
     throw new Error(`[Interactable] implementation "${def.name}" is already registered`);
   }
   for (const [otherName, other] of definitions) {
-    for (const event of def.events) {
-      if (other.events.includes(event) && tagsOverlap(def.tags, other.tags)) {
+    for (const event of Object.keys(def.events)) {
+      if (Object.hasOwn(other.events, event) && tagsOverlap(def.tags, other.tags)) {
         throw new Error(
           `[Interactable] event "${event}" is registered by both "${otherName}" and "${def.name}"; ` +
             `two implementations on the same tag cannot claim the same event`,
