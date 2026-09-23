@@ -161,11 +161,10 @@ test("requestable-concurrency=all lets both run without aborting", async () => {
   assert.equal(fetchCalls[0]!.signal?.aborted, false);
 });
 
-test("requestable-concurrency=all applies every response, not just the last", async () => {
-  const el = await mount({
-    "requestable-url": "/api",
-    "requestable-concurrency": "all",
-  });
+test("requestable-concurrency=all announces every response, not just the last", async () => {
+  const el = await mount({ "requestable-url": "/api", "requestable-concurrency": "all" });
+  const seen: string[] = [];
+  el.addEventListener("response", (e) => seen.push((e as ImplementationEvent).values["html"] ?? ""));
   interact(el, "send");
   interact(el, "send");
   assert.equal(fetchCalls.length, 2);
@@ -174,12 +173,12 @@ test("requestable-concurrency=all applies every response, not just the last", as
 
   fetchCalls[0]!.resolve(response(true, 200, "<b>first</b>"));
   await flush();
-  assert.equal(el.innerHTML, "<b>first</b>");
+  assert.deepEqual(seen, ["<b>first</b>"]);
   assert.equal(el.hasAttribute("aria-busy"), true);
 
   fetchCalls[1]!.resolve(response(true, 200, "<i>second</i>"));
   await flush();
-  assert.equal(el.innerHTML, "<i>second</i>");
+  assert.deepEqual(seen, ["<b>first</b>", "<i>second</i>"]);
   assert.equal(el.hasAttribute("aria-busy"), false);
   assert.equal(el.hasAttribute("requestable-status"), false);
 });
@@ -261,11 +260,7 @@ test("an out-of-set requestable-concurrency is rejected before anything is sent"
 
 test("send sets status=loading and aria-busy synchronously; success clears both and runs on-response", async (t) => {
   const warn = t.mock.method(console, "warn");
-  const el = await mount({
-    "requestable-url": "/api",
-    "on-response": "#receipt.show()",
-    "requestable-target": "#receipt",
-  });
+  const el = await mount({ "requestable-url": "/api", "on-response": "#receipt.show()" });
   const receipt = revealable("section", "receipt");
   document.body.appendChild(receipt);
   await flush();
@@ -278,7 +273,6 @@ test("send sets status=loading and aria-busy synchronously; success clears both 
   await flush();
   assert.equal(el.hasAttribute("requestable-status"), false);
   assert.equal(el.hasAttribute("aria-busy"), false);
-  assert.equal(receipt.innerHTML, "<p>hi</p>");
   assert.equal(receipt.hidden, false);
   assert.equal(warn.mock.callCount(), 0, "a declared event never triggers the no-such-event warning");
 });
@@ -327,22 +321,20 @@ test("abort() aborts the request and clears status and aria-busy without running
   assert.equal(receipt.hidden, true);
 });
 
-test("a response that replaces the element skips on-response", async () => {
-  const el = await mount({
-    "requestable-url": "/api",
-    "requestable-swap": "outerHTML",
-    "on-response": "#receipt.show()",
-  });
-  const receipt = revealable("section", "receipt");
-  document.body.appendChild(receipt);
-  await flush();
+test("requestable mutates no DOM: the response payload rides the event, the element's markup is untouched", async () => {
+  const el = await mount({ "requestable-url": "/api" });
+  el.innerHTML = "<span>authored</span>";
+  const seen: string[] = [];
+  el.addEventListener("response", (e) => seen.push((e as ImplementationEvent).values["html"] ?? ""));
 
   interact(el, "send");
-  fetchCalls[0]!.resolve(response(true, 200, "<p id='done'>done</p>"));
+  fetchCalls[0]!.resolve(response(true, 200, "<b>fresh</b>"));
   await flush();
-  assert.equal(el.isConnected, false);
-  assert.equal(document.getElementById("done")?.textContent, "done");
-  assert.equal(receipt.hidden, true);
+
+  assert.equal(el.isConnected, true);
+  assert.equal(el.innerHTML, "<span>authored</span>", "requestable never swaps the response in");
+  assert.deepEqual(seen, ["<b>fresh</b>"], "the payload rides the response event");
+  assert.equal(el.hasAttribute("aria-busy"), false);
 });
 
 test("GET serialises requestable-include into the query string", async () => {
@@ -448,12 +440,14 @@ test("a timeout fires on-request-error with the reserved key timeout, exactly on
   assert.equal(el.hasAttribute("aria-busy"), false);
   assert.equal(alert.hidden, false, "the timeout keyed phrase runs");
 
+  const seen: string[] = [];
+  el.addEventListener("response", (e) => seen.push((e as ImplementationEvent).values["html"] ?? ""));
   interact(el, "send");
   assert.equal(fetchCalls.length, 2, "the timed-out request finished; a new send is not refused or superseded");
   assert.equal(el.getAttribute("requestable-status"), "loading");
   fetchCalls[1]!.resolve(response(true, 200, "<p>ok</p>"));
   await flush();
-  assert.equal(el.innerHTML, "<p>ok</p>");
+  assert.deepEqual(seen, ["<p>ok</p>"], "the payload rides the response event");
   assert.equal(el.hasAttribute("aria-busy"), false);
 });
 

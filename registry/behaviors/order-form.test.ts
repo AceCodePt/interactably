@@ -28,42 +28,30 @@ const FORM_OPEN = `<form id="order" novalidate
       requestable-url="/api/orders" requestable-method="post"`;
 
 const HAPPY = `${FORM_OPEN}
-      requestable-target="#receipt"
-      on-response="#receipt.show(); #alert.show(false)"
+      on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false)"
       on-request-error="#alert.show()"
       on-submit="this.validate().send()">
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
-<section id="receipt" implements="revealable" hidden></section>
+<section id="receipt" implements="renderable revealable" hidden></section>
 <div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
 
 const UNOWNED = `${FORM_OPEN}
-      requestable-target="#receipt"
-      on-response="#receipt.show(); this.reset()"
+      on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); this.reset()"
       on-request-error="#alert.show()"
       on-submit="this.validate().send()">
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
-<section id="receipt" implements="revealable" hidden></section>
-<div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
-
-const OUTER = `${FORM_OPEN}
-      requestable-swap="outerHTML"
-      on-response="#receipt.show()"
-      on-request-error="#alert.show()"
-      on-submit="this.validate().send()">
-  <input id="qty" name="qty" type="number" min="1" required>
-  <button>Place order</button>
-</form>
-<section id="receipt" implements="revealable" hidden></section>
+<section id="receipt" implements="renderable revealable" hidden></section>
 <div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
 
 before(async () => {
   dom = setupJsdom();
   installFetch();
   await import("@behaviors/requestable/requestable.ts");
+  await import("@behaviors/renderable/renderable.ts");
   await import("@behaviors/validatable/validatable.ts");
   await import("@behaviors/revealable/revealable.ts");
   await import("@behaviors/prevent-default/prevent-default.ts");
@@ -134,7 +122,7 @@ function submit(): void {
   form().dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 }
 
-test("happy path: validate passes, the POST is sent, the response swaps and after runs", async () => {
+test("happy path: validate passes, the POST is sent, the payload renders into the receipt and after runs", async () => {
   mount(HAPPY);
   await flush();
   qty().value = "2";
@@ -213,8 +201,8 @@ test("an unowned continuation verb logs and stops; the earlier phrase still runs
   );
 });
 
-test("a response that replaces the form skips on-response", async () => {
-  mount(OUTER);
+test("a response that replaces the form is impossible: requestable never touches the DOM", async () => {
+  mount(HAPPY);
   await flush();
   qty().value = "2";
 
@@ -222,7 +210,7 @@ test("a response that replaces the form skips on-response", async () => {
   fetchCalls[0]!.resolve(response(true, 200, "<p id='done'>done</p>"));
   await flush();
 
-  assert.equal(document.getElementById("order"), null);
-  assert.equal(document.getElementById("done")?.textContent, "done");
-  assert.equal(receipt().hidden, true);
+  assert.equal(document.getElementById("order"), form());
+  assert.equal(document.getElementById("done")?.textContent, "done", "the author's render placed the payload in the receipt");
+  assert.equal(receipt().hidden, false);
 });
