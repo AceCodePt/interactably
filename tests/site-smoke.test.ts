@@ -549,7 +549,7 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.equal(fetchCalls[offlineFetch]!.url, "/api/messages");
   fetchCalls[offlineFetch]!.reject(new TypeError("network down"));
   await flush();
-  assert.equal(ofList.children.length, 0, "request-error with the offline key runs undo and restores");
+  assert.equal(ofList.children.length, 0, "request-offline runs undo and restores");
 
   // Format a number or date (formattable)
   const nfUsd = byId("nf-usd") as HTMLOutputElement;

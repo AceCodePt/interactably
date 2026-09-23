@@ -8,14 +8,18 @@ type Policy = "latest" | "first" | "all";
 export const requestable = defineImplementation(
   "requestable",
   {
-    events: { response: { open: true }, "request-error": {} },
+    events: {
+      response: { fields: { html: "string", status: "number" }, open: true },
+      "request-error": { fields: { status: "number" }, open: true },
+      "request-timeout": {},
+      "request-offline": {},
+    },
     config: {
       url: "string | undefined",
       method: "'get' | 'post' | 'put' | 'delete' | 'patch' | undefined",
       include: "string | undefined",
       concurrency: "'latest' | 'first' | 'all' | undefined",
       timeout: "number | undefined",
-      errors: "string | undefined",
     },
     state: { status: "'idle' | 'loading' | 'error' | undefined" },
     verbs: {
@@ -58,11 +62,11 @@ export const requestable = defineImplementation(
       timeoutTimers.set(controller, timer);
     };
 
-    const dispatchError = (e: InteractionEvent, key: string | undefined): void => {
+    const dispatch = (e: InteractionEvent, type: string, values?: Record<string, string>): void => {
       if (!el.isConnected) return;
       const init: ImplementationEventInit = { originalEvent: e.originalEvent };
-      if (key !== undefined) init.key = key;
-      el.dispatchEvent(new ImplementationEvent("request-error", init));
+      if (values !== undefined) init.values = values;
+      el.dispatchEvent(new ImplementationEvent(type, init));
     };
 
     return {
@@ -80,7 +84,6 @@ export const requestable = defineImplementation(
         const method = (opts?.method ?? attrs.method ?? "get").toLowerCase();
         const current = policy(method);
         const timeout = attrs.timeout;
-        const errorMap = parseErrorMap(attrs.errors);
         if (inflight.size > 0) {
           if (current === "first") return;
           if (current === "latest") {
@@ -103,14 +106,12 @@ export const requestable = defineImplementation(
             }
             if (!response.ok) {
               finish(controller, true);
-              dispatchError(e, errorMap?.get(response.status));
+              dispatch(e, "request-error", { status: String(response.status) });
               return;
             }
             const html = await response.text();
             finish(controller, false);
-            if (el.isConnected) {
-              el.dispatchEvent(new ImplementationEvent("response", { originalEvent: e.originalEvent, values: { html } }));
-            }
+            dispatch(e, "response", { html, status: String(response.status) });
           })
           .catch((err: unknown) => {
             if (isAbort(err)) {
@@ -119,7 +120,7 @@ export const requestable = defineImplementation(
             }
             if (isTimeout(err)) {
               finish(controller, true);
-              dispatchError(e, "timeout");
+              dispatch(e, "request-timeout");
               return;
             }
             if (current === "latest" && controller !== latest) {
@@ -127,37 +128,12 @@ export const requestable = defineImplementation(
               return;
             }
             finish(controller, true);
-            dispatchError(e, isTypeError(err) ? "offline" : undefined);
+            dispatch(e, "request-offline");
           });
       },
     };
   },
 );
-
-function parseErrorMap(raw: string | undefined): Map<number, string> | undefined {
-  if (raw === undefined) return undefined;
-  let value: unknown;
-  try {
-    value = JSON.parse(raw);
-  } catch {
-    throw new Error("requestable-errors: not valid JSON");
-  }
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error("requestable-errors: expected a JSON object of status to name");
-  }
-  const map = new Map<number, string>();
-  for (const [status, name] of Object.entries(value)) {
-    if (typeof name !== "string") {
-      throw new Error(`requestable-errors: status "${status}" maps to a non-string name`);
-    }
-    const numeric = Number(status);
-    if (!Number.isInteger(numeric)) {
-      throw new Error(`requestable-errors: status "${status}" is not an integer`);
-    }
-    map.set(numeric, name);
-  }
-  return map;
-}
 
 function timeoutError(): Error {
   return new DOMException("request timed out", "TimeoutError");
@@ -173,10 +149,6 @@ function isTimeout(err: unknown): boolean {
 
 function isNamedError(err: unknown, name: string): boolean {
   return typeof err === "object" && err !== null && (err as { name?: unknown }).name === name;
-}
-
-function isTypeError(err: unknown): boolean {
-  return err instanceof TypeError;
 }
 
 function buildRequest(
