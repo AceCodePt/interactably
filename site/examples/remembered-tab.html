@@ -45,15 +45,15 @@
                   <button id="mp-tab-overview" type="button" implements="storable focusable" storable-key="maintab" storable-value="overview"
                           on-load="this.restore()"
                           on-click="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.save()"
-                          on-restore="overview: #mp-overview.show(); overview: #mp-specs.show(false); overview: #mp-notes.show(false); overview: this.focus()">Overview</button>
+                          on-restore(value:string)="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.focus()">Overview</button>
                   <button id="mp-tab-specs" type="button" implements="storable focusable" storable-key="maintab" storable-value="specs"
                           on-load="this.restore()"
                           on-click="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); this.save()"
-                          on-restore="specs: #mp-specs.show(); specs: #mp-overview.show(false); specs: #mp-notes.show(false); specs: this.focus()">Specs</button>
+                          on-restore(value:string)="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); this.focus()">Specs</button>
                   <button id="mp-tab-notes" type="button" implements="storable focusable" storable-key="maintab" storable-value="notes"
                           on-load="this.restore()"
                           on-click="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); this.save()"
-                          on-restore="notes: #mp-notes.show(); notes: #mp-overview.show(false); notes: #mp-specs.show(false); notes: this.focus()">Notes</button>
+                          on-restore(value:string)="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); this.focus()">Notes</button>
                 </div>
                 <section id="mp-overview" class="tabpanel" implements="revealable" revealable-open="true">
                   <p>Overview &mdash; open because it is the authored default, or because the stored choice said so.</p>
@@ -80,7 +80,7 @@
       &lt;button implements="storable focusable" storable-key="maintab" storable-value="overview"
               on-load="this.restore()"
               on-click="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.save()"
-              on-restore="overview: #mp-overview.show(); overview: #mp-specs.show(false); overview: #mp-notes.show(false); overview: this.focus()"&gt;Overview&lt;/button&gt;
+              on-restore(value:string)="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.focus()"&gt;Overview&lt;/button&gt;
       &lt;!-- Specs and Notes repeat the same shape with their own value and receivers --&gt;
     &lt;/div&gt;
     &lt;section id="mp-overview" class="tabpanel" implements="revealable" revealable-open="true"&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;

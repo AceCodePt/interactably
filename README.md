@@ -141,8 +141,8 @@ The rules, one line each:
 | `no-propagate` | any | — | `events` (default `"click"`) | `stopPropagation` on listed events |
 | `prevent-default` | any | — | `events` (derived: the element's `on-submit`/`on-click`/keyed `on-keydown`, else submit on a form, click on a[href]/button) | `preventDefault` on listed events |
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([§ revealable](https://acecodept.github.io/interactably/docs.html#revealable)) |
-| `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script or restored by `storable` is sized on the next input |
-| `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key — a literal, or a ref (`#cart`/`this` for contents, `this.value` for a property); `restore()` writes a ref slot back and fires `restore` carrying the stored string as `key` and as the declared value `value`, filtered by the colon prefix |
+| `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script is sized on the next input |
+| `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key — a literal, or a ref (`#cart`/`this` for contents, `this.value` for a property); `restore()` reads the key and fires `restore` carrying the stored string as the declared value `value`, writing nothing; `on-restore(value:string)` resolves it by name and restore never filters |
 | `pastable` | input, textarea | — | — | fires `pasted` after a paste has landed, carrying the post-paste value as `text`, so `this.value` is the new value |
 | `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
 | `focusable` | any | `focus`, `blur` | — | `HTMLElement.focus()` / `blur()` as verbs; reports once if focus did not take |
