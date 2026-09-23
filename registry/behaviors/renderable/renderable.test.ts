@@ -247,6 +247,65 @@ test("a duplicate id throws before anything is inserted", async () => {
   assert.equal(list.children.length, 0);
 });
 
+test("render inserts a payload string as markup, without stamping slots", async () => {
+  const list = mount();
+  await flush();
+  list.innerHTML = "<li>old</li>";
+
+  dispatchInteraction(list, "render", { payload: "<li id='row-9'>{title}</li>", swap: "innerHTML" });
+
+  assert.equal(list.children.length, 1);
+  const row = list.children[0] as HTMLElement;
+  assert.equal(row.id, "row-9");
+  assert.equal(row.textContent, "{title}", "a payload is inserted verbatim, not stamped with slots");
+});
+
+test("render beforeend with a payload appends the markup in order", async () => {
+  const list = mount();
+  await flush();
+
+  dispatchInteraction(list, "render", { payload: "<li>{a}</li><li>{b}</li>", swap: "beforeend" });
+
+  assert.deepEqual([...list.children].map((row) => row.textContent), ["{a}", "{b}"]);
+});
+
+test("undo removes the rows a payload render appended", async () => {
+  const list = mount();
+  await flush();
+
+  dispatchInteraction(list, "render", { payload: '<li class="new">{x}</li>', swap: "beforeend" });
+  assert.equal(document.querySelectorAll(".new").length, 1);
+
+  dispatchInteraction(list, "undo");
+  assert.equal(document.querySelectorAll(".new").length, 0);
+});
+
+test("supplying both template and payload is a definition-time signature error", async () => {
+  const list = mount();
+  await flush();
+  const tpl = template("<li>{x}</li>");
+
+  assert.throws(
+    () => dispatchInteraction(list, "render", { template: tpl, payload: "<li>y</li>", swap: "beforeend" }),
+    /mutually exclusive/,
+  );
+  assert.equal(list.children.length, 0, "nothing is inserted");
+});
+
+test("a duplicate id in a payload throws before anything is inserted", async () => {
+  const list = mount();
+  await flush();
+  const existing = document.createElement("li");
+  existing.id = "row-9";
+  document.body.appendChild(existing);
+
+  assert.throws(
+    () => dispatchInteraction(list, "render", { payload: '<li id="row-9">x</li>', swap: "beforeend" }),
+    /duplicate id "row-9"/,
+  );
+  assert.equal(list.children.length, 0);
+});
+
 test("two elements sharing an id inside the clone throw before insertion", async () => {
   const list = mount();
   await flush();

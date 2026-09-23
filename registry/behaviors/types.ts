@@ -1,10 +1,10 @@
 import { SUPPORTED_KEYWORDS } from "tsyntax";
 import type { DSLInfer, DSLValidate } from "tsyntax";
-import type { Ctor, OptionalCtor, Sig } from "@interactable/signature.ts";
+import type { Ctor, ExclusiveSlot, OptionalCtor, Sig } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
 
-export type { Ctor, OptionalCtor, Sig } from "@interactable/signature.ts";
+export type { Ctor, ExclusiveSlot, OptionalCtor, Sig } from "@interactable/signature.ts";
 
 export type Tag = keyof HTMLElementTagNameMap;
 
@@ -12,7 +12,7 @@ export type El<T extends readonly Tag[] | undefined> = T extends readonly Tag[]
   ? HTMLElementTagNameMap[T[number]]
   : HTMLElement;
 
-export type Slot = string | Ctor | OptionalCtor;
+export type Slot = string | Ctor | OptionalCtor | ExclusiveSlot;
 
 export type KW = typeof SUPPORTED_KEYWORDS;
 
@@ -22,7 +22,9 @@ type SlotOf<S extends Slot> = S extends string
     ? InstanceType<C> | undefined
     : S extends Ctor
       ? InstanceType<S>
-      : never;
+      : S extends ExclusiveSlot<infer Inner>
+        ? SlotOf<Inner>
+        : never;
 
 export type ArgOf<S extends Sig> = S extends Slot
   ? SlotOf<S>

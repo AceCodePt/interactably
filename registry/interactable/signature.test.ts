@@ -2,7 +2,7 @@ import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
-import { compileSignature, optionalCtor } from "@interactable/signature.ts";
+import { compileSignature, exclusive, optionalCtor } from "@interactable/signature.ts";
 import type { Ctor } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
@@ -124,6 +124,32 @@ test("an optional-Ctor slot may be omitted but instance-checks when present", ()
   assert.throws(() => sig.validate({ template: new Gadget(), name: "x" }));
   assert.throws(() => sig.validate({ template: "tpl", name: "x" }));
   assert.throws(() => sig.validate({ template: 5, name: "x" }));
+});
+
+test("an exclusive slot validates its own scalar and rejects a record naming both partners", () => {
+  const sig = compileSignature({
+    template: optionalCtor(WidgetCtor),
+    payload: exclusive("template", "string | undefined"),
+  });
+  assert.deepEqual(sig.validate({ payload: "<li>hi</li>" }), { payload: "<li>hi</li>" });
+  const withTemplate = sig.validate({ template: new Widget() }) as { template: Widget };
+  assert.ok(withTemplate.template instanceof Widget);
+  assert.throws(() => sig.validate({ template: new Widget(), payload: "<li>hi</li>" }), /mutually exclusive/);
+  assert.throws(() => sig.validate({ payload: 5 }));
+  assert.throws(() => sig.validate({ payload: { nested: 1 } }));
+});
+
+test("a record whose only fields are an optional Ctor and an exclusive slot is itself optional", () => {
+  const sig = compileSignature({
+    template: optionalCtor(WidgetCtor),
+    payload: exclusive("template", "string | undefined"),
+  });
+  assert.equal(sig.validate(undefined), undefined);
+  assert.throws(() => sig.validate({ template: new Widget(), payload: "<p>x</p>" }));
+});
+
+test("exclusive() naming an undeclared key is rejected at compile time", () => {
+  assert.throws(() => compileSignature({ payload: exclusive("nope", "string") }), /not a declared key/);
 });
 
 test("a record whose only field is an optional Ctor is itself optional", () => {

@@ -1,5 +1,5 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { optionalCtor } from "@interactable/signature.ts";
+import { exclusive, optionalCtor } from "@interactable/signature.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { resolveTarget, SWAP_SLOT } from "@behaviors/swap.ts";
 import type { SwapMode } from "@behaviors/swap.ts";
@@ -20,6 +20,7 @@ export const renderable = defineImplementation(
     verbs: {
       render: {
         template: optionalCtor(HTMLTemplateElement),
+        payload: exclusive("template", "string | undefined"),
         swap: SWAP_SLOT,
         target: "string | undefined",
         "*": "string | number | boolean",
@@ -45,7 +46,7 @@ export const renderable = defineImplementation(
           last = undefined;
           return;
         }
-        const { template: _template, swap: _swap, target: _target, ...slots } = options;
+        const { template, payload, swap: _swap, target: _target, ...slots } = options;
         let mutate: () => void;
         if (swap === "delete") {
           const parent = destination.parentNode;
@@ -56,11 +57,15 @@ export const renderable = defineImplementation(
             last = { kind: "replaced", parent, reference, inserted: [], original: destination };
           };
         } else {
-          const template = options.template;
-          if (!(template instanceof HTMLTemplateElement)) {
-            throw new Error(`renderable: template is required for swap "${swap}"`);
+          let fragment: DocumentFragment;
+          if (payload !== undefined) {
+            fragment = fragmentFromMarkup(payload);
+          } else {
+            if (!(template instanceof HTMLTemplateElement)) {
+              throw new Error(`renderable: template is required for swap "${swap}"`);
+            }
+            fragment = stamp(template, slots);
           }
-          const fragment = stamp(template, slots);
           assertUniqueIds(fragment);
           const nodes = Array.from(fragment.childNodes);
           mutate = () => {
@@ -148,6 +153,12 @@ function stamp(
   }
   substitute(fragment, slots);
   return fragment;
+}
+
+function fragmentFromMarkup(markup: string): DocumentFragment {
+  const holder = document.createElement("template");
+  holder.innerHTML = markup;
+  return holder.content;
 }
 
 function collectPlaceholders(fragment: DocumentFragment): Set<string> {

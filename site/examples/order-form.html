@@ -32,8 +32,8 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">Order form — the asynchronous seam</h1>
     <p class="doc-lede">
-          <code class="inline-code">on-submit="this.send()"</code> POSTs the form; the response swaps into the receipt and
-          <code class="inline-code">on-response</code> reveals it. This site has no backend, so you&rsquo;ll see the failure path —
+          <code class="inline-code">on-submit="this.send()"</code> POSTs the form; <code class="inline-code">on-response(html:string)</code> renders
+          the response body into the receipt and reveals it. This site has no backend, so you&rsquo;ll see the failure path —
           the alert — which is the honest behavior. Point <code class="inline-code">requestable-url</code> at a real endpoint and the same
           markup works; the button disables itself via
           <code class="inline-code">form[aria-busy="true"] button { pointer-events: none }</code>.
@@ -43,8 +43,7 @@
               <div class="demo">
                 <form id="order" novalidate implements="prevent-default requestable"
                       requestable-url="/api/orders" requestable-method="post"
-                      requestable-target="#receipt"
-                      on-response="#receipt.show(); #alert.show(false)"
+                      on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false)"
                       on-request-error="#alert.show()"
                       on-submit="this.send()">
                   <label>Qty
@@ -52,7 +51,7 @@
                   </label>
                   <button type="submit">Place order</button>
                 </form>
-                <section id="receipt" implements="revealable" hidden></section>
+                <section id="receipt" implements="renderable revealable" hidden></section>
                 <div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>
               </div>
     </div>
@@ -69,8 +68,7 @@
               <pre class="code" id="code-ex-order" data-lang="html"><code>&lt;form id="order" novalidate
           implements="prevent-default requestable"
           requestable-url="/api/orders" requestable-method="post"
-          requestable-target="#receipt"
-          on-response="#receipt.show(); #alert.show(false)"
+          on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false)"
           on-request-error="#alert.show()"
           on-submit="this.send()"&gt;
       &lt;label&gt;Qty
@@ -78,7 +76,7 @@
       &lt;/label&gt;
       &lt;button type="submit"&gt;Place order&lt;/button&gt;
     &lt;/form&gt;
-    &lt;section id="receipt" implements="revealable" hidden&gt;&lt;/section&gt;
+    &lt;section id="receipt" implements="renderable revealable" hidden&gt;&lt;/section&gt;
     &lt;div id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;</code></pre>
             </div>
           </details>

@@ -2,7 +2,6 @@ import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import type { ImplementationEventInit } from "@interactable/implementation-event.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
-import { resolveTarget, SWAP_SLOT } from "@behaviors/swap.ts";
 
 type Policy = "latest" | "first" | "all";
 
@@ -13,8 +12,6 @@ export const requestable = defineImplementation(
     config: {
       url: "string | undefined",
       method: "'get' | 'post' | 'put' | 'delete' | 'patch' | undefined",
-      target: "string | undefined",
-      swap: SWAP_SLOT,
       include: "string | undefined",
       concurrency: "'latest' | 'first' | 'all' | undefined",
       timeout: "number | undefined",
@@ -110,7 +107,6 @@ export const requestable = defineImplementation(
               return;
             }
             const html = await response.text();
-            applySwap(el, attrs.swap, attrs.target, html);
             finish(controller, false);
             if (el.isConnected) {
               el.dispatchEvent(new ImplementationEvent("response", { originalEvent: e.originalEvent, values: { html } }));
@@ -250,36 +246,4 @@ function collectInputField(node: HTMLInputElement, fields: Array<[string, FormDa
   }
   if (type === "submit" || type === "button" || type === "reset" || type === "image") return;
   fields.push([node.name, node.value]);
-}
-
-function applySwap(
-  el: HTMLElement,
-  swap: string | undefined,
-  target: string | undefined,
-  html: string,
-): void {
-  const mode = swap ?? "innerHTML";
-  if (mode === "none") return;
-  const destination = resolveTarget(el, target);
-  if (destination === null) {
-    console.error(`[Interactable] requestable target "${target ?? ""}" not found; response dropped`);
-    return;
-  }
-  switch (mode) {
-    case "delete":
-      destination.remove();
-      return;
-    case "innerHTML":
-      (destination as HTMLElement).innerHTML = html;
-      return;
-    case "outerHTML":
-      (destination as HTMLElement).outerHTML = html;
-      return;
-    case "beforebegin":
-    case "afterbegin":
-    case "beforeend":
-    case "afterend":
-      destination.insertAdjacentHTML(mode, html);
-      return;
-  }
 }

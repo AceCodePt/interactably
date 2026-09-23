@@ -71,7 +71,7 @@
       <article class="ref-card">
         <h3><code class="inline-code">renderable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">Stamps a template with flat scalar slots into text nodes and attribute values. Swap modes mirror <code class="inline-code">requestable</code>; <code class="inline-code">undo()</code> reverses the one last render (removes appended rows, restores displaced markup). Every successful swap animates as a same-document view transition and fires <code class="inline-code">rendered</code> when it settles; <code class="inline-code">renderable-disable-view-transition</code> opts out.</p>
+        <p class="ref-desc">Stamps a template with flat scalar slots into text nodes and attribute values, or inserts a <code class="inline-code">payload</code> markup string as-is (the two are mutually exclusive — supplying both is a signature error). <code class="inline-code">undo()</code> reverses the one last render (removes appended rows, restores displaced markup). Every successful swap animates as a same-document view transition and fires <code class="inline-code">rendered</code> when it settles; <code class="inline-code">renderable-disable-view-transition</code> opts out.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">render</span><span class="verb-tag">undo</span></div>
         <p class="ref-labels">Config / state</p>
@@ -83,11 +83,11 @@
       <article class="ref-card">
         <h3><code class="inline-code">requestable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">Fetch, swap the response into the DOM, fire its own events. GET is latest-wins; anything else is first-wins. <code class="inline-code">request-error</code> carries a failure key (<code class="inline-code">timeout</code>, <code class="inline-code">offline</code>, or a mapped status name) for keyed <code class="inline-code">on-request-error</code> phrases; <code class="inline-code">response</code> carries the response body text as <code class="inline-code">html</code>, so <code class="inline-code">on-response(html:string)="#receipt.set(html)"</code> names it.</p>
+        <p class="ref-desc">Fetch and announce; never touches the DOM. GET is latest-wins; anything else is first-wins. <code class="inline-code">request-error</code> carries a failure key (<code class="inline-code">timeout</code>, <code class="inline-code">offline</code>, or a mapped status name) for keyed <code class="inline-code">on-request-error</code> phrases; <code class="inline-code">response</code> carries the response body text as <code class="inline-code">html</code>, so <code class="inline-code">on-response(html:string)="#list.render({payload: html, swap: 'beforeend'})"</code> places it.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">send</span><span class="verb-tag">abort</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">url</span><span class="verb-tag">method</span><span class="verb-tag">target</span><span class="verb-tag">swap</span><span class="verb-tag">include</span><span class="verb-tag">concurrency</span><span class="verb-tag">timeout</span><span class="verb-tag">errors</span><span class="verb-tag">status (state)</span></div>
+        <div><span class="verb-tag">url</span><span class="verb-tag">method</span><span class="verb-tag">include</span><span class="verb-tag">concurrency</span><span class="verb-tag">timeout</span><span class="verb-tag">errors</span><span class="verb-tag">status (state)</span></div>
         <p class="ref-labels">Events</p>
         <div><span class="verb-tag">response</span><span class="verb-tag">request-error</span></div>
       </article>

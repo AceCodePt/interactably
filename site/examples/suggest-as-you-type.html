@@ -32,12 +32,13 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">Suggest as you type</h1>
     <p class="doc-lede">
-          <code class="inline-code">requestable</code> &times; <code class="inline-code">focusable</code> &times;
-          <code class="inline-code">revealable</code>. A debounced <code class="inline-code">send()</code> fetches a fragment
-          of options and swaps it into the listbox; <code class="inline-code">on-response="#city-list.show()"</code> reveals
-          it. Press &darr; in the field to hop focus into the list, then arrow through &mdash; each option arrives already
-          wired, because its own <code class="inline-code">on-keydown</code> / <code class="inline-code">on-click</code>
-          phrases attach on insertion. Enter or a click picks the city into the field.
+          <code class="inline-code">requestable</code> &times; <code class="inline-code">renderable</code> &times;
+          <code class="inline-code">focusable</code> &times; <code class="inline-code">revealable</code>. A debounced
+          <code class="inline-code">send()</code> fetches a fragment of options and renders it into the listbox;
+          <code class="inline-code">on-response(html:string)="#city-list.render({payload: html}); #city-list.show()"</code>
+          places it and reveals it. Press &darr; in the field to hop focus into the list, then arrow through &mdash; each
+          option arrives already wired, because its own <code class="inline-code">on-keydown</code> /
+          <code class="inline-code">on-click</code> phrases attach on insertion. Enter or a click picks the city into the field.
         </p>
     <div class="example-body">
 
@@ -46,12 +47,11 @@
                   <input id="city" type="search" placeholder="Type a city, press &darr;"
                          implements="requestable modifiable focusable prevent-default"
                          requestable-url="../fragments/cities.html"
-                         requestable-target="#city-list"
                          on-input="#city.debounce(250).send()"
-                         on-response="#city-list.show()"
+                         on-response(html:string)="#city-list.render({payload: html}); #city-list.show()"
                          on-keydown="arrowdown: #sug-1.focus(); escape: #city-list.show(false)">
                 </div>
-                <ul id="city-list" implements="revealable" hidden></ul>
+                <ul id="city-list" implements="renderable revealable" hidden></ul>
               </div>
     </div>
         <details class="example-code">
@@ -67,13 +67,12 @@
               <pre class="code" id="code-ex-suggest" data-lang="html"><code>&lt;input id="city" type="search" placeholder="Type a city, press &darr;"
            implements="requestable modifiable focusable prevent-default"
            requestable-url="./fragments/cities.html"
-           requestable-target="#city-list"
            on-input="#city.debounce(250).send()"
-           on-response="#city-list.show()"
+           on-response(html:string)="#city-list.render({payload: html}); #city-list.show()"
            on-keydown="arrowdown: #sug-1.focus(); escape: #city-list.show(false)"&gt;
-    &lt;ul id="city-list" implements="revealable" hidden&gt;&lt;/ul&gt;
+    &lt;ul id="city-list" implements="renderable revealable" hidden&gt;&lt;/ul&gt;
 
-    &lt;!-- the fragment the response swaps in: each option is wired when it lands --&gt;
+    &lt;!-- the fragment the response renders in: each option is wired when it lands --&gt;
     &lt;li role="option"&gt;&lt;button id="sug-1" implements="focusable prevent-default"
         on-click="#city.set('Lisbon'); #city-list.show(false)"
         on-keydown="arrowdown: #sug-2.focus(); arrowup: #city.focus()"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;

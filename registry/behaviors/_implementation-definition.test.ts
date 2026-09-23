@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { optionalCtor } from "@interactable/signature.ts";
+import { exclusive, optionalCtor } from "@interactable/signature.ts";
 import { getImplementationDef } from "@behaviors/implementation-registry.ts";
 
 let dom: JSDOM;
@@ -132,4 +132,32 @@ test("an optional-Ctor field may be omitted from a record argument but is instan
     verb.validate({ template: document.createElement("template"), title: "x" }),
   );
   assert.throws(() => verb.validate({ template: document.createElement("div"), title: "x" }));
+});
+
+test("an exclusive field compiles into a validator that rejects both partners", () => {
+  defineImplementation(
+    "with-exclusive",
+    { verbs: { render: { template: optionalCtor(HTMLTemplateElement), payload: exclusive("template", "string | undefined") } } },
+    (_el) => ({ render: (_e, args) => void args }),
+  );
+  const verb = getImplementationDef("with-exclusive")?.verbs["render"];
+  assert.ok(verb !== undefined);
+  assert.doesNotThrow(() => verb.validate({ payload: "<p>hi</p>" }));
+  assert.doesNotThrow(() => verb.validate({ template: document.createElement("template") }));
+  assert.throws(
+    () => verb.validate({ template: document.createElement("template"), payload: "<p>hi</p>" }),
+    /mutually exclusive/,
+  );
+});
+
+test("an exclusive field naming an undeclared key is a definition-time error", () => {
+  assert.throws(
+    () =>
+      defineImplementation(
+        "bad-exclusive",
+        { verbs: { render: { payload: exclusive("nope", "string") } } },
+        (_el) => ({ render: () => undefined }),
+      ),
+    /not a declared key/,
+  );
 });

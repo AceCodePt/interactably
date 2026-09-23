@@ -45,9 +45,8 @@
                 <form id="gs-form" novalidate
                       implements="prevent-default validatable requestable"
                       requestable-url="/api/signup" requestable-method="post"
-                      requestable-target="#gs-ok"
                       on-submit="#gs-ok.show(false); #gs-alert.show(false); this.validate().send() || #gs-alert.show()"
-                      on-response="#gs-ok.show()"
+                      on-response(html:string)="#gs-ok.render({payload: html}); #gs-ok.show()"
                       on-request-error="#gs-alert.show()">
                   <div class="row">
                     <label>Email
@@ -55,7 +54,7 @@
                     </label>
                     <button type="submit">Sign up</button>
                   </div>
-                  <p id="gs-ok" implements="revealable" hidden>Signed up &mdash; the request landed.</p>
+                  <p id="gs-ok" implements="renderable revealable" hidden>Signed up &mdash; the request landed.</p>
                   <div id="gs-alert" implements="revealable" hidden role="alert">Enter a valid email address.</div>
                 </form>
               </div>
@@ -73,15 +72,14 @@
               <pre class="code" id="code-ex-guarded" data-lang="html"><code>&lt;form id="gs-form" novalidate
           implements="prevent-default validatable requestable"
           requestable-url="/api/signup" requestable-method="post"
-          requestable-target="#gs-ok"
           on-submit="#gs-ok.show(false); #gs-alert.show(false); this.validate().send() || #gs-alert.show()"
-          on-response="#gs-ok.show()"
+          on-response(html:string)="#gs-ok.render({payload: html}); #gs-ok.show()"
           on-request-error="#gs-alert.show()"&gt;
       &lt;label&gt;Email
         &lt;input name="email" type="email" required placeholder="you@example.com"&gt;
       &lt;/label&gt;
       &lt;button type="submit"&gt;Sign up&lt;/button&gt;
-      &lt;p id="gs-ok" implements="revealable" hidden&gt;Signed up &mdash; the request landed.&lt;/p&gt;
+      &lt;p id="gs-ok" implements="renderable revealable" hidden&gt;Signed up &mdash; the request landed.&lt;/p&gt;
       &lt;div id="gs-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
     &lt;/form&gt;</code></pre>
             </div>
