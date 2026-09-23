@@ -291,8 +291,8 @@ test("a non-ok response sets status=error and runs on-request-error", async () =
   assert.equal(alert.hidden, false);
 });
 
-test("a network failure sets status=error and fires on-request-error", async () => {
-  const el = await mount({ "requestable-url": "/api", "on-request-error": "#alert.show()" });
+test("a network failure sets status=error and fires on-request-offline", async () => {
+  const el = await mount({ "requestable-url": "/api", "on-request-offline": "#alert.show()" });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
   await flush();
@@ -406,13 +406,15 @@ test("requestable-include spreads a matched form's fields as FormData would", as
   assert.equal(fetchCalls[0]!.url, "/api/search?a=1&b=2");
 });
 
-test("an offline fetch rejection fires on-request-error with the reserved key offline", async () => {
+test("any non-abort, non-timeout rejection is request-offline, and it carries no values", async () => {
   const el = await mount({
     "requestable-url": "/api",
-    "on-request-error": "offline: #alert.show()",
+    "on-request-offline": "#alert.show()",
   });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
+  const seen: Array<Record<string, string>> = [];
+  el.addEventListener("request-offline", (e) => seen.push({ ...(e as ImplementationEvent).values }));
   await flush();
 
   interact(el, "send");
@@ -420,17 +422,20 @@ test("an offline fetch rejection fires on-request-error with the reserved key of
   await flush();
   assert.equal(el.getAttribute("requestable-status"), "error");
   assert.equal(el.hasAttribute("aria-busy"), false);
-  assert.equal(alert.hidden, false, "the offline keyed phrase runs");
+  assert.equal(alert.hidden, false, "the request-offline phrase runs");
+  assert.deepEqual(seen, [{}], "request-offline carries no values");
 });
 
-test("a timeout fires on-request-error with the reserved key timeout, exactly once, and the element stays usable", async () => {
+test("a timeout fires on-request-timeout, exactly once, carrying no values, and the element stays usable", async () => {
   const el = await mount({
     "requestable-url": "/api",
     "requestable-timeout": "10",
-    "on-request-error": "timeout: #alert.show()",
+    "on-request-timeout": "#alert.show()",
   });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
+  const seen: Array<Record<string, string>> = [];
+  el.addEventListener("request-timeout", (e) => seen.push({ ...(e as ImplementationEvent).values }));
   await flush();
 
   interact(el, "send");
@@ -438,27 +443,30 @@ test("a timeout fires on-request-error with the reserved key timeout, exactly on
   await delay(30);
   assert.equal(el.getAttribute("requestable-status"), "error");
   assert.equal(el.hasAttribute("aria-busy"), false);
-  assert.equal(alert.hidden, false, "the timeout keyed phrase runs");
+  assert.equal(alert.hidden, false, "the request-timeout phrase runs");
+  assert.deepEqual(seen, [{}], "request-timeout carries no values");
 
-  const seen: string[] = [];
-  el.addEventListener("response", (e) => seen.push((e as ImplementationEvent).values["html"] ?? ""));
+  const responses: string[] = [];
+  el.addEventListener("response", (e) => responses.push((e as ImplementationEvent).values["html"] ?? ""));
   interact(el, "send");
   assert.equal(fetchCalls.length, 2, "the timed-out request finished; a new send is not refused or superseded");
   assert.equal(el.getAttribute("requestable-status"), "loading");
   fetchCalls[1]!.resolve(response(true, 200, "<p>ok</p>"));
   await flush();
-  assert.deepEqual(seen, ["<p>ok</p>"], "the payload rides the response event");
+  assert.deepEqual(responses, ["<p>ok</p>"], "the payload rides the response event");
   assert.equal(el.hasAttribute("aria-busy"), false);
 });
 
-test("requestable-errors maps a status to the author's failure key", async () => {
-  const el = await mount({
-    "requestable-url": "/api",
-    "requestable-errors": '{"401": "unauthorized"}',
-    "on-request-error": "unauthorized: #alert.show()",
-  });
+test("on-request-error(status:`401`) fires only when the non-ok status is 401, and request-error carries status", async () => {
+  const holder = document.createElement("div");
+  holder.innerHTML =
+    '<div id="req-401" implements="requestable" requestable-url="/api" on-request-error(status:`401`)="#alert.show()"></div>';
+  const el = holder.querySelector("#req-401") as HTMLElement;
+  document.body.appendChild(el);
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
+  const seen: Array<Record<string, string>> = [];
+  el.addEventListener("request-error", (e) => seen.push({ ...(e as ImplementationEvent).values }));
   await flush();
 
   interact(el, "send");
@@ -466,27 +474,15 @@ test("requestable-errors maps a status to the author's failure key", async () =>
   await flush();
   assert.equal(el.getAttribute("requestable-status"), "error");
   assert.equal(el.hasAttribute("aria-busy"), false);
-  assert.equal(alert.hidden, false, "the mapped-name keyed phrase runs");
-});
+  assert.equal(alert.hidden, false, "the 401 literal phrase runs on a 401");
+  assert.deepEqual(seen, [{ status: "401" }], "request-error carries the status");
 
-test("an unmapped status fires on-request-error with no key: the unfiltered phrase runs, no keyed phrase does", async () => {
-  const el = await mount({
-    "requestable-url": "/api",
-    "on-request-error": "#alert.show(); timeout: #timeout-alert.show()",
-  });
-  const alert = revealable("div", "alert");
-  const timeoutAlert = revealable("div", "timeout-alert");
-  document.body.appendChild(alert);
-  document.body.appendChild(timeoutAlert);
-  await flush();
-
+  alert.hidden = true;
   interact(el, "send");
-  fetchCalls[0]!.resolve(response(false, 503, "boom"));
+  fetchCalls[1]!.resolve(response(false, 500, "boom"));
   await flush();
-  assert.equal(el.getAttribute("requestable-status"), "error");
-  assert.equal(el.hasAttribute("aria-busy"), false);
-  assert.equal(alert.hidden, false, "the unfiltered on-request-error phrase still runs");
-  assert.equal(timeoutAlert.hidden, true, "no keyed phrase matches a keyless failure");
+  assert.equal(alert.hidden, true, "the 401 literal phrase does not run on a 500");
+  assert.deepEqual(seen, [{ status: "401" }, { status: "500" }], "every request-error carries its status");
 });
 
 test("a user abort() is silent: no request-error, and a timeout is not an abort", async () => {
@@ -507,21 +503,12 @@ test("a user abort() is silent: no request-error, and a timeout is not an abort"
   assert.equal(el.hasAttribute("aria-busy"), false);
 });
 
-test("a malformed requestable-errors is rejected before anything is sent", async () => {
-  const el = await mount({ "requestable-url": "/api", "requestable-errors": "{nope" });
-  const event = interact(el, "send");
-  assert.ok(event.error instanceof Error);
-  assert.equal(fetchCalls.length, 0);
-  assert.equal(el.hasAttribute("aria-busy"), false);
-  assert.equal(el.hasAttribute("requestable-status"), false);
-});
-
-test("on-response carries the response body as the html value", async () => {
+test("on-response carries the response body as the html value and the status", async () => {
   const el = await mount({ "requestable-url": "/api" });
-  const seen: string[] = [];
-  el.addEventListener("response", (e) => seen.push((e as ImplementationEvent).values["html"] ?? ""));
+  const seen: Array<Record<string, string>> = [];
+  el.addEventListener("response", (e) => seen.push({ ...(e as ImplementationEvent).values }));
   interact(el, "send");
   fetchCalls[0]!.resolve(response(true, 200, "<b>hi</b>"));
   await flush();
-  assert.deepEqual(seen, ["<b>hi</b>"]);
+  assert.deepEqual(seen, [{ html: "<b>hi</b>", status: "200" }]);
 });

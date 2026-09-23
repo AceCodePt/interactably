@@ -86,7 +86,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | Construct | Example | Meaning |
 | --- | --- | --- |
 | Trigger | `on-click="#pop.show()"` | On `click`, run the phrase |
-| Implementation event | `on-copy="#flash.show()"` | An implementation's own event (`copy-error`, `response`, `request-error`, `restore`); copyable also re-dispatches the native `copy`, which shares the attribute |
+| Implementation event | `on-copy="#flash.show()"` | An implementation's own event (`copy-error`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`); copyable also re-dispatches the native `copy`, which shares the attribute |
 | Synthetic trigger | `on-intersect-enter="#link.mark()"` | `IntersectionObserver` against the viewport: `enter`/`leave`/`full` |
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from |
@@ -110,7 +110,7 @@ The rules, one line each:
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`, `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#`. Class or attribute selectors are never receivers.
 3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form.
-4. **Keys are legal only under `on-keydown`/`on-keyup`, the three intersect triggers, and a keyed implementation event**, one per phrase; two keyboard keys is two phrases. Key names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under the intersect triggers the key is that phrase's `rootMargin`; under `on-request-error` it is the failure kind (`timeout`, `offline`, or a mapped status name), matched exactly.
+4. **Keys are legal only under `on-keydown`/`on-keyup` and the three intersect triggers**, one per phrase; two keyboard keys is two phrases. Key names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. Under the intersect triggers the key is that phrase's `rootMargin`, matched exactly.
 5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** It never crosses `&&`. `debounce`/`throttle` are legal only right after the ref; `once` and `delay` may sit anywhere. `once()` must be followed by a call. At most one `debounce`/`throttle` per receiver chain.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops on a `preventDefault()`-ed event, a throw, or an unowned verb. `||` fires only on a guard's abort; errors and unowned verbs stop both.
 7. **`once()` spends on passing through, not on completion.** A spent gate cuts the chain where it sits — links before it still run, links after it never do.
@@ -132,7 +132,7 @@ The rules, one line each:
 | `dirtyable` | input, textarea, select, output | — | `dirty-on`; events `dirty`, `clean` | compares the element's current value with its platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); fires `dirty` / `clean` on transition; writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `renderable` | any | `render`, `undo` | `disable-view-transition`; event `rendered` | stamps a template with flat scalar slots into text and attributes, or inserts a `payload` markup string as-is (the two are mutually exclusive — a signature error to supply both); every successful swap animates as a same-document view transition and fires `rendered` when it settles; `undo` reverses the one last render |
-| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `include`, `concurrency`, `timeout`, `errors` + `status` state; events `response`, `request-error` | fetch and announce; never touches the DOM — `response` carries the response body text as `html` and the author places it (`on-response(html:string)="#list.render({payload: html, swap: 'beforeend'})"`); `request-error` is partitioned by failure kind |
+| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `include`, `concurrency`, `timeout` + `status` state; events `response`, `request-error`, `request-timeout`, `request-offline` | fetch and announce; never touches the DOM — `response` carries the response body text as `html` and the `status`, and the author places it (`on-response(html:string)="#list.render({payload: html, swap: 'beforeend'})"`); failures split three ways — `request-error` (non-ok status, filter by status literal), `request-timeout`, `request-offline` |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
 | `classable` | any | `add`, `remove`, `toggle` | — | `classList` writes, one class name per call; `toggle` has no force argument — `add`/`remove` are the forced forms |
 | `logger` | any | `log` | — | `console.log` from a phrase |
@@ -160,7 +160,7 @@ The five load-bearing claims; the full argument for each is settled in the [docs
 - **Native elements.** No `is=`, no shadow DOM, no wrapper elements. Platform attributes are read off the element, never declared; `<dialog>` traps focus, `<details>` toggles, forms submit.
 - **Push, not state.** The DOM is the store; ids are the addresses. No subscription, no reactivity, no derived state — an event pushes a verb onto a named receiver.
 - **Signatures as strings.** Every verb signature is a tsyntax string: the same string is the TypeScript type at the call site and the runtime check.
-- **The asynchronous seam.** Verbs are synchronous and chains never await; the implementation that owns the I/O dispatches its own event (`on-response` / `on-request-error`) when the work finishes.
+- **The asynchronous seam.** Verbs are synchronous and chains never await; the implementation that owns the I/O dispatches its own event (`on-response` / `on-request-error` / `on-request-timeout` / `on-request-offline`) when the work finishes.
 
 ---
 
@@ -170,7 +170,7 @@ The five load-bearing claims; the full argument for each is settled in the [docs
 
 The tabs example is the honest boundary case. Each button's `on-click` pushes `show()` onto its panels, and the six it closes; "which tab is visible" is never stored — every switch rewrites the panels' visibility by hand. Adding a fourth section means editing every phrase, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.
 
-When the behaviour you need *pulls* — a value kept in sync with other values, recomputed on change, reactive by construction — a reactive/data-flow framework is the right tool. The one async seam this library does own is `requestable`: the trigger pushes `send()`, and `on-response` / `on-request-error` continue from the element that did the work.
+When the behaviour you need *pulls* — a value kept in sync with other values, recomputed on change, reactive by construction — a reactive/data-flow framework is the right tool. The one async seam this library does own is `requestable`: the trigger pushes `send()`, and `on-response` / `on-request-error` / `on-request-timeout` / `on-request-offline` continue from the element that did the work.
 
 Input masks and format-as-you-type belong in a component library built on the same elements: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw `<input>` pair, which needs markup of its own to fake. `formattable` is the whole declarative share — display elements only, formatted on connect and on each library write.
 
@@ -198,7 +198,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `parse(value, eventName?)` | Parse an attribute string into phrases (cached by event name and value) |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](https://acecodept.github.io/interactably/docs.html#interaction-event)) |
-| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `restore`); a synthetic intersect event carries the observed margin as `key`, `request-error` carries the failure kind, and an event may carry declared values as `values` (`response` → `html`, `pasted` → `text`, `restore` → `value`) |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`); a synthetic intersect event carries the observed margin as `key`, and an event may carry declared values as `values` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
 | `isImplementationEvent(el, type)` | True when `type` is an intersect name or an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per `rootMargin` |
