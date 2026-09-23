@@ -62,12 +62,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-reveal)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-reveal" on-click="#code-ex-reveal.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-reveal" data-lang="html"><code>&lt;button on-click="#panel.toggle()"
+              <pre class="code" id="code-ex-reveal" implements="copyable" on-copy="#copy-code-ex-reveal.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#panel.toggle()"
             aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
     &lt;section id="panel" implements="revealable" hidden&gt;
       &lt;p&gt;&hellip;&lt;/p&gt;

@@ -64,12 +64,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-guarded)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-guarded" on-click="#code-ex-guarded.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-guarded" data-lang="html"><code>&lt;form id="gs-form" novalidate
+              <pre class="code" id="code-ex-guarded" implements="copyable" on-copy="#copy-code-ex-guarded.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="gs-form" novalidate
           implements="prevent-default validatable requestable"
           requestable-url="/api/signup" requestable-method="post"
           on-submit="#gs-ok.show(false); #gs-alert.show(false); this.validate().send() || #gs-alert.show()"

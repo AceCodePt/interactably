@@ -57,183 +57,157 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-test("copy writes the target's text without touching any attribute", async () => {
+test("copy() on the copied element writes its own text without touching any attribute", async () => {
   const copied: string[] = [];
   installClipboard(async (text) => {
     copied.push(text);
   });
-  const button = hostElement("button", { implements: "copyable", id: "copy-btn" });
-  const code = hostElement("pre", { id: "quick-start" });
+  const code = hostElement("pre", { implements: "copyable", id: "quick-start" });
   code.textContent = "const x = 1;";
-  document.body.append(button, code);
+  document.body.append(code);
   await flush();
-  interact(button, "copy", code);
+  interact(code, "copy");
   await flush();
   assert.equal(copied.length, 1);
   assert.equal(copied[0], "const x = 1;");
-  assert.deepEqual(button.getAttributeNames(), ["implements", "id"], "copy itself never writes an attribute");
+  assert.deepEqual(code.getAttributeNames(), ["implements", "id"], "copy itself never writes an attribute");
 });
 
-test("a rejected clipboard write falls back and warns", async (t) => {
+test("copy() returns synchronously: no promise, no executor warning", async (t) => {
   const warn = t.mock.method(console, "warn");
-  installClipboard(async () => {
-    throw new Error("denied");
-  });
-  const button = hostElement("button", { implements: "copyable" });
-  const code = hostElement("pre", { id: "code" });
-  code.textContent = "fallback";
-  document.body.append(button, code);
-  await flush();
-  interact(button, "copy", code);
-  await flush();
-  assert.equal(warn.mock.callCount(), 1);
-});
-
-test("without a clipboard API it warns", async (t) => {
-  const warn = t.mock.method(console, "warn");
-  const button = hostElement("button", { implements: "copyable" });
-  const code = hostElement("pre", { id: "code" });
-  code.textContent = "plain text";
-  document.body.append(button, code);
-  await flush();
-  interact(button, "copy", code);
-  await flush();
-  assert.equal(warn.mock.callCount(), 1);
-});
-
-test("an empty target warns", async (t) => {
-  const warn = t.mock.method(console, "warn");
-  const button = hostElement("button", { implements: "copyable" });
-  const code = hostElement("pre", { id: "code" });
-  document.body.append(button, code);
-  await flush();
-  interact(button, "copy", code);
-  assert.equal(warn.mock.callCount(), 1);
-});
-
-test("the flash is the trigger attribute's job: on-copy marks, then debounces the clear", async () => {
   installClipboard(async () => {});
-  const button = hostElement("button", {
+  const code = hostElement("pre", { implements: "copyable", id: "code" });
+  code.textContent = "copy me";
+  document.body.append(code);
+  await flush();
+  const event = interact(code, "copy");
+  assert.equal(event.result, undefined, "copy() returns undefined, never a promise");
+  await flush();
+  assert.equal(warn.mock.callCount(), 0, "the executor never warns about a promise return");
+});
+
+test("a successful copy dispatches copy and runs on-copy with this bound to the copied element", async () => {
+  installClipboard(async () => {});
+  const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
+  const code = hostElement("pre", {
     implements: "copyable attributable",
-    id: "copy-btn",
-    "on-copy": "this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(20).removeAttr('data-copied')",
+    id: "code",
+    "on-copy": "this.setAttr({name: 'data-done', value: 'yes'})",
   });
-  const code = hostElement("pre", { id: "code" });
+  code.textContent = "copy me";
+  document.body.append(code, receipt);
+  await flush();
+
+  interact(code, "copy");
+  await flush();
+  assert.equal(code.getAttribute("data-done"), "yes", "on-copy runs with this bound to the copied element");
+});
+
+test("the flash pattern marks the button via a back-pointer on the copied element's on-copy", async () => {
+  installClipboard(async () => {});
+  const button = hostElement("button", { implements: "attributable", id: "copy-btn" });
+  const code = hostElement("pre", {
+    implements: "copyable",
+    id: "code",
+    "on-copy": "#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(20).removeAttr('data-copied')",
+  });
   code.textContent = "copy me";
   document.body.append(button, code);
   await flush();
 
-  interact(button, "copy", code);
+  interact(code, "copy");
   await flush();
-  assert.equal(button.getAttribute("data-copied"), "true", "on-copy marks the button");
+  assert.equal(button.getAttribute("data-copied"), "true", "on-copy marks the button via the back-pointer");
 
   await delay(60);
-  assert.equal(button.hasAttribute("data-copied"), false, "the debounced reset removes the marker");
+  assert.equal(button.hasAttribute("data-copied"), false, "the delayed reset removes the marker");
 });
 
-test("a successful copy runs on-copy", async () => {
+test("a native copy event on a copyable element does run on-copy", async () => {
   installClipboard(async () => {});
   const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
-  const button = hostElement("button", {
+  const code = hostElement("pre", {
     implements: "copyable",
-    id: "copy-btn",
+    id: "code",
     "on-copy": "#receipt.show()",
   });
-  const code = hostElement("pre", { id: "code" });
   code.textContent = "copy me";
-  document.body.append(button, code, receipt);
+  document.body.append(code, receipt);
   await flush();
 
-  interact(button, "copy", code);
+  code.dispatchEvent(new Event("copy"));
   await flush();
-  assert.equal(receipt.getAttribute("revealable-open"), "true");
-});
-
-test("a failed copy warns and never fires on-copy", async () => {
-  installClipboard(async () => {
-    throw new Error("denied");
-  });
-  const alert = hostElement("section", { implements: "revealable", id: "alert", hidden: "" });
-  const button = hostElement("button", {
-    implements: "copyable",
-    id: "copy-btn",
-    "on-copy": "#alert.show()",
-  });
-  const code = hostElement("pre", { id: "code" });
-  code.textContent = "copy me";
-  document.body.append(button, code, alert);
-  await flush();
-
-  interact(button, "copy", code);
-  await flush();
-  assert.equal(alert.hidden, true);
-});
-
-test("a native copy event on a copyable element does not run on-copy", async (t) => {
-  const warn = t.mock.method(console, "warn");
-  installClipboard(async () => {});
-  const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
-  const button = hostElement("button", {
-    implements: "copyable",
-    id: "copy-btn",
-    "on-copy": "#receipt.show()",
-  });
-  const code = hostElement("pre", { id: "code" });
-  code.textContent = "copy me";
-  document.body.append(button, code, receipt);
-  await flush();
-
-  button.dispatchEvent(new Event("copy"));
-  assert.equal(receipt.hidden, true, "the native clipboard event does not fire copyable's on-copy");
-  assert.equal(warn.mock.callCount(), 0, "a declared event never triggers the no-such-event warning");
+  assert.equal(receipt.hidden, false, "the native clipboard event fires copyable's on-copy too");
 });
 
 test("a native copy event on a non-copyable element does run on-copy", async () => {
   const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
-  const button = hostElement("button", { id: "copy-btn", "on-copy": "#receipt.show()" });
-  document.body.append(button, receipt);
+  const code = hostElement("pre", { id: "code", "on-copy": "#receipt.show()" });
+  code.textContent = "copy me";
+  document.body.append(code, receipt);
   await flush();
 
-  button.dispatchEvent(new Event("copy"));
+  code.dispatchEvent(new Event("copy"));
   await flush();
   assert.equal(receipt.hidden, false, "without copyable the plain DOM copy event fires the phrase");
 });
 
-test("implements added after wiring is respected at dispatch time", async () => {
-  installClipboard(async () => {});
+test("a total failure fires on-copy-error and never on-copy, with no console.warn", async (t) => {
+  const warn = t.mock.method(console, "warn");
+  installClipboard(async () => {
+    throw new Error("denied");
+  });
   const receipt = hostElement("section", { implements: "revealable", id: "receipt", hidden: "" });
-  const button = hostElement("button", { id: "late-btn", "on-copy": "#receipt.show()" });
-  const code = hostElement("pre", { id: "code" });
+  const alert = hostElement("section", { implements: "revealable", id: "alert", hidden: "" });
+  const code = hostElement("pre", {
+    implements: "copyable",
+    id: "code",
+    "on-copy": "#receipt.show()",
+    "on-copy-error": "#alert.show()",
+  });
   code.textContent = "copy me";
-  document.body.append(button, code, receipt);
+  document.body.append(code, receipt, alert);
   await flush();
 
-  button.dispatchEvent(new Event("copy"));
+  interact(code, "copy");
   await flush();
-  assert.equal(receipt.hidden, false, "before copyable attaches, the native copy event fires the phrase");
-
-  button.setAttribute("implements", "copyable");
-  await flush();
-  receipt.hidden = true;
-
-  button.dispatchEvent(new Event("copy"));
-  await flush();
-  assert.equal(receipt.hidden, true, "once copyable declares copy, the native event no longer fires on-copy");
+  assert.equal(receipt.hidden, true, "on-copy never fires on total failure");
+  assert.equal(alert.hidden, false, "on-copy-error fires when the clipboard write and the fallback both fail");
+  assert.equal(warn.mock.callCount(), 0, "the failure path never warns");
 });
 
-test("on-copy runs with this bound to the button", async () => {
-  installClipboard(async () => {});
-  const button = hostElement("button", {
-    implements: "copyable attributable",
-    id: "copy-btn",
-    "on-copy": "this.setAttr({name: 'data-done', value: 'yes'})",
+test("without a clipboard API a failed fallback fires on-copy-error, never on-copy", async (t) => {
+  const warn = t.mock.method(console, "warn");
+  const alert = hostElement("section", { implements: "revealable", id: "alert", hidden: "" });
+  const code = hostElement("pre", {
+    implements: "copyable",
+    id: "code",
+    "on-copy-error": "#alert.show()",
   });
-  const code = hostElement("pre", { id: "code" });
-  code.textContent = "copy me";
-  document.body.append(button, code);
+  code.textContent = "plain text";
+  document.body.append(code, alert);
   await flush();
 
-  interact(button, "copy", code);
+  interact(code, "copy");
   await flush();
-  assert.equal(button.getAttribute("data-done"), "yes");
+  assert.equal(alert.hidden, false, "no clipboard API plus a failed fallback fires on-copy-error");
+  assert.equal(warn.mock.callCount(), 0);
+});
+
+test("empty text is a no-op: it fires neither copy nor copy-error", async (t) => {
+  const warn = t.mock.method(console, "warn");
+  const code = hostElement("pre", { implements: "copyable", id: "code" });
+  code.textContent = "   ";
+  let copies = 0;
+  let errors = 0;
+  code.addEventListener("copy", () => copies++);
+  code.addEventListener("copy-error", () => errors++);
+  document.body.append(code);
+  await flush();
+
+  interact(code, "copy");
+  await flush();
+  assert.equal(copies, 0, "empty text never fires copy");
+  assert.equal(errors, 0, "empty text never fires copy-error");
+  assert.equal(warn.mock.callCount(), 0, "empty text is a no-op, not a warning");
 });

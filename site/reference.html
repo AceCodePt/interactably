@@ -194,14 +194,14 @@
 
       <article class="ref-card">
         <h3><code class="inline-code">copyable</code></h3>
-        <p class="ref-tags">button</p>
-        <p class="ref-desc">Copies a target element&rsquo;s text to the clipboard: <code class="inline-code">on-click="this.copy(#id)"</code>. Fires <code class="inline-code">copy</code> on success; it never touches attributes, so the flash is the author&rsquo;s (<code class="inline-code">on-copy</code>).</p>
+        <p class="ref-tags">pre &middot; code &middot; p &middot; div</p>
+        <p class="ref-desc">Copies the element&rsquo;s own text to the clipboard; a button calls it as a plain receiver (<code class="inline-code">on-click="#snippet.copy()"</code>). On success it dispatches <code class="inline-code">copy</code> &mdash; which shares the attribute with the native clipboard copy &mdash; and <code class="inline-code">copy-error</code> on total failure; empty text is a no-op; it never touches attributes, so the flash is the author&rsquo;s (<code class="inline-code">on-copy</code>).</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">copy</span></div>
         <p class="ref-labels">Config / state</p>
         <div><span class="verb-tag">&mdash;</span></div>
         <p class="ref-labels">Events</p>
-        <div><span class="verb-tag">copy</span></div>
+        <div><span class="verb-tag">copy</span><span class="verb-tag">copy-error</span></div>
       </article>
 
       <article class="ref-card">
@@ -232,7 +232,7 @@
           <tr><td><code class="inline-code">parse(value, eventName?)</code></td><td>Parse an attribute string into phrases (cached by event name and value)</td></tr>
           <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
           <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class</td></tr>
-          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code>, <code class="inline-code">request-error</code> carries the failure kind, and an event may carry declared values as <code class="inline-code">values</code> alongside <code class="inline-code">key</code></td></tr>
+          <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy-error</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code>, <code class="inline-code">request-error</code> carries the failure kind, and an event may carry declared values as <code class="inline-code">values</code> alongside <code class="inline-code">key</code>. copyable re-dispatches the native <code class="inline-code">copy</code> instead of declaring it, so the attribute shares one fact with the browser&rsquo;s own event</td></tr>
           <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is an intersect name or an event some implementation on <code class="inline-code">el</code> declares</td></tr>
           <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
           <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s <code class="inline-code">IntersectionObserver</code>s, one per <code class="inline-code">rootMargin</code></td></tr>
@@ -267,12 +267,11 @@
     <div class="codeblock">
       <div class="codeblock-bar">
         <span class="codeblock-lang">Text</span>
-        <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                on-click="this.copy(#code-reference-grammar)" type="button">
+        <button class="copy-btn" implements="attributable" id="copy-code-reference-grammar" on-click="#code-reference-grammar.copy()" type="button">
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>
       </div>
-      <pre class="code" id="code-reference-grammar" data-lang="text"><code>attribute := 'on-' event-type [ '(' value-decl (',' value-decl)* ')' ]
+      <pre class="code" id="code-reference-grammar" implements="copyable" on-copy="#copy-code-reference-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>attribute := 'on-' event-type [ '(' value-decl (',' value-decl)* ')' ]
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+

@@ -56,12 +56,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-bubble)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-bubble" on-click="#code-ex-bubble.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-bubble" data-lang="html"><code>&lt;div id="outer" implements="logger"
+              <pre class="code" id="code-ex-bubble" implements="copyable" on-copy="#copy-code-ex-bubble.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div id="outer" implements="logger"
          on-click="#outer.log('outer card')"&gt;
       &lt;p&gt;Clicking the plain area logs the outer line.&lt;/p&gt;
       &lt;button on-click="#outer.log('plain inner button')"&gt;Inner button (bubbles)&lt;/button&gt;

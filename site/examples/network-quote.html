@@ -55,12 +55,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-quote)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-quote" on-click="#code-ex-quote.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-quote" data-lang="html"><code>&lt;button on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
+              <pre class="code" id="code-ex-quote" implements="copyable" on-copy="#copy-code-ex-quote.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
     &lt;div id="quote" implements="requestable renderable"
          requestable-url="./fragments/quote.html" requestable-method="get"
          on-response(html:string)="#quote.render({payload: html})"&gt;

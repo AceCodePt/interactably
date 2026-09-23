@@ -70,12 +70,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-theme)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-theme" on-click="#code-ex-theme.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-theme" data-lang="html"><code>&lt;button implements="storable" storable-key="theme" storable-value="dark"
+              <pre class="code" id="code-ex-theme" implements="copyable" on-copy="#copy-code-ex-theme.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button implements="storable" storable-key="theme" storable-value="dark"
             on-load="this.restore()"
             on-click="#stage.setAttr({name: 'data-theme', value: 'dark'}); this.save()"
             on-restore(value:string)="#stage.setAttr({name: 'data-theme', value: value}); #theme-toast.show()"&gt;Dark&lt;/button&gt;

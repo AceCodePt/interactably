@@ -86,7 +86,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | Construct | Example | Meaning |
 | --- | --- | --- |
 | Trigger | `on-click="#pop.show()"` | On `click`, run the phrase |
-| Implementation event | `on-copy="#flash.show()"` | An implementation's own event (`copy`, `response`, `request-error`, `restore`) |
+| Implementation event | `on-copy="#flash.show()"` | An implementation's own event (`copy-error`, `response`, `request-error`, `restore`); copyable also re-dispatches the native `copy`, which shares the attribute |
 | Synthetic trigger | `on-intersect-enter="#link.mark()"` | `IntersectionObserver` against the viewport: `enter`/`leave`/`full` |
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from |
@@ -95,7 +95,6 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | And | `#form.validate() && #hint.show()` | Next unit only if this one completed |
 | Or | `#form.validate().send() \|\| #alert.show()` | Next unit only if a guard aborted this one |
 | Scalar arg | `#qty.set(#qty.value + 5)` | Numbers, `'strings'`, `true` / `false` |
-| Element arg | `#clip.copy(#snippet)` | A ref resolves to the element at fire time |
 | Property read | `#preview.set(this.value)` | `value`/`checked`/`min`/`max`/`step`, typed by the element |
 | Key | `on-keydown="enter: #f.send()"` | Filter *which* events reach the phrase |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
@@ -144,7 +143,7 @@ The rules, one line each:
 | `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script is sized on the next input |
 | `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key — a literal, or a ref (`#cart`/`this` for contents, `this.value` for a property); `restore()` reads the key and fires `restore` carrying the stored string as the declared value `value`, writing nothing; `on-restore(value:string)` resolves it by name and restore never filters |
 | `pastable` | input, textarea | — | — | fires `pasted` after a paste has landed, carrying the post-paste value as `text`, so `this.value` is the new value |
-| `copyable` | button | `copy` | event `copy` | copies a target element's text to the clipboard and fires `copy` on success; the flash is the author's (`on-copy`) |
+| `copyable` | pre, code, p, div | `copy` (no argument) | events `copy`, `copy-error` | copies the element's own text to the clipboard — a button calls it as a plain receiver (`#snippet.copy()`); on success it dispatches `copy`, which shares the attribute with the native clipboard copy, on total failure `copy-error`; empty text is a no-op; the flash is the author's (`on-copy`) |
 | `focusable` | any | `focus`, `blur` | — | `HTMLElement.focus()` / `blur()` as verbs; reports once if focus did not take |
 
 `attributable` writes attributes whole. `class` is a token list, so `classable` exposes `classList` instead — `#menu.toggle('open')`, one name per call, browser rules for what a name may be.

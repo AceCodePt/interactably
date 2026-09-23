@@ -59,12 +59,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-valid)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-valid" on-click="#code-ex-valid.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-valid" data-lang="html"><code>&lt;form id="signup" novalidate
+              <pre class="code" id="code-ex-valid" implements="copyable" on-copy="#copy-code-ex-valid.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="signup" novalidate
           implements="prevent-default validatable attributable"
           on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()"&gt;
       &lt;label&gt;Email
