@@ -308,3 +308,144 @@ test("substitution reaches attribute values, so a stamped delete button targets 
   await flush();
   assert.equal(list.children.length, 0, "the stamped button deleted its own row");
 });
+
+interface FakeTransition {
+  finished: Promise<void>;
+  resolveFinished: () => void;
+}
+
+let transitions: FakeTransition[];
+
+function installFakeTransition(): void {
+  transitions = [];
+  Object.defineProperty(document, "startViewTransition", {
+    configurable: true,
+    value: (callback: () => void): { finished: Promise<void> } => {
+      callback();
+      let resolveFinished!: () => void;
+      const finished = new Promise<void>((resolve) => {
+        resolveFinished = resolve;
+      });
+      transitions.push({ finished, resolveFinished });
+      return { finished };
+    },
+  });
+}
+
+function restoreFakeTransition(): void {
+  delete (document as unknown as { startViewTransition?: unknown }).startViewTransition;
+}
+
+test("fallback path fires rendered immediately after the mutation", async () => {
+  const list = mount();
+  await flush();
+  const tpl = template("<li>{x}</li>");
+  const seen: string[] = [];
+  list.addEventListener("rendered", () => seen.push("rendered"));
+
+  dispatchInteraction(list, "render", { template: tpl, swap: "beforeend", x: "a" });
+
+  assert.equal(list.children.length, 1);
+  assert.deepEqual(seen, ["rendered"]);
+});
+
+test("wrapped path fires rendered after finished resolves", async (t) => {
+  const list = mount();
+  await flush();
+  const tpl = template("<li>{x}</li>");
+  const seen: string[] = [];
+  list.addEventListener("rendered", () => seen.push("rendered"));
+  installFakeTransition();
+  t.after(restoreFakeTransition);
+
+  dispatchInteraction(list, "render", { template: tpl, swap: "beforeend", x: "a" });
+
+  assert.equal(list.children.length, 1, "the fake runs the mutation synchronously");
+  assert.equal(transitions.length, 1, "the swap wrapped in a view transition");
+  assert.deepEqual(seen, [], "rendered waits for finished");
+
+  transitions[0]!.resolveFinished();
+  await flush();
+  assert.deepEqual(seen, ["rendered"], "rendered fires once the transition settles");
+});
+
+test("renderable-disable-view-transition skips the wrap even with the fake installed", async (t) => {
+  const list = mount();
+  await flush();
+  list.setAttribute("renderable-disable-view-transition", "");
+  const tpl = template("<li>{x}</li>");
+  const seen: string[] = [];
+  list.addEventListener("rendered", () => seen.push("rendered"));
+  installFakeTransition();
+  t.after(restoreFakeTransition);
+
+  dispatchInteraction(list, "render", { template: tpl, swap: "beforeend", x: "a" });
+
+  assert.equal(transitions.length, 0, "the swap bypasses startViewTransition");
+  assert.equal(list.children.length, 1);
+  assert.deepEqual(seen, ["rendered"], "the fallback fires rendered immediately");
+});
+
+test("rendered does not fire for swap none", async (t) => {
+  const list = mount();
+  await flush();
+  list.innerHTML = "<li>kept</li>";
+  const seen: string[] = [];
+  list.addEventListener("rendered", () => seen.push("rendered"));
+  installFakeTransition();
+  t.after(restoreFakeTransition);
+
+  dispatchInteraction(list, "render", { swap: "none" });
+
+  assert.equal(transitions.length, 0);
+  assert.deepEqual(seen, []);
+  assert.equal(list.textContent, "kept");
+});
+
+test("rendered does not fire when a slot or id validation throws", async (t) => {
+  const list = mount();
+  await flush();
+  const seen: string[] = [];
+  list.addEventListener("rendered", () => seen.push("rendered"));
+  installFakeTransition();
+  t.after(restoreFakeTransition);
+
+  assert.throws(
+    () =>
+      dispatchInteraction(list, "render", {
+        template: template("<li>{title}</li>"),
+        swap: "beforeend",
+        title: "x",
+        extra: "y",
+      }),
+    /slot "extra" is not declared/,
+  );
+  assert.throws(
+    () =>
+      dispatchInteraction(list, "render", {
+        template: template('<li id="row-{id}">a</li><li id="row-{id}">b</li>'),
+        swap: "beforeend",
+        id: 4,
+      }),
+    /duplicate id "row-4"/,
+  );
+  assert.equal(transitions.length, 0, "validation happens before the wrap");
+  assert.deepEqual(seen, []);
+});
+
+test("undo reverses while a transition is pending", async (t) => {
+  const list = mount();
+  await flush();
+  const tpl = template("<li>{x}</li>");
+  installFakeTransition();
+  t.after(restoreFakeTransition);
+
+  dispatchInteraction(list, "render", { template: tpl, swap: "beforeend", x: "a" });
+  assert.equal(list.children.length, 1);
+
+  dispatchInteraction(list, "undo");
+  assert.equal(list.children.length, 0, "undo reverses without waiting for finished");
+
+  transitions[0]!.resolveFinished();
+  await flush();
+});
