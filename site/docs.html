@@ -157,7 +157,7 @@
             <thead><tr><th>Bundle</th><th>Contents</th></tr></thead>
             <tbody>
               <tr><td><code class="inline-code">interactably-core.js</code></td><td>parser, executor, event, attachment, registry. No implementations.</td></tr>
-              <tr><td><code class="inline-code">modifiable.js</code>, <code class="inline-code">dirtyable.js</code>, <code class="inline-code">listable.js</code>, &hellip;</td><td>one implementation per file, registering into the core&rsquo;s registry on import</td></tr>
+              <tr><td><code class="inline-code">modifiable.js</code>, <code class="inline-code">dirtyable.js</code>, <code class="inline-code">renderable.js</code>, &hellip;</td><td>one implementation per file, registering into the core&rsquo;s registry on import</td></tr>
             </tbody>
           </table>
         </div>
@@ -190,7 +190,7 @@
 &lt;button on-click="#tour.once().show()"&gt;
 &lt;button on-click="#pb.show(false); #pc.show(false); #pa.show()"&gt;
 &lt;button on-click="#note.transform({mode: 'upper', shift: 2})"&gt;
-&lt;button on-click="#list.removeRow(this)"&gt;
+&lt;button on-click="#clip.copy(#snippet)"&gt;
 &lt;form   on-submit="#order.validate().send() || #alert.show()"&gt;
 &lt;input  on-change="#form.validate() &amp;&amp; #hint.show()"&gt;</code></pre>
         </div>
@@ -235,7 +235,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td>And</td><td><code class="inline-code">#form.validate() &amp;&amp; #hint.show()</code></td><td><code class="inline-code">.validate()</code> then, only if it completed, <code class="inline-code">#hint.show()</code> &mdash; possibly on another receiver</td></tr>
               <tr><td>Or</td><td><code class="inline-code">#form.validate().send() || #alert.show()</code></td><td><code class="inline-code">#alert.show()</code> only if a guard aborted the first unit</td></tr>
               <tr><td>Scalar arg</td><td><code class="inline-code">#qty.set(#qty.value + 5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
-              <tr><td>Element arg</td><td><code class="inline-code">#list.removeRow(this)</code></td><td>A ref resolves to the element at fire time</td></tr>
+              <tr><td>Element arg</td><td><code class="inline-code">#clip.copy(#snippet)</code></td><td>A ref resolves to the element at fire time</td></tr>
               <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code>, the type the element declares; absent <code class="inline-code">min</code>/<code class="inline-code">max</code> reads empty, absent <code class="inline-code">step</code> on a number/range input reads <code class="inline-code">1</code></td></tr>
               <tr><td>Key</td><td><code class="inline-code">on-keydown="enter: #f.send()"</code></td><td>Filter <em>which</em> events reach the phrase</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
@@ -483,7 +483,7 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
               <tr><td><code class="inline-code">modifiable</code></td><td>input, textarea, output, select</td><td><code class="inline-code">set</code>, <code class="inline-code">clear</code>, <code class="inline-code">reset</code></td><td>&mdash;</td><td>typed writes; <code class="inline-code">set</code> takes a string, a number, or an expression evaluated at fire time</td></tr>
               <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td>&mdash;</td><td><code class="inline-code">dirty-on</code>; events <code class="inline-code">dirty</code>, <code class="inline-code">clean</code></td><td>fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing; move the baseline on an input with <code class="inline-code">setAttr({name: &rsquo;value&rsquo;, value: this.value})</code></td></tr>
               <tr><td><code class="inline-code">formattable</code></td><td>output, span, div, td, p, li, dd, b, strong, em, small</td><td>&mdash;</td><td><code class="inline-code">format</code></td><td>renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write</td></tr>
-              <tr><td><code class="inline-code">listable</code></td><td>ul, ol, tbody</td><td><code class="inline-code">removeRow</code>, <code class="inline-code">adopt</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">min-rows</code></td><td>row removal / template adoption / clear, keeping <code class="inline-code">min-rows</code></td></tr>
+              <tr><td><code class="inline-code">renderable</code></td><td>any</td><td><code class="inline-code">render</code>, <code class="inline-code">undo</code></td><td>&mdash;</td><td>stamps a template with flat scalar slots into text nodes and attribute values; the swap vocabulary is <code class="inline-code">requestable</code>&rsquo;s; <code class="inline-code">undo</code> reverses the one last render</td></tr>
               <tr><td><code class="inline-code">requestable</code></td><td>any</td><td><code class="inline-code">send</code>, <code class="inline-code">abort</code></td><td><code class="inline-code">url</code>, <code class="inline-code">method</code>, <code class="inline-code">target</code>, <code class="inline-code">swap</code>, <code class="inline-code">include</code>, <code class="inline-code">concurrency</code>, <code class="inline-code">timeout</code>, <code class="inline-code">errors</code> + <code class="inline-code">status</code> state; events <code class="inline-code">response</code>, <code class="inline-code">request-error</code></td><td>fetch, swap the response into the DOM, fire <code class="inline-code">response</code> / <code class="inline-code">request-error</code> events, partitioned by failure kind</td></tr>
               <tr><td><code class="inline-code">attributable</code></td><td>any</td><td><code class="inline-code">setAttr</code>, <code class="inline-code">toggleAttr</code>, <code class="inline-code">removeAttr</code></td><td>&mdash;</td><td>attribute writes (<code class="inline-code">setAttr({name, value})</code>)</td></tr>
               <tr><td><code class="inline-code">classable</code></td><td>any</td><td><code class="inline-code">add</code>, <code class="inline-code">remove</code>, <code class="inline-code">toggle</code></td><td>&mdash;</td><td>classList writes, one class name per call; <code class="inline-code">toggle</code> has no force argument</td></tr>
@@ -675,6 +675,8 @@ export const modifiable = defineImplementation("modifiable", {
           <li><strong>Scalar slot:</strong> <code class="inline-code">"string"</code>, <code class="inline-code">"number | undefined"</code>, <code class="inline-code">"'upper' | 'lower'"</code>, <code class="inline-code">"`${number}px`"</code>. When a field has a finite set of legal values, spell the union out.</li>
           <li><strong>Element slot:</strong> a constructor — <code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, <code class="inline-code">HTMLButtonElement</code>. The grammar already knows a bare ref is an element and the executor has resolved it, so what remains is <code class="inline-code">instanceof</code>.</li>
           <li><strong>One argument per verb:</strong> a slot (scalar or constructor) or a <strong>record of slots</strong> (one object literal). <code class="inline-code">"undefined"</code> declares no argument. Positional lists do not exist, so changing <code class="inline-code">transform('upper')</code> to take a second argument forces every call site to become <code class="inline-code">transform({mode: 'upper', &hellip;})</code> — a loud parse error, never a silent re-bind.</li>
+          <li><strong>Rest key:</strong> a <code class="inline-code">"*"</code> slot in a record validates every undeclared key — <code class="inline-code">render</code>&rsquo;s flat slots are <code class="inline-code">"string | number | boolean"</code> — while declared keys still validate against their own slots.</li>
+          <li><strong>Optional element slot:</strong> <code class="inline-code">optionalCtor(HTMLTemplateElement)</code> — the key may be omitted from the object literal, and a present value is <code class="inline-code">instanceof</code>-checked. <code class="inline-code">render</code>&rsquo;s <code class="inline-code">template</code> field is exactly this.</li>
         </ul>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -684,18 +686,19 @@ export const modifiable = defineImplementation("modifiable", {
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-signatures" data-lang="ts"><code>export const listable = defineImplementation("listable", {
-  tags: ["ul", "ol", "tbody"],
-  config: { "min-rows": "number | undefined" },
+          <pre class="code" id="code-docs-signatures" data-lang="ts"><code>export const renderable = defineImplementation("renderable", {
   verbs: {
-    removeRow: HTMLElement,                  // any element inside a row
-    adopt:     HTMLTemplateElement,
-    clear:     "undefined",
+    render: {
+      template: optionalCtor(HTMLTemplateElement),   // optional, but instance-checked when present
+      swap:     SWAP_SLOT,                           // the shared requestable swap vocabulary
+      target:   "string | undefined",
+      "*":      "string | number | boolean",         // every undeclared key validates against this
+    },
+    undo: "undefined",
   },
-}, (el, attrs) =&gt; ({
-  removeRow: (_e, from) =&gt; { const row = from.closest(":scope &gt; *"); if (row &amp;&amp; el.children.length &gt; (attrs["min-rows"] ?? 0)) row.remove(); },
-  adopt:     (_e, tpl)  =&gt; el.append(tpl.content.cloneNode(true)),
-  clear:     ()         =&gt; { while (el.children.length &gt; (attrs["min-rows"] ?? 0)) el.lastElementChild!.remove(); },
+}, (el) =&gt; ({
+  render: (_e, { template, swap = "innerHTML", target, ...slots }) =&gt; stampInto(el, { template, swap, target, slots }),
+  undo:   () =&gt; rollback(el),
 }));
 
 export const attributable = defineImplementation("attributable", {
@@ -841,8 +844,8 @@ export const attributable = defineImplementation("attributable", {
           <table class="tbl">
             <thead><tr><th>Case</th><th>Answer</th></tr></thead>
             <tbody>
-              <tr><td><strong>Dynamic triggers</strong> (rows cloned from a template)</td><td>Put the <code class="inline-code">implements</code> / <code class="inline-code">on-*</code> attributes in the template; <code class="inline-code">on-click="this.remove()"</code> / <code class="inline-code">#list.removeRow(this)</code> works on every clone with no generated ids</td></tr>
-              <tr><td><strong>Dynamic receivers</strong> (a row&rsquo;s own subtotal)</td><td>Receivers stay ids or <code class="inline-code">this</code>. Either address a stable ancestor and let the implementation find the relative element from <code class="inline-code">e.source</code> (<code class="inline-code">closest("li")</code>), or stamp ids in the template</td></tr>
+              <tr><td><strong>Dynamic triggers</strong> (rows rendered from a template)</td><td>Put the <code class="inline-code">implements</code> / <code class="inline-code">on-*</code> attributes in the template; <code class="inline-code">render()</code> stamps each clone with an author-supplied <code class="inline-code">id</code> slot, and the row&rsquo;s delete button targets that id directly — <code class="inline-code">on-click="#list.render({swap: 'delete', target: '#row-{id}'})"</code> — no closest-style walk-up, no generated ids</td></tr>
+              <tr><td><strong>Dynamic receivers</strong> (a row&rsquo;s own subtotal)</td><td>Receivers stay ids or <code class="inline-code">this</code>. Stamp ids in the template — <code class="inline-code">render()</code> fills <code class="inline-code">row-{id}</code> from a slot — so a row&rsquo;s own fields are addressed directly, or the row totals them with the <code class="inline-code">&amp;</code> selector below</td></tr>
               <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>An expression with a selector: the row&rsquo;s <code class="inline-code">on-input="#total.set(sum('#list .amount:valid'))"</code>, and <code class="inline-code">on-load="this.set(sum('#list .amount:valid'))"</code> on the total to compute at attach. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. <code class="inline-code">sum</code> is strict; filter blanks in the selector — <code class="inline-code">sum('#list .amount:valid')</code> (blank <code class="inline-code">required</code> inputs are <code class="inline-code">:invalid</code>), <code class="inline-code">sum('#list .amount:not(:placeholder-shown)')</code> (blank inputs carrying a <code class="inline-code">placeholder</code>, even <code class="inline-code">placeholder=" "</code>), <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes. A <code class="inline-code">&amp;</code> in the selector names the element the phrase is on, so a row can total its own fields — see the row example below</td></tr>
               <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change fires its own event (<code class="inline-code">on-response="#count.set(count('#results &gt; li'))"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
             </tbody>
@@ -936,7 +939,7 @@ export const attributable = defineImplementation("attributable", {
           <pre class="code" id="code-docs-native-defaults" data-lang="html"><code>&lt;form implements="prevent-default" on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
 &lt;a       href="/docs"                  on-click="#log.track('docs')"&gt;Docs&lt;/a&gt;   &lt;!-- navigates and tracks --&gt;
 &lt;a       href="#p" implements="prevent-default" on-click="#p.show()"&gt;&hellip;&lt;/a&gt;   &lt;!-- in-page action --&gt;
-&lt;button implements="no-propagate" on-click="#list.removeRow(this)"&gt;&times;&lt;/button&gt;  &lt;!-- row's on-click untouched --&gt;</code></pre>
+&lt;button implements="no-propagate" on-click="#clip.copy(#snippet)"&gt;&times;&lt;/button&gt;  &lt;!-- the inner click never reaches the outer trigger --&gt;</code></pre>
         </div>
         <p><code class="inline-code">prevent-default</code> binds its own listeners with <code class="inline-code">passive: false</code>, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying <code class="inline-code">on-submit</code> on a <code class="inline-code">&lt;form&gt;</code> (or <code class="inline-code">on-click</code> on an <code class="inline-code">&lt;a href&gt;</code>, or <code class="inline-code">on-keydown</code> on a <code class="inline-code">&lt;button&gt;</code>) without <code class="inline-code">prevent-default</code> logs one <code class="inline-code">console.warn</code>. A pre-existing <code class="inline-code">defaultPrevented</code> does <strong>not</strong> suppress dispatch.</p>
 
@@ -1034,19 +1037,19 @@ export const attributable = defineImplementation("attributable", {
 &lt;button on-click="#qty.reset(); #preview.set(#qty.value)"&gt;Reset&lt;/button&gt;
 &lt;output id="preview" implements="modifiable" on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;
 
-&lt;ul id="list" implements="listable" listable-min-rows="1"&gt;
-  &lt;li&gt;
+&lt;ul id="list" implements="renderable"&gt;
+  &lt;li id="row-1"&gt;
     &lt;input class="amount" type="number" step="any" required on-input="#total.set(sum('#list .amount:valid'))"&gt;
-    &lt;button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
+    &lt;button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
-&lt;button on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount:valid'))"&gt;Add row&lt;/button&gt;
-&lt;template id="row-tpl"&gt;&lt;li&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
+&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid'))"&gt;Add row&lt;/button&gt;
+&lt;template id="row-tpl"&gt;&lt;li id="row-{id}"&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
 &lt;output id="total" implements="modifiable formattable"
         on-load="this.set(sum('#list .amount:valid'))"
         formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;</code></pre>
         </div>
-        <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers; the <code class="inline-code">&lt;li&gt;</code> is a plain element — the row is reached through <code class="inline-code">#list.removeRow(this)</code>, so it needs no implementation, no host and no id, and cloning it produces nothing that has to be unique.</p>
+        <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers. The <code class="inline-code">&lt;li&gt;</code> is a plain element carrying an author-supplied id: <code class="inline-code">render()</code> stamps <code class="inline-code">row-{id}</code> from a slot (the <code class="inline-code">&times;</code> button&rsquo;s <code class="inline-code">target: '#row-{id}'</code> resolves before the clone attaches), so a row deletes itself by id &mdash; no closest-style walk-up, no generated ids.</p>
 
         <h3 id="order-form">Order form — the asynchronous seam</h3>
         <div class="codeblock">
@@ -1129,11 +1132,12 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">INTERSECT_EVENT_NAMES</code></td><td>The synthetic intersect names (<code class="inline-code">intersect-enter</code>, <code class="inline-code">intersect-leave</code>, <code class="inline-code">intersect-full</code>)</td></tr>
               <tr><td><code class="inline-code">matchesKey(ev, name)</code></td><td>The key matcher (<code class="inline-code">space</code> &rarr; <code class="inline-code">" "</code>, case-insensitive) used by keys and event lists</td></tr>
               <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
+              <tr><td><code class="inline-code">optionalCtor(Ctor)</code></td><td>Mark an element-constructor signature slot optional: the key may be omitted, and a present value is instance-checked (<code class="inline-code">render</code>&rsquo;s <code class="inline-code">template</code> field)</td></tr>
               <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
               <tr><td><code class="inline-code">readValue(el, property = "value")</code></td><td>The element&rsquo;s value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read <code class="inline-code">.value</code> (a string), display elements read <code class="inline-code">formattable-value</code> as a number under a numeric format, else <code class="inline-code">textContent</code> (a string); <code class="inline-code">readValue(el, "checked")</code> is the checked boolean; <code class="inline-code">readValue(el, "min" | "max" | "step")</code> is the platform bound — a number on number/range inputs (absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code>, absent <code class="inline-code">step</code> is <code class="inline-code">1</code>), the string as written elsewhere</td></tr>
               <tr><td><code class="inline-code">writeValue(el, v)</code></td><td>Write helper: sets <code class="inline-code">.value</code> where the element has one, else <code class="inline-code">textContent</code></td></tr>
               <tr><td><code class="inline-code">NotReadyError</code></td><td>Error set on <code class="inline-code">e.error</code> when a dispatch reaches an attached element whose <code class="inline-code">implements</code> names an implementation still pending registration</td></tr>
-              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">listable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">classable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pastable</code>, <code class="inline-code">copyable</code>, <code class="inline-code">formattable</code>, <code class="inline-code">focusable</code></td></tr>
+              <tr><td>Implementations</td><td><code class="inline-code">modifiable</code>, <code class="inline-code">dirtyable</code>, <code class="inline-code">renderable</code>, <code class="inline-code">requestable</code>, <code class="inline-code">attributable</code>, <code class="inline-code">classable</code>, <code class="inline-code">logger</code>, <code class="inline-code">validatable</code>, <code class="inline-code">noPropagate</code>, <code class="inline-code">preventDefault</code>, <code class="inline-code">revealable</code>, <code class="inline-code">autoGrow</code>, <code class="inline-code">storable</code>, <code class="inline-code">pastable</code>, <code class="inline-code">copyable</code>, <code class="inline-code">formattable</code>, <code class="inline-code">focusable</code></td></tr>
             </tbody>
           </table>
         </div>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably example — A list you can grow and shrink.">
-  <title>A list you can grow and shrink — Examples — Interactably</title>
+  <meta name="description" content="Interactably example — Optimistic send with an offline fallback.">
+  <title>Optimistic send, offline fallback — Examples — Interactably</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body data-page="examples">
@@ -30,31 +30,29 @@
 
   <main class="wrap">
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
-    <h1 class="doc-title">A list you can grow and shrink</h1>
+    <h1 class="doc-title">Optimistic send, offline fallback</h1>
     <p class="doc-lede">
-          <code class="inline-code">render()</code> stamps a template row with an author-supplied <code class="inline-code">id</code>
-          slot, the <code class="inline-code">&times;</code> button deletes its own row by targeting that id, and
-          <code class="inline-code">undo()</code> removes the last stamped row. <code class="inline-code">count('#dl-list li')</code> keeps
-          the total in sync after each change.
+          One <code class="inline-code">on-click</code> renders the message optimistically and then sends it in the same
+          chain (<code class="inline-code">#list.render({&hellip;}); #form.send()</code>). When the network is down, the form
+          fires <code class="inline-code">request-error</code> with the reserved <code class="inline-code">offline</code> key, and
+          the keyed <code class="inline-code">on-request-error="offline: #list.undo()"</code> rolls the row back.
         </p>
     <div class="example-body">
 
               <div class="demo">
-                <button id="dl-add" type="button" on-click="#dl-list.render({template: #dl-tpl, swap: 'beforeend', id: now()}); #dl-count.set(count('#dl-list li'))">Add a row</button>
-                <button id="dl-undo" type="button" on-click="#dl-list.undo(); #dl-count.set(count('#dl-list li'))">Undo last</button>
-                <ul id="dl-list" implements="renderable">
-                  <li id="dl-row-1">
-                    <input class="dl-item" placeholder="Type in this row">
-                    <button type="button" on-click="#dl-list.render({swap: 'delete', target: '#dl-row-1'}); #dl-count.set(count('#dl-list li'))">&times;</button>
-                  </li>
-                </ul>
-                <p class="demo-note">Rows: <output id="dl-count" implements="modifiable">1</output></p>
-                <template id="dl-tpl">
-                  <li id="dl-row-{id}">
-                    <input class="dl-item" placeholder="Type in the new row">
-                    <button type="button" on-click="#dl-list.render({swap: 'delete', target: '#dl-row-{id}'}); #dl-count.set(count('#dl-list li'))">&times;</button>
-                  </li>
-                </template>
+                <div class="row">
+                  <label>Message
+                    <input id="of-text" type="text" value="hello from the optimistic path">
+                  </label>
+                  <button id="of-send" type="button"
+                          on-click="#of-list.render({template: #of-row-tpl, swap: 'beforeend', text: #of-text.value, id: now()}); #of-form.send()">Send</button>
+                </div>
+                <form id="of-form" implements="prevent-default requestable"
+                      requestable-url="/api/messages" requestable-method="post"
+                      on-request-error="offline: #of-list.undo()"></form>
+                <ul id="of-list" implements="renderable"></ul>
+                <p class="demo-note">Turn your network off and send: the row renders first, then undoes on the failure.</p>
+                <template id="of-row-tpl"><li id="msg-{id}">{text}</li></template>
               </div>
     </div>
         <details class="example-code">
@@ -63,25 +61,16 @@
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
                 <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-dl)" type="button">
+                        on-click="this.copy(#code-ex-offline)" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-dl" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #count.set(count('#list li'))"&gt;Add a row&lt;/button&gt;
-&lt;button on-click="#list.undo(); #count.set(count('#list li'))"&gt;Undo last&lt;/button&gt;
-&lt;ul id="list" implements="renderable"&gt;
-  &lt;li id="row-1"&gt;
-    &lt;input class="item" placeholder="Type in this row"&gt;
-    &lt;button on-click="#list.render({swap: 'delete', target: '#row-1'}); #count.set(count('#list li'))"&gt;&times;&lt;/button&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Rows: &lt;output id="count" implements="modifiable"&gt;1&lt;/output&gt;&lt;/p&gt;
-&lt;template id="row-tpl"&gt;
-  &lt;li id="row-{id}"&gt;
-    &lt;input class="item" placeholder="Type in the new row"&gt;
-    &lt;button on-click="#list.render({swap: 'delete', target: '#row-{id}'}); #count.set(count('#list li'))"&gt;&times;&lt;/button&gt;
-  &lt;/li&gt;
-&lt;/template&gt;</code></pre>
+              <pre class="code" id="code-ex-offline" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', text: #text.value, id: now()}); #form.send()"&gt;Send&lt;/button&gt;
+&lt;form id="form" implements="prevent-default requestable"
+      requestable-url="/api/messages" requestable-method="post"
+      on-request-error="offline: #list.undo()"&gt;&lt;/form&gt;
+&lt;ul id="list" implements="renderable"&gt;&lt;/ul&gt;
+&lt;template id="row-tpl"&gt;&lt;li id="msg-{id}"&gt;{text}&lt;/li&gt;&lt;/template&gt;</code></pre>
             </div>
           </details>
   </main>

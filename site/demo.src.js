@@ -1,6 +1,6 @@
 import "@behaviors/modifiable/modifiable.ts";
 import "@behaviors/dirtyable/dirtyable.ts";
-import "@behaviors/listable/listable.ts";
+import "@behaviors/renderable/renderable.ts";
 import "@behaviors/revealable/revealable.ts";
 import "@behaviors/requestable/requestable.ts";
 import "@behaviors/prevent-default/prevent-default.ts";

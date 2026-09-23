@@ -1,10 +1,10 @@
 import { SUPPORTED_KEYWORDS } from "tsyntax";
 import type { DSLInfer, DSLValidate } from "tsyntax";
-import type { Ctor, Sig } from "@interactable/signature.ts";
+import type { Ctor, OptionalCtor, Sig } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
 
-export type { Ctor, Sig } from "@interactable/signature.ts";
+export type { Ctor, OptionalCtor, Sig } from "@interactable/signature.ts";
 
 export type Tag = keyof HTMLElementTagNameMap;
 
@@ -12,13 +12,22 @@ export type El<T extends readonly Tag[] | undefined> = T extends readonly Tag[]
   ? HTMLElementTagNameMap[T[number]]
   : HTMLElement;
 
-export type Slot = string | Ctor;
+export type Slot = string | Ctor | OptionalCtor;
 
 export type KW = typeof SUPPORTED_KEYWORDS;
 
-type SlotOf<S extends Slot> = S extends string ? DSLInfer<KW, S> : S extends Ctor ? InstanceType<S> : never;
+type SlotOf<S extends Slot> = S extends string
+  ? DSLInfer<KW, S>
+  : S extends OptionalCtor<infer C>
+    ? InstanceType<C> | undefined
+    : S extends Ctor
+      ? InstanceType<S>
+      : never;
 
-export type ArgOf<S extends Sig> = S extends Slot ? SlotOf<S> : { [K in keyof S]: S[K] extends Slot ? SlotOf<S[K]> : never };
+export type ArgOf<S extends Sig> = S extends Slot
+  ? SlotOf<S>
+  : { [K in Exclude<keyof S, "*">]: S[K] extends Slot ? SlotOf<S[K]> : never } &
+      (S extends { "*": infer R } ? { [key: string]: R extends Slot ? SlotOf<R> : never } : {});
 
 export type Attrs<C extends Record<string, string>, S extends Record<string, string>> =
   { [K in keyof C]: DSLInfer<KW, C[K]> } & { -readonly [K in keyof S]: DSLInfer<KW, S[K]> };

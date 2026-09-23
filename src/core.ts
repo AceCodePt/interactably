@@ -22,5 +22,5 @@ export { ImplementationEvent } from "@interactable/implementation-event.ts";
 export type { ImplementationEventInit } from "@interactable/implementation-event.ts";
 export { isImplementationEvent } from "@interactable/events.ts";
 export { matchesKey } from "@interactable/keys.ts";
-export { compileSignature } from "@interactable/signature.ts";
-export type { CompiledSignature, Ctor, Sig as SignatureSlot } from "@interactable/signature.ts";
+export { compileSignature, optionalCtor } from "@interactable/signature.ts";
+export type { CompiledSignature, Ctor, OptionalCtor, Sig as SignatureSlot } from "@interactable/signature.ts";

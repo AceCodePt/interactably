@@ -90,17 +90,17 @@
             <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
           </div>
 
-          <ul id="list" implements="listable" listable-min-rows="1">
-            <li>
+          <ul id="list" implements="renderable">
+            <li id="row-1">
               <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
-              <button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
+              <button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
             </li>
           </ul>
-          <button id="add-row" on-click="#list.adopt(#row-tpl); #total.set(sum('#list .amount:valid'))" type="button">Add row</button>
+          <button id="add-row" on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid'))" type="button">Add row</button>
           <template id="row-tpl">
-            <li>
+            <li id="row-{id}">
               <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
-              <button on-click="#list.removeRow(this); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
+              <button on-click="#list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
             </li>
           </template>
           <p class="total">
@@ -204,7 +204,7 @@
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>modifiable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>dirtyable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>formattable</a>
-        <a class="chip" href="./reference.html"><span class="chip-dot"></span>listable</a>
+        <a class="chip" href="./reference.html"><span class="chip-dot"></span>renderable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>requestable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>attributable</a>
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>classable</a>
