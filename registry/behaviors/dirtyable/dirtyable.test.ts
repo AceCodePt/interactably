@@ -232,15 +232,14 @@ test("moving the baseline via setAttr commits the current state and fires clean"
   dispose();
 });
 
-test("an on-restore baseline move after a matching restore counts as pristine", async () => {
+test("an on-restore baseline move after a restore counts as pristine", async () => {
   localStorage.setItem("draft", "initial");
   const dispose = (await import("@interactable/start.ts")).start();
-  const input = hostElement("input", {
-    implements: "dirtyable storable attributable",
-    "storable-key": "draft",
-    "storable-value": "initial",
-    "on-restore": "initial: this.setAttr({name: 'value', value: this.value})",
-  }) as HTMLInputElement;
+  const holder = document.createElement("div");
+  holder.innerHTML =
+    `<input implements="dirtyable storable modifiable attributable" storable-key="draft" storable-value="initial" ` +
+    `on-restore(value:string)="this.set(value).setAttr({name: 'value', value: value})">`;
+  const input = holder.firstElementChild as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 

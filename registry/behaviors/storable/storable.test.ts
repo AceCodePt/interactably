@@ -44,9 +44,9 @@ function restoreCalls(el: Element): string[] {
   return seen;
 }
 
-function restoreKeys(el: Element): string[] {
+function restoreValues(el: Element): string[] {
   const seen: string[] = [];
-  el.addEventListener("restore", (e) => seen.push((e as Event & { key?: string }).key ?? ""));
+  el.addEventListener("restore", (e) => seen.push((e as ImplementationEvent).values["value"] ?? ""));
   return seen;
 }
 
@@ -145,7 +145,7 @@ test("save() never fires restore", async () => {
   dispose();
 });
 
-test("restore() fires whenever something is stored, carrying the stored string as the key", async () => {
+test("restore() fires whenever something is stored, carrying the stored string as the declared value", async () => {
   const dispose = start();
   const el = hostElement<HTMLInputElement>("input", {
     "storable-key": "draft",
@@ -153,18 +153,18 @@ test("restore() fires whenever something is stored, carrying the stored string a
   });
   document.body.appendChild(el);
   await flush();
-  const keys = restoreKeys(el);
+  const values = restoreValues(el);
 
   interact(el, "restore");
-  assert.deepEqual(keys, [], "no stored value fires nothing");
+  assert.deepEqual(values, [], "no stored value fires nothing");
 
   localStorage.setItem("draft", "other");
   interact(el, "restore");
-  assert.deepEqual(keys, ["other"], "any stored value fires restore carrying it as the key");
+  assert.deepEqual(values, ["other"], "any stored value fires restore carrying it as the declared value");
 
   localStorage.setItem("draft", "initial");
   interact(el, "restore");
-  assert.deepEqual(keys, ["other", "initial"], "the authored value is not compared against");
+  assert.deepEqual(values, ["other", "initial"], "the authored value is not compared against");
   dispose();
 });
 
@@ -190,67 +190,13 @@ test("a literal storable-value is never written by restore", async () => {
     "storable-key": "pm",
     "storable-value": "pnpm",
   });
-  const keys = restoreKeys(div);
+  const values = restoreValues(div);
   document.body.appendChild(div);
   await flush();
   interact(div, "restore");
-  assert.deepEqual(keys, ["npm"], "a stored value different from the literal still fires restore");
+  assert.deepEqual(values, ["npm"], "a stored value different from the literal still fires restore");
   assert.equal(div.getAttribute("storable-value"), "pnpm", "the authored attribute is untouched");
   assert.equal(div.innerHTML, "", "a literal slot has no element to write");
-  dispose();
-});
-
-test("two elements may share a key: restore fires on both, keyed on-restore phrases filter", async () => {
-  const dispose = start();
-  localStorage.setItem("pm", "pnpm");
-  const a = hostElement<HTMLButtonElement>("button", {
-    implements: "storable attributable",
-    "storable-key": "pm",
-    "storable-value": "pnpm",
-    "on-restore": "pnpm: this.setAttr({name: 'data-hit', value: 'pnpm'})",
-  });
-  const b = hostElement<HTMLButtonElement>("button", {
-    implements: "storable attributable",
-    "storable-key": "pm",
-    "storable-value": "yarn",
-    "on-restore": "yarn: this.setAttr({name: 'data-hit', value: 'yarn'})",
-  });
-  const seenA = restoreCalls(a);
-  const seenB = restoreCalls(b);
-  document.body.append(a, b);
-  await flush();
-
-  interact(a, "restore");
-  interact(b, "restore");
-  assert.deepEqual(seenA, ["restore"], "the pnpm button fires restore too");
-  assert.deepEqual(seenB, ["restore"], "the yarn button fires restore too");
-  assert.equal(a.getAttribute("data-hit"), "pnpm", "the pnpm keyed phrase paints");
-  assert.equal(b.getAttribute("data-hit"), null, "the yarn keyed phrase does not match");
-
-  localStorage.setItem("pm", "yarn");
-  interact(a, "restore");
-  interact(b, "restore");
-  assert.equal(b.getAttribute("data-hit"), "yarn", "the yarn keyed phrase paints when its key is stored");
-  dispose();
-});
-
-test("an unkeyed on-restore phrase is skipped on a keyed restore", async () => {
-  const dispose = start();
-  localStorage.setItem("draft", "saved");
-  const div = hostElement<HTMLDivElement>("div", {
-    implements: "storable attributable",
-    "storable-key": "draft",
-    "storable-value": "saved",
-    "on-restore": "this.setAttr({name: 'data-mode', value: 'boom'})",
-  });
-  document.body.appendChild(div);
-  await flush();
-  interact(div, "restore");
-  assert.equal(
-    div.getAttribute("data-mode"),
-    null,
-    "a keyed restore event only runs keyed on-restore phrases",
-  );
   dispose();
 });
 
@@ -269,7 +215,7 @@ test("save() on a bare ref stores innerHTML", async () => {
   dispose();
 });
 
-test("restore() on a bare ref writes the exact stored string and fires with it as the key", async () => {
+test("restore() on a bare ref fires the stored string as the declared value and writes nothing", async () => {
   const dispose = start();
   localStorage.setItem("cart", "<li>one</li><li>two</li>");
   const cart = hostElement<HTMLDivElement>("div", {
@@ -278,22 +224,23 @@ test("restore() on a bare ref writes the exact stored string and fires with it a
   });
   cart.id = "cart";
   cart.innerHTML = "<li>stale</li>";
-  const keys = restoreKeys(cart);
+  const values = restoreValues(cart);
   document.body.appendChild(cart);
   await flush();
   interact(cart, "restore");
-  assert.equal(cart.innerHTML, "<li>one</li><li>two</li>", "restore() writes the exact string back");
-  assert.deepEqual(keys, ["<li>one</li><li>two</li>"], "the event carries the stored string");
+  assert.equal(cart.innerHTML, "<li>stale</li>", "restore() never writes the stored string back");
+  assert.deepEqual(values, ["<li>one</li><li>two</li>"], "the event carries the stored string as its value");
   dispose();
 });
 
-test("a bare ref on this stores and restores the element's own contents", async () => {
+test("a bare ref on this stores the element's own contents; restore only announces them", async () => {
   const dispose = start();
   const panel = hostElement<HTMLDivElement>("div", {
     "storable-key": "panel",
     "storable-value": "this",
   });
   panel.innerHTML = "<p>kept</p>";
+  const values = restoreValues(panel);
   document.body.appendChild(panel);
   await flush();
   interact(panel, "save");
@@ -301,7 +248,8 @@ test("a bare ref on this stores and restores the element's own contents", async 
 
   panel.innerHTML = "<p>edited</p>";
   interact(panel, "restore");
-  assert.equal(panel.innerHTML, "<p>kept</p>", "the element itself is the slot");
+  assert.equal(panel.innerHTML, "<p>edited</p>", "restore() does not write the element's contents back");
+  assert.deepEqual(values, ["<p>kept</p>"], "the event carries what save() stored");
   dispose();
 });
 
@@ -319,19 +267,19 @@ test("save() on a property ref stores that property", async () => {
   dispose();
 });
 
-test("restore() on a property ref writes the exact string into the property", async () => {
+test("restore() on a property ref fires the stored string as its value and writes nothing", async () => {
   const dispose = start();
   localStorage.setItem("draft", "hello");
   const field = hostElement<HTMLInputElement>("input", {
     "storable-key": "draft",
     "storable-value": "this.value",
   });
-  const keys = restoreKeys(field);
+  const values = restoreValues(field);
   document.body.appendChild(field);
   await flush();
   interact(field, "restore");
-  assert.equal(field.value, "hello", "restore() writes the stored string into the property");
-  assert.deepEqual(keys, ["hello"], "the event carries the stored string");
+  assert.equal(field.value, "", "restore() never writes the stored string into the property");
+  assert.deepEqual(values, ["hello"], "the event carries the stored string");
   dispose();
 });
 
@@ -353,25 +301,7 @@ test("a property ref targets the element a #id names", async () => {
 
   localStorage.setItem("draft", "y");
   interact(button, "restore");
-  assert.equal(other.value, "y", "restore() writes the targeted element's property");
-  dispose();
-});
-
-test("restore() writes the slot before it fires", async () => {
-  const dispose = start();
-  localStorage.setItem("cart", "<p>fresh</p>");
-  const cart = hostElement<HTMLDivElement>("div", {
-    "storable-key": "cart",
-    "storable-value": "#cart",
-  });
-  cart.id = "cart";
-  cart.innerHTML = "<p>stale</p>";
-  const atFire: string[] = [];
-  cart.addEventListener("restore", () => atFire.push(cart.innerHTML));
-  document.body.appendChild(cart);
-  await flush();
-  interact(cart, "restore");
-  assert.deepEqual(atFire, ["<p>fresh</p>"], "the slot is written before the restore event");
+  assert.equal(other.value, "x", "restore() writes nothing to the targeted element's property");
   dispose();
 });
 
@@ -397,7 +327,7 @@ test("innerHTML is not reachable as a property: storable-value=\"this.innerHTML\
   dispose();
 });
 
-test("a missing ref target throws and dispatches nothing", async () => {
+test("a missing ref target throws on save() but restore() still announces the value", async () => {
   const dispose = start();
   localStorage.setItem("draft", "saved");
   const div = hostElement<HTMLDivElement>("div", {
@@ -407,9 +337,13 @@ test("a missing ref target throws and dispatches nothing", async () => {
   const seen = restoreCalls(div);
   document.body.appendChild(div);
   await flush();
-  const event = interact(div, "restore");
-  assert.ok(event.error instanceof Error, "the missing ref fails the verb");
-  assert.deepEqual(seen, [], "no restore event fires when the slot cannot be resolved");
+
+  const saveEvent = interact(div, "save");
+  assert.ok(saveEvent.error instanceof Error, "save() fails when the ref target cannot be resolved");
+
+  const restoreEvent = interact(div, "restore");
+  assert.equal(restoreEvent.error, undefined, "restore() never resolves the slot");
+  assert.deepEqual(seen, ["restore"], "restore fires the value even when the ref target is missing");
   dispose();
 });
 
@@ -588,36 +522,11 @@ test("save() then restore() round-trips a property ref", async () => {
 
   field.value = "first";
   interact(field, "save");
-  const keys = restoreKeys(field);
+  const values = restoreValues(field);
   field.value = "second";
   interact(field, "restore");
-  assert.equal(field.value, "first", "restore() puts back the exact value save() took");
-  assert.deepEqual(keys, ["first"], "the round trip fires restore with the stored string");
-  dispose();
-});
-
-test("a keyed on-restore phrase runs only when its key matches the stored value", async () => {
-  const dispose = start();
-  localStorage.setItem("mode", "dark");
-  const div = hostElement<HTMLDivElement>("div", {
-    implements: "storable attributable",
-    "storable-key": "mode",
-    "storable-value": "dark",
-    "on-restore": "dark: this.setAttr({name: 'data-mode', value: 'dark'})",
-  });
-  document.body.appendChild(div);
-  await flush();
-  interact(div, "restore");
-  assert.equal(div.getAttribute("data-mode"), "dark", "a matching keyed phrase paints the effect");
-
-  localStorage.setItem("mode", "light");
-  div.removeAttribute("data-mode");
-  interact(div, "restore");
-  assert.equal(
-    div.getAttribute("data-mode"),
-    null,
-    "a different stored value does not run the keyed phrase",
-  );
+  assert.equal(field.value, "second", "restore() never writes the property");
+  assert.deepEqual(values, ["first"], "the round trip fires restore with the stored string");
   dispose();
 });
 
@@ -638,7 +547,7 @@ test("restore event routes through the element and is catchable, never a native 
   dispose();
 });
 
-test("restore carries the stored string as both the key and the value", async () => {
+test("restore carries the stored string as its declared value and never as a key", async () => {
   const dispose = start();
   localStorage.setItem("draft", "saved");
   const el = hostElement<HTMLInputElement>("input", {
@@ -653,6 +562,26 @@ test("restore carries the stored string as both the key and the value", async ()
   document.body.appendChild(el);
   await flush();
   interact(el, "restore");
-  assert.deepEqual(seen, [{ key: "saved", value: "saved" }], "key dispatch is kept and value is declared alongside");
+  assert.deepEqual(seen, [{ key: undefined, value: "saved" }], "restore dispatches only the declared value");
+  dispose();
+});
+
+test("an on-restore phrase resolves the declared value by name and writes nothing", async () => {
+  const dispose = start();
+  localStorage.setItem("draft", "saved");
+  const holder = document.createElement("div");
+  holder.innerHTML =
+    `<div implements="storable attributable" storable-key="draft" storable-value="saved" ` +
+    `on-restore(value:string)="this.setAttr({name: 'data-restored', value: value})"></div>`;
+  const div = holder.firstElementChild as HTMLDivElement;
+  document.body.appendChild(div);
+  await flush();
+  interact(div, "restore");
+  assert.equal(
+    div.getAttribute("data-restored"),
+    "saved",
+    "the phrase receives the stored string as the declared value",
+  );
+  assert.equal(div.innerHTML, "", "restore writes nothing on its own");
   dispose();
 });

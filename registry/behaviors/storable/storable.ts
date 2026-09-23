@@ -78,16 +78,6 @@ export const storable = defineImplementation(
       return String((target as unknown as Record<string, unknown>)[slot.property] ?? "");
     };
 
-    const writeSlot = (stored: string): void => {
-      if (slot.kind === "literal") return;
-      const target = resolve(slot.ref);
-      if (slot.kind === "ref") {
-        target.innerHTML = stored;
-      } else {
-        (target as unknown as Record<string, unknown>)[slot.property] = stored;
-      }
-    };
-
     return {
       save: (): void => {
         write(key, slot.kind === "literal" ? slot.text : readSlot());
@@ -95,11 +85,9 @@ export const storable = defineImplementation(
       restore: (e: InteractionEvent): void => {
         const stored = read(key);
         if (stored === null) return;
-        writeSlot(stored);
         el.dispatchEvent(
           new ImplementationEvent("restore", {
             originalEvent: e.originalEvent,
-            key: stored,
             values: { value: stored },
           }),
         );

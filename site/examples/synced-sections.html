@@ -34,7 +34,7 @@
     <p class="doc-lede">
           Three sections &mdash; install, config, troubleshooting &mdash; each with its own tab bar. Every button
           names the three panels it opens, the six it closes, and <code class="inline-code">this.save()</code>; its
-          <code class="inline-code">on-restore</code> repeats the nine <code class="inline-code">show</code> /
+          <code class="inline-code">on-restore(value:string)</code> repeats the nine <code class="inline-code">show</code> /
           <code class="inline-code">show(false)</code> receivers without the save, and <code class="inline-code">on-load="this.restore()"</code>
           replays the stored selection when the page loads. With <code class="inline-code">implements</code>, <code class="inline-code">storable-key</code>,
           <code class="inline-code">storable-value</code> and two phrases, a button is around a dozen lines &mdash;
@@ -49,13 +49,13 @@
                   <div class="tabbar">
                     <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                             on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                            on-restore="npm: #install-npm.show(); npm: #config-npm.show(); npm: #trouble-npm.show(); npm: #install-pnpm.show(false); npm: #config-pnpm.show(false); npm: #trouble-pnpm.show(false); npm: #install-bun.show(false); npm: #config-bun.show(false); npm: #trouble-bun.show(false)">npm</button>
-                    <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                            on-restore="pnpm: #install-pnpm.show(); pnpm: #config-pnpm.show(); pnpm: #trouble-pnpm.show(); pnpm: #install-npm.show(false); pnpm: #config-npm.show(false); pnpm: #trouble-npm.show(false); pnpm: #install-bun.show(false); pnpm: #config-bun.show(false); pnpm: #trouble-bun.show(false)">pnpm</button>
+                            on-restore(value:string)="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
                     <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                             on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                            on-restore="bun: #install-bun.show(); bun: #config-bun.show(); bun: #trouble-bun.show(); bun: #install-npm.show(false); bun: #config-npm.show(false); bun: #trouble-npm.show(false); bun: #install-pnpm.show(false); bun: #config-pnpm.show(false); bun: #trouble-pnpm.show(false)">bun</button>
+                            on-restore(value:string)="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
+                    <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
+                            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
+                            on-restore(value:string)="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
                   </div>
                   <div id="install-npm" implements="revealable" class="tabpanel" revealable-open="true">
                     <p><code class="inline-code">npm install</code> ships with Node.</p>
@@ -71,13 +71,13 @@
                   <div class="tabbar">
                     <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                             on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                            on-restore="npm: #install-npm.show(); npm: #config-npm.show(); npm: #trouble-npm.show(); npm: #install-pnpm.show(false); npm: #config-pnpm.show(false); npm: #trouble-pnpm.show(false); npm: #install-bun.show(false); npm: #config-bun.show(false); npm: #trouble-bun.show(false)">npm</button>
-                    <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                            on-restore="pnpm: #install-pnpm.show(); pnpm: #config-pnpm.show(); pnpm: #trouble-pnpm.show(); pnpm: #install-npm.show(false); pnpm: #config-npm.show(false); pnpm: #trouble-npm.show(false); pnpm: #install-bun.show(false); pnpm: #config-bun.show(false); pnpm: #trouble-bun.show(false)">pnpm</button>
+                            on-restore(value:string)="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
                     <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                             on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                            on-restore="bun: #install-bun.show(); bun: #config-bun.show(); bun: #trouble-bun.show(); bun: #install-npm.show(false); bun: #config-npm.show(false); bun: #trouble-npm.show(false); bun: #install-pnpm.show(false); bun: #config-pnpm.show(false); bun: #trouble-pnpm.show(false)">bun</button>
+                            on-restore(value:string)="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
+                    <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
+                            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
+                            on-restore(value:string)="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
                   </div>
                   <div id="config-npm" implements="revealable" class="tabpanel" revealable-open="true">
                     <p><code class="inline-code">npm config</code> &mdash; <code class="inline-code">.npmrc</code> lives in your home directory.</p>
@@ -93,13 +93,13 @@
                   <div class="tabbar">
                     <button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                             on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                            on-restore="npm: #install-npm.show(); npm: #config-npm.show(); npm: #trouble-npm.show(); npm: #install-pnpm.show(false); npm: #config-pnpm.show(false); npm: #trouble-pnpm.show(false); npm: #install-bun.show(false); npm: #config-bun.show(false); npm: #trouble-bun.show(false)">npm</button>
-                    <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                            on-restore="pnpm: #install-pnpm.show(); pnpm: #config-pnpm.show(); pnpm: #trouble-pnpm.show(); pnpm: #install-npm.show(false); pnpm: #config-npm.show(false); pnpm: #trouble-npm.show(false); pnpm: #install-bun.show(false); pnpm: #config-bun.show(false); pnpm: #trouble-bun.show(false)">pnpm</button>
+                            on-restore(value:string)="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">npm</button>
                     <button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                             on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                            on-restore="bun: #install-bun.show(); bun: #config-bun.show(); bun: #trouble-bun.show(); bun: #install-npm.show(false); bun: #config-npm.show(false); bun: #trouble-npm.show(false); bun: #install-pnpm.show(false); bun: #config-pnpm.show(false); bun: #trouble-pnpm.show(false)">bun</button>
+                            on-restore(value:string)="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)">bun</button>
+                    <button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
+                            on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
+                            on-restore(value:string)="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)">pnpm</button>
                   </div>
                   <div id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true">
                     <p>npm troubleshooting &mdash; <code class="inline-code">npm cache clean --force</code> clears the cache.</p>
@@ -127,13 +127,13 @@
       &lt;div class="tabbar"&gt;
         &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                 on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                on-restore="npm: #install-npm.show(); npm: #config-npm.show(); npm: #trouble-npm.show(); npm: #install-pnpm.show(false); npm: #config-pnpm.show(false); npm: #trouble-pnpm.show(false); npm: #install-bun.show(false); npm: #config-bun.show(false); npm: #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-        &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                on-restore="pnpm: #install-pnpm.show(); pnpm: #config-pnpm.show(); pnpm: #trouble-pnpm.show(); pnpm: #install-npm.show(false); pnpm: #config-npm.show(false); pnpm: #trouble-npm.show(false); pnpm: #install-bun.show(false); pnpm: #config-bun.show(false); pnpm: #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
+                on-restore(value:string)="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
         &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                 on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                on-restore="bun: #install-bun.show(); bun: #config-bun.show(); bun: #trouble-bun.show(); bun: #install-npm.show(false); bun: #config-npm.show(false); bun: #trouble-npm.show(false); bun: #install-pnpm.show(false); bun: #config-pnpm.show(false); bun: #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
+                on-restore(value:string)="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
+        &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
+                on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
+                on-restore(value:string)="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
       &lt;/div&gt;
       &lt;div id="install-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
       &lt;div id="install-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
@@ -144,13 +144,13 @@
       &lt;div class="tabbar"&gt;
         &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                 on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                on-restore="npm: #install-npm.show(); npm: #config-npm.show(); npm: #trouble-npm.show(); npm: #install-pnpm.show(false); npm: #config-pnpm.show(false); npm: #trouble-pnpm.show(false); npm: #install-bun.show(false); npm: #config-bun.show(false); npm: #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-        &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                on-restore="pnpm: #install-pnpm.show(); pnpm: #config-pnpm.show(); pnpm: #trouble-pnpm.show(); pnpm: #install-npm.show(false); pnpm: #config-npm.show(false); pnpm: #trouble-npm.show(false); pnpm: #install-bun.show(false); pnpm: #config-bun.show(false); pnpm: #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
+                on-restore(value:string)="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
         &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                 on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                on-restore="bun: #install-bun.show(); bun: #config-bun.show(); bun: #trouble-bun.show(); bun: #install-npm.show(false); bun: #config-npm.show(false); bun: #trouble-npm.show(false); bun: #install-pnpm.show(false); bun: #config-pnpm.show(false); bun: #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
+                on-restore(value:string)="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
+        &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
+                on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
+                on-restore(value:string)="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
       &lt;/div&gt;
       &lt;div id="config-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
       &lt;div id="config-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
@@ -161,13 +161,13 @@
       &lt;div class="tabbar"&gt;
         &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                 on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                on-restore="npm: #install-npm.show(); npm: #config-npm.show(); npm: #trouble-npm.show(); npm: #install-pnpm.show(false); npm: #config-pnpm.show(false); npm: #trouble-pnpm.show(false); npm: #install-bun.show(false); npm: #config-bun.show(false); npm: #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
-        &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
-                on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
-                on-restore="pnpm: #install-pnpm.show(); pnpm: #config-pnpm.show(); pnpm: #trouble-pnpm.show(); pnpm: #install-npm.show(false); pnpm: #config-npm.show(false); pnpm: #trouble-npm.show(false); pnpm: #install-bun.show(false); pnpm: #config-bun.show(false); pnpm: #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
+                on-restore(value:string)="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;npm&lt;/button&gt;
         &lt;button type="button" implements="storable" storable-key="pm" storable-value="bun" on-load="this.restore()"
                 on-click="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); this.save()"
-                on-restore="bun: #install-bun.show(); bun: #config-bun.show(); bun: #trouble-bun.show(); bun: #install-npm.show(false); bun: #config-npm.show(false); bun: #trouble-npm.show(false); bun: #install-pnpm.show(false); bun: #config-pnpm.show(false); bun: #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
+                on-restore(value:string)="#install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false)"&gt;bun&lt;/button&gt;
+        &lt;button type="button" implements="storable" storable-key="pm" storable-value="pnpm" on-load="this.restore()"
+                on-click="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
+                on-restore(value:string)="#install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false)"&gt;pnpm&lt;/button&gt;
       &lt;/div&gt;
       &lt;div id="trouble-npm" implements="revealable" class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
       &lt;div id="trouble-pnpm" implements="revealable" class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
