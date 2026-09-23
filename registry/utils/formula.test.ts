@@ -886,6 +886,32 @@ test("length joins to a string with + and arithmetics with -", () => {
   assert.equal(evaluateFormula("200 - length(this.value)", { document, source: self }).value, 197);
 });
 
+test("now() is a number and two sequential calls are non-decreasing epoch-ms", () => {
+  const first = evaluateFormula("now()").value;
+  assert.equal(typeof first, "number");
+  const second = evaluateFormula("now()").value;
+  assert.equal(typeof second, "number");
+  assert.ok((second as number) >= (first as number));
+});
+
+test("now() joins with a string prefix to build an id", () => {
+  const id = evaluateFormula("'row-' + now()").value;
+  assert.equal(typeof id, "string");
+  assert.ok((id as string).startsWith("row-"), id as string);
+});
+
+test("now() takes exactly zero arguments", () => {
+  assert.throws(() => evaluateFormula("now(1)"), /now\(\) takes 0 arguments/);
+  assert.throws(() => evaluateFormula("now('x')"), /now\(\) takes 0 arguments/);
+});
+
+test("parseFormula validates now() with no document or source", () => {
+  assert.doesNotThrow(() => parseFormula("now()"));
+  assert.doesNotThrow(() => parseFormula("now() + 1"));
+  assert.throws(() => parseFormula("now(1)"), /now\(\) takes 0 arguments/);
+  assert.throws(() => parseFormula("now('x')"), /now\(\) takes 0 arguments/);
+});
+
 test("parseFormula validates syntax without a document or source, gating data errors", () => {
   assert.doesNotThrow(() => parseFormula("1 + 2"));
   assert.doesNotThrow(() => parseFormula("min(#a.value, 3)"));
