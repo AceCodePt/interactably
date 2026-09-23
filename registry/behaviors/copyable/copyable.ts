@@ -4,25 +4,17 @@ import { ImplementationEvent } from "@interactable/implementation-event.ts";
 export const copyable = defineImplementation(
   "copyable",
   {
-    tags: ["button"],
-    events: ["copy"],
-    verbs: { copy: HTMLElement },
+    tags: ["pre", "code", "p", "div"],
+    events: ["copy-error"],
+    verbs: { copy: "undefined" },
   },
   (el) => ({
-    copy: (e, target) => {
-      const text = target.textContent ?? "";
-      if (text.trim() === "") {
-        console.warn(`[Interactable] copyable: #${target.id} has no text to copy`);
-        return;
-      }
+    copy: () => {
+      const text = el.textContent ?? "";
+      if (text.trim() === "") return;
       void copyText(text).then((ok) => {
-        if (ok) {
-          if (el.isConnected) {
-            el.dispatchEvent(new ImplementationEvent("copy", { originalEvent: e.originalEvent }));
-          }
-        } else {
-          console.warn(`[Interactable] copyable: could not copy #${target.id}`);
-        }
+        if (!el.isConnected) return;
+        el.dispatchEvent(ok ? new Event("copy") : new ImplementationEvent("copy-error"));
       });
     },
   }),

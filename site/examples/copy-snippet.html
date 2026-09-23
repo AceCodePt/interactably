@@ -32,10 +32,10 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">Copy a snippet — the flash is delayable</h1>
     <p class="doc-lede">
-          <code class="inline-code">copyable</code> copies a target's text and fires
-          <code class="inline-code">copy</code>; it never touches attributes. The flash is the trigger attribute's job:
-          here <code class="inline-code">on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"</code>
-          marks the button, pauses the chain for 1.5&nbsp;s, then removes the attribute, so <em>Copied</em> reverts to <em>Copy</em>.
+          <code class="inline-code">copyable</code> sits on the element being copied: the button just calls
+          <code class="inline-code">#snippet.copy()</code> and the snippet copies its own text. It never touches attributes; the flash is the author's:
+          here <code class="inline-code">on-copy="#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"</code>
+          on the snippet points back at the button, marks it, pauses the chain for 1.5&nbsp;s, then removes the attribute, so <em>Copied</em> reverts to <em>Copy</em>.
         </p>
     <div class="example-body">
 
@@ -43,13 +43,11 @@
                 <div class="codeblock">
                   <div class="codeblock-bar">
                     <span class="codeblock-lang">text</span>
-                    <button class="copy-btn" implements="copyable attributable"
-                            on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                            on-click="this.copy(#demo-snippet)" type="button">
+                    <button class="copy-btn" implements="attributable" id="copy-demo-snippet" on-click="#demo-snippet.copy()" type="button">
                       <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                     </button>
                   </div>
-                  <pre class="code" id="demo-snippet" data-lang="text">Copy this line and watch the label &mdash; it reverts to Copy after 1.5&nbsp;s.</pre>
+                  <pre class="code" id="demo-snippet" implements="copyable" on-copy="#copy-demo-snippet.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text">Copy this line and watch the label &mdash; it reverts to Copy after 1.5&nbsp;s.</pre>
                 </div>
               </div>
     </div>
@@ -58,18 +56,17 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-copy)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-copy" on-click="#code-ex-copy.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-copy" data-lang="html"><code>&lt;button class="copy-btn" implements="copyable attributable"
-            on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-            on-click="this.copy(#snippet)" type="button"&gt;
-      &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;
-    &lt;/button&gt;
+              <pre class="code" id="code-ex-copy" implements="copyable" on-copy="#copy-code-ex-copy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;pre id="snippet" implements="copyable"
+            on-copy="#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"&gt;Copy this line and watch the label &amp;mdash; it reverts to Copy after 1.5&amp;nbsp;s.&lt;/pre&gt;
 
-    &lt;pre class="code" id="snippet"&gt;Copy this line and watch the label &mdash; it reverts to Copy after 1.5&amp;nbsp;s.&lt;/pre&gt;</code></pre>
+    &lt;button id="copy-btn" class="copy-btn" implements="attributable"
+            on-click="#snippet.copy()" type="button"&gt;
+      &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;
+    &lt;/button&gt;</code></pre>
             </div>
           </details>
   </main>

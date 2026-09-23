@@ -71,12 +71,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-maintab)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-maintab" on-click="#code-ex-maintab.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-maintab" data-lang="html"><code>&lt;div class="tabbar"&gt;
+              <pre class="code" id="code-ex-maintab" implements="copyable" on-copy="#copy-code-ex-maintab.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="tabbar"&gt;
       &lt;button implements="storable focusable" storable-key="maintab" storable-value="overview"
               on-load="this.restore()"
               on-click="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.save()"

@@ -54,12 +54,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-pt)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-pt" on-click="#code-ex-pt.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-pt" data-lang="html"><code>&lt;textarea implements="pastable modifiable attributable"
+              <pre class="code" id="code-ex-pt" implements="copyable" on-copy="#copy-code-ex-pt.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;textarea implements="pastable modifiable attributable"
           on-pasted="this.set(replace(replace(replace(this.value, '\s+', ' '), '^ ', ''), ' $', '')); #clean.set(this.value)"
           placeholder="Paste a block with newlines, tabs and double spaces&hellip;"&gt;&lt;/textarea&gt;
 &lt;p&gt;Cleaned: &lt;output id="clean" implements="modifiable"&gt;&lt;/output&gt;&lt;/p&gt;

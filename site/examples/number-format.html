@@ -64,12 +64,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-nf)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-nf" on-click="#code-ex-nf.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-nf" data-lang="html"><code>&lt;input id="price" implements="modifiable attributable"
+              <pre class="code" id="code-ex-nf" implements="copyable" on-copy="#copy-code-ex-nf.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="price" implements="modifiable attributable"
        on-input="#usd.set(this.value); #eur.set(this.value)"&gt;
 &lt;output id="usd" implements="modifiable formattable"
         formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;

@@ -49,12 +49,11 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-quickstart)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-quickstart" on-click="#code-quickstart.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-quickstart" data-lang="html"><code>&lt;script type="module"&gt;
+          <pre class="code" id="code-quickstart" implements="copyable" on-copy="#copy-code-quickstart.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module"&gt;
   import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/revealable.js";
   start();

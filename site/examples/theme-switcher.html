@@ -61,12 +61,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-attr)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-attr" on-click="#code-ex-attr.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-attr" data-lang="html"><code>&lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
+              <pre class="code" id="code-ex-attr" implements="copyable" on-copy="#copy-code-ex-attr.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
     &lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
     &lt;button on-click="#swatch.toggleAttr('data-bordered')"&gt;Toggle border&lt;/button&gt;
     &lt;button on-click="#swatch.removeAttr('data-theme')"&gt;Clear theme&lt;/button&gt;

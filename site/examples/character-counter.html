@@ -53,12 +53,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-counter)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-counter" on-click="#code-ex-counter.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-counter" data-lang="html"><code>&lt;textarea id="bio" maxlength="200" implements="attributable"
+              <pre class="code" id="code-ex-counter" implements="copyable" on-copy="#copy-code-ex-counter.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;textarea id="bio" maxlength="200" implements="attributable"
               on-input="#count.set(length(this.value) + ' of 200');
                         this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))})"&gt;&lt;/textarea&gt;
     &lt;output id="count" implements="modifiable"&gt;0 of 200&lt;/output&gt;

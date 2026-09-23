@@ -59,12 +59,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-suggest)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-suggest" on-click="#code-ex-suggest.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-suggest" data-lang="html"><code>&lt;input id="city" type="search" placeholder="Type a city, press &darr;"
+              <pre class="code" id="code-ex-suggest" implements="copyable" on-copy="#copy-code-ex-suggest.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="city" type="search" placeholder="Type a city, press &darr;"
            implements="requestable modifiable focusable prevent-default"
            requestable-url="./fragments/cities.html"
            on-input="#city.debounce(250).send()"

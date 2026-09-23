@@ -61,12 +61,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-dt)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-dt" on-click="#code-ex-dt.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-dt" data-lang="html"><code>&lt;input id="name" implements="dirtyable attributable"
+              <pre class="code" id="code-ex-dt" implements="copyable" on-copy="#copy-code-ex-dt.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="name" implements="dirtyable attributable"
        on-dirty="#status.set('Unsaved changes&hellip;').setAttr({name: 'data-state', value: 'dirty'})"
        on-clean="#status.set('All saved.').removeAttr('data-state')"&gt;
 &lt;input id="remember" type="checkbox" implements="dirtyable attributable"

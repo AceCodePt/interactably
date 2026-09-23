@@ -59,12 +59,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-class)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-class" on-click="#code-ex-class.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-class" data-lang="html"><code>&lt;button on-click="#menu.toggle('open')"&gt;Toggle open&lt;/button&gt;
+              <pre class="code" id="code-ex-class" implements="copyable" on-copy="#copy-code-ex-class.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#menu.toggle('open')"&gt;Toggle open&lt;/button&gt;
     &lt;button on-click="#menu.add('compact')"&gt;Compact&lt;/button&gt;
     &lt;button on-click="#menu.remove('compact')"&gt;Spacious&lt;/button&gt;
     &lt;button on-click="#menu.toggle('open').toggle('compact')"&gt;Toggle both&lt;/button&gt;

@@ -63,12 +63,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-dl)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-dl" on-click="#code-ex-dl.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-dl" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()})"&gt;Add a row&lt;/button&gt;
+              <pre class="code" id="code-ex-dl" implements="copyable" on-copy="#copy-code-ex-dl.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()})"&gt;Add a row&lt;/button&gt;
 &lt;button on-click="#list.undo(); #count.set(count('#list li'))"&gt;Undo last&lt;/button&gt;
 &lt;ul id="list" implements="renderable" on-rendered="#count.set(count('#list li'))"&gt;
   &lt;li id="row-1"&gt;

@@ -66,12 +66,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-combobox)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-combobox" on-click="#code-ex-combobox.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-combobox" data-lang="html"><code>&lt;input id="cb-search" type="search" role="combobox" aria-controls="cb-results" aria-expanded="true"
+              <pre class="code" id="code-ex-combobox" implements="copyable" on-copy="#copy-code-ex-combobox.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="cb-search" type="search" role="combobox" aria-controls="cb-results" aria-expanded="true"
            implements="focusable prevent-default"
            on-keydown="arrowdown: #cb-results-1.focus()"
            placeholder="Search a city&hellip;"&gt;

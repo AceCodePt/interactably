@@ -60,12 +60,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-offline)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-offline" on-click="#code-ex-offline.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-offline" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', text: #text.value, id: now()}); #form.send()"&gt;Send&lt;/button&gt;
+              <pre class="code" id="code-ex-offline" implements="copyable" on-copy="#copy-code-ex-offline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', text: #text.value, id: now()}); #form.send()"&gt;Send&lt;/button&gt;
 &lt;form id="form" implements="prevent-default requestable"
       requestable-url="/api/messages" requestable-method="post"
       on-request-error="offline: #list.undo()"&gt;&lt;/form&gt;

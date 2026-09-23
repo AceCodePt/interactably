@@ -52,12 +52,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-lg)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-lg" on-click="#code-ex-lg.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-lg" data-lang="html"><code>&lt;button implements="logger" on-click="this.log('hello from a button')"&gt;
+              <pre class="code" id="code-ex-lg" implements="copyable" on-copy="#copy-code-ex-lg.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button implements="logger" on-click="this.log('hello from a button')"&gt;
   Log &ldquo;hello from a button&rdquo;
 &lt;/button&gt;
 &lt;button implements="logger" on-click="this.log(2 + 3)"&gt;Log a computed number&lt;/button&gt;

@@ -81,12 +81,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-calc)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-calc" on-click="#code-ex-calc.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-calc" data-lang="html"><code>&lt;div class="demo"&gt;
+              <pre class="code" id="code-ex-calc" implements="copyable" on-copy="#copy-code-ex-calc.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="demo"&gt;
       &lt;div class="row"&gt;
         &lt;label&gt;Qty
           &lt;input id="qty" implements="modifiable dirtyable attributable prevent-default"

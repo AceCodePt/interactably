@@ -56,12 +56,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-open-focus)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-open-focus" on-click="#code-ex-open-focus.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-open-focus" data-lang="html"><code>&lt;button id="opener" implements="focusable"
+              <pre class="code" id="code-ex-open-focus" implements="copyable" on-copy="#copy-code-ex-open-focus.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button id="opener" implements="focusable"
             on-click="#dlg.show(); #name.focus()"&gt;Open dialog&lt;/button&gt;
 
     &lt;dialog id="dlg" implements="revealable"&gt;

@@ -88,12 +88,11 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Shell</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-install)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-install" on-click="#code-docs-install.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-install" data-lang="sh"><code>npm install interactably</code></pre>
+          <pre class="code" id="code-docs-install" implements="copyable" on-copy="#copy-code-docs-install.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="sh"><code>npm install interactably</code></pre>
         </div>
         <p>
           Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the
@@ -103,12 +102,11 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-load)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-load" on-click="#code-docs-load.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-load" data-lang="html"><code>&lt;script type="module"&gt;
+          <pre class="code" id="code-docs-load" implements="copyable" on-copy="#copy-code-docs-load.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module"&gt;
   import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/modifiable.js";
   import "interactably/dist/cdn/revealable.js";
@@ -180,18 +178,17 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-grammar-examples)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-grammar-examples" on-click="#code-docs-grammar-examples.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-grammar-examples" data-lang="html"><code>&lt;button on-click="#pop.show().focus()"&gt;
+          <pre class="code" id="code-docs-grammar-examples" implements="copyable" on-copy="#copy-code-docs-grammar-examples.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#pop.show().focus()"&gt;
 &lt;input  on-input="#echo.set(this.value); #results.debounce(300).filter(this.value)"&gt;
 &lt;input  on-keydown="escape: this.reset(); enter: #form.validate().send()"&gt;
 &lt;button on-click="#tour.once().show()"&gt;
 &lt;button on-click="#pb.show(false); #pc.show(false); #pa.show()"&gt;
 &lt;button on-click="#note.transform({mode: 'upper', shift: 2})"&gt;
-&lt;button on-click="#clip.copy(#snippet)"&gt;
+&lt;button on-click="#snippet.copy()"&gt;
 &lt;form   on-submit="#order.validate().send() || #alert.show()"&gt;
 &lt;input  on-change="#form.validate() &amp;&amp; #hint.show()"&gt;</code></pre>
         </div>
@@ -202,12 +199,11 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-grammar)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-grammar" on-click="#code-docs-grammar.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-grammar" data-lang="text"><code>value     := phrase (';' phrase)*
+          <pre class="code" id="code-docs-grammar" implements="copyable" on-copy="#copy-code-docs-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#'id | this
@@ -227,7 +223,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
             <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
             <tbody>
               <tr><td>Trigger</td><td><code class="inline-code">on-click="#pop.show()"</code></td><td>On <code class="inline-code">click</code>, run the phrase</td></tr>
-              <tr><td>Implementation event</td><td><code class="inline-code">on-copy="#flash.show()"</code></td><td>On a copyable element <code class="inline-code">on-copy</code> is copyable&rsquo;s event and the native clipboard event doesn&rsquo;t fire it. Continuations now share trigger-attribute <code class="inline-code">once</code>/<code class="inline-code">debounce</code> semantics.</td></tr>
+              <tr><td>Implementation event</td><td><code class="inline-code">on-copy="#flash.show()"</code></td><td>On a copyable element <code class="inline-code">on-copy</code> catches both the native clipboard event and copyable&rsquo;s success — one attribute, one fact — differing underneath only in cancelability and <code class="inline-code">clipboardData</code>; if the sharing ever bites, the fix is a rename to <code class="inline-code">copied</code>, not a redesign.</td></tr>
               <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect-enter="-#topnav.height 0px 0px 0px: #link.setAttr({name: 'data-visible', value: ''})"</code></td><td><code class="inline-code">IntersectionObserver</code> against the viewport: <code class="inline-code">enter</code> / <code class="inline-code">leave</code> fire on the element entering and leaving the box, <code class="inline-code">full</code> on the element becoming entirely inside the box or not; the phrase key is the <code class="inline-code">rootMargin</code>, and each <code class="inline-code">;</code> phrase observes its own margin</td></tr>
               <tr><td>Receiver</td><td><code class="inline-code">#pop.show()</code></td><td>Send verb <code class="inline-code">show()</code> to the element with <code class="inline-code">id="pop"</code></td></tr>
               <tr><td>Self</td><td><code class="inline-code">this.reset()</code></td><td>The element the phrase was read from (the trigger for <code class="inline-code">on-*</code>)</td></tr>
@@ -236,7 +232,6 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td>And</td><td><code class="inline-code">#form.validate() &amp;&amp; #hint.show()</code></td><td><code class="inline-code">.validate()</code> then, only if it completed, <code class="inline-code">#hint.show()</code> &mdash; possibly on another receiver</td></tr>
               <tr><td>Or</td><td><code class="inline-code">#form.validate().send() || #alert.show()</code></td><td><code class="inline-code">#alert.show()</code> only if a guard aborted the first unit</td></tr>
               <tr><td>Scalar arg</td><td><code class="inline-code">#qty.set(#qty.value + 5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
-              <tr><td>Element arg</td><td><code class="inline-code">#clip.copy(#snippet)</code></td><td>A ref resolves to the element at fire time</td></tr>
               <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code>, the type the element declares; absent <code class="inline-code">min</code>/<code class="inline-code">max</code> reads empty, absent <code class="inline-code">step</code> on a number/range input reads <code class="inline-code">1</code></td></tr>
               <tr><td>Key</td><td><code class="inline-code">on-keydown="enter: #f.send()"</code></td><td>Filter <em>which</em> events reach the phrase</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
@@ -340,12 +335,11 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-formula)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-formula" on-click="#code-docs-formula.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-formula" data-lang="text"><code>expression := term (('+' | '-') term)*
+<pre class="code" id="code-docs-formula" implements="copyable" on-copy="#copy-code-docs-formula.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>expression := term (('+' | '-') term)*
 term       := factor (('*' | '/') factor)*
 factor     := '-' factor | primary
 primary    := number | 'string' | reference | function'(' args ')' | '(' expression ')'
@@ -384,12 +378,11 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-event)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-event" on-click="#code-docs-event.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-event" data-lang="ts"><code>class InteractionEvent extends Event {
+          <pre class="code" id="code-docs-event" implements="copyable" on-copy="#copy-code-docs-event.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>class InteractionEvent extends Event {
   readonly verb: string;          // "show"
   readonly arg: unknown;          // resolved: 5 | "currency" | HTMLElement | { name, value } | undefined
   readonly source: Element;       // the element whose attribute the phrase came from (what `this` resolved to)
@@ -422,12 +415,11 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-attach-trigger)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-attach-trigger" on-click="#code-docs-attach-trigger.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-attach-trigger" data-lang="ts"><code>for (const attribute of el.getAttributeNames()) {
+<pre class="code" id="code-docs-attach-trigger" implements="copyable" on-copy="#copy-code-docs-attach-trigger.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>for (const attribute of el.getAttributeNames()) {
   if (!attribute.startsWith("on-")) continue;
   const { type, declaration } = parseEventAttribute(attribute.slice(3));
   // on-response(html:string) &rarr; type "response", declaration { html: "string" }
@@ -516,7 +508,7 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
               <tr><td><code class="inline-code">auto-grow</code></td><td>textarea</td><td>&mdash;</td><td>&mdash;</td><td>auto-height textarea; sizes on connect and on <code class="inline-code">input</code>/<code class="inline-code">change</code>; a value written by script is sized on the next input</td></tr>
               <tr><td><code class="inline-code">storable</code></td><td>any</td><td><code class="inline-code">save</code>, <code class="inline-code">restore</code>, <code class="inline-code">clear</code></td><td><code class="inline-code">scope</code> (<code class="inline-code">local</code>/<code class="inline-code">session</code>), <code class="inline-code">key</code>, <code class="inline-code">value</code> (both required)</td><td>persists a declared slot under a declared key &mdash; a literal, or a ref (<code class="inline-code">#cart</code>/<code class="inline-code">this</code> for contents, <code class="inline-code">this.value</code> for a property); <code class="inline-code">restore()</code> reads the key and fires <code class="inline-code">restore</code> carrying the stored string as the declared value <code class="inline-code">value</code>, writing nothing; <code class="inline-code">on-restore(value:string)</code> resolves it by name and restore never filters; nothing restores without <code class="inline-code">on-load="this.restore()"</code></td></tr>
               <tr><td><code class="inline-code">pastable</code></td><td>input, textarea</td><td>&mdash;</td><td>&mdash;</td><td>fires <code class="inline-code">pasted</code> after a paste has landed, carrying the post-paste value as <code class="inline-code">text</code>, so <code class="inline-code">this.value</code> is the new value</td></tr>
-              <tr><td><code class="inline-code">copyable</code></td><td>button</td><td><code class="inline-code">copy</code></td><td>event <code class="inline-code">copy</code></td><td>copies a target element&rsquo;s text to the clipboard and fires <code class="inline-code">copy</code> on success; the flash is the author&rsquo;s (<code class="inline-code">on-copy</code>)</td></tr>
+              <tr><td><code class="inline-code">copyable</code></td><td>pre, code, p, div</td><td><code class="inline-code">copy</code> (no argument)</td><td>events <code class="inline-code">copy</code>, <code class="inline-code">copy-error</code></td><td>copies the element&rsquo;s own text to the clipboard — a button calls it as a plain receiver (<code class="inline-code">#snippet.copy()</code>); on success it dispatches the <code class="inline-code">copy</code> event, which shares the attribute with the native clipboard copy; on total failure it fires <code class="inline-code">copy-error</code>; empty text is a no-op; the flash is the author&rsquo;s (<code class="inline-code">on-copy</code>)</td></tr>
               <tr><td><code class="inline-code">focusable</code></td><td>any</td><td><code class="inline-code">focus</code>, <code class="inline-code">blur</code></td><td>&mdash;</td><td><code class="inline-code">HTMLElement.focus()</code> / <code class="inline-code">blur()</code> as verbs; reports once if focus did not take</td></tr>
             </tbody>
           </table>
@@ -541,12 +533,11 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-prevent-default)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-prevent-default" on-click="#code-docs-prevent-default.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-prevent-default" data-lang="html"><code>&lt;form implements="prevent-default no-propagate" no-propagate-events="submit"
+          <pre class="code" id="code-docs-prevent-default" implements="copyable" on-copy="#copy-code-docs-prevent-default.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form implements="prevent-default no-propagate" no-propagate-events="submit"
       on-submit="#api.send(); #status.set('Saving&hellip;')"&gt;                                  &lt;!-- derived from on-submit: submit --&gt;
 
 &lt;div implements="prevent-default" prevent-default-events="contextmenu"
@@ -611,12 +602,11 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-focusable)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-focusable" on-click="#code-docs-focusable.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-focusable" data-lang="html"><code>&lt;input id="search" implements="focusable prevent-default requestable"
+          <pre class="code" id="code-docs-focusable" implements="copyable" on-copy="#copy-code-docs-focusable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="search" implements="focusable prevent-default requestable"
        role="combobox" aria-controls="results" aria-expanded="true"
        requestable-url="/api/search" requestable-include="#q"
        on-response(html:string)="#results.render({payload: html})"
@@ -641,12 +631,11 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-implementation)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-implementation" on-click="#code-docs-implementation.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-implementation" data-lang="ts"><code>import { defineImplementation } from "interactably";
+          <pre class="code" id="code-docs-implementation" implements="copyable" on-copy="#copy-code-docs-implementation.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>import { defineImplementation } from "interactably";
 
 export const modifiable = defineImplementation("modifiable", {
   tags: ["input", "textarea", "output", "select"],
@@ -710,12 +699,11 @@ export const modifiable = defineImplementation("modifiable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-signatures)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-signatures" on-click="#code-docs-signatures.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-signatures" data-lang="ts"><code>export const renderable = defineImplementation("renderable", {
+          <pre class="code" id="code-docs-signatures" implements="copyable" on-copy="#copy-code-docs-signatures.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>export const renderable = defineImplementation("renderable", {
   verbs: {
     render: {
       template: optionalCtor(HTMLTemplateElement),        // optional, but instance-checked when present
@@ -784,7 +772,7 @@ export const attributable = defineImplementation("attributable", {
           <li><strong>Verbs receive <code class="inline-code">(e, arg)</code>.</strong> <code class="inline-code">arg</code> is already validated against the signature. Inputs come from <code class="inline-code">arg</code>; <code class="inline-code">e.source</code> and <code class="inline-code">e.originalEvent</code> are <em>context</em>, not input.</li>
           <li><strong>Verbs are synchronous.</strong> Do the work, return; the host stores the return value on <code class="inline-code">e.result</code>. A verb that returns a promise gets a console warning.</li>
           <li><strong>Lifecycle:</strong> <code class="inline-code">connectedCallback</code>, <code class="inline-code">disconnectedCallback</code>, <code class="inline-code">attributeChangedCallback(name, old, new)</code> may be returned from the factory alongside the verbs.</li>
-          <li><strong>Implementations never call verbs on other elements.</strong> Work that completes later declares <strong>its own events</strong> (<code class="inline-code">copyable</code> declares <code class="inline-code">"copy"</code>; <code class="inline-code">requestable</code> declares <code class="inline-code">"response"</code> and <code class="inline-code">"request-error"</code>; <code class="inline-code">storable</code> declares <code class="inline-code">"restore"</code>) and dispatches an <code class="inline-code">ImplementationEvent</code> when the moment arrives; the follow-up is a plain <code class="inline-code">on-&lt;event&gt;</code> trigger attribute on that element, so <code class="inline-code">this</code> in the continuation is the element that did the work.</li>
+          <li><strong>Implementations never call verbs on other elements.</strong> Work that completes later declares <strong>its own events</strong> (<code class="inline-code">copyable</code> declares <code class="inline-code">"copy-error"</code> and re-dispatches the native <code class="inline-code">"copy"</code>; <code class="inline-code">requestable</code> declares <code class="inline-code">"response"</code> and <code class="inline-code">"request-error"</code>; <code class="inline-code">storable</code> declares <code class="inline-code">"restore"</code>) and dispatches an <code class="inline-code">ImplementationEvent</code> when the moment arrives; the follow-up is a plain <code class="inline-code">on-&lt;event&gt;</code> trigger attribute on that element, so <code class="inline-code">this</code> in the continuation is the element that did the work.</li>
           <li><strong>Registering an implementation is idempotent.</strong> The registry records the name once; <code class="inline-code">defineImplementation</code> refuses a duplicate. An element whose <code class="inline-code">implements</code> names a registered implementation gets it at attach, or when the name registers later.</li>
         </ul>
 
@@ -806,12 +794,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-dirtyable)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-dirtyable" on-click="#code-docs-dirtyable.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-dirtyable" data-lang="ts"><code>// dirtyable — reports one decision as events; the baseline is the platform default
+          <pre class="code" id="code-docs-dirtyable" implements="copyable" on-copy="#copy-code-docs-dirtyable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>// dirtyable — reports one decision as events; the baseline is the platform default
 (el, attrs) =&gt; {
   const isDirty = () =&gt;
     el instanceof HTMLSelectElement
@@ -848,12 +835,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-revealable)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-revealable" on-click="#code-docs-revealable.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-revealable" data-lang="ts"><code>// revealable on a plain panel — the one case with invented state
+          <pre class="code" id="code-docs-revealable" implements="copyable" on-copy="#copy-code-docs-revealable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>// revealable on a plain panel — the one case with invented state
 // state: { open: "boolean | undefined" } → revealable-open
 (el, attrs) =&gt; ({
   show:   (_e, value) =&gt; { attrs.open = value === false ? undefined : true; },
@@ -888,12 +874,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-row-example)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-row-example" on-click="#code-docs-row-example.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-row-example" data-lang="html"><code>&lt;li class="row" on-input="this.setAttr({name: 'data-total', value: '' + sum('&amp; .amount')})"&gt;
+<pre class="code" id="code-docs-row-example" implements="copyable" on-copy="#copy-code-docs-row-example.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;li class="row" on-input="this.setAttr({name: 'data-total', value: '' + sum('&amp; .amount')})"&gt;
   &lt;input class="amount" type="number" value="10"&gt;
   &lt;input class="amount" type="number" value="20"&gt;
 &lt;/li&gt;</code></pre>
@@ -901,12 +886,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">CSS</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-row-css)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-row-css" on-click="#code-docs-row-css.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-row-css" data-lang="css"><code>li.row::after { content: attr(data-total); }</code></pre>
+<pre class="code" id="code-docs-row-css" implements="copyable" on-copy="#copy-code-docs-row-css.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="css"><code>li.row::after { content: attr(data-total); }</code></pre>
         </div>
         <p id="timing" style="scroll-margin-top:5rem"><strong>Timing is uniform.</strong> Every element &mdash; in the initial document or inserted later, server-rendered or cloned from a template &mdash; attaches one microtask after insertion, or at <code class="inline-code">DOMContentLoaded</code> for the initial document. The cost of that microtask gap is the one price of the model: code that inserts a trigger and drives it in the same task gets a <code class="inline-code">"is not attached"</code> error. Moving an element around the document is a no-op: it stays attached, its instance survives. An element that gains <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute after insertion is not attached by that attribute alone &mdash; re-insert it.</p>
         <p>Selector rule: <strong>selectors may appear in arguments, never as receivers.</strong> The dispatch graph stays 1:1 — every interaction goes to one element with one <code class="inline-code">implements</code>, so completion, grep (<code class="inline-code">#pop.</code> finds every writer) and error rules stay exact.</p>
@@ -922,12 +906,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-pipeline)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-pipeline" on-click="#code-docs-pipeline.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-pipeline" data-lang="text"><code>DOM event on the trigger (passive listener bound in connectedCallback)
+          <pre class="code" id="code-docs-pipeline" implements="copyable" on-copy="#copy-code-docs-pipeline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>DOM event on the trigger (passive listener bound in connectedCallback)
   → parse(attributeValue)          cached by string → Phrase[] with unresolved refs
   → runPhrases(this, phrases, ev)
       → key filter
@@ -964,15 +947,14 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-native-defaults)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-native-defaults" on-click="#code-docs-native-defaults.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-native-defaults" data-lang="html"><code>&lt;form implements="prevent-default" on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
+          <pre class="code" id="code-docs-native-defaults" implements="copyable" on-copy="#copy-code-docs-native-defaults.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form implements="prevent-default" on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
 &lt;a       href="/docs"                  on-click="#log.track('docs')"&gt;Docs&lt;/a&gt;   &lt;!-- navigates and tracks --&gt;
 &lt;a       href="#p" implements="prevent-default" on-click="#p.show()"&gt;&hellip;&lt;/a&gt;   &lt;!-- in-page action --&gt;
-&lt;button implements="no-propagate" on-click="#clip.copy(#snippet)"&gt;&times;&lt;/button&gt;  &lt;!-- the inner click never reaches the outer trigger --&gt;</code></pre>
+&lt;button implements="no-propagate" on-click="#snippet.copy()"&gt;&times;&lt;/button&gt;  &lt;!-- the inner click never reaches the outer trigger --&gt;</code></pre>
         </div>
         <p><code class="inline-code">prevent-default</code> binds its own listeners with <code class="inline-code">passive: false</code>, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying <code class="inline-code">on-submit</code> on a <code class="inline-code">&lt;form&gt;</code> (or <code class="inline-code">on-click</code> on an <code class="inline-code">&lt;a href&gt;</code>, or <code class="inline-code">on-keydown</code> on a <code class="inline-code">&lt;button&gt;</code>) without <code class="inline-code">prevent-default</code> logs one <code class="inline-code">console.warn</code>. A pre-existing <code class="inline-code">defaultPrevented</code> does <strong>not</strong> suppress dispatch.</p>
 
@@ -984,39 +966,37 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-pause)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-pause" on-click="#code-docs-pause.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-pause" data-lang="html"><code>&lt;button implements="attributable"
+          <pre class="code" id="code-docs-pause" implements="copyable" on-copy="#copy-code-docs-pause.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button implements="attributable"
         on-click="this.delay(300).setAttr({name: 'aria-busy', value: 'true'})"&gt;&hellip;&lt;/button&gt;</code></pre>
         </div>
-        <p>The executor stops the chain at <code class="inline-code">delay(ms)</code>, schedules the remainder to run <code class="inline-code">ms</code> later, and returns. Each re-fire that reaches the same delay schedules its own remainder — they stack, they do not reset each other, so two can be pending at once; superseding is <code class="inline-code">debounce</code>&rsquo;s job. A re-fire gated before it — for example by a spent <code class="inline-code">once()</code> — leaves the pending remainder to run. Every pending remainder is dropped on disconnect. The copy-flash pattern lives in the trigger attribute: <code class="inline-code">on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"</code> marks the button, and the reset debounced 1.5&nbsp;s after the last copy. A pause is a scheduling decision the executor owns — never an awaited interaction.</p>
+        <p>The executor stops the chain at <code class="inline-code">delay(ms)</code>, schedules the remainder to run <code class="inline-code">ms</code> later, and returns. Each re-fire that reaches the same delay schedules its own remainder — they stack, they do not reset each other, so two can be pending at once; superseding is <code class="inline-code">debounce</code>&rsquo;s job. A re-fire gated before it — for example by a spent <code class="inline-code">once()</code> — leaves the pending remainder to run. Every pending remainder is dropped on disconnect. The copy-flash pattern lives on the copied element&rsquo;s <code class="inline-code">on-copy</code> and points back at the button: <code class="inline-code">on-copy="#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"</code> marks the button, and the reset follows the chain&rsquo;s own 1.5&nbsp;s delay. A pause is a scheduling decision the executor owns — never an awaited interaction.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-copy-flash)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-copy-flash" on-click="#code-docs-copy-flash.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-copy-flash" data-lang="html"><code>&lt;button implements="copyable attributable"
-        on-click="this.copy(#snippet)"
-        on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"&gt;
+          <pre class="code" id="code-docs-copy-flash" implements="copyable" on-copy="#copy-code-docs-copy-flash.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;pre id="snippet" implements="copyable"
+      on-copy="#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"&gt;...&lt;/pre&gt;
+&lt;button id="copy-btn" implements="attributable"
+        on-click="#snippet.copy()" type="button"&gt;
   &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;
 &lt;/button&gt;</code></pre>
         </div>
-        <p><code class="inline-code">copy</code> fires its <code class="inline-code">copy</code> event on success (<code class="inline-code">this</code> is the button); <code class="inline-code">setAttr</code> marks the button; the reset runs after the last copy — each copy restarts the 1.5&nbsp;s <code class="inline-code">debounce</code>, so the flash lasts 1.5&nbsp;s <em>after the last</em> copy.</p>
+        <p><code class="inline-code">copy</code> lives on the copied element: copyable sits on <code class="inline-code">#snippet</code>, so <code class="inline-code">on-copy</code> runs with <code class="inline-code">this</code> bound to the snippet; the flash phrase points back at the button — <code class="inline-code">#copy-btn.setAttr</code> marks it, and the chain&rsquo;s <code class="inline-code">delay(1500)</code> removes the mark 1.5&nbsp;s later.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-async)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-async" on-click="#code-docs-async.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-async" data-lang="html"><code>&lt;input id="q" on-input="#results.debounce(300).send()"&gt;
+          <pre class="code" id="code-docs-async" implements="copyable" on-copy="#copy-code-docs-async.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="q" on-input="#results.debounce(300).send()"&gt;
 
 &lt;ul id="results" implements="requestable renderable"
     requestable-url="/api/search" requestable-include="#q"
@@ -1051,12 +1031,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-full-calc)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-full-calc" on-click="#code-docs-full-calc.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-full-calc" data-lang="html"><code>&lt;label&gt;Qty
+          <pre class="code" id="code-docs-full-calc" implements="copyable" on-copy="#copy-code-docs-full-calc.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;label&gt;Qty
   &lt;input id="qty" implements="modifiable dirtyable attributable prevent-default"
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)"
@@ -1088,12 +1067,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-full-order)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-full-order" on-click="#code-docs-full-order.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-full-order" data-lang="html"><code>&lt;form id="order" novalidate
+          <pre class="code" id="code-docs-full-order" implements="copyable" on-copy="#copy-code-docs-full-order.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="order" novalidate
       implements="prevent-default validatable requestable"
       requestable-url="/api/orders" requestable-method="post"
       on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false)"
@@ -1113,12 +1091,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-full-spy)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-full-spy" on-click="#code-docs-full-spy.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-full-spy" data-lang="html"><code>&lt;script type="module"&gt;
+          <pre class="code" id="code-docs-full-spy" implements="copyable" on-copy="#copy-code-docs-full-spy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module"&gt;
   import { start } from "interactably/dist/cdn/interactably-core.js";
   import "interactably/dist/cdn/attributable.js";
   start();
@@ -1224,12 +1201,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}); this.debounce(1500).removeAttr('data-copied')"
-                    on-click="this.copy(#code-docs-reference-grammar)" type="button">
+            <button class="copy-btn" implements="attributable" id="copy-code-docs-reference-grammar" on-click="#code-docs-reference-grammar.copy()" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-reference-grammar" data-lang="text"><code>attribute := 'on-' event-type
+          <pre class="code" id="code-docs-reference-grammar" implements="copyable" on-copy="#copy-code-docs-reference-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>attribute := 'on-' event-type
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+

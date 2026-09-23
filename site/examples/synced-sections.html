@@ -118,12 +118,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="copyable attributable" on-copy="this.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"
-                        on-click="this.copy(#code-ex-pkg)" type="button">
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-pkg" on-click="#code-ex-pkg.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-pkg" data-lang="html"><code>&lt;div class="demo-section"&gt;
+              <pre class="code" id="code-ex-pkg" implements="copyable" on-copy="#copy-code-ex-pkg.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="demo-section"&gt;
       &lt;div class="tabbar"&gt;
         &lt;button type="button" implements="storable" storable-key="pm" storable-value="npm" on-load="this.restore()"
                 on-click="#install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); this.save()"
