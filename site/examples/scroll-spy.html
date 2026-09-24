@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably example — A scroll spy, written out.">
+  <title>A scroll spy, written out — Examples — Interactably</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body data-page="examples">
+  <header id="spy-header" class="topnav">
+    <div class="topnav-inner">
+      <a class="brand" href="../" aria-label="Interactably home">
+        <span class="brand-mark">&lt;/&gt;</span>
+        <span class="brand-name">interactably</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html" class="active">Examples</a>
+        <a href="../reference.html">Reference</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="gh-link" href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64.18 1.32.27 2 .27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 1.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
+    <h1 class="doc-title">A scroll spy, written out</h1>
+    <p class="doc-lede">
+          A current-section indicator &mdash; the same thing the <a href="../docs.html#scroll-spy">docs page&rsquo;s sidebar</a> does &mdash;
+          built with plain HTML and <code class="inline-code">on-intersect</code>. Sections light and unlight their links; the header
+          supplies a measured top margin, and one full view earns a read mark. The observer&rsquo;s first report handles the first link.
+        </p>
+    <div class="example-body">
+
+              <div class="demo">
+                <div class="layout spy-layout">
+                  <aside class="sidebar spy-sidebar">
+                    <h2>On this page</h2>
+                    <nav id="spy-toc" aria-label="Scroll-spy sections">
+                      <a id="spy-toc-observe" implements="attributable" href="#spy-section-observe">Observe</a>
+                      <a id="spy-toc-enter" implements="attributable" href="#spy-section-enter">Enter and leave</a>
+                      <a id="spy-toc-header" implements="attributable" href="#spy-section-header">Below the header</a>
+                      <a id="spy-toc-read" implements="attributable" href="#spy-section-read">Read</a>
+                      <a id="spy-toc-summary" implements="attributable" href="#spy-section-summary">The whole pattern</a>
+                    </nav>
+                  </aside>
+
+                  <div class="content spy-content">
+                    <section id="spy-section-observe" class="spy-section"
+                             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#spy-toc-observe.setAttr({name: 'data-visible', value: ''})"
+                             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#spy-toc-observe.removeAttr('data-visible')">
+                      <h2 id="spy-heading-observe">Observe, do not poll</h2>
+                      <p>An <code class="inline-code">IntersectionObserver</code> reports when a target crosses an observation
+                        box. This page never asks which link is current and never listens to scroll: each section owns the
+                        phrases that change its own link, so the relationship stays visible beside the content.</p>
+                      <p>The observer&rsquo;s first report is an ordinary report. When the opening section is already inside
+                        the box, its <code class="inline-code">enter</code> phrase lights the first link without a separate
+                        initialization step.</p>
+                    </section>
+
+                    <section id="spy-section-enter" class="spy-section"
+                             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#spy-toc-enter.setAttr({name: 'data-visible', value: ''})"
+                             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#spy-toc-enter.removeAttr('data-visible')">
+                      <h2 id="spy-heading-enter">Two sides of one crossing</h2>
+                      <p><code class="inline-code">state:`enter`</code> sets <code class="inline-code">data-visible</code> and
+                        <code class="inline-code">state:`leave`</code> removes it. The attribute is the small amount of
+                        state the pattern needs; the section, not a scroll handler, decides when it changes.</p>
+                      <p>The sections are tall enough to make the current entry easy to follow. A shorter section can still
+                        be observed, of course, but two entries may be lit while the viewport overlaps both.</p>
+                    </section>
+
+                    <section id="spy-section-header" class="spy-section"
+                             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#spy-toc-header.setAttr({name: 'data-visible', value: ''})"
+                             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#spy-toc-header.removeAttr('data-visible')">
+                      <h2 id="spy-heading-header">Start below the header</h2>
+                      <p>Every observer uses <code class="inline-code">block-start:`-#spy-header.height`</code>. The
+                        reference reads the sticky header&rsquo;s measured height instead of restating a number, and a resize
+                        rebuilds the observer with the new measurement.</p>
+                      <p>The four margin names &mdash; <code class="inline-code">block-start</code>,
+                        <code class="inline-code">block-end</code>, <code class="inline-code">inline-start</code> and
+                        <code class="inline-code">inline-end</code> &mdash; are logical sides. The platform exposes physical
+                        <code class="inline-code">rootMargin</code> sides, so the library maps them from the element&rsquo;s
+                        writing mode and direction. An omitted margin slot is <code class="inline-code">0px</code>.</p>
+                    </section>
+
+                    <section id="spy-section-read" class="spy-section"
+                             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#spy-toc-read.setAttr({name: 'data-visible', value: ''})"
+                             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#spy-toc-read.removeAttr('data-visible')"
+                             on-intersect(full:`true`,block-start:`-#spy-header.height`)="#spy-toc-read.once().setAttr({name: 'data-read', value: ''})">
+                      <h2 id="spy-heading-read">Read the whole thing</h2>
+                      <p>When this section is entirely inside the observation box,
+                        <code class="inline-code">full:`true`</code> sets <code class="inline-code">data-read</code> on its
+                        table-of-contents entry. The <code class="inline-code">once()</code> modifier spends that phrase after
+                        the first full view, so the mark stays after the section scrolls away.</p>
+                      <p><code class="inline-code">full</code> is a boolean slot, not a third
+                        <code class="inline-code">state</code>: it fires on every change between fully visible and not fully
+                        visible, in either direction. That is why the example uses one <code class="inline-code">true</code>
+                        matcher for the lasting mark.</p>
+                    </section>
+
+                    <section id="spy-section-summary" class="spy-section"
+                             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#spy-toc-summary.setAttr({name: 'data-visible', value: ''})"
+                             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#spy-toc-summary.removeAttr('data-visible')">
+                      <h2 id="spy-heading-summary">The whole pattern</h2>
+                      <p>A sticky header, a table of contents, a handful of sections and a few declarative phrases are all
+                        this pattern needs. The browser owns observation, the author owns the markup, and the current entry
+                        follows the reader without a page-specific script.</p>
+                    </section>
+                  </div>
+                </div>
+              </div>
+    </div>
+        <details class="example-code">
+            <summary>Show the markup</summary>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button class="copy-btn" implements="attributable" id="spy-copy-code-scroll-spy" on-click="#spy-code-scroll-spy.copy()" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="spy-code-scroll-spy" implements="copyable" on-copy="#spy-copy-code-scroll-spy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;header id="spy-header" class="topnav"&gt;&hellip;&lt;/header&gt;
+
+&lt;div class="layout"&gt;
+  &lt;aside class="sidebar"&gt;
+    &lt;nav id="toc" aria-label="Scroll-spy sections"&gt;
+      &lt;a id="toc-observe" implements="attributable" href="#section-observe"&gt;Observe&lt;/a&gt;
+      &lt;a id="toc-enter" implements="attributable" href="#section-enter"&gt;Enter and leave&lt;/a&gt;
+      &lt;a id="toc-header" implements="attributable" href="#section-header"&gt;Below the header&lt;/a&gt;
+      &lt;a id="toc-read" implements="attributable" href="#section-read"&gt;Read&lt;/a&gt;
+      &lt;a id="toc-summary" implements="attributable" href="#section-summary"&gt;The whole pattern&lt;/a&gt;
+    &lt;/nav&gt;
+  &lt;/aside&gt;
+
+  &lt;div class="content"&gt;
+    &lt;section id="section-observe"
+             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#toc-observe.setAttr({name: 'data-visible', value: ''})"
+             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#toc-observe.removeAttr('data-visible')"&gt;
+      &lt;h2&gt;Observe, do not poll&lt;/h2&gt;
+      &lt;p&gt;An IntersectionObserver reports when a target crosses the observation box.&lt;/p&gt;
+    &lt;/section&gt;
+
+    &lt;section id="section-enter"
+             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#toc-enter.setAttr({name: 'data-visible', value: ''})"
+             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#toc-enter.removeAttr('data-visible')"&gt;
+      &lt;h2&gt;Enter and leave&lt;/h2&gt;
+      &lt;p&gt;Enter sets data-visible; leave removes it.&lt;/p&gt;
+    &lt;/section&gt;
+
+    &lt;section id="section-header"
+             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#toc-header.setAttr({name: 'data-visible', value: ''})"
+             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#toc-header.removeAttr('data-visible')"&gt;
+      &lt;h2&gt;Below the header&lt;/h2&gt;
+      &lt;p&gt;The header's measured height keeps the observation box below it.&lt;/p&gt;
+    &lt;/section&gt;
+
+    &lt;section id="section-read"
+             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#toc-read.setAttr({name: 'data-visible', value: ''})"
+             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#toc-read.removeAttr('data-visible')"
+             on-intersect(full:`true`,block-start:`-#spy-header.height`)="#toc-read.once().setAttr({name: 'data-read', value: ''})"&gt;
+      &lt;h2&gt;Read the whole thing&lt;/h2&gt;
+      &lt;p&gt;A fully visible section reveals its read mark, and the mark stays.&lt;/p&gt;
+    &lt;/section&gt;
+
+    &lt;section id="section-summary"
+             on-intersect(state:`enter`,block-start:`-#spy-header.height`)="#toc-summary.setAttr({name: 'data-visible', value: ''})"
+             on-intersect(state:`leave`,block-start:`-#spy-header.height`)="#toc-summary.removeAttr('data-visible')"&gt;
+      &lt;h2&gt;The whole pattern&lt;/h2&gt;
+      &lt;p&gt;No scroll listener and no page-load phrase are required.&lt;/p&gt;
+    &lt;/section&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+          </details>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>Built with <a href="../">Interactably</a> &middot; MIT licensed</div>
+      <div class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html">Examples</a>
+        <a href="../reference.html">Reference</a>
+        <a href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">Source</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../demo.js"></script>
+</body>
+</html>

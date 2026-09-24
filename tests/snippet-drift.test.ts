@@ -18,6 +18,7 @@ const EXAMPLE_PAGES = [
   "character-counter",
   "age-gate",
   "reveal-strategies",
+  "scroll-spy",
   "tabs",
   "synced-sections",
   "signup-guard",
