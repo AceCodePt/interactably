@@ -1,0 +1,27 @@
+# Handoff: Cross-document view transitions across the site
+
+## Findings
+
+- **Opt-in and reach.** `@view-transition { navigation: auto; }` sits at the top of `site/styles.css`. All 39 pages load this one stylesheet (35 examples via `../styles.css`, the four top-level pages via `./styles.css`); a grep over the built output found no page missing it, so no inline rule and no per-page edit was needed.
+- **Names.** `.topnav`, `.wrap` and `.footer` carry the stable names `site-header`, `site-main` and `site-footer`. A jsdom pass over all 39 pages confirms each selector matches exactly one element per page, so no duplicate name can abort a transition. The only extra `topnav` text match in the source is inside scroll-spy's escaped code sample, which is a text node in the markup, not a rendered element.
+- **`.nav-links`.** Left unnamed on purpose. It is a child of the already-named `.topnav`, and naming the header already captures the whole bar. A nested name would lift the menu out of the header's snapshot into its own group, producing a second, overlapping animation for an element whose box is identical on every page — only the `.active` highlight differs, and the header's internal cross-fade already covers that. Naming the container and not the child is the simpler, seam-free choice.
+- **Reduced motion.** The `prefers-reduced-motion: reduce` block nests `@view-transition { navigation: none; }`. The spec permits `@view-transition` inside a conditional group rule, and the rule resolver takes the last matching `@view-transition` in the document, so under reduced motion the opt-in resolves to `none`. This disables only the cross-document transition and leaves the same-document `renderable` `startViewTransition` path and its pseudo-elements untouched, keeping the two halves independent. A global `::view-transition-* { animation: none }` rule would have coupled the cross-document task to the same-document one.
+- **Documentation.** The prose paragraph went into `site/examples.html`, not `docs.html`: the examples list is the hub you navigate between, so it reads naturally there, whereas `docs.html` already carries the renderable same-document view-transition discussion. The paragraph states that the feature is CSS-only, same-origin, and degrades to an ordinary navigation where unsupported.
+
+### Predicted gaps — which materialised
+
+Chromium 153 via Playwright against the built `site-dist`, with an injected `pagereveal` recorder (test-harness script only; no site script was added).
+
+- **Header jump on differing scrollbar presence — not reproduced here; condition present.** This Chromium uses overlay scrollbars (`innerWidth - clientWidth == 0` on every page), so the header width never changes and no jump appeared. Pages do differ in vertical overflow (`examples/tabs.html` fits a 700px viewport; `docs.html` is about 49,400px tall), so on a browser or OS with classic space-taking scrollbars the `site-header` group would animate a width change across a short-to-long navigation. It is environment-dependent and cannot be fixed in CSS alone without pinning `scrollbar-gutter`, which is out of scope.
+- **Tall body shown before below-fold content is parsed — not on a fast connection; condition real under a slow parse.** Every unthrottled navigation revealed at `readyState` `complete`/`interactive` with the full body height, including the tall `docs.html`. Under a simulated 120 KB/s link with 400ms latency, the incoming document was still `loading` at `pagereveal` with only about 7,730px of about 49,400px parsed — but in that run the transition did not activate at all (the opt-in stylesheet had not arrived in time), so no half-parsed snapshot was shown. The `<link rel="expect" blocking="render">` remedy is real but needs per-page ids; per the brief it was left for a follow-up.
+- **Sidebar cross-fade — materialises by construction, for `docs.html` only.** Only `docs.html` has a `.sidebar` (the brief's survey also named `reference.html`; it has none). The sidebar sits inside the named `site-main` and itself computes `view-transition-name: none`, so entering or leaving `docs.html` gives it no counterpart to morph with and it cross-fades as part of the main snapshot. That is the documented unmatched-element behaviour, not a defect; a separate name would only matter if the sidebar were meant to slide in or out, which this task does not ask for.
+- **Demo captured in its pre-render state — not reproduced.** At `pagereveal` the destination demos were already mounted (`#total` read `$2.50` on price-calculator, `#nf-usd` read `$0.00` on number-format, rows were present), because the module bundle runs before first render. The incoming snapshot therefore captures the rendered demo.
+
+## Verification
+
+- `pnpm run build` passes.
+- `pnpm test` passes: 604 tests, 0 failures (run after the build so `dist/site/demo.js` was current).
+- `pnpm check` passes (`tsc --noEmit`).
+- `pnpm run build:site` succeeds; `site-dist/styles.css` retains `@view-transition`, one occurrence of each `view-transition-name` value, and the reduced-motion rule.
+- All 39 built pages reference the shared stylesheet; none are missing it.
+- In Chromium, a same-origin link click fires `pagereveal` with an active `viewTransition`, and the computed names resolve to `site-header`/`site-main`/`site-footer` (with `.nav-links` resolving to `none`). With `prefers-reduced-motion: reduce`, the same navigation reports no active view transition.

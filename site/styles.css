@@ -1,5 +1,45 @@
 /* Interactably — site design system */
 
+/*
+ * Cross-document view transitions.
+ *
+ * Both documents in a navigation must opt in: the outgoing page declares
+ * `navigation: auto` for itself, and the incoming page must carry the same
+ * rule or nothing animates. Every page on this site loads this one shared
+ * stylesheet, so this single rule opts in the whole site. Same-origin
+ * navigations then morph the shared furniture instead of flashing; browsers
+ * without support simply perform an ordinary navigation.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+/*
+ * The names below pair the shared furniture across the outgoing and incoming
+ * document. A name must be unique within a document, and each of these class
+ * selectors matches exactly one element per page. `.nav-links` is deliberately
+ * left unnamed: it is a child of the already-named `.topnav`, so its contents
+ * already morph as part of the header; naming it too would lift the menu out
+ * into a separate animation with no visual gain.
+ */
+.topnav {
+  view-transition-name: site-header;
+}
+
+.wrap {
+  view-transition-name: site-main;
+}
+
+.footer {
+  view-transition-name: site-footer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
 :root {
   --bg: #f5f4f0;
   --surface: #ffffff;
