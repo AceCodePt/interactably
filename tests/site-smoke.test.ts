@@ -51,6 +51,7 @@ const EXAMPLE_PAGES = [
   "dirty-tracking",
   "dynamic-list",
   "todo-list",
+  "shop-cart",
   "number-format",
   "logging",
   "offline-fallback",
@@ -627,6 +628,56 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.equal(todoList.children.length, 3, "a reload restores the saved DOM");
   await click(todoList.querySelector("li button")!);
   assert.equal(todoList.children.length, 2, "a restored row still has a live delete phrase");
+
+  const cart = byId("cart") as HTMLUListElement;
+  const cartTotal = byId("cart-total") as HTMLOutputElement;
+  const cartStore = byId("cart-store");
+  assert.equal(cart.children.length, 0, "the anonymous cart starts empty");
+  assert.equal(cartTotal.textContent, "$0.00", "the empty cart starts at zero");
+
+  await click(byId("shop-add-mug"));
+  assert.equal(cart.children.length, 1, "a product button appends one line");
+  assert.equal(cart.querySelector(".cart-name")?.textContent, "Enamel mug");
+  assert.equal(cart.querySelector(".cart-price")?.textContent, "12");
+  assert.equal(cartTotal.textContent, "$12.00", "the rendered event recomputes the total");
+  assert.equal(localStorage.getItem("cart"), cart.innerHTML, "the rendered event mirrors the cart markup");
+
+  await new Promise((resolve) => setTimeout(resolve, 2));
+  await click(byId("shop-add-mug"));
+  assert.equal(cart.children.length, 2, "the same product makes a second line");
+  assert.equal(cartTotal.textContent, "$24.00", "duplicate lines contribute twice");
+
+  await click(byId("shop-add-notebook"));
+  assert.equal(cart.children.length, 3, "a different product appends its own line");
+  assert.equal(cartTotal.textContent, "$32.00", "the running total includes every line");
+
+  const savedCart = cart.innerHTML;
+  cart.replaceChildren();
+  cartStore.remove();
+  await flush();
+  document.body.append(cartStore);
+  await flush();
+  assert.equal(cart.children.length, 3, "a reload restores the saved cart markup");
+  assert.equal(cartTotal.textContent, "$32.00", "the rendered restore event recomputes the restored total");
+  assert.equal(cart.innerHTML, savedCart, "restoring does not require a page-load total phrase");
+
+  const restoredRemove = cart.querySelector("li button");
+  assert.ok(restoredRemove !== null);
+  await click(restoredRemove);
+  assert.equal(cart.children.length, 2, "a restored remove button remains live");
+  assert.equal(cartTotal.textContent, "$20.00", "removing a restored line recomputes the total");
+
+  await click(byId("cart-empty"));
+  assert.equal(cart.children.length, 0, "empty cart removes every line");
+  assert.equal(cartTotal.textContent, "$0.00", "empty cart zeroes the total");
+  assert.equal(localStorage.getItem("cart"), "", "empty cart saves the empty DOM snapshot");
+
+  cartStore.remove();
+  await flush();
+  document.body.append(cartStore);
+  await flush();
+  assert.equal(cart.children.length, 0, "an empty snapshot survives reload as empty");
+  assert.equal(cartTotal.textContent, "$0.00", "an empty snapshot restores the zero total");
 
   // Format a number or date (formattable)
   const nfUsd = byId("nf-usd") as HTMLOutputElement;

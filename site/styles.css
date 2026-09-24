@@ -992,6 +992,81 @@ code, pre, kbd {
   padding: 0.35rem 0;
 }
 
+.demo .shop-products {
+  align-items: stretch;
+}
+
+.demo .product-card {
+  flex: 1 1 12rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.demo .product-card h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.demo .product-price {
+  margin: 0 0 0.65rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.demo .cart-panel {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.demo .cart-panel h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.demo #cart {
+  list-style: none;
+  margin: 0.65rem 0;
+  padding: 0;
+}
+
+.demo #cart:empty::before {
+  content: "Your cart is empty.";
+  display: block;
+  padding: 0.45rem 0;
+  color: var(--muted);
+}
+
+.demo #cart li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.demo #cart li:last-child {
+  border-bottom: 0;
+}
+
+.demo .cart-name {
+  flex: 1;
+}
+
+.demo .cart-price {
+  min-width: 4rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.demo .cart-price::before {
+  content: "$";
+}
+
 .demo .amount {
   width: 6rem;
 }
