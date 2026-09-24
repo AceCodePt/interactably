@@ -38,6 +38,7 @@ const EXAMPLE_PAGES = [
   "dynamic-list",
   "todo-list",
   "shop-cart",
+  "multi-step-form",
   "number-format",
   "logging",
   "offline-fallback",
