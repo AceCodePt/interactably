@@ -295,7 +295,7 @@ test("prevent-default silences the native-action warning", async (t) => {
 test("a keyed button on-keydown/on-keyup does not warn; an unkeyed one does", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const keyed = hostElement("button", { "on-keydown": "escape: #recv.go()" });
+  const keyed = hostElement("button", { "on-keydown(key:`Escape`)": "#recv.go()" });
   document.body.appendChild(keyed);
   const unkeyedDown = hostElement("button", { "on-keydown": "#recv.go()" });
   document.body.appendChild(unkeyedDown);

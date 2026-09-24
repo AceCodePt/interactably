@@ -6,8 +6,8 @@ export type { NormalizedImplementationDef } from "@behaviors/implementation-regi
 export { NotReadyError, bindEvents, formatWrite, readValue, registerFormatter, writeValue } from "@behaviors/implementation-utils.ts";
 export type { BindEventsOptions, BoundEvents, ImplementationInstance } from "@behaviors/implementation-utils.ts";
 export { clearPhraseState, runPhrases } from "@interactable/executor.ts";
-export { parse, parseRefOrRead } from "@interactable/parser.ts";
-export type { RefOrRead } from "@interactable/parser.ts";
+export { parse, parseEventAttribute, parseRefOrRead } from "@interactable/parser.ts";
+export type { EventAttribute, EventValueDeclaration, RefOrRead } from "@interactable/parser.ts";
 export {
   INTERSECT_EVENT_NAMES,
   normaliseRootMargin,
@@ -22,6 +22,5 @@ export type { InteractionEventInit } from "@interactable/interaction-event.ts";
 export { ImplementationEvent } from "@interactable/implementation-event.ts";
 export type { ImplementationEventInit } from "@interactable/implementation-event.ts";
 export { isImplementationEvent } from "@interactable/events.ts";
-export { matchesKey } from "@interactable/keys.ts";
 export { compileSignature, exclusive, optionalCtor } from "@interactable/signature.ts";
 export type { CompiledSignature, Ctor, ExclusiveSlot, OptionalCtor, Sig as SignatureSlot } from "@interactable/signature.ts";

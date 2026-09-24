@@ -238,7 +238,7 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
           `event; custom events are fine, but check the spelling and case`,
       );
     }
-    warnIfNativeActionLikelyUnwanted(el as HTMLElement, type);
+    warnIfNativeActionLikelyUnwanted(el as HTMLElement, type, attribute);
   }
   attachment.triggers.set(attribute, () => el.removeEventListener(type, handler));
 }
@@ -407,7 +407,7 @@ function handleTriggerAttribute(
   else if (oldValue !== null && newValue === null) unbindTrigger(attachment, name);
 }
 
-function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string): void {
+function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string, attribute: string): void {
   const implementsValue = el.getAttribute("implements") ?? "";
   if (implementsValue.split(/\s+/).includes("prevent-default")) return;
   if (el instanceof HTMLFormElement && type === "submit") {
@@ -415,9 +415,23 @@ function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string): void {
   } else if (el instanceof HTMLAnchorElement && el.href && type === "click") {
     console.warn(`[Interactable] on-click on ${describeElement(el)}: also navigates; add implements="prevent-default" to cancel it`);
   } else if (el instanceof HTMLButtonElement && (type === "keydown" || type === "keyup")) {
-    const phrases = parse(el.getAttribute(`on-${type}`) ?? "", type);
-    if (phrases.some((phrase) => phrase.key === undefined)) {
+    if (!hasKeyLiteral(attribute)) {
       console.warn(`[Interactable] on-${type} on ${describeElement(el)}: also activates on Enter/Space; add implements="prevent-default" to cancel it`);
     }
   }
+}
+
+function hasKeyLiteral(attribute: string): boolean {
+  let declaration: ReturnType<typeof parseEventAttribute>["declaration"];
+  try {
+    ({ declaration } = parseEventAttribute(attribute.slice(3)));
+  } catch {
+    return false;
+  }
+  return (
+    declaration !== undefined &&
+    declaration.some(
+      (value) => value.kind === "literal" && (value.name === "key" || value.name === "code"),
+    )
+  );
 }

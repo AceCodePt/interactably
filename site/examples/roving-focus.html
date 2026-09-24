@@ -44,20 +44,25 @@
                 <div class="row">
                   <input id="cb-search" type="search" role="combobox" aria-controls="cb-results" aria-expanded="true"
                          implements="focusable prevent-default"
-                         on-keydown="arrowdown: #cb-results-1.focus()"
+                         on-keydown(code:`ArrowDown`)="#cb-results-1.focus()"
                          placeholder="Search a city&hellip;">
                 </div>
                 <ul id="cb-results" role="listbox">
                   <li role="option"><button id="cb-results-1" type="button" implements="focusable prevent-default"
-                      on-keydown="arrowdown: #cb-results-2.focus(); arrowup: #cb-search.focus()">Berlin</button></li>
+                      on-keydown(code:`ArrowDown`)="#cb-results-2.focus()"
+                      on-keydown(code:`ArrowUp`)="#cb-search.focus()">Berlin</button></li>
                   <li role="option"><button id="cb-results-2" type="button" implements="focusable prevent-default"
-                      on-keydown="arrowdown: #cb-results-3.focus(); arrowup: #cb-results-1.focus()">Lisbon</button></li>
+                      on-keydown(code:`ArrowDown`)="#cb-results-3.focus()"
+                      on-keydown(code:`ArrowUp`)="#cb-results-1.focus()">Lisbon</button></li>
                   <li role="option"><button id="cb-results-3" type="button" implements="focusable prevent-default"
-                      on-keydown="arrowdown: #cb-results-4.focus(); arrowup: #cb-results-2.focus()">London</button></li>
+                      on-keydown(code:`ArrowDown`)="#cb-results-4.focus()"
+                      on-keydown(code:`ArrowUp`)="#cb-results-2.focus()">London</button></li>
                   <li role="option"><button id="cb-results-4" type="button" implements="focusable prevent-default"
-                      on-keydown="arrowdown: #cb-results-5.focus(); arrowup: #cb-results-3.focus()">Paris</button></li>
+                      on-keydown(code:`ArrowDown`)="#cb-results-5.focus()"
+                      on-keydown(code:`ArrowUp`)="#cb-results-3.focus()">Paris</button></li>
                   <li role="option"><button id="cb-results-5" type="button" implements="focusable prevent-default"
-                      on-keydown="arrowdown: #cb-results-1.focus(); arrowup: #cb-results-4.focus()">Tokyo</button></li>
+                      on-keydown(code:`ArrowDown`)="#cb-results-1.focus()"
+                      on-keydown(code:`ArrowUp`)="#cb-results-4.focus()">Tokyo</button></li>
                 </ul>
               </div>
     </div>
@@ -72,22 +77,27 @@
               </div>
               <pre class="code" id="code-ex-combobox" implements="copyable" on-copy="#copy-code-ex-combobox.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="cb-search" type="search" role="combobox" aria-controls="cb-results" aria-expanded="true"
            implements="focusable prevent-default"
-           on-keydown="arrowdown: #cb-results-1.focus()"
+           on-keydown(code:`ArrowDown`)="#cb-results-1.focus()"
            placeholder="Search a city&hellip;"&gt;
 
     &lt;!-- the list is what a requestable response would return: ids are positional
          and regenerated with each response, so #cb-results-1 is always current --&gt;
     &lt;ul id="cb-results" role="listbox"&gt;
       &lt;li role="option"&gt;&lt;button id="cb-results-1" type="button" implements="focusable prevent-default"
-          on-keydown="arrowdown: #cb-results-2.focus(); arrowup: #cb-search.focus()"&gt;Berlin&lt;/button&gt;&lt;/li&gt;
+          on-keydown(code:`ArrowDown`)="#cb-results-2.focus()"
+          on-keydown(code:`ArrowUp`)="#cb-search.focus()"&gt;Berlin&lt;/button&gt;&lt;/li&gt;
       &lt;li role="option"&gt;&lt;button id="cb-results-2" type="button" implements="focusable prevent-default"
-          on-keydown="arrowdown: #cb-results-3.focus(); arrowup: #cb-results-1.focus()"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
+          on-keydown(code:`ArrowDown`)="#cb-results-3.focus()"
+          on-keydown(code:`ArrowUp`)="#cb-results-1.focus()"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
       &lt;li role="option"&gt;&lt;button id="cb-results-3" type="button" implements="focusable prevent-default"
-          on-keydown="arrowdown: #cb-results-4.focus(); arrowup: #cb-results-2.focus()"&gt;London&lt;/button&gt;&lt;/li&gt;
+          on-keydown(code:`ArrowDown`)="#cb-results-4.focus()"
+          on-keydown(code:`ArrowUp`)="#cb-results-2.focus()"&gt;London&lt;/button&gt;&lt;/li&gt;
       &lt;li role="option"&gt;&lt;button id="cb-results-4" type="button" implements="focusable prevent-default"
-          on-keydown="arrowdown: #cb-results-5.focus(); arrowup: #cb-results-3.focus()"&gt;Paris&lt;/button&gt;&lt;/li&gt;
+          on-keydown(code:`ArrowDown`)="#cb-results-5.focus()"
+          on-keydown(code:`ArrowUp`)="#cb-results-3.focus()"&gt;Paris&lt;/button&gt;&lt;/li&gt;
       &lt;li role="option"&gt;&lt;button id="cb-results-5" type="button" implements="focusable prevent-default"
-          on-keydown="arrowdown: #cb-results-1.focus(); arrowup: #cb-results-4.focus()"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
+          on-keydown(code:`ArrowDown`)="#cb-results-1.focus()"
+          on-keydown(code:`ArrowUp`)="#cb-results-4.focus()"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
     &lt;/ul&gt;</code></pre>
             </div>
           </details>

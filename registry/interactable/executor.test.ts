@@ -85,10 +85,6 @@ function run(source: Element, value: string, ev: Event): void {
   runPhrases(source, value, ev);
 }
 
-function keyEvent(key: string, type = "keydown"): Event {
-  return Object.assign(new Event(type), { key });
-}
-
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -368,20 +364,7 @@ test("a guard-aborted || fallback leaves once() unspent", () => {
   assert.equal(sendCalls, 0, "the guard still aborts, so send never runs");
 });
 
-test("key prefixes filter events and are case-insensitive", () => {
-  const receiver = el("f");
-  let sendCalls = 0;
-  wireHost(receiver, { send: () => void sendCalls++ });
-
-  const trigger = el();
-  run(trigger, "enter: #f.send()", keyEvent("Enter"));
-  run(trigger, "enter: #f.send()", keyEvent("ENTER"));
-  run(trigger, "enter: #f.send()", keyEvent("Tab"));
-  run(trigger, "enter: #f.send()", keyEvent(" "));
-  assert.equal(sendCalls, 2);
-});
-
-test("a keyed phrase under a non-keyboard event is skipped and logged once", (t) => {
+test("a keyed phrase on a native event is skipped and logged once", (t) => {
   const spy = t.mock.method(console, "error");
   const receiver = el("f");
   let sendCalls = 0;
@@ -391,8 +374,10 @@ test("a keyed phrase under a non-keyboard event is skipped and logged once", (t)
   run(trigger, "enter: #f.send()", new Event("click"));
   run(trigger, "enter: #f.send()", new Event("click"));
   assert.equal(sendCalls, 0);
-  assert.equal(spy.mock.callCount(), 1);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('key "enter" on non-keyboard event "click"'));
+  assert.equal(spy.mock.callCount(), 1, "the phrase is skipped once per value");
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes('key "enter" on event "click" that carries no routing key'),
+  );
 });
 
 test("this resolves to the element the phrase was read from", () => {
@@ -1105,14 +1090,15 @@ test("a keyed phrase works with && and ||", () => {
   wireHost(alert, { show: () => void order.push("show") });
 
   const trigger = el();
-  run(trigger, "enter: #form.validate() || #alert.show()", keyEvent("Enter"));
+  const timeout = (): Event => new ImplementationEventClass("request-error", { key: "timeout" });
+  run(trigger, "timeout: #form.validate() || #alert.show()", timeout());
   assert.deepEqual(order, ["validate", "show"]);
 
   order.length = 0;
-  run(trigger, "enter: #form.validate() || #alert.show()", keyEvent("Tab"));
-  assert.deepEqual(order, [], "a non-matching key never reaches the phrase");
+  run(trigger, "offline: #form.validate() || #alert.show()", timeout());
+  assert.deepEqual(order, [], "a non-matching implementation key never reaches the phrase");
 
-  run(trigger, "enter: #form.validate() && #alert.show()", keyEvent("Enter"));
+  run(trigger, "timeout: #form.validate() && #alert.show()", timeout());
   assert.deepEqual(order, ["validate"], "&& stops after the guard abort");
 });
 

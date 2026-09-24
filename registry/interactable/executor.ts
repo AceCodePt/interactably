@@ -1,7 +1,6 @@
 import { isAttached } from "@interactable/attachment.ts";
 import { parse, isNumericUnion } from "@interactable/parser.ts";
 import { getEventFieldTypes } from "@interactable/events.ts";
-import { matchesKey } from "@interactable/keys.ts";
 import { INTERSECT_EVENT_NAMES } from "@interactable/intersect.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
@@ -71,17 +70,12 @@ function runPhrase(
   eventAttribute?: EventAttribute,
 ): void {
   if (eventAttribute !== undefined && !matchesLiteralDeclarations(source, eventAttribute, ev)) return;
-  if (KEYBOARD_EVENT_TYPES.has(ev.type)) {
-    if (phrase.key !== undefined) {
-      const keyboardEvent = ev as KeyboardEvent;
-      if (typeof keyboardEvent.key !== "string" || !matchesKey(keyboardEvent, phrase.key)) return;
-    }
-  } else if (ev instanceof ImplementationEvent && ev.key !== undefined) {
+  if (ev instanceof ImplementationEvent && ev.key !== undefined) {
     if (!INTERSECT_EVENT_NAMES.has(ev.type) && phrase.key !== ev.key) {
       return;
     }
   } else if (phrase.key !== undefined) {
-    logOnce(source, `key "${phrase.key}" on non-keyboard event "${ev.type}"; phrase skipped`);
+    logOnce(source, `key "${phrase.key}" on event "${ev.type}" that carries no routing key; phrase skipped`);
     return;
   }
 

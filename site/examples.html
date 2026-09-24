@@ -45,7 +45,7 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/price-calculator.html">Price calculator</a>
-        <p class="examples-blurb">Rows, quantities and a total recomputed from sum('#list .amount') after every change.</p>
+        <p class="examples-blurb">Rows, quantities and a total recomputed from sum('#list .amount') after every change; <code class="inline-code">on-keydown(code:`Escape`)</code> resets a field.</p>
         <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; renderable &middot; formattable &middot; prevent-default</span>
       </li>
       <li>
@@ -55,13 +55,13 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/live-preview.html">Live preview: debounce, keys & once</a>
-        <p class="examples-blurb">Debounce, enter/escape keys, and a once() that spends itself on the first click.</p>
-        <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; prevent-default &middot; revealable</span>
+        <p class="examples-blurb">Literal-matched <code class="inline-code">on-keydown(code:`Enter`)</code> / <code class="inline-code">(code:`Escape`)</code> declarations, a debounce, and a once() that spends itself on the first click.</p>
+        <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; prevent-default &middot; revealable &middot; on-keydown</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/roving-focus.html">Roving focus, written out</a>
-        <p class="examples-blurb">Arrow keys move real focus through a list; the ids are positional and the wrap is written out.</p>
-        <span class="examples-tags">focusable &middot; prevent-default</span>
+        <p class="examples-blurb">Arrow keys, literal-matched <code class="inline-code">on-keydown(code:`ArrowDown`)</code>, move real focus through a list; the ids are positional and the wrap is written out.</p>
+        <span class="examples-tags">focusable &middot; prevent-default &middot; on-keydown</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/theme-switcher.html">Theme & attribute switcher</a>
@@ -100,8 +100,8 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/synced-sections.html">Three synchronized sections, written out</a>
-        <p class="examples-blurb">Nine panels, three tab bars, one stored selection — the honest price of push.</p>
-        <span class="examples-tags">storable &middot; revealable</span>
+        <p class="examples-blurb">Nine panels, three tab bars, one stored selection — replayed by one literal-matched restore site per value; the honest price of push.</p>
+        <span class="examples-tags">storable &middot; revealable &middot; on-restore</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/signup-guard.html">Sign-up form with a guard</a>
@@ -159,8 +159,8 @@
     <ul class="examples-list">
       <li>
         <a class="examples-title" href="./examples/suggest-as-you-type.html">Suggest as you type</a>
-        <p class="examples-blurb">A debounced send() renders options into a listbox; arrows rove real focus through them.</p>
-        <span class="examples-tags">requestable &middot; renderable &middot; focusable &middot; revealable</span>
+        <p class="examples-blurb">A debounced send() renders options into a listbox; literal-matched <code class="inline-code">on-keydown(code:`ArrowDown`)</code> roves real focus through them.</p>
+        <span class="examples-tags">requestable &middot; renderable &middot; focusable &middot; revealable &middot; on-keydown</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/guarded-submit.html">Validate, then send</a>
@@ -169,13 +169,13 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/remember-theme.html">Remember my theme</a>
-        <p class="examples-blurb">A stored choice paints data-theme on the card and flashes a toast on restore.</p>
-        <span class="examples-tags">storable &middot; attributable &middot; revealable</span>
+        <p class="examples-blurb">A stored choice paints data-theme on the card and flashes a toast — from a single restore site, however many values it remembers.</p>
+        <span class="examples-tags">storable &middot; attributable &middot; revealable &middot; on-restore</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/remembered-tab.html">One tab bar, remembered</a>
-        <p class="examples-blurb">The open tab persists and refocuses on reload — a three-way intersection.</p>
-        <span class="examples-tags">storable &middot; revealable &middot; focusable</span>
+        <p class="examples-blurb">The open tab persists and refocuses on reload; one restore site literal-matches the stored value — a three-way intersection.</p>
+        <span class="examples-tags">storable &middot; revealable &middot; focusable &middot; on-restore</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/open-focus.html">Open, and focus lands</a>

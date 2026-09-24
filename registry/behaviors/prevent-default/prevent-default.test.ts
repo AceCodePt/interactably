@@ -31,6 +31,12 @@ function hostElement(tag: string, attributes: Record<string, string>): HTMLEleme
   return el;
 }
 
+function fromMarkup(html: string): HTMLElement {
+  const holder = document.createElement("div");
+  holder.innerHTML = html;
+  return holder.firstElementChild as HTMLElement;
+}
+
 function cancelableEvent(el: Element, type: string, init?: EventInit): Event {
   const event = new Event(type, { bubbles: true, cancelable: true, ...init });
   el.dispatchEvent(event);
@@ -38,22 +44,20 @@ function cancelableEvent(el: Element, type: string, init?: EventInit): Event {
 }
 
 test("derivedDefaults reads claimed on-* attributes and falls back to the tag", () => {
-  const div = document.createElement("div");
-  div.setAttribute("on-click", "#x.go()");
-  assert.equal(derivedDefaults(div), "click");
+  const div = fromMarkup('<div on-click="#x.go()" on-submit="#x.go()" on-input="#x.go()"></div>');
+  assert.equal(derivedDefaults(div), "click,submit");
 
-  div.setAttribute("on-keydown", "enter: #x.go(); #y.go()");
-  assert.equal(derivedDefaults(div), "click,keydown:enter");
+  const keyed = fromMarkup('<div on-click="#x.go()" on-keydown(key:`Enter`)="#x.go(); #y.go()"></div>');
+  assert.equal(derivedDefaults(keyed), "click,keydown:enter");
 
-  div.setAttribute("on-submit", "#x.go()");
-  assert.equal(derivedDefaults(div), "click,keydown:enter,submit");
+  const coded = fromMarkup('<div on-keydown(code:`KeyA`)="#x.go()"></div>');
+  assert.equal(derivedDefaults(coded), "keydown:code:keya");
 
-  div.setAttribute("on-input", "#x.go()");
-  assert.equal(derivedDefaults(div), "click,keydown:enter,submit");
-
-  const unkeyed = document.createElement("div");
-  unkeyed.setAttribute("on-keydown", "#x.go()");
+  const unkeyed = fromMarkup('<div on-keydown="#x.go()"></div>');
   assert.equal(derivedDefaults(unkeyed), "");
+
+  const typed = fromMarkup('<div on-keydown(key:string)="#x.go()"></div>');
+  assert.equal(derivedDefaults(typed), "", "a type declaration binds, it does not derive a claim");
 
   const form = document.createElement("form");
   assert.equal(derivedDefaults(form), "submit");
@@ -89,9 +93,9 @@ test("prevent-default derives submit from a claimed on-submit", async (t) => {
   assert.equal(cancelableEvent(form, "submit").defaultPrevented, true);
 });
 
-test("prevent-default derives keydown:enter from a keyed on-keydown and leaves other keys alone", async (t) => {
+test("prevent-default derives keydown:enter from a key literal and leaves other keys alone", async (t) => {
   t.mock.method(console, "error");
-  const input = hostElement("input", { implements: "prevent-default", "on-keydown": "enter: #x.go()" });
+  const input = fromMarkup('<input implements="prevent-default" on-keydown(key:`Enter`)="#x.go()">');
   document.body.appendChild(input);
   await flush();
 
@@ -102,6 +106,21 @@ test("prevent-default derives keydown:enter from a keyed on-keydown and leaves o
   const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
   input.dispatchEvent(tab);
   assert.equal(tab.defaultPrevented, false);
+});
+
+test("prevent-default derives a code claim that matches code, not key", async (t) => {
+  t.mock.method(console, "error");
+  const input = fromMarkup('<input implements="prevent-default" on-keydown(code:`KeyA`)="#x.go()">');
+  document.body.appendChild(input);
+  await flush();
+
+  const wrongCode = new KeyboardEvent("keydown", { key: "a", code: "KeyB", bubbles: true, cancelable: true });
+  input.dispatchEvent(wrongCode);
+  assert.equal(wrongCode.defaultPrevented, false, "the claim matches code, so key alone is not enough");
+
+  const rightCode = new KeyboardEvent("keydown", { key: "q", code: "KeyA", bubbles: true, cancelable: true });
+  input.dispatchEvent(rightCode);
+  assert.equal(rightCode.defaultPrevented, true, "the derived code claim cancels exactly its code");
 });
 
 test("an unkeyed on-keydown contributes nothing and prevent-default warns that it has no effect", async (t) => {

@@ -1,4 +1,3 @@
-import { matchesKey } from "@interactable/keys.ts";
 import { isDateFormat } from "@behaviors/formattable/format.ts";
 
 export interface ImplementationInstance {
@@ -85,8 +84,17 @@ export interface BoundEvents {
 
 interface BoundListener {
   type: string;
-  key: string | undefined;
+  field: KeyField | undefined;
+  value: string | undefined;
   listener: (e: Event) => void;
+}
+
+type KeyField = "key" | "code";
+
+interface EventEntry {
+  type: string;
+  field?: KeyField;
+  value?: string;
 }
 
 export function bindEvents(
@@ -101,18 +109,15 @@ export function bindEvents(
     const entries = parseEventList(events());
     const seen = new Set<string>();
     for (const entry of entries) {
-      const id = `${entry.type}\u0000${entry.key ?? ""}`;
+      const id = `${entry.type}\u0000${entry.field ?? ""}\u0000${entry.value ?? ""}`;
       if (seen.has(id)) continue;
       seen.add(id);
       const listener = (e: Event): void => {
-        if (entry.key !== undefined) {
-          const keyboard = e as KeyboardEvent;
-          if (typeof keyboard.key !== "string" || !matchesKey(keyboard, entry.key)) return;
-        }
+        if (!matchesEventEntry(e, entry)) return;
         handler(e);
       };
       el.addEventListener(entry.type, listener, { passive: options.passive ?? true });
-      listeners.set(id, { type: entry.type, key: entry.key, listener });
+      listeners.set(id, { type: entry.type, field: entry.field, value: entry.value, listener });
     }
   };
 
@@ -125,14 +130,29 @@ export function bindEvents(
   return { update: () => { unbind(); bind(); }, dispose: unbind };
 }
 
-function parseEventList(list: string): Array<{ type: string; key?: string }> {
+function matchesEventEntry(e: Event, entry: EventEntry): boolean {
+  if (entry.value === undefined) return true;
+  if (entry.field === "code") {
+    const code = (e as KeyboardEvent).code;
+    return typeof code === "string" && code.toLowerCase() === entry.value.toLowerCase();
+  }
+  const key = (e as KeyboardEvent).key;
+  if (typeof key !== "string") return false;
+  const wanted = entry.value.toLowerCase() === "space" ? " " : entry.value;
+  return key.toLowerCase() === wanted.toLowerCase();
+}
+
+function parseEventList(list: string): EventEntry[] {
   return list
     .split(",")
     .map((entry) => entry.trim())
     .filter((entry) => entry !== "")
     .map((entry) => {
-      const colon = entry.indexOf(":");
-      if (colon === -1) return { type: entry };
-      return { type: entry.slice(0, colon).trim(), key: entry.slice(colon + 1).trim() };
+      const parts = entry.split(":");
+      const type = parts[0]!.trim();
+      if (parts.length === 1) return { type };
+      if (parts.length === 2) return { type, field: "key", value: parts[1]!.trim() };
+      const field: KeyField = parts[1]!.trim() === "code" ? "code" : "key";
+      return { type, field, value: parts.slice(2).join(":").trim() };
     });
 }
