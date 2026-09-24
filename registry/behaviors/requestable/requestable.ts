@@ -21,7 +21,7 @@ export const requestable = defineImplementation(
       concurrency: "'latest' | 'first' | 'all' | undefined",
       timeout: "number | undefined",
     },
-    state: { status: "'idle' | 'loading' | 'error' | undefined" },
+    state: { status: "'loading' | 'error' | undefined" },
     verbs: {
       send: {
         method: "'get' | 'post' | 'put' | 'delete' | 'patch' | undefined",

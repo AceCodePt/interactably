@@ -34,10 +34,12 @@
     <p class="doc-lede">
           <code class="inline-code">validatable</code> &times; <code class="inline-code">requestable</code>. The guard meets
           the async seam in one phrase: <code class="inline-code">on-submit="this.validate().send() || #gs-alert.show()"</code>.
-          An invalid form stops the chain and the <code class="inline-code">||</code> branch shows the alert; a valid one
-          posts, and <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code>
-          continue from the element that did the work. This site has no backend, so the failure alert is the honest result
-          until you point <code class="inline-code">requestable-url</code> at a real endpoint.
+          An invalid form stops the chain and the <code class="inline-code">||</code> branch shows the validation alert; a
+          valid one posts, and <code class="inline-code">on-response</code> /
+          <code class="inline-code">on-request-error</code> / <code class="inline-code">on-request-timeout</code> /
+          <code class="inline-code">on-request-offline</code> continue from the element that did the work. This site has no
+          backend, so the server-failure alert is the honest result until you point
+          <code class="inline-code">requestable-url</code> at a real endpoint.
         </p>
     <div class="example-body">
 
@@ -45,9 +47,11 @@
                 <form id="gs-form" novalidate
                       implements="prevent-default validatable requestable"
                       requestable-url="/api/signup" requestable-method="post"
-                      on-submit="#gs-ok.show(false); #gs-alert.show(false); this.validate().send() || #gs-alert.show()"
+                      on-submit="#gs-ok.show(false); #gs-alert.show(false); #gs-server-alert.show(false); this.validate().send() || #gs-alert.show()"
                       on-response(html:string)="#gs-ok.render({payload: html}); #gs-ok.show()"
-                      on-request-error="#gs-alert.show()">
+                      on-request-error="#gs-server-alert.show()"
+                      on-request-timeout="#gs-server-alert.show()"
+                      on-request-offline="#gs-server-alert.show()">
                   <div class="row">
                     <label>Email
                       <input name="email" type="email" required placeholder="you@example.com">
@@ -56,6 +60,7 @@
                   </div>
                   <p id="gs-ok" implements="renderable revealable" hidden>Signed up &mdash; the request landed.</p>
                   <div id="gs-alert" implements="revealable" hidden role="alert">Enter a valid email address.</div>
+                  <div id="gs-server-alert" implements="revealable" hidden role="alert">Couldn't sign up &mdash; the request failed.</div>
                 </form>
               </div>
     </div>
@@ -71,15 +76,18 @@
               <pre class="code" id="code-ex-guarded" implements="copyable" on-copy="#copy-code-ex-guarded.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="gs-form" novalidate
           implements="prevent-default validatable requestable"
           requestable-url="/api/signup" requestable-method="post"
-          on-submit="#gs-ok.show(false); #gs-alert.show(false); this.validate().send() || #gs-alert.show()"
+          on-submit="#gs-ok.show(false); #gs-alert.show(false); #gs-server-alert.show(false); this.validate().send() || #gs-alert.show()"
           on-response(html:string)="#gs-ok.render({payload: html}); #gs-ok.show()"
-          on-request-error="#gs-alert.show()"&gt;
+          on-request-error="#gs-server-alert.show()"
+          on-request-timeout="#gs-server-alert.show()"
+          on-request-offline="#gs-server-alert.show()"&gt;
       &lt;label&gt;Email
         &lt;input name="email" type="email" required placeholder="you@example.com"&gt;
       &lt;/label&gt;
       &lt;button type="submit"&gt;Sign up&lt;/button&gt;
       &lt;p id="gs-ok" implements="renderable revealable" hidden&gt;Signed up &mdash; the request landed.&lt;/p&gt;
       &lt;div id="gs-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
+      &lt;div id="gs-server-alert" implements="revealable" hidden role="alert"&gt;Couldn't sign up &mdash; the request failed.&lt;/div&gt;
     &lt;/form&gt;</code></pre>
             </div>
           </details>

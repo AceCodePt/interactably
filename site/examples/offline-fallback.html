@@ -33,9 +33,13 @@
     <h1 class="doc-title">Optimistic send, offline fallback</h1>
     <p class="doc-lede">
           One <code class="inline-code">on-click</code> renders the message optimistically and then sends it in the same
-          chain (<code class="inline-code">#list.render({&hellip;}); #form.send()</code>). When the network is down, the form
-          fires <code class="inline-code">request-offline</code>, and
-          <code class="inline-code">on-request-offline="#list.undo()"</code> rolls the row back.
+          chain (<code class="inline-code">#list.render({&hellip;}); #form.send()</code>). The row rolls back on
+          <em>any</em> failure: <code class="inline-code">on-request-error</code>,
+          <code class="inline-code">on-request-timeout</code> and
+          <code class="inline-code">on-request-offline</code> each run
+          <code class="inline-code">#list.undo()</code>. On this static site that is a missing endpoint with the network
+          on (<code class="inline-code">request-error</code>), or a network failure with it off
+          (<code class="inline-code">request-offline</code>).
         </p>
     <div class="example-body">
 
@@ -49,9 +53,11 @@
                 </div>
                 <form id="of-form" implements="prevent-default requestable"
                       requestable-url="/api/messages" requestable-method="post"
+                      on-request-error="#of-list.undo()"
+                      on-request-timeout="#of-list.undo()"
                       on-request-offline="#of-list.undo()"></form>
                 <ul id="of-list" implements="renderable"></ul>
-                <p class="demo-note">Turn your network off and send: the row renders first, then undoes on the failure.</p>
+                <p class="demo-note">Send once: the row renders, then undoes when the request fails &mdash; a missing endpoint with the network on, or a network failure with it off. <code class="inline-code">undo()</code> keeps one render, so two sends before a failure would orphan the first row.</p>
                 <template id="of-row-tpl"><li id="msg-{id}">{text}</li></template>
               </div>
     </div>
@@ -67,6 +73,8 @@
               <pre class="code" id="code-ex-offline" implements="copyable" on-copy="#copy-code-ex-offline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', text: #text.value, id: now()}); #form.send()"&gt;Send&lt;/button&gt;
 &lt;form id="form" implements="prevent-default requestable"
       requestable-url="/api/messages" requestable-method="post"
+      on-request-error="#list.undo()"
+      on-request-timeout="#list.undo()"
       on-request-offline="#list.undo()"&gt;&lt;/form&gt;
 &lt;ul id="list" implements="renderable"&gt;&lt;/ul&gt;
 &lt;template id="row-tpl"&gt;&lt;li id="msg-{id}"&gt;{text}&lt;/li&gt;&lt;/template&gt;</code></pre>

@@ -715,6 +715,111 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.deepEqual(pageErrors, [], "every example renders and interacts without console.error");
 });
 
+test("site: each POST example reacts to a status failure and a network failure", async (t) => {
+  const dom: JSDOM = setupJsdom();
+  t.after(() => teardownJsdom(dom));
+
+  const warns: string[] = [];
+  const errors: string[] = [];
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  console.warn = (...args: unknown[]) => {
+    warns.push(args.map(String).join(" "));
+  };
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+  };
+  t.after(() => {
+    console.warn = originalWarn;
+    console.error = originalError;
+  });
+
+  const originalFetch = globalThis.fetch;
+  const fetchCalls: FetchCall[] = [];
+  globalThis.fetch = ((...args: Parameters<typeof fetch>): Promise<Response> => {
+    const [input, init] = args;
+    return new Promise<Response>((resolve, reject) => {
+      fetchCalls.push({
+        url: String(input),
+        init: init ?? {},
+        resolve: (response) => resolve(response as unknown as Response),
+        reject: (error: unknown) => reject(error),
+      });
+    });
+  }) as typeof fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const holder = document.createElement("div");
+  holder.innerHTML = ["offline-fallback", "guarded-submit", "order-form"]
+    .map((name) => bodyMarkup(readFileSync(fileURLToPath(new URL(`${name}.html`, examplesDir)), "utf8")))
+    .join("\n");
+  document.body.appendChild(holder);
+  await import(`${siteBundle.href}?post-failures-test`);
+  await flush();
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+
+  // Offline fallback: a non-ok status is a failure, not a silent success
+  const ofList = byId("of-list") as HTMLUListElement;
+  await click(byId("of-send"));
+  assert.equal(ofList.children.length, 1, "the optimistic row renders before the response");
+  const ofStatusFetch = fetchCalls.length - 1;
+  assert.equal(fetchCalls[ofStatusFetch]!.url, "/api/messages");
+  fetchCalls[ofStatusFetch]!.resolve(fakeResponse(false, 405, ""));
+  await flush();
+  assert.equal(ofList.children.length, 0, "request-error rolls the row back on a non-ok status");
+  await click(byId("of-send"));
+  assert.equal(ofList.children.length, 1, "a second send renders the row again");
+  const ofNetworkFetch = fetchCalls.length - 1;
+  fetchCalls[ofNetworkFetch]!.reject(new TypeError("network down"));
+  await flush();
+  assert.equal(ofList.children.length, 0, "request-offline rolls the row back on a network failure");
+
+  // Guarded submit: a server failure gets its own alert, not the validation one
+  const gsForm = byId("gs-form") as HTMLFormElement;
+  const gsEmail = gsForm.querySelector("input") as HTMLInputElement;
+  const gsAlert = byId("gs-alert");
+  const gsServerAlert = byId("gs-server-alert");
+  gsEmail.value = "you@example.com";
+  gsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  const gsStatusFetch = fetchCalls.length - 1;
+  assert.equal(fetchCalls[gsStatusFetch]!.url, "/api/signup");
+  fetchCalls[gsStatusFetch]!.resolve(fakeResponse(false, 405, ""));
+  await flush();
+  assert.equal(gsServerAlert.hidden, false, "request-error shows the server-failure alert");
+  assert.equal(gsAlert.hidden, true, "a valid submit never shows the validation alert");
+  gsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  const gsNetworkFetch = fetchCalls.length - 1;
+  fetchCalls[gsNetworkFetch]!.reject(new TypeError("network down"));
+  await flush();
+  assert.equal(gsServerAlert.hidden, false, "request-offline shows the server-failure alert");
+  assert.equal(gsAlert.hidden, true, "and still not the validation alert");
+
+  // Order form: the same honest alert on every failure
+  const orderForm = byId("order") as HTMLFormElement;
+  const orderAlert = byId("alert");
+  orderForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  const orderStatusFetch = fetchCalls.length - 1;
+  assert.equal(fetchCalls[orderStatusFetch]!.url, "/api/orders");
+  fetchCalls[orderStatusFetch]!.resolve(fakeResponse(false, 405, ""));
+  await flush();
+  assert.equal(orderAlert.hidden, false, "request-error shows the order alert");
+  orderForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  const orderNetworkFetch = fetchCalls.length - 1;
+  fetchCalls[orderNetworkFetch]!.reject(new TypeError("network down"));
+  await flush();
+  assert.equal(orderAlert.hidden, false, "request-offline shows the order alert");
+
+  assert.deepEqual(warns, [], "the POST examples load without console.warn");
+  assert.deepEqual(errors, [], "the POST examples load without console.error");
+});
+
 test("site: the multi-step form gates, explains and closes every later step", async (t) => {
   const html = readFileSync(fileURLToPath(new URL("examples/multi-step-form.html", siteDir)), "utf8");
   const dom: JSDOM = setupJsdom();

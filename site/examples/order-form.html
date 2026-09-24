@@ -45,6 +45,8 @@
                       requestable-url="/api/orders" requestable-method="post"
                       on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false)"
                       on-request-error="#alert.show()"
+                      on-request-timeout="#alert.show()"
+                      on-request-offline="#alert.show()"
                       on-submit="this.send()">
                   <label>Qty
                     <input name="qty" type="number" min="1" required value="2">
@@ -69,6 +71,8 @@
           requestable-url="/api/orders" requestable-method="post"
           on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false)"
           on-request-error="#alert.show()"
+          on-request-timeout="#alert.show()"
+          on-request-offline="#alert.show()"
           on-submit="this.send()"&gt;
       &lt;label&gt;Qty
         &lt;input name="qty" type="number" min="1" required value="2"&gt;
