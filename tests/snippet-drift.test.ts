@@ -36,6 +36,7 @@ const EXAMPLE_PAGES = [
   "dirty-tracking",
   "dynamic-list",
   "todo-list",
+  "shop-cart",
   "number-format",
   "logging",
   "offline-fallback",

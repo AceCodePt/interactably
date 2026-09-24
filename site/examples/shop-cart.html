@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably example — A shop with an anonymous cart.">
+  <title>A shop with an anonymous cart — Examples — Interactably</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body data-page="examples">
+  <header class="topnav">
+    <div class="topnav-inner">
+      <a class="brand" href="../" aria-label="Interactably home">
+        <span class="brand-mark">&lt;/&gt;</span>
+        <span class="brand-name">interactably</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html" class="active">Examples</a>
+        <a href="../reference.html">Reference</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="gh-link" href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07.52.28.87.51 1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64.18 1.32.27 2 .27s1.36-.09 2-.27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
+    <h1 class="doc-title">A shop with an anonymous cart</h1>
+    <p class="doc-lede">
+          This is a static shop with no checkout: the products are HTML on the page, and the anonymous visitor&rsquo;s cart is kept in
+          local storage. Each click on <em>Add to cart</em> adds one line, so a repeated product is repeated rather than merged. The
+          <code class="inline-code">renderable</code> line and its <code class="inline-code">storable</code> mirror are shared with
+          <a href="./todo-list.html">the to-do list</a>; there is no account, server cart, or quantity control here.
+        </p>
+    <div class="example-body">
+
+              <div class="demo">
+                <div id="shop-products" class="row shop-products">
+                  <article class="product-card">
+                    <h2>Enamel mug</h2>
+                    <p class="product-price">$12.00</p>
+                    <button id="shop-add-mug" type="button" on-click="#cart.render({template: #cart-line-tpl, swap: 'beforeend', id: now(), name: 'Enamel mug', price: 12})">Add to cart</button>
+                  </article>
+                  <article class="product-card">
+                    <h2>Canvas tote</h2>
+                    <p class="product-price">$18.00</p>
+                    <button id="shop-add-tote" type="button" on-click="#cart.render({template: #cart-line-tpl, swap: 'beforeend', id: now(), name: 'Canvas tote', price: 18})">Add to cart</button>
+                  </article>
+                  <article class="product-card">
+                    <h2>Field notebook</h2>
+                    <p class="product-price">$8.00</p>
+                    <button id="shop-add-notebook" type="button" on-click="#cart.render({template: #cart-line-tpl, swap: 'beforeend', id: now(), name: 'Field notebook', price: 8})">Add to cart</button>
+                  </article>
+                  <article class="product-card">
+                    <h2>Wool scarf</h2>
+                    <p class="product-price">$24.00</p>
+                    <button id="shop-add-scarf" type="button" on-click="#cart.render({template: #cart-line-tpl, swap: 'beforeend', id: now(), name: 'Wool scarf', price: 24})">Add to cart</button>
+                  </article>
+                </div>
+
+                <section class="cart-panel" aria-labelledby="cart-heading">
+                  <div class="row">
+                    <h2 id="cart-heading">Your cart</h2>
+                    <button id="cart-empty" type="button" on-click="#cart.render({payload: ''})">Empty cart</button>
+                  </div>
+                  <ul id="cart" implements="renderable"
+                      on-rendered="#cart-store.save(); #cart-total.set(sum('#cart .cart-price'))"></ul>
+                  <p class="total">Total:
+                    <output id="cart-total" implements="modifiable formattable"
+                            formattable-format="{ style: 'currency', currency: 'USD' }">$0.00</output>
+                  </p>
+                  <p class="demo-note">The empty-cart action replaces the DOM with an empty fragment; the same rendered event saves that state and recomputes the total.</p>
+                  <span id="cart-store" implements="storable" storable-key="cart" storable-value="#cart"
+                        on-load="this.restore()"
+                        on-restore(value:string)="#cart.render({payload: value})" hidden></span>
+                  <template id="cart-line-tpl">
+                    <li id="cart-line-{id}">
+                      <span class="cart-name">{name}</span>
+                      <span class="cart-price" implements="formattable" formattable-value="{price}"
+                            formattable-format="{ maximumFractionDigits: 0 }">{price}</span>
+                      <button type="button" on-click="#cart.render({swap: 'delete', target: '#cart-line-{id}'})" aria-label="Remove item">Remove</button>
+                    </li>
+                  </template>
+                </section>
+              </div>
+    </div>
+        <details class="example-code">
+            <summary>Show the markup</summary>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-cart" on-click="#code-ex-cart.copy()" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="code-ex-cart" implements="copyable" on-copy="#copy-code-ex-cart.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div id="products" class="row shop-products"&gt;
+  &lt;article class="product-card"&gt;
+    &lt;h2&gt;Enamel mug&lt;/h2&gt;
+    &lt;p class="product-price"&gt;$12.00&lt;/p&gt;
+    &lt;button id="add-mug" type="button" on-click="#cart.render({template: #line-tpl, swap: 'beforeend', id: now(), name: 'Enamel mug', price: 12})"&gt;Add to cart&lt;/button&gt;
+  &lt;/article&gt;
+  &lt;article class="product-card"&gt;
+    &lt;h2&gt;Canvas tote&lt;/h2&gt;
+    &lt;p class="product-price"&gt;$18.00&lt;/p&gt;
+    &lt;button id="add-tote" type="button" on-click="#cart.render({template: #line-tpl, swap: 'beforeend', id: now(), name: 'Canvas tote', price: 18})"&gt;Add to cart&lt;/button&gt;
+  &lt;/article&gt;
+  &lt;article class="product-card"&gt;
+    &lt;h2&gt;Field notebook&lt;/h2&gt;
+    &lt;p class="product-price"&gt;$8.00&lt;/p&gt;
+    &lt;button id="add-notebook" type="button" on-click="#cart.render({template: #line-tpl, swap: 'beforeend', id: now(), name: 'Field notebook', price: 8})"&gt;Add to cart&lt;/button&gt;
+  &lt;/article&gt;
+  &lt;article class="product-card"&gt;
+    &lt;h2&gt;Wool scarf&lt;/h2&gt;
+    &lt;p class="product-price"&gt;$24.00&lt;/p&gt;
+    &lt;button id="add-scarf" type="button" on-click="#cart.render({template: #line-tpl, swap: 'beforeend', id: now(), name: 'Wool scarf', price: 24})"&gt;Add to cart&lt;/button&gt;
+  &lt;/article&gt;
+&lt;/div&gt;
+
+&lt;section class="cart-panel" aria-labelledby="heading"&gt;
+  &lt;div class="row"&gt;
+    &lt;h2 id="heading"&gt;Your cart&lt;/h2&gt;
+    &lt;button id="empty" type="button" on-click="#cart.render({payload: ''})"&gt;Empty cart&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;ul id="cart" implements="renderable"
+      on-rendered="#store.save(); #total.set(sum('#cart .cart-price'))"&gt;&lt;/ul&gt;
+  &lt;p class="total"&gt;Total:
+    &lt;output id="total" implements="modifiable formattable"
+            formattable-format="{ style: 'currency', currency: 'USD' }"&gt;$0.00&lt;/output&gt;
+  &lt;/p&gt;
+  &lt;p class="demo-note"&gt;The empty-cart action replaces the DOM with an empty fragment; the same rendered event saves that state and recomputes the total.&lt;/p&gt;
+  &lt;span id="store" implements="storable" storable-key="cart" storable-value="#cart"
+        on-load="this.restore()"
+        on-restore(value:string)="#cart.render({payload: value})" hidden=""&gt;&lt;/span&gt;
+  &lt;template id="line-tpl"&gt;
+    &lt;li id="line-{id}"&gt;
+      &lt;span class="cart-name"&gt;{name}&lt;/span&gt;
+      &lt;span class="cart-price" implements="formattable" formattable-value="{price}"
+            formattable-format="{ maximumFractionDigits: 0 }"&gt;{price}&lt;/span&gt;
+      &lt;button type="button" on-click="#cart.render({swap: 'delete', target: '#line-{id}'})" aria-label="Remove item"&gt;Remove&lt;/button&gt;
+    &lt;/li&gt;
+  &lt;/template&gt;
+&lt;/section&gt;</code></pre>
+            </div>
+          </details>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>Built with <a href="../">Interactably</a> &middot; MIT licensed</div>
+      <div class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html">Examples</a>
+        <a href="../reference.html">Reference</a>
+        <a href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">Source</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../demo.js"></script>
+</body>
+</html>
