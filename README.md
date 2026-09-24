@@ -86,7 +86,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | Construct | Example | Meaning |
 | --- | --- | --- |
 | Trigger | `on-click="#pop.show()"` | On `click`, run the phrase |
-| Implementation event | `on-copy="#flash.show()"` | An implementation's own event (`copy-error`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`); copyable also re-dispatches the native `copy`, which shares the attribute |
+| Implementation event | `on-copy="#flash.show()"` | An implementation's own event (`copy-error`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`, `valid`, `invalid`, `user-valid`, `user-invalid`); copyable also re-dispatches the native `copy`, which shares the attribute |
 | Synthetic trigger | ``on-intersect(state:`enter`)="#link.mark()"`` | `IntersectionObserver` against the viewport; `state` matches `enter`/`leave`, `full` matches `true`/`false`, and the four logical margin slots configure the observer |
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from |
@@ -136,7 +136,7 @@ The rules, one line each:
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
 | `classable` | any | `add`, `remove`, `toggle` | — | `classList` writes, one class name per call; `toggle` has no force argument — `add`/`remove` are the forced forms |
 | `logger` | any | `log` | — | `console.log` from a phrase |
-| `validatable` | form, input, select, textarea | `validate` | — | guard verb: `reportValidity()`, `preventDefault()` on failure |
+| `validatable` | form, input, select, textarea | `validate` | `validatable-on` (`input` / `change`); events `valid`, `invalid`, `user-valid`, `user-invalid` | `validate()` remains the active `reportValidity()` + `preventDefault()` guard; silent evaluation uses `checkValidity()`, reports the current result on every check, and reports the `user-` pair only after interaction and a validity transition |
 | `no-propagate` | any | — | `events` (default `"click"`) | `stopPropagation` on listed events |
 | `prevent-default` | any | — | `events` (derived: the element's `on-submit`/`on-click`/literal-matched `on-keydown`, else submit on a form, click on a[href]/button) | `preventDefault` on listed events |
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([§ revealable](https://acecodept.github.io/interactably/docs.html#revealable)) |
@@ -145,6 +145,10 @@ The rules, one line each:
 | `pastable` | input, textarea | — | — | fires `pasted` after a paste has landed, carrying the post-paste value as `text`, so `this.value` is the new value |
 | `copyable` | pre, code, p, div | `copy` (no argument) | events `copy`, `copy-error` | copies the element's own text to the clipboard — a button calls it as a plain receiver (`#snippet.copy()`); on success it dispatches `copy`, which shares the attribute with the native clipboard copy, on total failure `copy-error`; empty text is a no-op; the flash is the author's (`on-copy`) |
 | `focusable` | any | `focus`, `blur` | — | `HTMLElement.focus()` / `blur()` as verbs; reports once if focus did not take |
+
+`validatable` has an active path and an observation path. `validate()` is still the “act now and show the user” guard: it calls `reportValidity()` and prevents the chain on failure. The events are for “tell me when this changed”: `valid` and `invalid` reflect the current result on every evaluation, while `user-valid` and `user-invalid` fire only when the control has been touched and its validity has actually transitioned; all four events carry no values. A `storable` restore or another programmatic change can therefore announce `invalid` without announcing `user-invalid`; `validatable-on` chooses `input` (the default) or `change`. There is no quiet `validate()` verb: listen to the events instead.
+
+The platform still has no native `valid` event — the proposal is [w3c/html#1696](https://github.com/w3c/html/issues/1696). Evaluation calls `checkValidity()`, not `reportValidity()`, so it does not show validation UI, but it does not suppress the native `invalid` event on each failing control. On a field, our `invalid` deliberately shares that name on the same element, just as `copyable` shares `copy`; if that sharing ever becomes a problem, the fix is a rename, not a redesign. A form receives the aggregate event on the form because native `invalid` does not bubble. Use a `form` for an aggregate step; `fieldset` is barred from constraint validation and does not aggregate its children.
 
 `attributable` writes attributes whole. `class` is a token list, so `classable` exposes `classList` instead — `#menu.toggle('open')`, one name per call, browser rules for what a name may be.
 
@@ -199,7 +203,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `parseEventAttribute(name)` | Parse an attribute name into its event type and value declaration (the parenthesised `on-<type>(<name>:<type>)` form) |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](https://acecodept.github.io/interactably/docs.html#interaction-event)) |
-| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`), and the event `intersect` carries `state` (`enter`/`leave`) and/or `full` (`true`/`false`) as declared values `values`; an event may also carry a routing `key` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`, `valid`, `invalid`, `user-valid`, `user-invalid`), and the event `intersect` carries `state` (`enter`/`leave`) and/or `full` (`true`/`false`) as declared values `values`; an event may also carry a routing `key` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
 | `isImplementationEvent(el, type)` | True when `type` is the intersect event or an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per resolved `rootMargin` |
