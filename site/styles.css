@@ -1075,6 +1075,46 @@ code, pre, kbd {
   display: none;
 }
 
+.demo .spy-sidebar nav a {
+  position: relative;
+  padding-right: 4.8rem;
+}
+
+.demo .spy-sidebar nav a[data-read]::after {
+  content: "read ✓";
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ok);
+  font: 650 0.65rem/1 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.demo .spy-section {
+  min-height: 30rem;
+}
+
+@media (max-width: 900px) {
+  .demo .spy-sidebar {
+    margin-bottom: 0.5rem;
+  }
+
+  .demo .spy-sidebar nav a {
+    padding-right: 0.7rem;
+  }
+
+  .demo .spy-sidebar nav a[data-read] {
+    padding-right: 3.8rem;
+  }
+
+  .demo .spy-section {
+    min-height: 24rem;
+  }
+}
+
 .demo .tabbar {
   display: flex;
   flex-wrap: wrap;

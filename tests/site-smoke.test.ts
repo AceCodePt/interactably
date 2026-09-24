@@ -9,6 +9,11 @@ import {
   installFakeIntersectionObserver,
   resetFakeIntersectionObserver,
 } from "@tests/intersection-observer.ts";
+import {
+  FakeResizeObserver,
+  installFakeResizeObserver,
+  resetFakeResizeObserver,
+} from "@tests/resize-observer.ts";
 
 const siteDir = new URL("../site/", import.meta.url);
 const examplesUrl = new URL("examples.html", siteDir);
@@ -33,6 +38,7 @@ const EXAMPLE_PAGES = [
   "character-counter",
   "age-gate",
   "reveal-strategies",
+  "scroll-spy",
   "tabs",
   "synced-sections",
   "signup-guard",
@@ -784,6 +790,128 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
 
   assert.deepEqual(warns, [], "the docs body loads without console.warn");
   assert.deepEqual(errors, [], "the docs body loads without console.error");
+});
+
+test("site: the scroll-spy example lights, resizes and records a full view", async (t) => {
+  const html = readFileSync(fileURLToPath(new URL("examples/scroll-spy.html", siteDir)), "utf8");
+  const dom: JSDOM = setupJsdom();
+  t.after(() => teardownJsdom(dom));
+
+  resetFakeIntersectionObserver();
+  installFakeIntersectionObserver();
+  resetFakeResizeObserver();
+  installFakeResizeObserver();
+  t.after(() => {
+    resetFakeIntersectionObserver();
+    resetFakeResizeObserver();
+    Reflect.deleteProperty(globalThis, "IntersectionObserver");
+    Reflect.deleteProperty(globalThis, "ResizeObserver");
+  });
+
+  const warns: string[] = [];
+  const errors: string[] = [];
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  console.warn = (...args: unknown[]) => {
+    warns.push(args.map(String).join(" "));
+  };
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+  };
+  t.after(() => {
+    console.warn = originalWarn;
+    console.error = originalError;
+  });
+
+  const holder = document.createElement("div");
+  holder.innerHTML = bodyMarkup(html);
+  document.body.appendChild(holder);
+  await import(`${siteBundle.href}?scroll-spy-test`);
+  await flush();
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+
+  const first = byId("spy-section-observe");
+  const firstLink = byId("spy-toc-observe");
+  const read = byId("spy-section-read");
+  const readLink = byId("spy-toc-read");
+  const header = byId("spy-header");
+  assert.equal(document.querySelector("[on-load]"), null, "the example has no page-load phrase");
+  assert.equal(
+    [...document.querySelectorAll("*")].filter((element) =>
+      element.getAttributeNames().some((name) => name.includes("full:`true`")),
+    ).length,
+    1,
+    "the live demo has one full:true matcher",
+  );
+  assert.equal(firstLink.hasAttribute("data-visible"), false, "the first link waits for the observer report");
+
+  const firstObserver = FakeIntersectionObserver.instances.find((instance) => instance.observed.includes(first));
+  assert.ok(firstObserver !== undefined, "the first section observes itself");
+  const viewport = { top: 0, right: 800, bottom: 600, left: 0, width: 800, height: 600 };
+  const firstBox = { top: 100, right: 800, bottom: 200, left: 0, width: 800, height: 100 };
+  firstObserver.trigger([
+    {
+      target: first,
+      isIntersecting: true,
+      intersectionRatio: 1,
+      boundingClientRect: firstBox,
+      intersectionRect: firstBox,
+      rootBounds: viewport,
+    },
+  ]);
+  await flush();
+  assert.equal(firstLink.hasAttribute("data-visible"), true, "the initial enter report lights the first link");
+  firstObserver.trigger([
+    {
+      target: first,
+      isIntersecting: false,
+      intersectionRatio: 0,
+      boundingClientRect: { top: 700, right: 800, bottom: 800, left: 0, width: 800, height: 100 },
+      intersectionRect: { top: 700, right: 800, bottom: 700, left: 0, width: 0, height: 0 },
+      rootBounds: viewport,
+    },
+  ]);
+  await flush();
+  assert.equal(firstLink.hasAttribute("data-visible"), false, "leave unlights the first link");
+
+  const resize = FakeResizeObserver.instances.find((instance) => instance.observed.includes(header));
+  assert.ok(resize !== undefined, "the referenced header is measured through ResizeObserver");
+  resize.trigger([{ target: header, borderBoxSize: [{ blockSize: 72, inlineSize: 800 }] }]);
+  await flush();
+  const rebuilt = FakeIntersectionObserver.instances.filter((instance) => instance.observed.includes(read)).at(-1);
+  assert.ok(rebuilt !== undefined, "the read section keeps an observer after the resize");
+  assert.equal(rebuilt.rootMargin, "-72px 0px 0px 0px", "the measured header height rebuilds the margin");
+
+  const readObserver = rebuilt;
+  const readBox = { top: 100, right: 800, bottom: 200, left: 0, width: 800, height: 100 };
+  readObserver.trigger([
+    {
+      target: read,
+      isIntersecting: true,
+      intersectionRatio: 1,
+      boundingClientRect: readBox,
+      intersectionRect: readBox,
+      rootBounds: viewport,
+    },
+  ]);
+  await flush();
+  assert.equal(readLink.hasAttribute("data-read"), true, "a fully visible section records its read mark");
+  readObserver.trigger([
+    {
+      target: read,
+      isIntersecting: false,
+      intersectionRatio: 0,
+      boundingClientRect: { top: 700, right: 800, bottom: 800, left: 0, width: 800, height: 100 },
+      intersectionRect: { top: 700, right: 800, bottom: 700, left: 0, width: 0, height: 0 },
+      rootBounds: viewport,
+    },
+  ]);
+  await flush();
+  assert.equal(readLink.hasAttribute("data-read"), true, "leaving full visibility does not remove the read mark");
+
+  assert.deepEqual(warns, [], "the scroll-spy page loads without console.warn");
+  assert.deepEqual(errors, [], "the scroll-spy page loads without console.error");
 });
 
 test("site: every implementation is in all four homes and both API rows", () => {
