@@ -47,20 +47,23 @@
                 <form id="gs-form" novalidate
                       implements="prevent-default validatable requestable"
                       requestable-url="/api/signup" requestable-method="post"
-                      on-submit="#gs-ok.show(false); #gs-alert.show(false); #gs-server-alert.show(false); this.validate().send() || #gs-alert.show()"
+                      on-submit="#gs-ok.show(false); #gs-alert.show(false); #gs-server-error.show(false); #gs-server-timeout.show(false); #gs-server-offline.show(false); this.validate().send() || #gs-alert.show()"
                       on-response(html:string)="#gs-ok.render({payload: html}); #gs-ok.show()"
-                      on-request-error="#gs-server-alert.show()"
-                      on-request-timeout="#gs-server-alert.show()"
-                      on-request-offline="#gs-server-alert.show()">
+                      on-request-error="#gs-server-error.show()"
+                      on-request-timeout="#gs-server-timeout.show()"
+                      on-request-offline="#gs-server-offline.show()">
                   <div class="row">
                     <label>Email
                       <input name="email" type="email" required placeholder="you@example.com">
                     </label>
                     <button type="submit">Sign up</button>
                   </div>
+                  <p class="demo-pending" hidden>Sending&hellip;</p>
                   <p id="gs-ok" implements="renderable revealable" hidden>Signed up &mdash; the request landed.</p>
                   <div id="gs-alert" implements="revealable" hidden role="alert">Enter a valid email address.</div>
-                  <div id="gs-server-alert" implements="revealable" hidden role="alert">Couldn't sign up &mdash; the request failed.</div>
+                  <div id="gs-server-error" class="demo-message" implements="revealable" hidden role="alert">Couldn't sign up &mdash; the server refused it (non-ok status).</div>
+                  <div id="gs-server-timeout" class="demo-message" implements="revealable" hidden role="alert">Couldn't sign up &mdash; the server didn't answer in time.</div>
+                  <div id="gs-server-offline" class="demo-message" implements="revealable" hidden role="alert">Couldn't sign up &mdash; you're offline.</div>
                 </form>
               </div>
     </div>
@@ -76,18 +79,21 @@
               <pre class="code" id="code-ex-guarded" implements="copyable" on-copy="#copy-code-ex-guarded.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="gs-form" novalidate
           implements="prevent-default validatable requestable"
           requestable-url="/api/signup" requestable-method="post"
-          on-submit="#gs-ok.show(false); #gs-alert.show(false); #gs-server-alert.show(false); this.validate().send() || #gs-alert.show()"
+          on-submit="#gs-ok.show(false); #gs-alert.show(false); #gs-server-error.show(false); #gs-server-timeout.show(false); #gs-server-offline.show(false); this.validate().send() || #gs-alert.show()"
           on-response(html:string)="#gs-ok.render({payload: html}); #gs-ok.show()"
-          on-request-error="#gs-server-alert.show()"
-          on-request-timeout="#gs-server-alert.show()"
-          on-request-offline="#gs-server-alert.show()"&gt;
+          on-request-error="#gs-server-error.show()"
+          on-request-timeout="#gs-server-timeout.show()"
+          on-request-offline="#gs-server-offline.show()"&gt;
       &lt;label&gt;Email
         &lt;input name="email" type="email" required placeholder="you@example.com"&gt;
       &lt;/label&gt;
       &lt;button type="submit"&gt;Sign up&lt;/button&gt;
+      &lt;p class="demo-pending" hidden&gt;Sending&hellip;&lt;/p&gt;
       &lt;p id="gs-ok" implements="renderable revealable" hidden&gt;Signed up &mdash; the request landed.&lt;/p&gt;
       &lt;div id="gs-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
-      &lt;div id="gs-server-alert" implements="revealable" hidden role="alert"&gt;Couldn't sign up &mdash; the request failed.&lt;/div&gt;
+      &lt;div id="gs-server-error" class="demo-message" implements="revealable" hidden role="alert"&gt;Couldn't sign up &mdash; the server refused it (non-ok status).&lt;/div&gt;
+      &lt;div id="gs-server-timeout" class="demo-message" implements="revealable" hidden role="alert"&gt;Couldn't sign up &mdash; the server didn't answer in time.&lt;/div&gt;
+      &lt;div id="gs-server-offline" class="demo-message" implements="revealable" hidden role="alert"&gt;Couldn't sign up &mdash; you're offline.&lt;/div&gt;
     &lt;/form&gt;</code></pre>
             </div>
           </details>

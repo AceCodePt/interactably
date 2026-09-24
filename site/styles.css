@@ -1245,6 +1245,25 @@ code, pre, kbd {
   border: 1px solid color-mix(in srgb, var(--err) 35%, transparent);
 }
 
+.demo .demo-message {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--err) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--err) 35%, transparent);
+}
+
+.demo .demo-pending {
+  display: none;
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.demo [aria-busy="true"] .demo-pending {
+  display: block;
+}
+
 .demo textarea {
   font: inherit;
   width: 100%;

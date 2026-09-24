@@ -49,14 +49,19 @@
                     <input id="of-text" type="text" value="hello from the optimistic path">
                   </label>
                   <button id="of-send" type="button"
-                          on-click="#of-list.render({template: #of-row-tpl, swap: 'beforeend', text: #of-text.value, id: now()}); #of-form.send()">Send</button>
+                          on-click="#of-msg-error.show(false); #of-msg-timeout.show(false); #of-msg-offline.show(false); #of-list.render({template: #of-row-tpl, swap: 'beforeend', text: #of-text.value, id: now()}); #of-form.send()">Send</button>
                 </div>
                 <form id="of-form" implements="prevent-default requestable"
                       requestable-url="/api/messages" requestable-method="post"
-                      on-request-error="#of-list.undo()"
-                      on-request-timeout="#of-list.undo()"
-                      on-request-offline="#of-list.undo()"></form>
+                      on-request-error="#of-list.undo(); #of-msg-error.show()"
+                      on-request-timeout="#of-list.undo(); #of-msg-timeout.show()"
+                      on-request-offline="#of-list.undo(); #of-msg-offline.show()">
+                  <p class="demo-pending" hidden>Sending&hellip;</p>
+                </form>
                 <ul id="of-list" implements="renderable"></ul>
+                <p id="of-msg-error" class="demo-message" implements="revealable" role="status" hidden>The server refused it &mdash; a non-ok status.</p>
+                <p id="of-msg-timeout" class="demo-message" implements="revealable" role="status" hidden>The server didn't answer in time.</p>
+                <p id="of-msg-offline" class="demo-message" implements="revealable" role="status" hidden>You're offline &mdash; the message wasn't sent.</p>
                 <p class="demo-note">Send once: the row renders, then undoes when the request fails &mdash; a missing endpoint with the network on, or a network failure with it off. <code class="inline-code">undo()</code> keeps one render, so two sends before a failure would orphan the first row.</p>
                 <template id="of-row-tpl"><li id="msg-{id}">{text}</li></template>
               </div>
@@ -70,13 +75,18 @@
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-offline" implements="copyable" on-copy="#copy-code-ex-offline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', text: #text.value, id: now()}); #form.send()"&gt;Send&lt;/button&gt;
+              <pre class="code" id="code-ex-offline" implements="copyable" on-copy="#copy-code-ex-offline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#msg-error.show(false); #msg-timeout.show(false); #msg-offline.show(false); #list.render({template: #row-tpl, swap: 'beforeend', text: #text.value, id: now()}); #form.send()"&gt;Send&lt;/button&gt;
 &lt;form id="form" implements="prevent-default requestable"
       requestable-url="/api/messages" requestable-method="post"
-      on-request-error="#list.undo()"
-      on-request-timeout="#list.undo()"
-      on-request-offline="#list.undo()"&gt;&lt;/form&gt;
+      on-request-error="#list.undo(); #msg-error.show()"
+      on-request-timeout="#list.undo(); #msg-timeout.show()"
+      on-request-offline="#list.undo(); #msg-offline.show()"&gt;
+  &lt;p class="demo-pending" hidden&gt;Sending&hellip;&lt;/p&gt;
+&lt;/form&gt;
 &lt;ul id="list" implements="renderable"&gt;&lt;/ul&gt;
+&lt;p id="msg-error" class="demo-message" implements="revealable" role="status" hidden&gt;The server refused it &mdash; a non-ok status.&lt;/p&gt;
+&lt;p id="msg-timeout" class="demo-message" implements="revealable" role="status" hidden&gt;The server didn't answer in time.&lt;/p&gt;
+&lt;p id="msg-offline" class="demo-message" implements="revealable" role="status" hidden&gt;You're offline &mdash; the message wasn't sent.&lt;/p&gt;
 &lt;template id="row-tpl"&gt;&lt;li id="msg-{id}"&gt;{text}&lt;/li&gt;&lt;/template&gt;</code></pre>
             </div>
           </details>

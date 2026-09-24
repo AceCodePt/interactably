@@ -715,7 +715,7 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.deepEqual(pageErrors, [], "every example renders and interacts without console.error");
 });
 
-test("site: each POST example reacts to a status failure and a network failure", async (t) => {
+test("site: each POST example reacts to each failure with its own message", async (t) => {
   const dom: JSDOM = setupJsdom();
   t.after(() => teardownJsdom(dom));
 
@@ -761,60 +761,104 @@ test("site: each POST example reacts to a status failure and a network failure",
   document.dispatchEvent(new Event("DOMContentLoaded"));
   await flush();
 
-  // Offline fallback: a non-ok status is a failure, not a silent success
+  // Offline fallback: each outcome rolls the row back and names itself.
+  const ofForm = byId("of-form") as HTMLFormElement;
   const ofList = byId("of-list") as HTMLUListElement;
+  const ofError = byId("of-msg-error");
+  const ofTimeout = byId("of-msg-timeout");
+  const ofOffline = byId("of-msg-offline");
+
   await click(byId("of-send"));
   assert.equal(ofList.children.length, 1, "the optimistic row renders before the response");
+  assert.equal(ofForm.getAttribute("aria-busy"), "true", "the form is aria-busy while the request is pending");
+  assert.equal(ofError.hidden, true, "no message before the response");
+  assert.equal(ofTimeout.hidden, true, "no timeout message before the response");
+  assert.equal(ofOffline.hidden, true, "no offline message before the response");
   const ofStatusFetch = fetchCalls.length - 1;
   assert.equal(fetchCalls[ofStatusFetch]!.url, "/api/messages");
   fetchCalls[ofStatusFetch]!.resolve(fakeResponse(false, 405, ""));
   await flush();
+  assert.equal(ofForm.hasAttribute("aria-busy"), false, "aria-busy clears when the request settles");
   assert.equal(ofList.children.length, 0, "request-error rolls the row back on a non-ok status");
+  assert.equal(ofError.hidden, false, "request-error shows the server-refused message");
+  assert.equal(ofTimeout.hidden, true, "request-error does not show the timeout message");
+  assert.equal(ofOffline.hidden, true, "request-error does not show the offline message");
+
   await click(byId("of-send"));
   assert.equal(ofList.children.length, 1, "a second send renders the row again");
+  assert.equal(ofError.hidden, true, "the Send phrase clears the previous message first");
   const ofNetworkFetch = fetchCalls.length - 1;
   fetchCalls[ofNetworkFetch]!.reject(new TypeError("network down"));
   await flush();
   assert.equal(ofList.children.length, 0, "request-offline rolls the row back on a network failure");
+  assert.equal(ofOffline.hidden, false, "request-offline shows the offline message");
+  assert.equal(ofError.hidden, true, "request-offline does not show the server-refused message");
+  assert.equal(ofTimeout.hidden, true, "request-offline does not show the timeout message");
 
-  // Guarded submit: a server failure gets its own alert, not the validation one
+  // Guarded submit: a server failure gets its own alert, never the validation one.
   const gsForm = byId("gs-form") as HTMLFormElement;
   const gsEmail = gsForm.querySelector("input") as HTMLInputElement;
   const gsAlert = byId("gs-alert");
-  const gsServerAlert = byId("gs-server-alert");
+  const gsError = byId("gs-server-error");
+  const gsTimeout = byId("gs-server-timeout");
+  const gsOffline = byId("gs-server-offline");
   gsEmail.value = "you@example.com";
   gsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   await flush();
+  assert.equal(gsForm.getAttribute("aria-busy"), "true", "the guarded form is busy while the request is pending");
   const gsStatusFetch = fetchCalls.length - 1;
   assert.equal(fetchCalls[gsStatusFetch]!.url, "/api/signup");
   fetchCalls[gsStatusFetch]!.resolve(fakeResponse(false, 405, ""));
   await flush();
-  assert.equal(gsServerAlert.hidden, false, "request-error shows the server-failure alert");
+  assert.equal(gsForm.hasAttribute("aria-busy"), false, "the guarded form clears busy when the request settles");
+  assert.equal(gsError.hidden, false, "request-error shows the server-refused alert");
+  assert.equal(gsTimeout.hidden, true, "request-error does not show the timeout alert");
+  assert.equal(gsOffline.hidden, true, "request-error does not show the offline alert");
   assert.equal(gsAlert.hidden, true, "a valid submit never shows the validation alert");
+
   gsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   await flush();
+  assert.equal(gsError.hidden, true, "the submit phrase clears the previous server alert");
   const gsNetworkFetch = fetchCalls.length - 1;
   fetchCalls[gsNetworkFetch]!.reject(new TypeError("network down"));
   await flush();
-  assert.equal(gsServerAlert.hidden, false, "request-offline shows the server-failure alert");
+  assert.equal(gsOffline.hidden, false, "request-offline shows the offline alert");
+  assert.equal(gsError.hidden, true, "request-offline does not show the server-refused alert");
   assert.equal(gsAlert.hidden, true, "and still not the validation alert");
 
-  // Order form: the same honest alert on every failure
+  const gsCallsBefore = fetchCalls.length;
+  gsEmail.value = "";
+  gsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  assert.equal(gsAlert.hidden, false, "an invalid submit still shows the validation alert");
+  assert.equal(fetchCalls.length, gsCallsBefore, "an invalid guarded submit never reaches the network");
+
+  // Order form: the status failure keeps #alert, timeout and offline get their own.
   const orderForm = byId("order") as HTMLFormElement;
   const orderAlert = byId("alert");
+  const orderTimeout = byId("order-timeout-alert");
+  const orderOffline = byId("order-offline-alert");
   orderForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   await flush();
+  assert.equal(orderForm.getAttribute("aria-busy"), "true", "the order form is busy while the request is pending");
   const orderStatusFetch = fetchCalls.length - 1;
   assert.equal(fetchCalls[orderStatusFetch]!.url, "/api/orders");
   fetchCalls[orderStatusFetch]!.resolve(fakeResponse(false, 405, ""));
   await flush();
+  assert.equal(orderForm.hasAttribute("aria-busy"), false, "the order form clears busy when the request settles");
   assert.equal(orderAlert.hidden, false, "request-error shows the order alert");
+  assert.equal(orderTimeout.hidden, true, "request-error does not show the timeout alert");
+  assert.equal(orderOffline.hidden, true, "request-error does not show the offline alert");
+
   orderForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   await flush();
+  assert.equal(orderAlert.hidden, true, "the submit phrase clears the previous order alert");
   const orderNetworkFetch = fetchCalls.length - 1;
   fetchCalls[orderNetworkFetch]!.reject(new TypeError("network down"));
   await flush();
-  assert.equal(orderAlert.hidden, false, "request-offline shows the order alert");
+  assert.equal(orderOffline.hidden, false, "request-offline shows the order offline alert");
+  assert.equal(orderAlert.hidden, true, "request-offline does not show the order alert");
+  assert.equal(orderTimeout.hidden, true, "request-offline does not show the timeout alert");
 
   assert.deepEqual(warns, [], "the POST examples load without console.warn");
   assert.deepEqual(errors, [], "the POST examples load without console.error");
