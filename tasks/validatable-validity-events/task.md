@@ -41,7 +41,7 @@ Mirror `dirtyable`:
 - Track `touched` separately from validity: set it on first interaction, and never from a programmatic change. `user-` events fire only when `touched` is true.
 - `tags` gains `fieldset` if `fieldset` supports constraint validation. Verified: `HTMLFieldSetElement` has `checkValidity()`/`reportValidity()`, but `willValidate` is `false` — it is barred from constraint validation, so it always returns `true` and does not aggregate its children. `tags` therefore stays `form`, `input`, `select`, `textarea`, and the docs note that a step must be a form.
 
-`validate()` keeps its current behaviour unchanged: `reportValidity()` plus `preventDefault()`. It is the "act now and show the user" path; the events are the "tell me when it changed" path. Both stay.
+`validate()` keeps its current behaviour unchanged: `reportValidity()` plus `preventDefault()`. It is the "act now and show the user" path; the events are the "tell me when it changed" path. Both stay. A page that wants a silent check listens to the events rather than calling a verb, so `checkValidity()` is not exposed as one and `validate()` gains no quiet variant.
 
 ### Form-level and field-level are both needed
 
