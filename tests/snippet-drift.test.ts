@@ -35,6 +35,7 @@ const EXAMPLE_PAGES = [
   "paste-transform",
   "dirty-tracking",
   "dynamic-list",
+  "todo-list",
   "number-format",
   "logging",
   "offline-fallback",
@@ -100,8 +101,12 @@ function fingerprints(root: Element): Map<string, number> {
 
 function fetchedFragments(html: string): string {
   const parts: string[] = [];
+  const seen = new Set<string>();
   for (const match of html.matchAll(/requestable-url="([^"]+)"/g)) {
-    const file = fileURLToPath(new URL(match[1]!, examplesDir));
+    const url = match[1]!;
+    if (seen.has(url)) continue;
+    seen.add(url);
+    const file = fileURLToPath(new URL(url, examplesDir));
     if (existsSync(file)) parts.push(readFileSync(file, "utf8"));
   }
   return parts.join("\n");

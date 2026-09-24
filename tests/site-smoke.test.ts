@@ -18,6 +18,7 @@ const indexUrl = new URL("index.html", siteDir);
 const readmeUrl = new URL("../README.md", import.meta.url);
 const siteBundle = new URL("../dist/site/demo.js", import.meta.url);
 const cdnDir = new URL("../dist/cdn/", import.meta.url);
+const todoFragment = readFileSync(fileURLToPath(new URL("fragments/todos.html", siteDir)), "utf8");
 
 const examplesDir = new URL("examples/", siteDir);
 const EXAMPLE_PAGES = [
@@ -49,6 +50,7 @@ const EXAMPLE_PAGES = [
   "paste-transform",
   "dirty-tracking",
   "dynamic-list",
+  "todo-list",
   "number-format",
   "logging",
   "offline-fallback",
@@ -218,6 +220,7 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   localStorage.setItem("pm", "pnpm");
   localStorage.setItem("theme", "sepia");
   localStorage.setItem("maintab", "notes");
+  localStorage.setItem("todos", todoFragment);
   setReadyState("loading");
   const holder = document.createElement("div");
   holder.innerHTML = examplePagesBody();
@@ -230,6 +233,20 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   await flush();
 
   assert.equal(document.activeElement, byId("mp-tab-notes"), "on-load restore returns focus to the remembered tab");
+
+  const todoList = byId("todo-list") as HTMLUListElement;
+  assert.equal(
+    fetchCalls.some((call) => call.url === "../fragments/todos.html"),
+    false,
+    "restore owns load; the sample GET waits for the explicit button",
+  );
+  const restoredTodoRows = [...todoList.querySelectorAll("li")];
+  assert.equal(restoredTodoRows.length, 3, "the stored todo markup restores on load");
+  for (const row of restoredTodoRows) {
+    await click(row.querySelector("button")!);
+  }
+  assert.equal(todoList.children.length, 0, "every restored delete phrase removes its row");
+  localStorage.removeItem("todos");
 
   const pmNpm = document.querySelector('button[storable-value="npm"]') as HTMLButtonElement;
   const pmBun = document.querySelector('button[storable-value="bun"]') as HTMLButtonElement;
@@ -565,6 +582,51 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   fetchCalls[offlineFetch]!.reject(new TypeError("network down"));
   await flush();
   assert.equal(ofList.children.length, 0, "request-offline runs undo and restores");
+
+  const todoLoadStart = fetchCalls.length;
+  await click(byId("todo-load"));
+  assert.equal(fetchCalls.length, todoLoadStart + 1, "the sample button starts the GET");
+  const todoFetch = fetchCalls[todoLoadStart]!;
+  assert.equal(todoFetch.url, "../fragments/todos.html");
+  todoFetch.resolve(fakeResponse(true, 200, todoFragment));
+  await flush();
+  assert.equal(todoList.children.length, 3, "the GET response renders the seeded rows");
+  assert.equal(localStorage.getItem("todos"), todoList.innerHTML, "rendered snapshots the list into storage");
+
+  const todoInput = byId("todo-input") as HTMLInputElement;
+  todoInput.value = "Write the handoff";
+  await click(byId("todo-add"));
+  assert.equal(todoList.children.length, 4, "the add phrase stamps a row");
+  assert.equal(todoInput.value, "", "the add phrase clears the input after reading it");
+  const addedTodo = todoList.lastElementChild as HTMLElement;
+  assert.match(addedTodo.id, /^todo-row-\d+$/);
+  assert.equal(addedTodo.querySelector(".todo-title")?.textContent, "Write the handoff");
+  assert.equal(localStorage.getItem("todos"), todoList.innerHTML, "adding snapshots the stamped row");
+
+  await click(todoList.querySelector("li button")!);
+  assert.equal(todoList.children.length, 3, "delete removes a row by its stamped id");
+  assert.equal(localStorage.getItem("todos"), todoList.innerHTML, "deleting snapshots the list");
+
+  todoInput.value = "Undo this row";
+  await click(byId("todo-add"));
+  const undoTodo = todoList.lastElementChild as HTMLElement;
+  const undoTodoId = undoTodo.id;
+  await click(byId("todo-undo"));
+  assert.equal(todoList.children.length, 3, "undo removes the last stamped row");
+  assert.equal(document.getElementById(undoTodoId), null);
+  assert.equal(localStorage.getItem("todos"), todoList.innerHTML, "undo explicitly snapshots the list");
+
+  const todoStore = byId("todo-store");
+  const storedTodo = todoList.innerHTML;
+  todoList.replaceChildren();
+  localStorage.setItem("todos", storedTodo);
+  todoStore.remove();
+  await flush();
+  document.body.append(todoStore);
+  await flush();
+  assert.equal(todoList.children.length, 3, "a reload restores the saved DOM");
+  await click(todoList.querySelector("li button")!);
+  assert.equal(todoList.children.length, 2, "a restored row still has a live delete phrase");
 
   // Format a number or date (formattable)
   const nfUsd = byId("nf-usd") as HTMLOutputElement;
