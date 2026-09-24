@@ -32,9 +32,12 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">Live preview: debounce, keys & once</h1>
     <p class="doc-lede">
-          Type into the field and the preview follows — but only 300ms after you stop. Enter echoes instantly,
-          Escape clears, and the &ldquo;Toggle tip&rdquo; button spends its <code class="inline-code">once()</code> as the
-          walk passes it: the second click is a no-op.
+          Type into the field and the preview follows &mdash; but only 300ms after you stop. The two
+          <code class="inline-code">on-keydown</code> attributes match literals rather than binding a type:
+          <code class="inline-code">on-keydown(code:`Enter`)</code> echoes instantly and
+          <code class="inline-code">on-keydown(code:`Escape`)</code> clears, each gated on the physical key.
+          The &ldquo;Toggle tip&rdquo; button spends its <code class="inline-code">once()</code> as the walk passes it:
+          the second click is a no-op.
         </p>
     <div class="example-body">
 
@@ -45,7 +48,8 @@
                            on-input="#mirror.debounce(300).set(this.value)"
                            on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                            on-clean="this.removeAttr('data-dirty')"
-                           on-keydown="enter: #mirror.set(this.value); escape: this.clear()">
+                           on-keydown(code:`Enter`)="#mirror.set(this.value)"
+                           on-keydown(code:`Escape`)="this.clear()">
                   </label>
                   <output id="mirror" implements="modifiable">&hellip;</output>
                 </div>
@@ -68,7 +72,8 @@
            on-input="#mirror.debounce(300).set(this.value)"
            on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
            on-clean="this.removeAttr('data-dirty')"
-           on-keydown="enter: #mirror.set(this.value); escape: this.clear()"&gt;
+           on-keydown(code:`Enter`)="#mirror.set(this.value)"
+           on-keydown(code:`Escape`)="this.clear()"&gt;
     &lt;output id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
 
     &lt;button on-click="#tip.once().toggle()"&gt;Toggle tip (once)&lt;/button&gt;

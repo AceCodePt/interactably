@@ -96,7 +96,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | Or | `#form.validate().send() \|\| #alert.show()` | Next unit only if a guard aborted this one |
 | Scalar arg | `#qty.set(#qty.value + 5)` | Numbers, `'strings'`, `true` / `false` |
 | Property read | `#preview.set(this.value)` | `value`/`checked`/`min`/`max`/`step`, typed by the element |
-| Key | `on-keydown="enter: #f.send()"` | Filter *which* events reach the phrase |
+| Key filter | ``on-keydown(key:`Enter`)="#f.send()"`` | Match an event field to a literal; the phrase runs only when it matches |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
 | Event value | `on-response(html:string)="#receipt.set(html)"` | The event's own value, declared on the attribute and resolved by name inside that phrase |
 | Debounce | `#echo.debounce(300).set(this.value)` | Defers this receiver's chain; a re-fire restarts the timer |
@@ -110,7 +110,7 @@ The rules, one line each:
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`, `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#`. Class or attribute selectors are never receivers.
 3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form.
-4. **Keys are legal only under `on-keydown`/`on-keyup` and a keyed implementation event**, one per phrase; two keyboard keys is two phrases. Key names match `KeyboardEvent.key` case-insensitively; `space` means `" "`. `intersect` is not keyed: its `state`, `full` and margin slots live in the attribute name.
+4. **A phrase key routes implementation events; keyboard keys are filtered on the declaration**, one per phrase. `on-keydown(key:`Enter`)` and `on-keydown(code:`ArrowDown`)` match a literal case-insensitively; two keyboard keys is two attributes. A key on any event that carries no routing key is skipped. `intersect` is not keyed: its `state`, `full` and margin slots live in the attribute name.
 5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** It never crosses `&&`. `debounce`/`throttle` are legal only right after the ref; `once` and `delay` may sit anywhere. `once()` must be followed by a call. At most one `debounce`/`throttle` per receiver chain.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops on a `preventDefault()`-ed event, a throw, or an unowned verb. `||` fires only on a guard's abort; errors and unowned verbs stop both.
 7. **`once()` spends on passing through, not on completion.** A spent gate cuts the chain where it sits — links before it still run, links after it never do.
@@ -138,10 +138,10 @@ The rules, one line each:
 | `logger` | any | `log` | — | `console.log` from a phrase |
 | `validatable` | form, input, select, textarea | `validate` | — | guard verb: `reportValidity()`, `preventDefault()` on failure |
 | `no-propagate` | any | — | `events` (default `"click"`) | `stopPropagation` on listed events |
-| `prevent-default` | any | — | `events` (derived: the element's `on-submit`/`on-click`/keyed `on-keydown`, else submit on a form, click on a[href]/button) | `preventDefault` on listed events |
+| `prevent-default` | any | — | `events` (derived: the element's `on-submit`/`on-click`/literal-matched `on-keydown`, else submit on a form, click on a[href]/button) | `preventDefault` on listed events |
 | `revealable` | any | `show`, `toggle` | `modal` + `open` state | strategies per element ([§ revealable](https://acecodept.github.io/interactably/docs.html#revealable)) |
 | `auto-grow` | textarea | — | — | auto-height textarea; sizes on connect and on `input`/`change`; a value written by script is sized on the next input |
-| `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key — a literal, or a ref (`#cart`/`this` for contents, `this.value` for a property); `restore()` reads the key and fires `restore` carrying the stored string as the declared value `value`, writing nothing; `on-restore(value:string)` resolves it by name and restore never filters |
+| `storable` | any | `save`, `restore`, `clear` | `scope` (`local`/`session`), `key`, `value` | persists a declared slot under a declared key — a literal, or a ref (`#cart`/`this` for contents, `this.value` for a property); `restore()` reads the key and fires `restore` carrying the stored string as the declared value `value`, writing nothing; `on-restore(value:string)` resolves it by name and restore does not filter by itself — an ``on-restore(value:`…`)`` literal runs for one stored value only |
 | `pastable` | input, textarea | — | — | fires `pasted` after a paste has landed, carrying the post-paste value as `text`, so `this.value` is the new value |
 | `copyable` | pre, code, p, div | `copy` (no argument) | events `copy`, `copy-error` | copies the element's own text to the clipboard — a button calls it as a plain receiver (`#snippet.copy()`); on success it dispatches `copy`, which shares the attribute with the native clipboard copy, on total failure `copy-error`; empty text is a no-op; the flash is the author's (`on-copy`) |
 | `focusable` | any | `focus`, `blur` | — | `HTMLElement.focus()` / `blur()` as verbs; reports once if focus did not take |
@@ -196,6 +196,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `getImplementationDef(name)` | Look up a registered definition |
 | `runPhrases(el, value, ev)` | Run an attribute string against an element and a DOM event; the one entry point |
 | `parse(value, eventName?)` | Parse an attribute string into phrases (cached by event name and value) |
+| `parseEventAttribute(name)` | Parse an attribute name into its event type and value declaration (the parenthesised `on-<type>(<name>:<type>)` form) |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](https://acecodept.github.io/interactably/docs.html#interaction-event)) |
 | `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`), and the event `intersect` carries `state` (`enter`/`leave`) and/or `full` (`true`/`false`) as declared values `values`; an event may also carry a routing `key` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
@@ -205,7 +206,6 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `normaliseRootMargin(token?)` | Validate one root-margin token: a `px`/`%` length or a `#id.height`/`#id.width` reference (`undefined`/empty → `"0px"`; throws otherwise) |
 | `readMeasured(el, dim)` | The element's border-box `height`/`width` in CSS pixels as of the last layout the browser reported — the cache behind `#id.height`/`#id.width` |
 | `INTERSECT_EVENT_NAMES` | The synthetic intersect event name (`intersect`) |
-| `matchesKey(ev, name)` | The key matcher (`space` → `" "`, case-insensitive) used by keys and event lists |
 | `compileSignature(sig)` | Compile a slot/record signature to a validator |
 | `optionalCtor(Ctor)` | Mark an element-constructor signature slot optional: the key may be omitted, and a present value is instance-checked (`render`'s `template` field) |
 | `exclusive(other, slot)` | Mark a record-signature field as mutually exclusive with another named field: supplying both is a signature error before anything runs; the partner name is checked when the signature compiles (`render`'s `payload` is `exclusive("template", "string | undefined")`) |

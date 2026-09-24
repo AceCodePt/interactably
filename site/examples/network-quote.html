@@ -64,7 +64,10 @@
          requestable-url="./fragments/quote.html" requestable-method="get"
          on-response(html:string)="#quote.render({payload: html})"&gt;
       Nothing loaded yet &mdash; click the button above.
-    &lt;/div&gt;</code></pre>
+    &lt;/div&gt;
+
+    &lt;!-- the response renders ./fragments/quote.html, which loads again --&gt;
+    &lt;button on-click="#quote.send()"&gt;Load again&lt;/button&gt;</code></pre>
             </div>
           </details>
   </main>

@@ -117,6 +117,20 @@ test("bindEvents binds one listener per entry, filters event:key pairs, and upda
   assert.deepEqual(seen, ["click", "keydown", "input"]);
 });
 
+test("bindEvents filters a code entry against KeyboardEvent.code, not key", () => {
+  const el = document.createElement("div");
+  const seen: string[] = [];
+  const bound = bindEvents(el, () => "keydown:code:KeyA", (e) => {
+    seen.push((e as KeyboardEvent).code);
+  });
+
+  el.dispatchEvent(new KeyboardEvent("keydown", { key: "q", code: "KeyA" }));
+  el.dispatchEvent(new KeyboardEvent("keydown", { key: "a", code: "KeyB" }));
+  el.dispatchEvent(new KeyboardEvent("keydown", { key: "a" }));
+  assert.deepEqual(seen, ["KeyA"], "only the matching code fires; key is not consulted");
+  bound.dispose();
+});
+
 test("bindEvents dispose removes the listeners", () => {
   const el = document.createElement("div");
   let fired = 0;

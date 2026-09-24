@@ -49,7 +49,8 @@
                          requestable-url="../fragments/cities.html"
                          on-input="#city.debounce(250).send()"
                          on-response(html:string)="#city-list.render({payload: html}); #city-list.show()"
-                         on-keydown="arrowdown: #sug-1.focus(); escape: #city-list.show(false)">
+                         on-keydown(code:`ArrowDown`)="#sug-1.focus()"
+                         on-keydown(code:`Escape`)="#city-list.show(false)">
                 </div>
                 <ul id="city-list" implements="renderable revealable" hidden></ul>
               </div>
@@ -68,25 +69,31 @@
            requestable-url="./fragments/cities.html"
            on-input="#city.debounce(250).send()"
            on-response(html:string)="#city-list.render({payload: html}); #city-list.show()"
-           on-keydown="arrowdown: #sug-1.focus(); escape: #city-list.show(false)"&gt;
+           on-keydown(code:`ArrowDown`)="#sug-1.focus()"
+           on-keydown(code:`Escape`)="#city-list.show(false)"&gt;
     &lt;ul id="city-list" implements="renderable revealable" hidden&gt;&lt;/ul&gt;
 
     &lt;!-- the fragment the response renders in: each option is wired when it lands --&gt;
     &lt;li role="option"&gt;&lt;button id="sug-1" implements="focusable prevent-default"
         on-click="#city.set('Lisbon'); #city-list.show(false)"
-        on-keydown="arrowdown: #sug-2.focus(); arrowup: #city.focus()"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
+        on-keydown(code:`ArrowDown`)="#sug-2.focus()"
+        on-keydown(code:`ArrowUp`)="#city.focus()"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
     &lt;li role="option"&gt;&lt;button id="sug-2" implements="focusable prevent-default"
         on-click="#city.set('London'); #city-list.show(false)"
-        on-keydown="arrowdown: #sug-3.focus(); arrowup: #sug-1.focus()"&gt;London&lt;/button&gt;&lt;/li&gt;
+        on-keydown(code:`ArrowDown`)="#sug-3.focus()"
+        on-keydown(code:`ArrowUp`)="#sug-1.focus()"&gt;London&lt;/button&gt;&lt;/li&gt;
     &lt;li role="option"&gt;&lt;button id="sug-3" implements="focusable prevent-default"
         on-click="#city.set('Paris'); #city-list.show(false)"
-        on-keydown="arrowdown: #sug-4.focus(); arrowup: #sug-2.focus()"&gt;Paris&lt;/button&gt;&lt;/li&gt;
+        on-keydown(code:`ArrowDown`)="#sug-4.focus()"
+        on-keydown(code:`ArrowUp`)="#sug-2.focus()"&gt;Paris&lt;/button&gt;&lt;/li&gt;
     &lt;li role="option"&gt;&lt;button id="sug-4" implements="focusable prevent-default"
         on-click="#city.set('Tokyo'); #city-list.show(false)"
-        on-keydown="arrowdown: #sug-5.focus(); arrowup: #sug-3.focus()"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
+        on-keydown(code:`ArrowDown`)="#sug-5.focus()"
+        on-keydown(code:`ArrowUp`)="#sug-3.focus()"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
     &lt;li role="option"&gt;&lt;button id="sug-5" implements="focusable prevent-default"
         on-click="#city.set('Berlin'); #city-list.show(false)"
-        on-keydown="arrowdown: #city.focus(); arrowup: #sug-4.focus()"&gt;Berlin&lt;/button&gt;&lt;/li&gt;</code></pre>
+        on-keydown(code:`ArrowDown`)="#city.focus()"
+        on-keydown(code:`ArrowUp`)="#sug-4.focus()"&gt;Berlin&lt;/button&gt;&lt;/li&gt;</code></pre>
             </div>
           </details>
   </main>

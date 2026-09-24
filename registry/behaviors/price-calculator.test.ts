@@ -34,7 +34,7 @@ const MARKUP = `
          on-input="#preview.set(this.value)"
          on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
          on-clean="this.removeAttr('data-dirty')"
-         on-keydown="escape: this.reset(); #preview.set(#qty.value)">
+         on-keydown(code:\`Escape\`)="this.reset(); #preview.set(#qty.value)">
 </label>
 <button id="dec" on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)">−</button>
 <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
@@ -148,7 +148,7 @@ test("Escape on #qty runs the keyed this.reset()", async () => {
   assert.equal(qty.hasAttribute("data-dirty"), true);
   assert.equal(preview.textContent, "8");
 
-  qty.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+  qty.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape" }));
   assert.equal(qty.value, "1");
   assert.equal(preview.textContent, "1");
   assert.equal(qty.hasAttribute("data-dirty"), false);

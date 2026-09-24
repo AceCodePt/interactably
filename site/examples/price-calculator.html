@@ -46,7 +46,7 @@
                            on-input="#preview.set(this.value)"
                            on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                            on-clean="this.removeAttr('data-dirty')"
-                           on-keydown="escape: this.reset(); #preview.set(#qty.value)">
+                           on-keydown(code:`Escape`)="this.reset(); #preview.set(#qty.value)">
                   </label>
                   <button id="dec" on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)" type="button">&minus;</button>
                   <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)" type="button">+</button>
@@ -93,7 +93,7 @@
                  on-input="#preview.set(this.value)"
                  on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                  on-clean="this.removeAttr('data-dirty')"
-                 on-keydown="escape: this.reset(); #preview.set(#qty.value)"&gt;
+                 on-keydown(code:`Escape`)="this.reset(); #preview.set(#qty.value)"&gt;
         &lt;/label&gt;
         &lt;button on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)"&gt;&minus;&lt;/button&gt;
         &lt;button on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)"&gt;+&lt;/button&gt;

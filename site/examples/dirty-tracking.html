@@ -65,13 +65,13 @@
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-dt" implements="copyable" on-copy="#copy-code-ex-dt.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="name" implements="dirtyable attributable"
-       on-dirty="#status.set('Unsaved changes&hellip;').setAttr({name: 'data-state', value: 'dirty'})"
-       on-clean="#status.set('All saved.').removeAttr('data-state')"&gt;
-&lt;input id="remember" type="checkbox" implements="dirtyable attributable"
-       on-dirty="#status.set('Unsaved changes&hellip;').setAttr({name: 'data-state', value: 'dirty'})"
-       on-clean="#status.set('All saved.').removeAttr('data-state')"&gt;
-&lt;output id="status" implements="modifiable attributable" data-state="clean"&gt;All saved.&lt;/output&gt;</code></pre>
+              <pre class="code" id="code-ex-dt" implements="copyable" on-copy="#copy-code-ex-dt.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="dt-name" implements="dirtyable attributable"
+       on-dirty="#dt-status.set('Unsaved changes&hellip;').setAttr({name: 'data-state', value: 'dirty'})"
+       on-clean="#dt-status.set('All saved.').removeAttr('data-state')"&gt;
+&lt;input id="dt-remember" type="checkbox" implements="dirtyable attributable"
+       on-dirty="#dt-status.set('Unsaved changes&hellip;').setAttr({name: 'data-state', value: 'dirty'})"
+       on-clean="#dt-status.set('All saved.').removeAttr('data-state')"&gt;
+&lt;output id="dt-status" implements="modifiable attributable" data-state="clean"&gt;All saved.&lt;/output&gt;</code></pre>
             </div>
           </details>
   </main>

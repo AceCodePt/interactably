@@ -34,9 +34,10 @@
     <p class="doc-lede">
           The three-way intersection in one small widget: <code class="inline-code">storable</code> remembers which tab,
           <code class="inline-code">revealable</code> flips the panels, and <code class="inline-code">focusable</code> returns
-          focus to the remembered tab on load. Each button carries an <code class="inline-code">on-click</code> for the live
-          switch and an <code class="inline-code">on-restore</code> for the replay &mdash; pick one, reload, and the same
-          verbs run again.
+          focus to the remembered tab on load. The live switch is each button&rsquo;s <code class="inline-code">on-click</code>;
+          only one button calls <code class="inline-code">this.restore()</code>, and its three
+          <code class="inline-code">on-restore(value:`&hellip;`)</code> attributes match the stored literal, so the one phrase
+          for that tab runs and the rest stay quiet. Pick one, reload, and the same verbs run again.
         </p>
     <div class="example-body">
 
@@ -45,15 +46,13 @@
                   <button id="mp-tab-overview" type="button" implements="storable focusable" storable-key="maintab" storable-value="overview"
                           on-load="this.restore()"
                           on-click="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.save()"
-                          on-restore(value:string)="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.focus()">Overview</button>
+                          on-restore(value:`overview`)="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.focus()"
+                          on-restore(value:`specs`)="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus()"
+                          on-restore(value:`notes`)="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus()">Overview</button>
                   <button id="mp-tab-specs" type="button" implements="storable focusable" storable-key="maintab" storable-value="specs"
-                          on-load="this.restore()"
-                          on-click="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); this.save()"
-                          on-restore(value:string)="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); this.focus()">Specs</button>
+                          on-click="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); this.save()">Specs</button>
                   <button id="mp-tab-notes" type="button" implements="storable focusable" storable-key="maintab" storable-value="notes"
-                          on-load="this.restore()"
-                          on-click="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); this.save()"
-                          on-restore(value:string)="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); this.focus()">Notes</button>
+                          on-click="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); this.save()">Notes</button>
                 </div>
                 <section id="mp-overview" class="tabpanel" implements="revealable" revealable-open="true">
                   <p>Overview &mdash; open because it is the authored default, or because the stored choice said so.</p>
@@ -79,8 +78,14 @@
       &lt;button implements="storable focusable" storable-key="maintab" storable-value="overview"
               on-load="this.restore()"
               on-click="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.save()"
-              on-restore(value:string)="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.focus()"&gt;Overview&lt;/button&gt;
-      &lt;!-- Specs and Notes repeat the same shape with their own value and receivers --&gt;
+              on-restore(value:`overview`)="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); this.focus()"
+              on-restore(value:`specs`)="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus()"
+              on-restore(value:`notes`)="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus()"&gt;Overview&lt;/button&gt;
+      &lt;!-- Specs and Notes save on click; the one restore site above dispatches their stored value --&gt;
+      &lt;button implements="storable focusable" storable-key="maintab" storable-value="specs"
+              on-click="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); this.save()"&gt;Specs&lt;/button&gt;
+      &lt;button implements="storable focusable" storable-key="maintab" storable-value="notes"
+              on-click="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); this.save()"&gt;Notes&lt;/button&gt;
     &lt;/div&gt;
     &lt;section id="mp-overview" class="tabpanel" implements="revealable" revealable-open="true"&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
     &lt;section id="mp-specs" class="tabpanel" implements="revealable" hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;

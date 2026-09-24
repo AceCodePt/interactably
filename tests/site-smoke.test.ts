@@ -154,6 +154,21 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   const dom: JSDOM = setupJsdom();
   t.after(() => teardownJsdom(dom));
 
+  const pageWarns: string[] = [];
+  const pageErrors: string[] = [];
+  const originalWarnBefore = console.warn;
+  const originalErrorBefore = console.error;
+  console.warn = (...args: unknown[]) => {
+    pageWarns.push(args.map(String).join(" "));
+  };
+  console.error = (...args: unknown[]) => {
+    pageErrors.push(args.map(String).join(" "));
+  };
+  t.after(() => {
+    console.warn = originalWarnBefore;
+    console.error = originalErrorBefore;
+  });
+
   // jsdom does not implement the dialog API; the revealable dialog strategy
   // drives showModal()/show()/close(), so stub them like the behaviour tests do.
   const dialogProto = HTMLDialogElement.prototype as unknown as Record<
@@ -258,9 +273,9 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.equal(preview.textContent, "2");
   assert.equal(qty.hasAttribute("data-dirty"), true, "dirtyable is attached to #qty");
 
-  const escKeydown = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+  const escKeydown = new KeyboardEvent("keydown", { key: "Escape", code: "Escape", cancelable: true });
   qty.dispatchEvent(escKeydown);
-  assert.equal(escKeydown.defaultPrevented, true, "prevent-default derives keydown:escape and cancels the browser's native Escape default");
+  assert.equal(escKeydown.defaultPrevented, true, "prevent-default derives keydown:code:escape and cancels the browser's native Escape default");
   assert.equal(qty.value, "1", "Escape runs this.reset()");
   assert.equal(preview.textContent, "1");
   assert.equal(qty.hasAttribute("data-dirty"), false, "reset returns to the baseline, so dirtyable fires clean");
@@ -314,11 +329,11 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.equal(mirror.textContent, "…", "on-input is debounced: the mirror lags the keystroke");
   await new Promise((resolve) => setTimeout(resolve, 350));
   assert.equal(mirror.textContent, "hello", "the debounced phrase ran after the quiet period");
-  typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-  assert.equal(typer.value, "", "escape: this.clear() empties the field");
+  typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape" }));
+  assert.equal(typer.value, "", "on-keydown(code:`Escape`) this.clear() empties the field");
   typer.value = "echo";
-  typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
-  assert.equal(mirror.textContent, "echo", "enter: #mirror.set(this.value) fires without debounce");
+  typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter" }));
+  assert.equal(mirror.textContent, "echo", "on-keydown(code:`Enter`) fires without debounce");
 
   const tip = byId("tip");
   const tipButton = byId("tip-button");
@@ -434,14 +449,14 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   assert.equal(fetchCalls.length, 3, "after the quiet period the fragment is fetched");
   assert.equal(cityList.hidden, true, "the listbox stays hidden until the response lands");
   const options = [
-    `<li role="option"><button id="sug-1" implements="focusable prevent-default" on-click="#city.set('Lisbon'); #city-list.show(false)" on-keydown="arrowdown: #sug-2.focus(); arrowup: #city.focus()">Lisbon</button></li>`,
-    `<li role="option"><button id="sug-2" implements="focusable prevent-default" on-click="#city.set('London'); #city-list.show(false)" on-keydown="arrowdown: #city.focus(); arrowup: #sug-1.focus()">London</button></li>`,
+    `<li role="option"><button id="sug-1" implements="focusable prevent-default" on-click="#city.set('Lisbon'); #city-list.show(false)" on-keydown(code:\`ArrowDown\`)="#sug-2.focus()" on-keydown(code:\`ArrowUp\`)="#city.focus()">Lisbon</button></li>`,
+    `<li role="option"><button id="sug-2" implements="focusable prevent-default" on-click="#city.set('London'); #city-list.show(false)" on-keydown(code:\`ArrowDown\`)="#city.focus()" on-keydown(code:\`ArrowUp\`)="#sug-1.focus()">London</button></li>`,
   ];
   fetchCalls[2]!.resolve(fakeResponse(true, 200, options.join("")));
   await flush();
   assert.equal(cityList.hidden, false, "on-response reveals the populated listbox");
   assert.equal(byId("sug-1").hasAttribute("implements"), true, "the swapped-in option attaches its implementations");
-  city.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", cancelable: true }));
+  city.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", code: "ArrowDown", cancelable: true }));
   await flush();
   assert.equal(document.activeElement, byId("sug-1"), "arrowdown roves focus to the first option");
   await click(byId("sug-1"));
@@ -575,6 +590,9 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   );
   await click(byId("lg-math"));
   assert.ok(consoleLogs.some((line) => line.includes("5")), "log() accepts a computed number");
+
+  assert.deepEqual(pageWarns, [], "every example renders and interacts without console.warn");
+  assert.deepEqual(pageErrors, [], "every example renders and interacts without console.error");
 });
 
 test("site: docs.html sidebar lights each section's own link", async (t) => {

@@ -62,7 +62,13 @@ function captureErrors(): { errors: string[]; restore: () => void } {
 }
 
 function keydown(el: Element, key: string): void {
-  el.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+  el.dispatchEvent(new KeyboardEvent("keydown", { key, code: key, bubbles: true, cancelable: true }));
+}
+
+function fromMarkup<T extends HTMLElement>(html: string): T {
+  const holder = document.createElement("div");
+  holder.innerHTML = html;
+  return holder.firstElementChild as T;
 }
 
 function rovingOptions(ids: string[], searchId: string): HTMLUListElement {
@@ -70,24 +76,22 @@ function rovingOptions(ids: string[], searchId: string): HTMLUListElement {
   ul.id = "results";
   for (let index = 0; index < ids.length; index++) {
     const id = ids[index]!;
-    const li = document.createElement("li");
-    li.id = id;
-    li.tabIndex = -1;
-    li.setAttribute("implements", "focusable prevent-default");
     const next = ids[(index + 1) % ids.length]!;
     const prev = index === 0 ? searchId : ids[index - 1]!;
-    li.setAttribute("on-keydown", `arrowdown: #${next}.focus(); arrowup: #${prev}.focus()`);
-    li.textContent = id;
+    const li = fromMarkup<HTMLLIElement>(
+      `<li id="${id}" tabindex="-1" implements="focusable prevent-default" ` +
+        `on-keydown(code:\`ArrowDown\`)="#${next}.focus()" ` +
+        `on-keydown(code:\`ArrowUp\`)="#${prev}.focus()">${id}</li>`,
+    );
     ul.appendChild(li);
   }
   return ul;
 }
 
 function combobox(optionIds: string[]): HTMLInputElement {
-  const search = document.createElement("input");
-  search.id = "search";
-  search.setAttribute("implements", "focusable prevent-default");
-  search.setAttribute("on-keydown", "arrowdown: #results-1.focus()");
+  const search = fromMarkup<HTMLInputElement>(
+    `<input id="search" implements="focusable prevent-default" on-keydown(code:\`ArrowDown\`)="#results-1.focus()">`,
+  );
   document.body.append(search, rovingOptions(optionIds, "search"));
   return search;
 }
