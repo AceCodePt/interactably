@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably example — A to-do list that survives reload.">
+  <title>A to-do list that survives reload — Examples — Interactably</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body data-page="examples">
+  <header class="topnav">
+    <div class="topnav-inner">
+      <a class="brand" href="../" aria-label="Interactably home">
+        <span class="brand-mark">&lt;/&gt;</span>
+        <span class="brand-name">interactably</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html" class="active">Examples</a>
+        <a href="../reference.html">Reference</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="gh-link" href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
+    <h1 class="doc-title">A to-do list that survives reload</h1>
+    <p class="doc-lede">
+          This is a small application-shaped page on a static host: the sample list is a real
+          <code class="inline-code">GET</code> of <code class="inline-code">site/fragments/todos.html</code>, while adding,
+          deleting, and undoing are local DOM changes. <code class="inline-code">storable</code> mirrors the list into local
+          storage, and restore owns page load so a reload keeps what the user added. The GET is an explicit
+          <em>Load the sample list</em> action rather than another on-load race, and the rows arrive with their own delete
+          phrases. The list is an empty <code class="inline-code">&lt;ul&gt;</code> before the first render and after the last
+          delete; the DSL has no conditional empty-state rendering. The template shape is shared with
+          <a href="./dynamic-list.html">the grow-and-shrink list</a>, while
+          <a href="./offline-fallback.html">offline fallback</a> covers the failure path.
+        </p>
+    <div class="example-body">
+
+              <div class="demo">
+                <div class="row">
+                  <label for="todo-input">New task
+                    <input id="todo-input" type="text" placeholder="What needs doing?" implements="modifiable">
+                  </label>
+                  <button id="todo-add" type="button" on-click="#todo-list.render({template: #todo-row-tpl, swap: 'beforeend', title: #todo-input.value, id: now()}); #todo-input.clear()">Add task</button>
+                  <button id="todo-load" type="button" on-click="#todo-list.send()">Load the sample list</button>
+                  <button id="todo-undo" type="button" on-click="#todo-list.undo(); #todo-store.save()">Undo last</button>
+                </div>
+                <ul id="todo-list" implements="requestable renderable"
+                    requestable-url="../fragments/todos.html" requestable-method="get"
+                    on-response(html:string)="#todo-list.render({payload: html})"
+                    on-rendered="#todo-store.save()"></ul>
+                <p class="demo-note">The list is empty before the first render and after the last delete; there is no conditional empty-state renderer.</p>
+                <span id="todo-store" implements="storable" storable-key="todos" storable-value="#todo-list"
+                      on-load="this.restore()"
+                      on-restore(value:string)="#todo-list.render({payload: value})" hidden></span>
+                <template id="todo-row-tpl">
+                  <li id="todo-row-{id}">
+                    <span class="todo-title">{title}</span>
+                    <button type="button" on-click="#todo-list.render({swap: 'delete', target: '#todo-row-{id}'})" aria-label="Remove task">&times;</button>
+                  </li>
+                </template>
+              </div>
+    </div>
+        <details class="example-code">
+            <summary>Show the markup</summary>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button class="copy-btn" implements="attributable" id="copy-code-ex-todo" on-click="#code-ex-todo.copy()" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="code-ex-todo" implements="copyable" on-copy="#copy-code-ex-todo.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;label for="input"&gt;New task
+  &lt;input id="input" type="text" placeholder="What needs doing?" implements="modifiable"&gt;
+&lt;/label&gt;
+&lt;button id="add" type="button" on-click="#list.render({template: #row-tpl, swap: 'beforeend', title: #input.value, id: now()}); #input.clear()"&gt;Add task&lt;/button&gt;
+&lt;button id="load" type="button" on-click="#list.send()"&gt;Load the sample list&lt;/button&gt;
+&lt;button id="undo" type="button" on-click="#list.undo(); #store.save()"&gt;Undo last&lt;/button&gt;
+&lt;ul id="list" implements="requestable renderable"
+    requestable-url="../fragments/todos.html" requestable-method="get"
+    on-response(html:string)="#list.render({payload: html})"
+    on-rendered="#store.save()"&gt;&lt;/ul&gt;
+&lt;p class="demo-note"&gt;The list is empty before the first render and after the last delete; there is no conditional empty-state renderer.&lt;/p&gt;
+&lt;span id="store" implements="storable" storable-key="todos" storable-value="#list"
+      on-load="this.restore()"
+      on-restore(value:string)="#list.render({payload: value})" hidden&gt;&lt;/span&gt;
+&lt;template id="row-tpl"&gt;
+  &lt;li id="row-{id}"&gt;
+    &lt;span class="todo-title"&gt;{title}&lt;/span&gt;
+    &lt;button type="button" on-click="#list.render({swap: 'delete', target: '#row-{id}'})" aria-label="Remove task"&gt;&amp;times;&lt;/button&gt;
+  &lt;/li&gt;
+&lt;/template&gt;
+
+&lt;li id="row-1"&gt;
+    &lt;span class="todo-title"&gt;Read the task brief&lt;/span&gt;
+    &lt;button type="button" on-click="#list.render({swap: 'delete', target: '#row-1'})" aria-label="Remove task"&gt;&amp;times;&lt;/button&gt;
+&lt;/li&gt;
+&lt;li id="row-2"&gt;
+    &lt;span class="todo-title"&gt;Try the rendered row&lt;/span&gt;
+    &lt;button type="button" on-click="#list.render({swap: 'delete', target: '#row-2'})" aria-label="Remove task"&gt;&amp;times;&lt;/button&gt;
+&lt;/li&gt;
+&lt;li id="row-3"&gt;
+    &lt;span class="todo-title"&gt;Delete me&lt;/span&gt;
+    &lt;button type="button" on-click="#list.render({swap: 'delete', target: '#row-3'})" aria-label="Remove task"&gt;&amp;times;&lt;/button&gt;
+&lt;/li&gt;</code></pre>
+            </div>
+          </details>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>Built with <a href="../">Interactably</a> &middot; MIT licensed</div>
+      <div class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html">Examples</a>
+        <a href="../reference.html">Reference</a>
+        <a href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">Source</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../demo.js"></script>
+</body>
+</html>
