@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactably example — A multi-step form gated on validity.">
+  <title>A multi-step form, gated on validity — Examples — Interactably</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body data-page="examples">
+  <header class="topnav">
+    <div class="topnav-inner">
+      <a class="brand" href="../" aria-label="Interactably home">
+        <span class="brand-mark">&lt;/&gt;</span>
+        <span class="brand-name">interactably</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html" class="active">Examples</a>
+        <a href="../reference.html">Reference</a>
+      </nav>
+      <div class="topnav-cta">
+        <a class="gh-link" href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
+    <h1 class="doc-title">A multi-step form, gated on validity</h1>
+    <p class="doc-lede">
+      Three sibling forms make one flow: the stepper is a real radio group, and each later radio is natively disabled until the
+      preceding form becomes <code class="inline-code">user-valid</code>. Breaking a form disables every later radio and
+      returns to the broken step. The gate forms listen on <code class="inline-code">change</code> because a committed value
+      is the completion point; field messages listen on <code class="inline-code">input</code> for immediate feedback.
+      The live progress line uses the aggressive <code class="inline-code">valid</code>/<code class="inline-code">invalid</code>
+      pair because it wants the current state on every evaluation. This is a static site with no backend: the final submit
+      only reveals a local confirmation. For the simpler one-input version, see the <a href="./age-gate.html">age gate</a>.
+    </p>
+    <div class="example-body">
+
+              <div class="demo">
+                <fieldset class="stepper" id="step-stepper">
+                  <legend>Application steps</legend>
+                  <div class="stepper-options">
+                    <label><input id="step-1-choice" type="radio" implements="attributable" name="step" value="1" checked
+                           on-change="#step-1-panel.show(); #step-2-panel.show(false); #step-3-panel.show(false)">
+                      <span>1. About you</span>
+                    </label>
+                    <label><input id="step-2-choice" type="radio" implements="attributable" name="step" value="2" disabled aria-disabled="true"
+                           aria-describedby="step-2-gate"
+                           on-change="#step-2-panel.show(); #step-1-panel.show(false); #step-3-panel.show(false)">
+                      <span>2. Project</span>
+                    </label>
+                    <label><input id="step-3-choice" type="radio" implements="attributable" name="step" value="3" disabled aria-disabled="true"
+                           aria-describedby="step-3-gate"
+                           on-change="#step-3-panel.show(); #step-1-panel.show(false); #step-2-panel.show(false)">
+                      <span>3. Confirm</span>
+                    </label>
+                  </div>
+                </fieldset>
+                <p id="step-2-gate" class="gate-message" implements="revealable" revealable-open="true" role="status">Complete step 1 to unlock step 2.</p>
+                <p id="step-3-gate" class="gate-message" implements="revealable" revealable-open="true" role="status">Complete steps 1 and 2 to unlock step 3.</p>
+                <p class="demo-note">Progress: <output id="step-progress" implements="modifiable" aria-live="polite">Step 1 of 3 incomplete</output></p>
+
+                <section id="step-1-panel" class="step-panel" implements="revealable" revealable-open="true">
+                  <h2>Step 1: About you</h2>
+                  <form id="step-1-form" class="step-form" novalidate implements="validatable" validatable-on="change"
+                        on-valid="#step-progress.set('Step 1 of 3 complete')"
+                        on-invalid="#step-progress.set('Step 1 of 3 incomplete')"
+                        on-user-valid="#step-2-choice.removeAttr('disabled').removeAttr('aria-disabled').removeAttr('aria-describedby'); #step-2-gate.show(false)"
+                        on-user-invalid="#step-2-choice.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'step-2-gate'}); #step-3-choice.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'step-3-gate'}); #step-2-gate.show(); #step-3-gate.show(); #step-1-choice.setAttr({name: 'checked', value: ''}); #step-2-choice.removeAttr('checked'); #step-3-choice.removeAttr('checked'); #step-1-panel.show(); #step-2-panel.show(false); #step-3-panel.show(false)">
+                    <label for="step-1-name">Full name
+                      <input id="step-1-name" type="text" required autocomplete="name" placeholder="Ada Lovelace"
+                             implements="validatable" validatable-on="input" aria-describedby="step-1-name-message"
+                             on-user-invalid="#step-1-name-message.show()"
+                             on-user-valid="#step-1-name-message.show(false)">
+                    </label>
+                    <p id="step-1-name-message" class="field-message" implements="revealable" hidden role="alert">Tell us your name.</p>
+                    <label for="step-1-email">Email
+                      <input id="step-1-email" type="email" required autocomplete="email" placeholder="you@example.com">
+                    </label>
+                    <p class="step-help">When both fields pass, step 2 becomes available in the radio group.</p>
+                  </form>
+                </section>
+
+                <section id="step-2-panel" class="step-panel" implements="revealable" hidden>
+                  <h2>Step 2: Project</h2>
+                  <form id="step-2-form" class="step-form" novalidate implements="validatable" validatable-on="change"
+                        on-user-valid="#step-3-choice.removeAttr('disabled').removeAttr('aria-disabled').removeAttr('aria-describedby'); #step-3-gate.show(false)"
+                        on-user-invalid="#step-3-choice.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'step-3-gate'}); #step-3-gate.show(); #step-2-choice.setAttr({name: 'checked', value: ''}); #step-1-choice.removeAttr('checked'); #step-3-choice.removeAttr('checked'); #step-2-panel.show(); #step-1-panel.show(false); #step-3-panel.show(false)">
+                    <label for="step-2-project">Project name
+                      <input id="step-2-project" type="text" required placeholder="A small useful thing"
+                             implements="validatable" validatable-on="input" aria-describedby="step-2-project-message"
+                             on-user-invalid="#step-2-project-message.show()"
+                             on-user-valid="#step-2-project-message.show(false)">
+                    </label>
+                    <p id="step-2-project-message" class="field-message" implements="revealable" hidden role="alert">Give the project a name.</p>
+                    <label for="step-2-role">Your role
+                      <select id="step-2-role" required>
+                        <option value="">Choose one</option>
+                        <option value="designer">Designer</option>
+                        <option value="developer">Developer</option>
+                        <option value="writer">Writer</option>
+                      </select>
+                    </label>
+                    <p class="step-help">Step 3 stays disabled until this whole form is valid.</p>
+                  </form>
+                </section>
+
+                <section id="step-3-panel" class="step-panel" implements="revealable" hidden>
+                  <h2>Step 3: Confirm</h2>
+                  <form id="step-3-form" class="step-form" novalidate implements="prevent-default validatable" validatable-on="change"
+                        on-user-valid="#step-3-status.show(false)"
+                        on-user-invalid="#step-3-status.show(); #step-3-choice.setAttr({name: 'checked', value: ''}); #step-1-choice.removeAttr('checked'); #step-2-choice.removeAttr('checked'); #step-3-panel.show(); #step-1-panel.show(false); #step-2-panel.show(false)"
+                        on-submit="this.validate() &amp;&amp; #step-confirmation.show()">
+                    <label for="step-3-note">What should happen next?
+                      <textarea id="step-3-note" required minlength="8" placeholder="A short note for the team"
+                                implements="validatable" validatable-on="input" aria-describedby="step-3-note-message"
+                                on-user-invalid="#step-3-note-message.show()"
+                                on-user-valid="#step-3-note-message.show(false)"></textarea>
+                    </label>
+                    <p id="step-3-note-message" class="field-message" implements="revealable" hidden role="alert">Add a little more detail.</p>
+                    <label class="check-field" for="step-3-consent">
+                      <input id="step-3-consent" type="checkbox" required>
+                      I understand this static demo does not send anything.
+                    </label>
+                    <p id="step-3-status" class="gate-message" implements="revealable" hidden role="alert">Complete the required fields to submit.</p>
+                    <button type="submit">Finish locally</button>
+                  </form>
+                </section>
+
+                <section id="step-confirmation" class="step-confirmation" implements="revealable" hidden role="status">
+                  Complete &mdash; the form is ready. Nothing was sent; this confirmation is local to the page.
+                </section>
+              </div>
+    </div>
+        <details class="example-code">
+            <summary>Show the markup</summary>
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">HTML</span>
+                <button class="copy-btn" implements="attributable" id="step-copy-code" on-click="#step-code.copy()" type="button">
+                  <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
+                </button>
+              </div>
+              <pre class="code" id="step-code" implements="copyable" on-copy="#step-copy-code.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;fieldset class="stepper"&gt;
+  &lt;legend&gt;Application steps&lt;/legend&gt;
+  &lt;div class="stepper-options"&gt;
+    &lt;label&gt;&lt;input id="choice-1" type="radio" implements="attributable" name="step" value="1" checked
+      on-change="#panel-1.show(); #panel-2.show(false); #panel-3.show(false)"&gt;
+      &lt;span&gt;1. About you&lt;/span&gt;
+    &lt;/label&gt;
+    &lt;label&gt;&lt;input id="choice-2" type="radio" implements="attributable" name="step" value="2" disabled aria-disabled="true"
+      aria-describedby="gate-2"
+      on-change="#panel-2.show(); #panel-1.show(false); #panel-3.show(false)"&gt;
+      &lt;span&gt;2. Project&lt;/span&gt;
+    &lt;/label&gt;
+    &lt;label&gt;&lt;input id="choice-3" type="radio" implements="attributable" name="step" value="3" disabled aria-disabled="true"
+      aria-describedby="gate-3"
+      on-change="#panel-3.show(); #panel-1.show(false); #panel-2.show(false)"&gt;
+      &lt;span&gt;3. Confirm&lt;/span&gt;
+    &lt;/label&gt;
+  &lt;/div&gt;
+&lt;/fieldset&gt;
+&lt;p id="gate-2" implements="revealable" revealable-open="true" role="status"&gt;Complete step 1 to unlock step 2.&lt;/p&gt;
+&lt;p id="gate-3" implements="revealable" revealable-open="true" role="status"&gt;Complete steps 1 and 2 to unlock step 3.&lt;/p&gt;
+&lt;p&gt;Progress: &lt;output id="progress" implements="modifiable" aria-live="polite"&gt;Step 1 of 3 incomplete&lt;/output&gt;&lt;/p&gt;
+
+&lt;section id="panel-1" implements="revealable" revealable-open="true"&gt;
+  &lt;h2&gt;Step 1: About you&lt;/h2&gt;
+  &lt;form id="form-1" novalidate implements="validatable" validatable-on="change"
+    on-valid="#progress.set('Step 1 of 3 complete')"
+    on-invalid="#progress.set('Step 1 of 3 incomplete')"
+    on-user-valid="#choice-2.removeAttr('disabled').removeAttr('aria-disabled').removeAttr('aria-describedby'); #gate-2.show(false)"
+    on-user-invalid="#choice-2.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-2'}); #choice-3.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-3'}); #gate-2.show(); #gate-3.show(); #choice-1.setAttr({name: 'checked', value: ''}); #choice-2.removeAttr('checked'); #choice-3.removeAttr('checked'); #panel-1.show(); #panel-2.show(false); #panel-3.show(false)"&gt;
+    &lt;label for="name-1"&gt;Full name
+      &lt;input id="name-1" type="text" required autocomplete="name" placeholder="Ada Lovelace"
+        implements="validatable" validatable-on="input" aria-describedby="name-message-1"
+        on-user-invalid="#name-message-1.show()"
+        on-user-valid="#name-message-1.show(false)"&gt;
+    &lt;/label&gt;
+    &lt;p id="name-message-1" implements="revealable" hidden role="alert"&gt;Tell us your name.&lt;/p&gt;
+    &lt;label for="email-1"&gt;Email
+      &lt;input id="email-1" type="email" required autocomplete="email" placeholder="you@example.com"&gt;
+    &lt;/label&gt;
+  &lt;/form&gt;
+&lt;/section&gt;
+
+&lt;section id="panel-2" implements="revealable" hidden&gt;
+  &lt;h2&gt;Step 2: Project&lt;/h2&gt;
+  &lt;form id="form-2" novalidate implements="validatable" validatable-on="change"
+    on-user-valid="#choice-3.removeAttr('disabled').removeAttr('aria-disabled').removeAttr('aria-describedby'); #gate-3.show(false)"
+    on-user-invalid="#choice-3.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-3'}); #gate-3.show(); #choice-2.setAttr({name: 'checked', value: ''}); #choice-1.removeAttr('checked'); #choice-3.removeAttr('checked'); #panel-2.show(); #panel-1.show(false); #panel-3.show(false)"&gt;
+    &lt;label for="project-2"&gt;Project name
+      &lt;input id="project-2" type="text" required placeholder="A small useful thing"
+        implements="validatable" validatable-on="input" aria-describedby="project-message-2"
+        on-user-invalid="#project-message-2.show()"
+        on-user-valid="#project-message-2.show(false)"&gt;
+    &lt;/label&gt;
+    &lt;p id="project-message-2" implements="revealable" hidden role="alert"&gt;Give the project a name.&lt;/p&gt;
+    &lt;label for="role-2"&gt;Your role
+      &lt;select id="role-2" required&gt;
+        &lt;option value=""&gt;Choose one&lt;/option&gt;
+        &lt;option value="designer"&gt;Designer&lt;/option&gt;
+        &lt;option value="developer"&gt;Developer&lt;/option&gt;
+        &lt;option value="writer"&gt;Writer&lt;/option&gt;
+      &lt;/select&gt;
+    &lt;/label&gt;
+  &lt;/form&gt;
+&lt;/section&gt;
+
+&lt;section id="panel-3" implements="revealable" hidden&gt;
+  &lt;h2&gt;Step 3: Confirm&lt;/h2&gt;
+  &lt;form id="form-3" novalidate implements="prevent-default validatable" validatable-on="change"
+    on-user-valid="#status-3.show(false)"
+    on-user-invalid="#status-3.show(); #choice-3.setAttr({name: 'checked', value: ''}); #choice-1.removeAttr('checked'); #choice-2.removeAttr('checked'); #panel-3.show(); #panel-1.show(false); #panel-2.show(false)"
+    on-submit="this.validate() &amp;&amp; #confirmation.show()"&gt;
+    &lt;label for="note-3"&gt;What should happen next?
+      &lt;textarea id="note-3" required minlength="8" placeholder="A short note for the team"
+        implements="validatable" validatable-on="input" aria-describedby="note-message-3"
+        on-user-invalid="#note-message-3.show()"
+        on-user-valid="#note-message-3.show(false)"&gt;&lt;/textarea&gt;
+    &lt;/label&gt;
+    &lt;p id="note-message-3" implements="revealable" hidden role="alert"&gt;Add a little more detail.&lt;/p&gt;
+    &lt;label for="consent-3"&gt;
+      &lt;input id="consent-3" type="checkbox" required&gt;
+      I understand this static demo does not send anything.
+    &lt;/label&gt;
+    &lt;p id="status-3" implements="revealable" hidden role="alert"&gt;Complete the required fields to submit.&lt;/p&gt;
+    &lt;button type="submit"&gt;Finish locally&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/section&gt;
+
+&lt;section id="confirmation" implements="revealable" hidden role="status"&gt;
+  Complete &amp;mdash; the form is ready. Nothing was sent; this confirmation is local to the page.
+&lt;/section&gt;</code></pre>
+            </div>
+          </details>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>Built with <a href="../">Interactably</a> &middot; MIT licensed</div>
+      <div class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../examples.html">Examples</a>
+        <a href="../reference.html">Reference</a>
+        <a href="https://github.com/AceCodePt/interactably" target="_blank" rel="noopener noreferrer">Source</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../demo.js"></script>
+</body>
+</html>

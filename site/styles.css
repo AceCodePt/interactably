@@ -1463,6 +1463,128 @@ code, pre, kbd {
   margin-bottom: 0.75rem;
 }
 
+.demo .stepper {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 1rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.demo .stepper legend {
+  padding: 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.demo .stepper-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.demo .stepper label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.demo .stepper label:hover {
+  border-color: var(--accent);
+}
+
+.demo .stepper input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+.demo .stepper input:disabled {
+  opacity: 0.55;
+}
+
+.demo .stepper input:disabled + span {
+  color: var(--muted);
+}
+
+.demo .gate-message {
+  margin: 0.4rem 0;
+  color: var(--warn);
+  font-size: 0.9rem;
+}
+
+.demo .step-panel {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.demo .step-panel h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1.15rem;
+}
+
+.demo .step-form {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 36rem;
+}
+
+.demo .step-form label {
+  display: block;
+  margin: 0;
+}
+
+.demo .step-form input[type="text"],
+.demo .step-form input[type="email"],
+.demo .step-form select {
+  font: inherit;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.demo .step-form textarea {
+  min-height: 6rem;
+}
+
+.demo .step-form .check-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.demo .field-message {
+  margin: -0.15rem 0 0;
+  color: var(--err);
+  font-size: 0.85rem;
+}
+
+.demo .step-help {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.demo .step-confirmation {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+  color: var(--fg);
+}
+
 /* ---------- tabs ---------- */
 
 .tabs {

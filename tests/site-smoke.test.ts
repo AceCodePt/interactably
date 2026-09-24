@@ -58,6 +58,7 @@ const EXAMPLE_PAGES = [
   "dynamic-list",
   "todo-list",
   "shop-cart",
+  "multi-step-form",
   "number-format",
   "logging",
   "offline-fallback",
@@ -712,6 +713,148 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
 
   assert.deepEqual(pageWarns, [], "every example renders and interacts without console.warn");
   assert.deepEqual(pageErrors, [], "every example renders and interacts without console.error");
+});
+
+test("site: the multi-step form gates, explains and closes every later step", async (t) => {
+  const html = readFileSync(fileURLToPath(new URL("examples/multi-step-form.html", siteDir)), "utf8");
+  const dom: JSDOM = setupJsdom();
+  t.after(() => teardownJsdom(dom));
+
+  const warns: string[] = [];
+  const errors: string[] = [];
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  console.warn = (...args: unknown[]) => {
+    warns.push(args.map(String).join(" "));
+  };
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+  };
+  t.after(() => {
+    console.warn = originalWarn;
+    console.error = originalError;
+  });
+
+  const holder = document.createElement("div");
+  holder.innerHTML = bodyMarkup(html);
+  document.body.appendChild(holder);
+  await import(`${siteBundle.href}?multi-step-form-test`);
+  await flush();
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await flush();
+
+  const byStepId = (id: string): HTMLElement => byId(`step-${id}`);
+  const step1Choice = byStepId("1-choice") as HTMLInputElement;
+  const step2Choice = byStepId("2-choice") as HTMLInputElement;
+  const step3Choice = byStepId("3-choice") as HTMLInputElement;
+  const step1Panel = byStepId("1-panel");
+  const step2Panel = byStepId("2-panel");
+  const step3Panel = byStepId("3-panel");
+  const step1Name = byStepId("1-name") as HTMLInputElement;
+  const step1Email = byStepId("1-email") as HTMLInputElement;
+  const step1Message = byStepId("1-name-message");
+  const step2Project = byStepId("2-project") as HTMLInputElement;
+  const step2Role = byStepId("2-role") as HTMLSelectElement;
+  const step3Note = byStepId("3-note") as HTMLTextAreaElement;
+  const step3Consent = byStepId("3-consent") as HTMLInputElement;
+  const step2Gate = byStepId("2-gate");
+  const step3Gate = byStepId("3-gate");
+  const step3Status = byStepId("3-status");
+  const step1Form = byStepId("1-form") as HTMLFormElement;
+  const step2Form = byStepId("2-form") as HTMLFormElement;
+  const step3Form = byStepId("3-form") as HTMLFormElement;
+  const progress = byStepId("progress");
+  const confirmation = byStepId("confirmation");
+
+  const input = (element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, value: string): void => {
+    element.value = value;
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  const change = (element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, value: string): void => {
+    element.value = value;
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+
+  assert.equal(document.querySelectorAll("input[type=radio][name=step]").length, 3, "the stepper is a three-radio group");
+  assert.equal(document.querySelectorAll('form[implements~="validatable"]').length, 3, "each step is a validatable form");
+  assert.equal(document.querySelector("fieldset[implements~=validatable]"), null, "the stepper fieldset is not a validity gate");
+  assert.equal(document.querySelectorAll("[on-valid], [on-invalid]").length, 1, "the aggressive pair is used on one live indicator");
+  assert.equal(step2Choice.disabled, true, "step 2 starts natively disabled");
+  assert.equal(step3Choice.disabled, true, "step 3 starts natively disabled");
+  assert.equal(step2Choice.getAttribute("aria-disabled"), "true", "step 2 announces its disabled state");
+  assert.equal(step3Choice.getAttribute("aria-disabled"), "true", "step 3 announces its disabled state");
+  assert.equal(step2Choice.getAttribute("aria-describedby"), "step-2-gate", "step 2 points at its explanation");
+  assert.equal(step3Choice.getAttribute("aria-describedby"), "step-3-gate", "step 3 points at its explanation");
+  assert.equal(step1Panel.hidden, false, "step 1 is the initially visible panel");
+  assert.equal(step2Panel.hidden, true, "later panels start closed");
+  assert.equal(step2Gate.hidden, false, "the step 2 explanation is visible while locked");
+  assert.equal(step3Gate.hidden, false, "the step 3 explanation is visible while locked");
+  assert.equal(step1Message.hidden, true, "an untouched invalid field stays quiet");
+  assert.equal(progress.textContent, "Step 1 of 3 incomplete");
+
+  input(step1Name, "Ada");
+  input(step1Email, "ada@example.com");
+  change(step1Name, "Ada");
+  change(step1Email, "ada@example.com");
+  await flush();
+  assert.equal(step1Form.checkValidity(), true, "the first form becomes valid");
+  assert.equal(step2Choice.disabled, false, "a valid first form enables step 2");
+  assert.equal(step2Choice.hasAttribute("aria-disabled"), false, "the enabled radio drops aria-disabled");
+  assert.equal(step2Choice.hasAttribute("aria-describedby"), false, "the enabled radio drops its explanation reference");
+  assert.equal(step2Gate.hidden, true, "the step 2 explanation is removed after completion");
+  assert.equal(progress.textContent, "Step 1 of 3 complete", "the aggressive indicator reports the valid evaluation");
+
+  step2Choice.click();
+  await flush();
+  assert.equal(step2Choice.checked, true, "the native radio selects step 2");
+  assert.equal(step1Panel.hidden, true, "selecting step 2 closes step 1");
+  assert.equal(step2Panel.hidden, false, "selecting step 2 reveals its panel");
+
+  input(step2Project, "A small useful thing");
+  change(step2Project, "A small useful thing");
+  input(step2Role, "developer");
+  change(step2Role, "developer");
+  await flush();
+  assert.equal(step2Form.checkValidity(), true, "the second form becomes valid");
+  assert.equal(step3Choice.disabled, false, "a valid second form enables step 3");
+  assert.equal(step3Gate.hidden, true, "the step 3 explanation is removed after step 2");
+
+  step3Choice.click();
+  await flush();
+  assert.equal(step3Panel.hidden, false, "selecting step 3 reveals the final form");
+  input(step3Note, "A short note for the team");
+  change(step3Note, "A short note for the team");
+  step3Consent.click();
+  await flush();
+  assert.equal(step3Form.checkValidity(), true, "the final form becomes valid");
+  assert.equal(step3Status.hidden, true, "a valid final form hides its completion status");
+  step3Form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+  await flush();
+  assert.equal(confirmation.hidden, false, "the final submit reveals the local confirmation");
+
+  step1Choice.click();
+  await flush();
+  input(step1Name, "");
+  change(step1Name, "");
+  await flush();
+  assert.equal(step1Message.hidden, false, "clearing a previously valid field reveals its message");
+  assert.equal(step1Choice.checked, true, "breaking step 1 returns the reader to it");
+  assert.equal(step1Panel.hidden, false, "the broken step is visible");
+  assert.equal(step2Panel.hidden, true, "the later panel is closed");
+  assert.equal(step3Panel.hidden, true, "the final panel is closed");
+  assert.equal(step2Choice.disabled, true, "breaking step 1 transitively disables step 2");
+  assert.equal(step3Choice.disabled, true, "breaking step 1 transitively disables step 3");
+  assert.equal(step2Choice.getAttribute("aria-describedby"), "step-2-gate", "the step 2 explanation is restored");
+  assert.equal(step3Choice.getAttribute("aria-describedby"), "step-3-gate", "the step 3 explanation is restored");
+  assert.equal(step2Gate.hidden, false, "the step 2 explanation is visible again");
+  assert.equal(step3Gate.hidden, false, "the step 3 explanation is visible again");
+
+  input(step1Name, "Ada");
+  await flush();
+  assert.equal(step1Message.hidden, true, "fixing the field hides its message");
+
+  assert.deepEqual(warns, [], "the multi-step form loads without console.warn");
+  assert.deepEqual(errors, [], "the multi-step form loads without console.error");
 });
 
 test("site: docs.html sidebar lights each section's own link", async (t) => {
