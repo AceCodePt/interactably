@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import type { TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { parse, parseEventAttribute } from "@interactable/parser.ts";
+import { parse, parseEventAttribute, parseWithErrors } from "@interactable/parser.ts";
 import type { Phrase, Unit } from "@interactable/parser.ts";
 
 function errorsOf(t: TestContext) {
@@ -663,4 +663,149 @@ test("a backslash escapes only the quote and itself; every other \\x stays verba
     position: 0,
   });
   assert.deepEqual(first(parse("#x.set('\\\\')")[0]!).calls[0]!.arg, { kind: "string", value: "\\" });
+});
+
+function span(source: string, node: { start: number; end: number }): string {
+  return source.slice(node.start, node.end);
+}
+
+test("offsets slice a keyed phrase back to its source", () => {
+  const source = "enter: #f.send()";
+  const [phrase] = parse(source);
+  assert.ok(phrase);
+  assert.equal(span(source, phrase), source);
+  assert.equal(phrase.key, "enter");
+  assert.equal(phrase.keyStart, 0);
+  assert.equal(phrase.keyEnd, 5);
+  assert.equal(source.slice(phrase.keyStart!, phrase.keyEnd!), "enter");
+  const unit = first(phrase);
+  assert.equal(span(source, unit), "#f.send()");
+  assert.equal(span(source, unit.ref), "#f");
+  assert.equal(span(source, unit.calls[0]!), "send()");
+});
+
+test("offsets slice a multi-unit phrase around &&", () => {
+  const source = "#a.show() && #b.hide()";
+  const [phrase] = parse(source);
+  assert.ok(phrase);
+  assert.equal(phrase.operator, "&&");
+  assert.equal(span(source, phrase), source);
+  assert.equal(span(source, phrase.units[0]!), "#a.show()");
+  assert.equal(span(source, phrase.units[1]!), "#b.hide()");
+  assert.equal(span(source, phrase.units[0]!.calls[0]!), "show()");
+  assert.equal(span(source, phrase.units[1]!.ref), "#b");
+});
+
+test("offsets slice chained calls back to each link", () => {
+  const source = "#a.show().focus()";
+  const [phrase] = parse(source);
+  assert.ok(phrase);
+  const unit = first(phrase);
+  assert.equal(span(source, unit), source);
+  assert.equal(unit.calls.length, 2);
+  assert.equal(span(source, unit.calls[0]!), "show()");
+  assert.equal(span(source, unit.calls[1]!), "focus()");
+});
+
+test("offsets slice an object-literal argument and its nested fields", () => {
+  const source = "#total.sum({root: #list, select: '.amount'})";
+  const [phrase] = parse(source);
+  assert.ok(phrase);
+  const arg = first(phrase).calls[0]!.arg;
+  assert.ok(arg);
+  assert.ok(arg.kind === "object");
+  assert.equal(span(source, arg), "{root: #list, select: '.amount'}");
+  assert.equal(span(source, arg.fields[0]!.value), "#list");
+  assert.equal(span(source, arg.fields[1]!.value), "'.amount'");
+});
+
+test("offsets slice a this receiver", () => {
+  const source = "this.reset()";
+  const [phrase] = parse(source);
+  assert.ok(phrase);
+  const unit = first(phrase);
+  assert.equal(span(source, unit.ref), "this");
+  assert.equal(span(source, unit), source);
+  assert.equal(span(source, unit.calls[0]!), "reset()");
+});
+
+test("offsets slice a read property argument", () => {
+  const source = "#x.set(this.value)";
+  const [phrase] = parse(source);
+  assert.ok(phrase);
+  const arg = first(phrase).calls[0]!.arg;
+  assert.ok(arg);
+  assert.ok(arg.kind === "read");
+  assert.equal(span(source, arg), "this.value");
+  assert.equal(span(source, arg.ref), "this");
+  assert.equal(arg.property, "value");
+});
+
+test("offsets slice an expression argument and a nested object-field expression", () => {
+  const source = "#qty.set(#price.value * 2)";
+  const [phrase] = parse(source);
+  assert.ok(phrase);
+  const arg = first(phrase).calls[0]!.arg;
+  assert.ok(arg);
+  assert.ok(arg.kind === "expr");
+  assert.equal(span(source, arg), "#price.value * 2");
+  assert.equal(arg.source, "#price.value * 2");
+  assert.equal(arg.position, 0);
+
+  const nestedSource = "#x.set({name: 'value', value: this.value + '!'})";
+  const [nested] = parse(nestedSource);
+  assert.ok(nested);
+  const object = first(nested).calls[0]!.arg;
+  assert.ok(object);
+  assert.ok(object.kind === "object");
+  const value = object.fields[1]!.value;
+  assert.ok(value.kind === "expr");
+  assert.equal(span(nestedSource, value), "this.value + '!'");
+});
+
+test("parseWithErrors exposes failures as data with ranges", () => {
+  const source = "#a.show(); .hide()";
+  const { phrases, errors } = parseWithErrors(source);
+  assert.equal(phrases.length, 1);
+  assert.equal(errors.length, 1);
+  const error = errors[0]!;
+  assert.equal(error.message, "missing receiver");
+  assert.equal(error.start, error.end);
+  assert.equal(source.slice(error.start, error.end), "");
+});
+
+test("an empty link between dots reports an empty span", () => {
+  const source = "#a..b()";
+  const { errors } = parseWithErrors(source);
+  assert.equal(errors.length, 1);
+  const error = errors[0]!;
+  assert.equal(error.message, "empty link between dots");
+  assert.equal(error.start, error.end);
+  assert.equal(source.slice(error.start, error.end), "");
+});
+
+test("a bad id error spans the offending id text", () => {
+  const source = "#x.set(#q:b)";
+  const { errors } = parseWithErrors(source);
+  assert.equal(errors.length, 1);
+  const error = errors[0]!;
+  assert.ok(error.message.includes('invalid id "q:b"'));
+  assert.equal(source.slice(error.start, error.end), "q:b");
+});
+
+test("a malformed object field error spans the field", () => {
+  const source = "#x.set({bad})";
+  const { errors } = parseWithErrors(source);
+  assert.equal(errors.length, 1);
+  const error = errors[0]!;
+  assert.ok(error.message.includes('object field "bad" needs "name: value"'));
+  assert.equal(source.slice(error.start, error.end), "bad");
+});
+
+test("parse and parseWithErrors share one cache that carries offsets", () => {
+  const source = "#a.b().c()";
+  const [fromParse] = parse(source);
+  const { phrases } = parseWithErrors(source);
+  assert.strictEqual(phrases[0], fromParse);
+  assert.equal(span(source, phrases[0]!.units[0]!.calls[1]!), "c()");
 });
