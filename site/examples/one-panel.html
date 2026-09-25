@@ -6,6 +6,7 @@
   <meta name="description" content="Interactably example — One button, one panel.">
   <title>One button, one panel — Examples — Interactably</title>
   <link rel="stylesheet" href="../styles.css">
+  <script type="module" implements="attributable copyable revealable" src="../cdn/interactably-bootstrap.js"></script>
 </head>
 <body data-page="examples">
   <header class="topnav">
@@ -32,10 +33,11 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">One button, one panel</h1>
     <p class="doc-lede">
-          The whole idea in a few lines: a <code class="inline-code">start()</code> call, a trigger with
-          <code class="inline-code">on-click="#panel.toggle()"</code>, and a receiver. No
-          <code class="inline-code">is=</code>, no per-tag setup &mdash; the button is live one microtask after
-          <code class="inline-code">start()</code> sees it.
+          The whole idea in a few lines: a declaring
+          <code class="inline-code">&lt;script type="module" implements="revealable"&gt;</code> in the head, a trigger
+          with <code class="inline-code">on-click="#panel.toggle()"</code>, and a receiver. No
+          <code class="inline-code">is=</code>, no per-tag setup &mdash; the shipped bootstrap reads the tag and the
+          button is live one microtask after it attaches.
         </p>
     <div class="example-body">
 
@@ -57,11 +59,8 @@
                     <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                   </button>
                 </div>
-                <pre class="code" id="code-ex-auto" implements="copyable" on-copy="#copy-code-ex-auto.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module"&gt;
-        import { start } from "interactably/dist/cdn/interactably-core.js";
-        import "interactably/dist/cdn/revealable.js";
-        start();
-      &lt;/script&gt;
+                <pre class="code" id="code-ex-auto" implements="copyable" on-copy="#copy-code-ex-auto.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implements="revealable"
+          src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
       &lt;button on-click="#panel.toggle()" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
       &lt;section id="panel" implements="revealable" hidden&gt;
@@ -83,7 +82,5 @@
       </div>
     </div>
   </footer>
-
-  <script type="module" src="../demo.js"></script>
 </body>
 </html>

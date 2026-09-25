@@ -18,7 +18,7 @@ Interactably's phrases live in HTML attributes, and nothing in an editor today k
 
 Two prerequisites have landed:
 - Parser offsets (d29c91a). Every parsed node carries flat start/end offsets into the attribute value, plus keyStart/keyEnd; ParseError carries a range; parseWithErrors returns both tree and errors. Offsets are non-enumerable. The server converts attribute-relative offsets to document positions by adding the attribute value's own offset in the HTML; it never re-parses phrases itself.
-- Declarative bootstrap (landed). The page declares which implementations it uses in an implements attribute on the script tag that loads interactably. That attribute is the server's sole source of the page's vocabulary.
+- Declarative bootstrap (this task's listed dependency; not yet archived when this context was written). The page declares which implementations it uses in an implements attribute on the script tag that loads interactably. That attribute is the server's sole source of the page's vocabulary.
 
 implements is deliberately overloaded: on the bootstrap script it is a declaration of what the page loads, and on any other element it is a usage. The server depends on this, but every query must be scoped by tag. A declaration is script[implements]; a usage is implements on anything that is not a script. Conflating them would make every element that uses an implementation appear to declare it, and the not-declared diagnostic would never fire.
 

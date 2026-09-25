@@ -79,6 +79,7 @@ function extractSnippet(html: string): string {
 }
 
 function isAttributed(el: Element): boolean {
+  if (el.localName.toLowerCase() === "script") return false;
   return (
     el.hasAttribute("implements") ||
     el.getAttributeNames().some((name) => name.startsWith("on-"))

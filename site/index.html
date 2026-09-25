@@ -6,6 +6,7 @@
   <meta name="description" content="Interactably — a declarative interaction language for plain HTML elements.">
   <title>Interactably — declarative interactions in plain HTML</title>
   <link rel="stylesheet" href="./styles.css">
+  <script type="module" implements="attributable copyable dirtyable formattable modifiable prevent-default renderable" src="./cdn/interactably-bootstrap.js"></script>
 </head>
 <body data-page="home">
   <header class="topnav">
@@ -33,8 +34,9 @@
       <span class="hero-badge"><span class="dot"></span>v0.1.0 &middot; no engine, no signals, no magic</span>
       <h1>Make your HTML <span class="hl">interactive</span> &mdash; without writing JavaScript.</h1>
       <p class="hero-sub">
-        You write plain HTML and Interactably wires it up. <code class="inline-code">start()</code> attaches any element that
-        carries an <code class="inline-code">on-*</code> attribute or <code class="inline-code">implements="&hellip;"</code> —
+        You write plain HTML and Interactably wires it up. One declaring <code class="inline-code">script</code> tag in
+        the head names the implementations the page uses; the runtime attaches every element that carries an
+        <code class="inline-code">on-*</code> attribute or <code class="inline-code">implements="&hellip;"</code> —
         no <code class="inline-code">is=</code>, no per-tag setup. No page JavaScript, no framework, no build step.
       </p>
       <div class="hero-cta">
@@ -53,19 +55,16 @@
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-quickstart" implements="copyable" on-copy="#copy-code-quickstart.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module"&gt;
-  import { start } from "interactably/dist/cdn/interactably-core.js";
-  import "interactably/dist/cdn/revealable.js";
-  start();
-&lt;/script&gt;
+          <pre class="code" id="code-quickstart" implements="copyable" on-copy="#copy-code-quickstart.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implements="revealable"
+        src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
 &lt;button on-click="#modal.show()"&gt;Open&lt;/button&gt;
 &lt;dialog id="modal" implements="revealable"&gt;&hellip;&lt;/dialog&gt;</code></pre>
         </div>
         <p class="note"><strong>One phrase.</strong> Clicking the button sends the verb
           <code class="inline-code">show()</code> to <code class="inline-code">#modal</code>, which implements
-          <code class="inline-code">revealable</code>. <code class="inline-code">start()</code> attaches everything already
-          in the document, and observes for anything added later.</p>
+          <code class="inline-code">revealable</code>. The runtime attaches everything already in the body, and observes
+          for anything added later.</p>
       </div>
 
       <div class="card">
@@ -147,7 +146,7 @@
           <span class="why-n">5</span>
           <div>
             <span class="why-q">Why should every interaction be a listener you wire, manage and clean up?</span>
-            <span class="why-a"><code class="inline-code">start()</code> does it for you &mdash; one observer binds each element&rsquo;s <code class="inline-code">on-*</code> at attach and cleans up on detach. Elements declare what they do: <code class="inline-code">on-*</code>, <code class="inline-code">implements</code>, both, or neither.</span>
+            <span class="why-a">The runtime does it for you &mdash; one observer binds each element&rsquo;s <code class="inline-code">on-*</code> at attach and cleans up on detach. Elements declare what they do: <code class="inline-code">on-*</code>, <code class="inline-code">implements</code>, both, or neither.</span>
           </div>
         </li>
         <li>
@@ -236,7 +235,5 @@
       </div>
     </div>
   </footer>
-
-  <script type="module" src="./demo.js"></script>
 </body>
 </html>

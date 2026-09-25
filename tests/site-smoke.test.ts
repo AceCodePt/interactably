@@ -1,4 +1,4 @@
-import { test } from "node:test";
+import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -21,8 +21,9 @@ const docsUrl = new URL("docs.html", siteDir);
 const referenceUrl = new URL("reference.html", siteDir);
 const indexUrl = new URL("index.html", siteDir);
 const readmeUrl = new URL("../README.md", import.meta.url);
-const siteBundle = new URL("../dist/site/demo.js", import.meta.url);
 const cdnDir = new URL("../dist/cdn/", import.meta.url);
+const bootstrapUrl = new URL("interactably-bootstrap.js", cdnDir);
+const coreUrl = new URL("interactably-core.js", cdnDir);
 const todoFragment = readFileSync(fileURLToPath(new URL("fragments/todos.html", siteDir)), "utf8");
 
 const examplesDir = new URL("examples/", siteDir);
@@ -85,8 +86,7 @@ function slugifyHeading(text: string): string {
     .replace(/\s+/g, "-");
 }
 
-const KNOWN_BUNDLES = new Set([
-  "interactably-core",
+const IMPLEMENTATION_NAMES = [
   "attributable",
   "auto-grow",
   "classable",
@@ -104,7 +104,46 @@ const KNOWN_BUNDLES = new Set([
   "revealable",
   "storable",
   "validatable",
-]);
+];
+
+function exampleHtml(name: string): string {
+  return readFileSync(fileURLToPath(new URL(`${name}.html`, examplesDir)), "utf8");
+}
+
+function headMarkup(html: string): string {
+  const match = /<head[^>]*>([\s\S]*?)<\/head>/i.exec(html);
+  assert.ok(match !== null, "the site HTML has a <head>");
+  return match[1] ?? "";
+}
+
+function headDeclarations(html: string): string[] {
+  const names = new Set<string>();
+  for (const match of headMarkup(html).matchAll(/<script\b[^>]*\bimplements="([^"]*)"/g)) {
+    for (const name of match[1]!.split(/\s+/)) {
+      if (name !== "") names.add(name);
+    }
+  }
+  return [...names];
+}
+
+function headDeclarationCount(html: string): number {
+  return [...headMarkup(html).matchAll(/<script\b[^>]*\bimplements=/g)].length;
+}
+
+function allExampleDeclarations(): string[] {
+  const names = new Set<string>();
+  for (const name of EXAMPLE_PAGES) {
+    for (const declared of headDeclarations(exampleHtml(name))) names.add(declared);
+  }
+  return [...names];
+}
+
+async function registerDeclared(names: Iterable<string>): Promise<void> {
+  await import(coreUrl.href);
+  for (const name of names) {
+    await import(new URL(`${name}.js`, cdnDir).href);
+  }
+}
 
 function bodyMarkup(html: string): string {
   const match = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html);
@@ -144,25 +183,34 @@ function setReadyState(state: DocumentReadyState): void {
   Object.defineProperty(document, "readyState", { value: state, configurable: true });
 }
 
-test("site: no is= anywhere, the demo ships as one file, and the demo interacts under jsdom", async (t) => {
+// One jsdom for the whole file: implementations capture their element constructors
+// at import time, so a fresh realm per test would fail every cross-realm instanceof.
+let sharedDom: JSDOM;
+before(() => {
+  sharedDom = setupJsdom();
+});
+after(() => teardownJsdom(sharedDom));
+beforeEach(() => {
+  document.head.replaceChildren();
+  document.body.replaceChildren();
+  localStorage.clear();
+  sessionStorage.clear();
+  setReadyState("complete");
+});
+
+test("site: no is= anywhere, the pages declare the bootstrap, and the demo interacts under jsdom", async (t) => {
   for (const file of ["docs.html", "examples.html", "index.html", "reference.html"]) {
     const html = readFileSync(fileURLToPath(new URL(file, siteDir)), "utf8");
     assert.equal(html.includes("interactable-"), false, `${file} carries no interactable- mentions`);
   }
 
   assert.ok(
-    existsSync(fileURLToPath(siteBundle)),
-    "dist/site/demo.js is missing; run pnpm build first",
+    existsSync(fileURLToPath(bootstrapUrl)),
+    "dist/cdn/interactably-bootstrap.js is missing; run pnpm build first",
   );
-  const bundle = readFileSync(fileURLToPath(siteBundle), "utf8");
-  assert.equal(
-    /^import /m.test(bundle),
-    false,
-    "dist/site/demo.js is a single file: it imports nothing, so the chain is depth two",
-  );
+  const bootstrap = readFileSync(fileURLToPath(bootstrapUrl), "utf8");
+  assert.match(bootstrap, /import\("\.\/revealable\.js"\)/, "the bootstrap lazy-loads per implementation");
 
-  const dom: JSDOM = setupJsdom();
-  t.after(() => teardownJsdom(dom));
 
   const pageWarns: string[] = [];
   const pageErrors: string[] = [];
@@ -221,10 +269,10 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   });
 
   // Mirror the deployed page-load sequence: the markup is already being parsed
-  // (readyState "loading") when demo.js imports the bundles (which register the
-  // implementations) and start() runs. start() defers the initial scan to
-  // DOMContentLoaded, which is when on-load="this.restore()" replays the stored
-  // selection and the matching buttons' on-restore phrases flip the panels.
+  // (readyState "loading") when the declared implementations register and start()
+  // runs. start() defers the initial scan to DOMContentLoaded, which is when
+  // on-load="this.restore()" replays the stored selection and the matching
+  // buttons' on-restore phrases flip the panels.
   localStorage.setItem("pm", "pnpm");
   localStorage.setItem("theme", "sepia");
   localStorage.setItem("maintab", "notes");
@@ -234,7 +282,9 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
   holder.innerHTML = examplePagesBody();
   document.body.appendChild(holder);
 
-  await import(siteBundle.href);
+  await registerDeclared(allExampleDeclarations());
+  const dispose = (await import(coreUrl.href)).start();
+  t.after(dispose);
 
   await flush();
   document.dispatchEvent(new Event("DOMContentLoaded"));
@@ -716,8 +766,6 @@ test("site: no is= anywhere, the demo ships as one file, and the demo interacts 
 });
 
 test("site: each POST example reacts to each failure with its own message", async (t) => {
-  const dom: JSDOM = setupJsdom();
-  t.after(() => teardownJsdom(dom));
 
   const warns: string[] = [];
   const errors: string[] = [];
@@ -751,12 +799,13 @@ test("site: each POST example reacts to each failure with its own message", asyn
     globalThis.fetch = originalFetch;
   });
 
+  const postPages = ["offline-fallback", "guarded-submit", "order-form"];
   const holder = document.createElement("div");
-  holder.innerHTML = ["offline-fallback", "guarded-submit", "order-form"]
-    .map((name) => bodyMarkup(readFileSync(fileURLToPath(new URL(`${name}.html`, examplesDir)), "utf8")))
-    .join("\n");
+  holder.innerHTML = postPages.map((name) => bodyMarkup(exampleHtml(name))).join("\n");
   document.body.appendChild(holder);
-  await import(`${siteBundle.href}?post-failures-test`);
+  await registerDeclared(postPages.flatMap((name) => headDeclarations(exampleHtml(name))));
+  const dispose = (await import(coreUrl.href)).start();
+  t.after(dispose);
   await flush();
   document.dispatchEvent(new Event("DOMContentLoaded"));
   await flush();
@@ -866,8 +915,6 @@ test("site: each POST example reacts to each failure with its own message", asyn
 
 test("site: the multi-step form gates, explains and closes every later step", async (t) => {
   const html = readFileSync(fileURLToPath(new URL("examples/multi-step-form.html", siteDir)), "utf8");
-  const dom: JSDOM = setupJsdom();
-  t.after(() => teardownJsdom(dom));
 
   const warns: string[] = [];
   const errors: string[] = [];
@@ -887,7 +934,9 @@ test("site: the multi-step form gates, explains and closes every later step", as
   const holder = document.createElement("div");
   holder.innerHTML = bodyMarkup(html);
   document.body.appendChild(holder);
-  await import(`${siteBundle.href}?multi-step-form-test`);
+  await registerDeclared(headDeclarations(html));
+  const dispose = (await import(coreUrl.href)).start();
+  t.after(dispose);
   await flush();
   document.dispatchEvent(new Event("DOMContentLoaded"));
   await flush();
@@ -1025,14 +1074,11 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
   assert.equal(new Set(enterTargets).size, navIds.size, "every nav link has an enter trigger");
   assert.deepEqual([...leaveTargets].sort(), [...enterTargets].sort(), "every enter has a matching leave");
 
-  const coreUrl = new URL("interactably-core.js", cdnDir);
   assert.ok(
-    existsSync(fileURLToPath(siteBundle)),
-    "dist/site/demo.js is missing; run pnpm build first",
+    existsSync(fileURLToPath(coreUrl)),
+    "dist/cdn/interactably-core.js is missing; run pnpm build first",
   );
 
-  const dom: JSDOM = setupJsdom();
-  t.after(() => teardownJsdom(dom));
 
   const warns: string[] = [];
   const errors: string[] = [];
@@ -1057,12 +1103,9 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
   installFakeIntersectionObserver();
   t.after(resetFakeIntersectionObserver);
 
+  await registerDeclared(headDeclarations(html));
   const core = await import(coreUrl.href);
-  const names = [...KNOWN_BUNDLES].filter((name) => name !== "interactably-core");
-  for (const name of names) {
-    await import(new URL(name, cdnDir).href);
-  }
-  core.start();
+  t.after(core.start());
   await flush();
 
   const toc = byId("toc");
@@ -1086,8 +1129,6 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
 
 test("site: the scroll-spy example lights, resizes and records a full view", async (t) => {
   const html = readFileSync(fileURLToPath(new URL("examples/scroll-spy.html", siteDir)), "utf8");
-  const dom: JSDOM = setupJsdom();
-  t.after(() => teardownJsdom(dom));
 
   resetFakeIntersectionObserver();
   installFakeIntersectionObserver();
@@ -1118,9 +1159,8 @@ test("site: the scroll-spy example lights, resizes and records a full view", asy
   const holder = document.createElement("div");
   holder.innerHTML = bodyMarkup(html);
   document.body.appendChild(holder);
-  await import(`${siteBundle.href}?scroll-spy-test`);
-  await flush();
-  document.dispatchEvent(new Event("DOMContentLoaded"));
+  await registerDeclared(headDeclarations(html));
+  t.after((await import(coreUrl.href)).start());
   await flush();
 
   const first = byId("spy-section-observe");
@@ -1212,7 +1252,7 @@ test("site: every implementation is in all four homes and both API rows", () => 
   const index = readFileSync(fileURLToPath(indexUrl), "utf8");
   const readme = readFileSync(fileURLToPath(readmeUrl), "utf8");
 
-  const names = [...KNOWN_BUNDLES].filter((name) => name !== "interactably-core");
+  const names = IMPLEMENTATION_NAMES;
 
   for (const name of names) {
     assert.ok(
@@ -1291,9 +1331,44 @@ test("site: examples.html lists every example page, and each page is standalone"
     assert.equal(page.includes("interactable-"), false, `${name} carries no interactable- mentions`);
     assert.ok(page.includes('href="../examples.html"'), `${name} links back to the list`);
     assert.ok(page.includes('href="../styles.css"'), `${name} loads the stylesheet`);
-    assert.ok(page.includes('src="../demo.js"'), `${name} loads the site bundle`);
+    assert.equal(headDeclarationCount(page), 1, `${name} has exactly one head > script[implements]`);
+    assert.ok(
+      page.includes('src="../cdn/interactably-bootstrap.js"'),
+      `${name} loads the bootstrap artifact`,
+    );
     assert.ok(/<title>[^<]+<\/title>/.test(page), `${name} has a title`);
     assert.ok(page.includes("<main"), `${name} has a main`);
     assert.ok(page.includes("</main>"), `${name} closes its main`);
+  }
+});
+
+test("site: every example declares exactly the implementations its markup uses", () => {
+  const collect = (root: ParentNode, names: Set<string>): void => {
+    for (const el of root.querySelectorAll("[implements]")) {
+      for (const name of (el.getAttribute("implements") ?? "").split(/\s+/)) {
+        if (name !== "") names.add(name);
+      }
+    }
+    for (const template of root.querySelectorAll("template")) collect(template.content, names);
+  };
+
+  for (const name of EXAMPLE_PAGES) {
+    const html = exampleHtml(name);
+    const used = new Set<string>();
+    const body = document.createElement("div");
+    body.innerHTML = bodyMarkup(html);
+    collect(body, used);
+    for (const match of html.matchAll(/requestable-url="([^"]+)"/g)) {
+      const file = fileURLToPath(new URL(match[1]!, examplesDir));
+      if (!existsSync(file)) continue;
+      const fragment = document.createElement("div");
+      fragment.innerHTML = readFileSync(file, "utf8");
+      collect(fragment, used);
+    }
+    assert.deepEqual(
+      [...used].sort(),
+      headDeclarations(html).sort(),
+      `${name} declares exactly the implementations it uses`,
+    );
   }
 });

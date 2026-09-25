@@ -63,6 +63,17 @@ if (raw.has(srcCore)) {
   outputs.set(path.join(distCdn, "interactably-core.d.ts"), rewrite(raw.get(srcCore), distCdn));
 }
 
+const srcBootstrap = path.join(distTypes, "src", "bootstrap.d.ts");
+if (raw.has(srcBootstrap)) {
+  const declaration = raw
+    .get(srcBootstrap)
+    .replace(
+      /(["'])(?:\.\/core\.js|@\/core\.ts|\.\.\/types\/src\/core\.js)\1/g,
+      "$1./interactably-core.js$1",
+    );
+  outputs.set(path.join(distCdn, "interactably-bootstrap.d.ts"), declaration);
+}
+
 const behaviorsDir = path.join(distTypes, "registry", "behaviors");
 for (const entry of readdirSync(behaviorsDir, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
