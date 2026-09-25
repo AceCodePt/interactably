@@ -1,7 +1,7 @@
 ---
 wait_human_start: true
 wait_human_merge: false
-dependencies: []
+dependencies: [declarative-bootstrap]
 ---
 
 # Task: HTML language server — diagnostics and completion for on-* phrases
