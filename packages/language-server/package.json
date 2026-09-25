@@ -1,0 +1,25 @@
+{
+  "name": "interactably-language-server",
+  "version": "0.1.0",
+  "description": "Language Server Protocol server for Interactably on-* phrases.",
+  "type": "module",
+  "bin": {
+    "interactably-lsp": "./dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=26"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "interactably": "workspace:*",
+    "tsyntax": "^0.1.4",
+    "vscode-html-languageservice": "^5.6.2",
+    "vscode-languageserver": "^9.0.0",
+    "vscode-languageserver-textdocument": "^1.0.15"
+  }
+}

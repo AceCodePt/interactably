@@ -31,8 +31,9 @@
       "@interactable/*": ["./registry/interactable/*"],
       "@behaviors/*": ["./registry/behaviors/*"],
       "@utils/*": ["./registry/utils/*"],
-      "@tests/*": ["./tests/*"]
+      "@tests/*": ["./tests/*"],
+      "interactably": ["./src/index.ts"]
     }
   },
-  "include": ["src", "registry", "scripts", "tests"]
+  "include": ["src", "registry", "scripts", "tests", "packages"]
 }
