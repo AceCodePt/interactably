@@ -47,6 +47,7 @@ const coreFiles = [
 ];
 
 const coreModuleIds = new Set(coreFiles.map((file) => path.join(root, file)));
+coreModuleIds.add(path.join(root, "src", "core.ts"));
 const coreSpecifier = "./interactably-core.js";
 
 const aliasTargets = {
@@ -88,8 +89,29 @@ function externalizeCore() {
 const externals = ["tsyntax"];
 
 const implementationInputs = {};
+const implementationModuleIds = new Map();
 for (const name of implementations) {
   implementationInputs[name] = path.join(root, "registry", "behaviors", name, `${name}.ts`);
+  implementationModuleIds.set(implementationInputs[name], `./${name}.js`);
+}
+
+function externalizeImplementations() {
+  return {
+    name: "externalize-implementations",
+    resolveId(source, importer) {
+      if (importer === undefined) return null;
+      let resolved;
+      if (source.startsWith(".")) {
+        resolved = path.resolve(path.dirname(importer), source);
+      } else {
+        resolved = resolveAlias(source);
+        if (resolved === null) return null;
+      }
+      const external = implementationModuleIds.get(resolved);
+      if (external !== undefined) return { id: external, external: true };
+      return null;
+    },
+  };
 }
 
 export default defineConfig([
@@ -122,11 +144,11 @@ export default defineConfig([
   },
   {
     tsconfig: "./tsconfig.json",
-    input: path.join(root, "site", "demo.src.js"),
-    treeshake: { moduleSideEffects: (id) => true },
+    input: path.join(root, "src", "bootstrap.ts"),
+    plugins: [externalizeCore(), externalizeImplementations()],
     output: {
       format: "esm",
-      file: "dist/site/demo.js",
+      file: "dist/cdn/interactably-bootstrap.js",
     },
   },
 ]);

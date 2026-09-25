@@ -25,7 +25,7 @@ Before a task is declared done, both must pass on the committed tree:
 - `pnpm check` — `tsc --noEmit`
 - `pnpm test` — `node --test` under the `tsx` loader (`node --import tsx`); `tsx` is a dev-only dependency because `tsyntax` ships as `.ts` source and Node's native type stripping refuses `node_modules` files.
 
-`pnpm test` requires `pnpm build` first: the site tests load `dist/site/demo.js`; run `pnpm build && pnpm test` on a fresh checkout. `pnpm build:site` is a Pages concern and is not needed for the suite.
+`pnpm test` requires `pnpm build` first: the site tests load the built `dist/cdn/` artifacts (the bootstrap and per-implementation bundles); run `pnpm build && pnpm test` on a fresh checkout. `pnpm build:site` is a Pages concern and is not needed for the suite.
 
 ## TypeScript posture
 

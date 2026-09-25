@@ -736,3 +736,50 @@ test("open events accept any field and literal at wire time", async () => {
   assert.deepEqual(errors, [], `open events accept any field and literal: ${JSON.stringify(errors)}`);
   dispose();
 });
+
+test("a declaring script in the head is never attached; the same script in the body is", () => {
+  const headScript = document.createElement("script");
+  headScript.setAttribute("type", "module");
+  headScript.setAttribute("implements", "attributable");
+  document.head.appendChild(headScript);
+
+  const bodyScript = document.createElement("script");
+  bodyScript.setAttribute("implements", "attributable");
+  document.body.appendChild(bodyScript);
+
+  const dispose = start();
+  assert.equal(isAttached(headScript), false, "head content is outside the scan");
+  assert.equal(isAttached(bodyScript), true, "the body script is a participant like any other");
+
+  bodyScript.remove();
+  headScript.remove();
+  dispose();
+});
+
+test("the body element itself attaches when it carries implements", () => {
+  document.body.setAttribute("implements", "attributable");
+  const dispose = start();
+  assert.equal(isAttached(document.body), true, "querySelectorAll omits its root, so the body is tested explicitly");
+  document.body.removeAttribute("implements");
+  dispose();
+});
+
+test("an element added to the head after start() never attaches, while one added to the body does", async () => {
+  const dispose = start();
+
+  const headElement = document.createElement("div");
+  headElement.setAttribute("implements", "attributable");
+  document.head.appendChild(headElement);
+  await flush();
+  assert.equal(isAttached(headElement), false, "a head insertion is never observed");
+
+  const bodyElement = document.createElement("div");
+  bodyElement.setAttribute("implements", "attributable");
+  document.body.appendChild(bodyElement);
+  await flush();
+  assert.equal(isAttached(bodyElement), true, "a body insertion attaches as before");
+
+  headElement.remove();
+  bodyElement.remove();
+  dispose();
+});

@@ -2,14 +2,11 @@
 
 A declarative interaction language for plain HTML elements.
 
-You write plain HTML. An `on-*` attribute makes a **trigger**; `implements="…"` makes a **receiver**; one `start()` call finds them all ([§ Quick start](#quick-start)).
+You write plain HTML. An `on-*` attribute makes a **trigger**; `implements="…"` makes a **receiver**; a `script` tag in the head declares the implementations the page uses ([§ Quick start](#quick-start)).
 
 ```html
-<script type="module">
-  import { start } from "interactably/dist/cdn/interactably-core.js";
-  import "interactably/dist/cdn/revealable.js";
-  start();
-</script>
+<script type="module" implements="revealable"
+        src="interactably/dist/cdn/interactably-bootstrap.js"></script>
 
 <button on-click="#modal.show()">Open</button>
 <dialog id="modal" implements="revealable">…</dialog>
@@ -27,15 +24,11 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
 npm install interactably
 ```
 
-Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the core's registry on import. Then call `start()` once — the single attachment point that wires up everything already in the document.
+Load the shipped bootstrap and declare the implementations you use in the `implements` attribute of the head script tag. The bootstrap reads that attribute, imports exactly the implementations it names, and starts Interactably against the body.
 
 ```html
-<script type="module">
-  import { start } from "interactably/dist/cdn/interactably-core.js";
-  import "interactably/dist/cdn/modifiable.js";
-  import "interactably/dist/cdn/revealable.js";
-  start();
-</script>
+<script type="module" implements="modifiable revealable"
+        src="interactably/dist/cdn/interactably-bootstrap.js"></script>
 
 <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
 
@@ -52,10 +45,11 @@ Every click on `+` runs `#qty.set(#qty.value + 1)` and then `#preview.set(#qty.v
 
 | Bundle | Contents |
 | --- | --- |
-| `interactably-core.js` | parser, executor, event, attachment, registry. No implementations. |
+| `interactably-bootstrap.js` | the declarative entry: reads the head `script[implements]`, imports exactly those implementations, and starts. The documented way in. |
+| `interactably-core.js` | parser, executor, event, attachment, registry. No implementations, no bootstrap. |
 | `modifiable.js`, `dirtyable.js`, `renderable.js`, … | one implementation per file, registering into the core's registry on import |
 
-> **The participation rule.** An element is a participant — something `start()` attaches — when it has `implements`, any `on-*` attribute, or both. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new `implements` or `on-*` attribute to an element after insertion does not attach it; re-insert the element.
+> **The participation rule.** An element is a participant — something `start()` attaches — when it has `implements`, any `on-*` attribute, or both. The runtime scans and observes the `<body>` element and everything it contains; nothing in the head is ever a participant, so the declaring script tag is never attached. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new `implements` or `on-*` attribute to an element after insertion does not attach it; re-insert the element.
 
 ---
 
@@ -160,7 +154,7 @@ Details, strategies and worked examples live in the [reference](https://acecodep
 
 The five load-bearing claims; the full argument for each is settled in the [docs](https://acecodept.github.io/interactably/docs.html).
 
-- **No engine, one observer.** A pure parser turns attribute strings into phrases; an executor runs them. One document-level `MutationObserver` (`start()`) decides what participates and when.
+- **No engine, one observer.** A pure parser turns attribute strings into phrases; an executor runs them. One body-level `MutationObserver` (`start()`) decides what participates and when.
 - **Native elements.** No `is=`, no shadow DOM, no wrapper elements. Platform attributes are read off the element, never declared; `<dialog>` traps focus, `<details>` toggles, forms submit.
 - **Push, not state.** The DOM is the store; ids are the addresses. No subscription, no reactivity, no derived state — an event pushes a verb onto a named receiver.
 - **Signatures as strings.** Every verb signature is a tsyntax string: the same string is the TypeScript type at the call site and the runtime check.

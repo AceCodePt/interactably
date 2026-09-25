@@ -6,6 +6,7 @@
   <meta name="description" content="Interactably documentation — the trigger grammar, attachment, implementations, state tiers, the parser and executor, and the asynchronous seam.">
   <title>Docs — Interactably</title>
   <link rel="stylesheet" href="./styles.css">
+  <script type="module" implements="attributable copyable modifiable revealable" src="./cdn/interactably-bootstrap.js"></script>
 </head>
 <body data-page="docs">
   <header id="topnav" class="topnav">
@@ -96,9 +97,9 @@
           <pre class="code" id="code-docs-install" implements="copyable" on-copy="#copy-code-docs-install.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="sh"><code>npm install interactably</code></pre>
         </div>
         <p>
-          Load the core bundle plus the implementations you use. Each implementation bundle registers itself into the
-          core&rsquo;s registry on import. Then call <code class="inline-code">start()</code> once &mdash; the single
-          attachment point that wires up everything already in the document.
+          Load the shipped bootstrap and declare the implementations you use in an
+          <code class="inline-code">implements</code> attribute on the head script tag. The bootstrap reads that one
+          attribute, imports exactly the implementations it names, and starts Interactably against the body.
         </p>
         <div class="codeblock">
           <div class="codeblock-bar">
@@ -107,12 +108,8 @@
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-load" implements="copyable" on-copy="#copy-code-docs-load.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module"&gt;
-  import { start } from "interactably/dist/cdn/interactably-core.js";
-  import "interactably/dist/cdn/modifiable.js";
-  import "interactably/dist/cdn/revealable.js";
-  start();
-&lt;/script&gt;
+          <pre class="code" id="code-docs-load" implements="copyable" on-copy="#copy-code-docs-load.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implements="modifiable revealable"
+        src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
 &lt;button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
 
@@ -124,10 +121,10 @@
 
 &lt;output id="preview" implements="modifiable" on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;</code></pre>
         </div>
-        <p class="note">No <code class="inline-code">is=</code> anywhere: <code class="inline-code">start()</code> attaches every
-          element that has <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute.
-          A synchronous <code class="inline-code">&lt;script&gt;</code> tag in <code class="inline-code">&lt;head&gt;</code> is
-          fine because attach-time work waits for the document.</p>
+        <p class="note">No <code class="inline-code">is=</code> anywhere: the runtime attaches every element that has
+          <code class="inline-code">implements</code> or an <code class="inline-code">on-*</code> attribute. The bootstrap
+          tag is a module script, so the browser defers it until the document is parsed; there is no race with the
+          parser, and the declaring tag itself is never a participant.</p>
         <p>Every click on <code class="inline-code">+</code> runs <code class="inline-code">#qty.set(#qty.value + 1)</code> and then
           <code class="inline-code">#preview.set(#qty.value)</code>; typing in the field still pushes
           through <code class="inline-code">on-input</code>. <code class="inline-code">#preview</code>&rsquo;s own
@@ -156,7 +153,8 @@
           <table class="tbl">
             <thead><tr><th>Bundle</th><th>Contents</th></tr></thead>
             <tbody>
-              <tr><td><code class="inline-code">interactably-core.js</code></td><td>parser, executor, event, attachment, registry. No implementations.</td></tr>
+              <tr><td><code class="inline-code">interactably-bootstrap.js</code></td><td>the declarative entry: reads the head <code class="inline-code">script[implements]</code>, imports exactly those implementations, and starts. The documented way in.</td></tr>
+              <tr><td><code class="inline-code">interactably-core.js</code></td><td>parser, executor, event, attachment, registry. No implementations, no bootstrap.</td></tr>
               <tr><td><code class="inline-code">modifiable.js</code>, <code class="inline-code">dirtyable.js</code>, <code class="inline-code">renderable.js</code>, &hellip;</td><td>one implementation per file, registering into the core&rsquo;s registry on import</td></tr>
             </tbody>
           </table>
@@ -165,11 +163,13 @@
         <div class="callout">
           <h3>The participation rule</h3>
           <p>An element is a participant &mdash; something <code class="inline-code">start()</code> attaches &mdash; when it has
-            <code class="inline-code">implements</code>, any <code class="inline-code">on-*</code> attribute, or both.
-            Implementations and interactions are independent: an element may have either, both, or neither. If nothing else
-            addresses an element, it does not need an <code class="inline-code">id</code>. Adding a brand-new
-            <code class="inline-code">implements</code> or <code class="inline-code">on-*</code> attribute to an element after
-            insertion does not attach it; re-insert the element.</p>
+            <code class="inline-code">implements</code>, any <code class="inline-code">on-*</code> attribute, or both. The
+            runtime scans and observes the <code class="inline-code">&lt;body&gt;</code> element and everything it contains;
+            nothing in the <code class="inline-code">&lt;head&gt;</code> is ever a participant, so the declaring script tag
+            is never attached. Implementations and interactions are independent: an element may have either, both, or
+            neither. If nothing else addresses an element, it does not need an <code class="inline-code">id</code>. Adding a
+            brand-new <code class="inline-code">implements</code> or <code class="inline-code">on-*</code> attribute to an
+            element after insertion does not attach it; re-insert the element.</p>
         </div>
 
         </section>
@@ -481,9 +481,11 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <p>
           <code class="inline-code">start()</code> attaches every participant &mdash; any element with an
           <code class="inline-code">implements</code> or <code class="inline-code">on-*</code> attribute &mdash; through one
-          document-level <code class="inline-code">MutationObserver</code>. Elements inserted later attach the same way; the
-          initial document waits for <code class="inline-code">DOMContentLoaded</code> so the markup may precede the imports.
-          Attach is atomic: the trigger side, the receiver side and on-load all come from one pass, in document order.
+          <code class="inline-code">MutationObserver</code> watching the document body. The body element itself and
+          everything it contains participate; the head is never scanned, so a declaring script tag cannot attach. Elements
+          inserted later attach the same way; the initial scan waits for <code class="inline-code">DOMContentLoaded</code>
+          when the document is still parsing, so the markup may precede the bootstrap. Attach is atomic: the trigger side,
+          the receiver side and on-load all come from one pass, in document order.
         </p>
         <p><strong>Trigger side.</strong> <code class="inline-code">attach()</code> scans the element&rsquo;s <code class="inline-code">on-*</code> attributes and binds one listener per attribute on the element:</p>
         <div class="codeblock">
@@ -1178,11 +1180,8 @@ export const attributable = defineImplementation("attributable", {
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-full-spy" implements="copyable" on-copy="#copy-code-docs-full-spy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module"&gt;
-  import { start } from "interactably/dist/cdn/interactably-core.js";
-  import "interactably/dist/cdn/attributable.js";
-  start();
-&lt;/script&gt;
+          <pre class="code" id="code-docs-full-spy" implements="copyable" on-copy="#copy-code-docs-full-spy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implements="attributable"
+        src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
 &lt;nav id="toc"&gt;
   &lt;a id="toc-intro" implements="attributable" href="#intro"&gt;Intro&lt;/a&gt;
@@ -1208,7 +1207,7 @@ export const attributable = defineImplementation("attributable", {
             <thead><tr><th>Export</th><th>What it is</th></tr></thead>
             <tbody>
               <tr><td><code class="inline-code">defineImplementation(name, decl, factory)</code></td><td>Declare an implementation (<a href="#writing-an-implementation">§ Writing an implementation</a>)</td></tr>
-              <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant under the root through one observer; returns a dispose function that tears the attachment down (<a href="#attachment">§ Attachment</a>)</td></tr>
+              <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant through one observer &mdash; for a Document root, the <code class="inline-code">document.body</code> element and everything it contains, never the head; returns a dispose function that tears the attachment down (<a href="#attachment">§ Attachment</a>)</td></tr>
               <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition (used by <code class="inline-code">defineImplementation</code>)</td></tr>
               <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
               <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
@@ -1346,7 +1345,5 @@ modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')
       </div>
     </div>
   </footer>
-
-  <script type="module" src="./demo.js"></script>
 </body>
 </html>

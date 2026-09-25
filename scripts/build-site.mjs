@@ -8,11 +8,12 @@ import githubDark from "shiki/themes/github-dark.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const site = path.join(root, "site");
-const siteBundle = path.join(root, "dist", "site", "demo.js");
+const cdnDir = path.join(root, "dist", "cdn");
+const bootstrapBundle = path.join(cdnDir, "interactably-bootstrap.js");
 const out = path.join(root, "site-dist");
 
-if (!existsSync(siteBundle)) {
-  console.error(`[build-site] ${path.relative(root, siteBundle)} not found; run pnpm build first`);
+if (!existsSync(bootstrapBundle)) {
+  console.error(`[build-site] ${path.relative(root, bootstrapBundle)} not found; run pnpm build first`);
   process.exit(1);
 }
 
@@ -137,7 +138,6 @@ mkdirSync(out, { recursive: true });
 
 let assets = 0;
 for (const name of readdirSync(site)) {
-  if (name === "demo.src.js") continue;
   const from = path.join(site, name);
   const to = path.join(out, name);
   if (statSync(from).isDirectory()) {
@@ -148,7 +148,14 @@ for (const name of readdirSync(site)) {
   assets += 1;
 }
 
-copyFileSync(siteBundle, path.join(out, "demo.js"));
+const cdnOut = path.join(out, "cdn");
+mkdirSync(cdnOut, { recursive: true });
+let cdnAssets = 0;
+for (const name of readdirSync(cdnDir)) {
+  if (!name.endsWith(".js")) continue;
+  copyFileSync(path.join(cdnDir, name), path.join(cdnOut, name));
+  cdnAssets += 1;
+}
 
 let highlighted = 0;
 const htmlFiles = [];
@@ -169,4 +176,6 @@ for (const file of htmlFiles) {
   highlighted += result.count;
 }
 
-console.log(`[build-site] copied ${assets} static asset(s) plus demo.js, highlighted ${highlighted} code block(s) into site-dist`);
+console.log(
+  `[build-site] copied ${assets} static asset(s) plus ${cdnAssets} cdn asset(s), highlighted ${highlighted} code block(s) into site-dist`,
+);

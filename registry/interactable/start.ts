@@ -8,9 +8,12 @@ export function start(root: StartRoot = document): () => void {
   const existing = disposers.get(root);
   if (existing !== undefined) return existing;
 
+  const documentRoot = root.nodeType === 9;
+
   const pending: Element[] = [];
   let documentReady = document.readyState !== "loading";
-  let didInitialScan = documentReady;
+  let didInitialScan = false;
+  let observing = false;
   let dclScheduled = false;
 
   const attachBatch = (elements: Iterable<Element>): void => {
@@ -42,6 +45,7 @@ export function start(root: StartRoot = document): () => void {
       () => {
         dclScheduled = false;
         documentReady = true;
+        observeTarget();
         if (!didInitialScan) {
           didInitialScan = true;
           const all = [...collectFromRoot(), ...pending];
@@ -57,8 +61,17 @@ export function start(root: StartRoot = document): () => void {
 
   const collectFromRoot = (): Element[] => {
     const out: Element[] = [];
-    for (const el of root.querySelectorAll("*")) {
-      if (isParticipant(el)) out.push(el);
+    if (documentRoot) {
+      const body = (root as Document).body;
+      if (body === null) return out;
+      if (isParticipant(body)) out.push(body);
+      for (const el of body.querySelectorAll("*")) {
+        if (isParticipant(el)) out.push(el);
+      }
+    } else {
+      for (const el of root.querySelectorAll("*")) {
+        if (isParticipant(el)) out.push(el);
+      }
     }
     return out;
   };
@@ -87,17 +100,33 @@ export function start(root: StartRoot = document): () => void {
       }
     }
   });
-  observer.observe(root, { childList: true, subtree: true });
+
+  const observeTarget = (): boolean => {
+    if (observing) return true;
+    if (documentRoot) {
+      const body = (root as Document).body;
+      if (body === null) return false;
+      observer.observe(body, { childList: true, subtree: true });
+    } else {
+      observer.observe(root, { childList: true, subtree: true });
+    }
+    observing = true;
+    return true;
+  };
 
   const dispose = (): void => {
     observer.disconnect();
     disposers.delete(root);
   };
 
+  const observingNow = observeTarget();
   if (!documentReady) {
     ensureDCL();
-  } else {
+  } else if (observingNow) {
+    didInitialScan = true;
     attachBatch(collectFromRoot());
+  } else {
+    ensureDCL();
   }
 
   disposers.set(root, dispose);

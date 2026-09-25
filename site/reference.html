@@ -6,6 +6,7 @@
   <meta name="description" content="Interactably reference — the shipped implementations, their verbs and config, the public API, reserved names and the reference grammar.">
   <title>Reference — Interactably</title>
   <link rel="stylesheet" href="./styles.css">
+  <script type="module" implements="attributable copyable" src="./cdn/interactably-bootstrap.js"></script>
 </head>
 <body data-page="reference">
   <header class="topnav">
@@ -227,7 +228,7 @@
         <thead><tr><th>Export</th><th>What it is</th></tr></thead>
         <tbody>
           <tr><td><code class="inline-code">defineImplementation(name, decl, factory)</code></td><td>Declare an implementation</td></tr>
-          <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant under the root through one observer; returns a dispose function</td></tr>
+          <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant through one observer &mdash; for a Document root, the <code class="inline-code">document.body</code> element and everything it contains, never the head; returns a dispose function</td></tr>
           <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition</td></tr>
           <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
           <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
