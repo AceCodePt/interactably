@@ -151,4 +151,15 @@ export default defineConfig([
       file: "dist/cdn/interactably-bootstrap.js",
     },
   },
+  {
+    tsconfig: "./tsconfig.json",
+    input: path.join(root, "packages", "language-server", "src", "bin.ts"),
+    external: [/^vscode-/],
+    output: {
+      format: "esm",
+      file: "packages/language-server/dist/bin.js",
+      intro:
+        "if (typeof globalThis.HTMLTemplateElement === 'undefined') globalThis.HTMLTemplateElement = class HTMLTemplateElement {};",
+    },
+  },
 ]);

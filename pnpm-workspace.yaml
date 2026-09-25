@@ -1,2 +1,6 @@
+packages:
+  - packages/*
 allowBuilds:
   esbuild: true
+minimumReleaseAgeExclude:
+  - vscode-languageserver-textdocument@1.0.15

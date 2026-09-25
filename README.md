@@ -215,6 +215,37 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 
 ---
 
+## Editor support: the language server
+
+The package ships `interactably-lsp`, a Language Server Protocol server for the phrase
+language, in the `interactably-language-server` workspace package
+([its README](packages/language-server/README.md)). It speaks LSP over stdio and reads no
+config file.
+
+It diagnoses every parse error at its range, an unknown verb, an unknown receiver
+(`#id` with no element), an unknown event, an element `implements` name the bootstrap
+tag does not declare, a non-built-in on the bootstrap tag, and a page that uses phrases
+with no bootstrap tag. It completes ids after `#`, an element's verbs after `#id.` or
+`this.`, implementation names inside either `implements="…"`, and `on-<event>` at an
+attribute name.
+
+```sh
+pnpm --filter interactably-language-server exec interactably-lsp --stdio
+```
+
+Neovim: `vim.lsp.start({ name = "interactably", cmd = { "interactably-lsp" }, root_dir = vim.fn.getcwd() })`
+from an `html` `FileType` autocmd. Helix: add `interactably-lsp` to `language-servers`
+for the `html` language and set `[language-server.interactably-lsp] command = "interactably-lsp"`.
+VS Code: point any generic LSP client at the same command over stdio with document
+selector `{ language: "html" }`.
+
+It knows the built-in implementations only. User-authored implementations are not
+discovered in this version: a lone HTML file does not say where they live, and a
+manifest would need the build step this server exists to avoid. Recorded as future work
+(project settings naming their location); not built now.
+
+---
+
 ## Documentation
 
 - **[docs.html](https://acecodept.github.io/interactably/docs.html)** — the design document: the grammar, the host, the state model, the parser and executor, the shipped implementations, and the appendices.
