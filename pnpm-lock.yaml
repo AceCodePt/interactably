@@ -138,6 +138,9 @@ importers:
       '@types/node':
         specifier: ^22.20.2
         version: 22.20.2
+      interactably-language-server:
+        specifier: workspace:*
+        version: link:packages/language-server
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1

@@ -58,6 +58,7 @@
   "devDependencies": {
     "@types/jsdom": "^30.0.0",
     "@types/node": "^22.20.2",
+    "interactably-language-server": "workspace:*",
     "jsdom": "^30.0.1",
     "playwright": "^1.63.0",
     "rolldown": "^1.2.8",
