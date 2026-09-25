@@ -1,5 +1,5 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { attribute, attributeValue, isScriptElement, parseHtml } from "./html.ts";
+import { attribute, isScriptElement, parseHtml } from "./html.ts";
 import type { HtmlDocumentModel, HtmlElement } from "./html.ts";
 import type { Vocabulary } from "./vocabulary.ts";
 
@@ -15,47 +15,15 @@ export interface DocumentAnalysis {
   readonly eventNames: ReadonlySet<string>;
 }
 
-const CDN_PREFIXES = [
-  "https://cdn.jsdelivr.net/npm/",
-  "https://esm.run/",
-  "https://unpkg.com/",
-  "https://esm.unpkg.com/",
-  "https://esm.sh/",
-];
-
-export function isRecognisedBootstrapSrc(src: string): boolean {
-  const bare = src.split(/[?#]/, 1)[0]!.trim();
-  if (bare === "") return false;
-  if (bare.includes("skypack")) return false;
-  for (const prefix of CDN_PREFIXES) {
-    if (!bare.startsWith(prefix)) continue;
-    const remainder = bare.slice(prefix.length);
-    const packageName = remainder.split("/", 1)[0]!;
-    return packageName === "interactably" || packageName.startsWith("interactably@");
-  }
-  return (
-    /(?:^|\/)node_modules\/interactably(?:\/|$)/.test(bare) ||
-    /(?:^|\/)dist\/cdn(?:\/|$)/.test(bare)
-  );
-}
-
 export function isBootstrapTag(element: HtmlElement): boolean {
-  if (!isScriptElement(element)) return false;
-  const implementsAttribute = attribute(element, "implements");
-  if (implementsAttribute !== undefined) return true;
-  const type = attributeValue(element, "type");
-  const src = attributeValue(element, "src") ?? "";
-  return type === "module" && isRecognisedBootstrapSrc(src);
+  return isScriptElement(element) && attribute(element, "implementations") !== undefined;
 }
 
 export function implementationNamesOf(element: HtmlElement): string[] {
-  const names: string[] = [];
-  const implementsAttribute = attribute(element, "implements");
-  if (implementsAttribute === undefined || implementsAttribute.value === null) return names;
-  for (const piece of implementsAttribute.value.split(/\s+/)) {
-    if (piece !== "") names.push(piece);
-  }
-  return names;
+  const name = isScriptElement(element) ? "implementations" : "implements";
+  const value = attribute(element, name);
+  if (value === undefined || value.value === null) return [];
+  return value.value.split(/\s+/).filter((piece) => piece !== "");
 }
 
 export function analyze(text: string, vocabulary: Vocabulary): DocumentAnalysis {

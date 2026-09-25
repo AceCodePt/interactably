@@ -21,8 +21,11 @@ export function computeCompletions(
   for (const candidate of element.attributes) {
     if (candidate.value === null) continue;
     if (offset < candidate.valueStart || offset > candidate.valueEnd) continue;
-    if (candidate.name === "implements") {
-      return implementsCompletions(analysis, element, candidate.valueStart, offset);
+    if (candidate.name === "implementations" && isScriptElement(element)) {
+      return declarationCompletions(analysis, element, candidate.valueStart, offset);
+    }
+    if (candidate.name === "implements" && !isScriptElement(element)) {
+      return usageCompletions(analysis, candidate.valueStart, offset);
     }
     if (candidate.name.startsWith("on-") && candidate.name.length > 3) {
       return phraseCompletions(analysis, element, candidate.valueStart, offset);
@@ -80,34 +83,45 @@ function eventCompletions(analysis: DocumentAnalysis, partial: string): Completi
     }));
 }
 
-function implementsCompletions(
+function declarationCompletions(
   analysis: DocumentAnalysis,
   element: HtmlElement,
   valueStart: Offset,
   offset: Offset,
 ): CompletionItem[] {
-  const rawPrefix = analysis.text.slice(valueStart, offset);
-  const typed = decodeHtml(rawPrefix).text;
+  const typed = decodeHtml(analysis.text.slice(valueStart, offset)).text;
   const currentWord = /\S+$/.exec(typed)?.[0] ?? "";
-  const bootstrap = isScriptElement(element);
-  const decodedValue = decodeAttributeValue(attribute(element, "implements")?.value ?? "");
+  const decodedValue = decodeAttributeValue(attribute(element, "implementations")?.value ?? "");
   const listed = new Set(decodedValue.split(/\s+/).filter((name) => name !== ""));
 
   const items: CompletionItem[] = [];
   for (const name of analysis.vocabulary.names) {
-    if (bootstrap && listed.has(name)) continue;
+    if (listed.has(name)) continue;
     if (currentWord !== "" && !name.startsWith(currentWord)) continue;
-    if (bootstrap) {
-      items.push({
-        label: name,
-        kind: CompletionItemKind.Interface,
-        detail: "built-in implementation",
-        insertText: name,
-        filterText: name,
-        sortText: name,
-      });
-      continue;
-    }
+    items.push({
+      label: name,
+      kind: CompletionItemKind.Interface,
+      detail: "built-in implementation",
+      insertText: name,
+      filterText: name,
+      sortText: name,
+    });
+  }
+  items.sort((a, b) => (a.sortText ?? a.label).localeCompare(b.sortText ?? b.label));
+  return items;
+}
+
+function usageCompletions(
+  analysis: DocumentAnalysis,
+  valueStart: Offset,
+  offset: Offset,
+): CompletionItem[] {
+  const typed = decodeHtml(analysis.text.slice(valueStart, offset)).text;
+  const currentWord = /\S+$/.exec(typed)?.[0] ?? "";
+
+  const items: CompletionItem[] = [];
+  for (const name of analysis.vocabulary.names) {
+    if (currentWord !== "" && !name.startsWith(currentWord)) continue;
     const declared = analysis.declarations.has(name);
     items.push({
       label: name,

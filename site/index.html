@@ -6,7 +6,7 @@
   <meta name="description" content="Interactably — a declarative interaction language for plain HTML elements.">
   <title>Interactably — declarative interactions in plain HTML</title>
   <link rel="stylesheet" href="./styles.css">
-  <script type="module" implements="attributable copyable dirtyable formattable modifiable prevent-default renderable" src="./cdn/interactably-bootstrap.js"></script>
+  <script type="module" implementations="attributable copyable dirtyable formattable modifiable prevent-default renderable" src="./cdn/interactably-bootstrap.js"></script>
 </head>
 <body data-page="home">
   <header class="topnav">
@@ -34,8 +34,8 @@
       <span class="hero-badge"><span class="dot"></span>v0.1.0 &middot; no engine, no signals, no magic</span>
       <h1>Make your HTML <span class="hl">interactive</span> &mdash; without writing JavaScript.</h1>
       <p class="hero-sub">
-        You write plain HTML and Interactably wires it up. One declaring <code class="inline-code">script</code> tag in
-        the head names the implementations the page uses; the runtime attaches every element that carries an
+        You write plain HTML and Interactably wires it up. One declaring <code class="inline-code">script</code> tag
+        names the implementations the page uses; the runtime attaches every element that carries an
         <code class="inline-code">on-*</code> attribute or <code class="inline-code">implements="&hellip;"</code> —
         no <code class="inline-code">is=</code>, no per-tag setup. No page JavaScript, no framework, no build step.
       </p>
@@ -55,7 +55,7 @@
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-quickstart" implements="copyable" on-copy="#copy-code-quickstart.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implements="revealable"
+          <pre class="code" id="code-quickstart" implements="copyable" on-copy="#copy-code-quickstart.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implementations="revealable"
         src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
 &lt;button on-click="#modal.show()"&gt;Open&lt;/button&gt;

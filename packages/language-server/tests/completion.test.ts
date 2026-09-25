@@ -39,7 +39,7 @@ test("completion: after #id. lists that element's verbs with signatures", () => 
 });
 
 test("completion: after this. lists the source element's verbs", () => {
-  const text = '<script type="module" implements="modifiable" src="x"></script>\n<button implements="modifiable" on-click="this.set(\'x\')">x</button>';
+  const text = '<script type="module" implementations="modifiable" src="x"></script>\n<button implements="modifiable" on-click="this.set(\'x\')">x</button>';
   const analysis = analysisOf(text);
   const offset = text.indexOf("this.set") + "this.".length;
   assert.deepEqual(labels(analysis, offset), ["clear", "reset", "set"]);
@@ -58,10 +58,10 @@ test("completion: an element's implements lists built-ins and ranks undeclared l
   assert.match(undeclared?.detail ?? "", /not declared/);
 });
 
-test("completion: the bootstrap tag's implements lists names not yet listed", () => {
-  const text = fixture("completion-bootstrap-implements.html");
+test("completion: the bootstrap tag's implementations lists names not yet listed", () => {
+  const text = fixture("completion-bootstrap-implementations.html");
   const analysis = analysisOf(text);
-  const offset = text.indexOf('implements="') + 'implements="'.length;
+  const offset = text.indexOf('implementations="') + 'implementations="'.length;
   const result = labels(analysis, offset);
   assert.ok(!result.includes("modifiable"));
   assert.ok(result.includes("attributable"));

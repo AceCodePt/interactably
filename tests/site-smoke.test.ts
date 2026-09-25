@@ -110,15 +110,9 @@ function exampleHtml(name: string): string {
   return readFileSync(fileURLToPath(new URL(`${name}.html`, examplesDir)), "utf8");
 }
 
-function headMarkup(html: string): string {
-  const match = /<head[^>]*>([\s\S]*?)<\/head>/i.exec(html);
-  assert.ok(match !== null, "the site HTML has a <head>");
-  return match[1] ?? "";
-}
-
-function headDeclarations(html: string): string[] {
+function declaredNames(html: string): string[] {
   const names = new Set<string>();
-  for (const match of headMarkup(html).matchAll(/<script\b[^>]*\bimplements="([^"]*)"/g)) {
+  for (const match of html.matchAll(/<script\b[^>]*\bimplementations="([^"]*)"/g)) {
     for (const name of match[1]!.split(/\s+/)) {
       if (name !== "") names.add(name);
     }
@@ -126,14 +120,14 @@ function headDeclarations(html: string): string[] {
   return [...names];
 }
 
-function headDeclarationCount(html: string): number {
-  return [...headMarkup(html).matchAll(/<script\b[^>]*\bimplements=/g)].length;
+function declarationCount(html: string): number {
+  return [...html.matchAll(/<script\b[^>]*\bimplementations=/g)].length;
 }
 
 function allExampleDeclarations(): string[] {
   const names = new Set<string>();
   for (const name of EXAMPLE_PAGES) {
-    for (const declared of headDeclarations(exampleHtml(name))) names.add(declared);
+    for (const declared of declaredNames(exampleHtml(name))) names.add(declared);
   }
   return [...names];
 }
@@ -803,7 +797,7 @@ test("site: each POST example reacts to each failure with its own message", asyn
   const holder = document.createElement("div");
   holder.innerHTML = postPages.map((name) => bodyMarkup(exampleHtml(name))).join("\n");
   document.body.appendChild(holder);
-  await registerDeclared(postPages.flatMap((name) => headDeclarations(exampleHtml(name))));
+  await registerDeclared(postPages.flatMap((name) => declaredNames(exampleHtml(name))));
   const dispose = (await import(coreUrl.href)).start();
   t.after(dispose);
   await flush();
@@ -934,7 +928,7 @@ test("site: the multi-step form gates, explains and closes every later step", as
   const holder = document.createElement("div");
   holder.innerHTML = bodyMarkup(html);
   document.body.appendChild(holder);
-  await registerDeclared(headDeclarations(html));
+  await registerDeclared(declaredNames(html));
   const dispose = (await import(coreUrl.href)).start();
   t.after(dispose);
   await flush();
@@ -1103,7 +1097,7 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
   installFakeIntersectionObserver();
   t.after(resetFakeIntersectionObserver);
 
-  await registerDeclared(headDeclarations(html));
+  await registerDeclared(declaredNames(html));
   const core = await import(coreUrl.href);
   t.after(core.start());
   await flush();
@@ -1159,7 +1153,7 @@ test("site: the scroll-spy example lights, resizes and records a full view", asy
   const holder = document.createElement("div");
   holder.innerHTML = bodyMarkup(html);
   document.body.appendChild(holder);
-  await registerDeclared(headDeclarations(html));
+  await registerDeclared(declaredNames(html));
   t.after((await import(coreUrl.href)).start());
   await flush();
 
@@ -1331,7 +1325,7 @@ test("site: examples.html lists every example page, and each page is standalone"
     assert.equal(page.includes("interactable-"), false, `${name} carries no interactable- mentions`);
     assert.ok(page.includes('href="../examples.html"'), `${name} links back to the list`);
     assert.ok(page.includes('href="../styles.css"'), `${name} loads the stylesheet`);
-    assert.equal(headDeclarationCount(page), 1, `${name} has exactly one head > script[implements]`);
+    assert.equal(declarationCount(page), 1, `${name} has exactly one script[implementations] declaration`);
     assert.ok(
       page.includes('src="../cdn/interactably-bootstrap.js"'),
       `${name} loads the bootstrap artifact`,
@@ -1367,7 +1361,7 @@ test("site: every example declares exactly the implementations its markup uses",
     }
     assert.deepEqual(
       [...used].sort(),
-      headDeclarations(html).sort(),
+      declaredNames(html).sort(),
       `${name} declares exactly the implementations it uses`,
     );
   }

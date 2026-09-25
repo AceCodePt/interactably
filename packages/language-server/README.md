@@ -22,22 +22,22 @@ Diagnostics (push on open/change, pull via `textDocument/diagnostic`):
   counts, so a receiver rendered later is not a false positive).
 - `unknown-event` — an `on-<event>` that is neither a native DOM event nor declared by
   an implementation on the page.
-- `undeclared-implementation` — an element's `implements` name the bootstrap tag does
-  not declare. An `implements` on a `<script>` is a declaration; on anything else it is
-  a usage.
-- `unknown-implementation` — a name in the bootstrap tag's `implements` that is not a
+- `undeclared-implementation` — an element's `implements` name the bootstrap script's
+  `implementations` does not list. A script's `implementations` is a declaration; an
+  element's `implements` is a usage.
+- `unknown-implementation` — a name in a `script[implementations]` that is not a
   built-in.
-- `missing-bootstrap` — the page has `on-*` or a usage `implements` but no bootstrap tag.
-  One informational diagnostic on the first such attribute.
+- `missing-bootstrap` — the page has `on-*` or a usage `implements` but no
+  `script[implementations]`. One informational diagnostic on the first such attribute.
 
 Completion positions:
 
 - after `#` — ids in the document;
 - after `#id.` or `this.` — the verbs of the receiver's implementations, each with its
   argument signature as detail;
-- inside an element's `implements="…"` — built-in names, with names the bootstrap tag
-  does not declare ranked lower and labelled;
-- inside the bootstrap tag's `implements="…"` — built-ins not yet listed;
+- inside an element's `implements="…"` — built-in names, with names the bootstrap script's
+  `implementations` does not list ranked lower and labelled;
+- inside a script's `implementations="…"` — built-ins not yet listed;
 - at an attribute-name position — `on-<event>` for every native event and every event
   the page's implementations declare.
 
