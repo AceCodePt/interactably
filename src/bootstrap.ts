@@ -49,8 +49,8 @@ export async function bootstrap(): Promise<void> {
 
 function declaredNames(): string[] {
   const names = new Set<string>();
-  for (const tag of document.head.querySelectorAll("script[implements]")) {
-    const value = tag.getAttribute("implements") ?? "";
+  for (const tag of document.querySelectorAll("script[implementations]")) {
+    const value = tag.getAttribute("implementations") ?? "";
     for (const name of value.split(/\s+/)) {
       if (name !== "") names.add(name);
     }
@@ -58,6 +58,4 @@ function declaredNames(): string[] {
   return [...names];
 }
 
-bootstrap().catch((error: unknown) => {
-  console.error(error);
-});
+void bootstrap();

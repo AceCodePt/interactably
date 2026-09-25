@@ -30,18 +30,9 @@ const IMPLEMENTATION_NAMES = [
 ];
 
 let nextQuery = 0;
-async function loadBootstrap(): Promise<void> {
+async function loadBootstrap(): Promise<{ bootstrap: () => Promise<void> }> {
   nextQuery += 1;
-  await import(`${bootstrapUrl.href}?test=${nextQuery}`);
-}
-
-function captureErrors(): { messages: string[]; restore: () => void } {
-  const messages: string[] = [];
-  const original = console.error;
-  console.error = (...args: unknown[]) => {
-    messages.push(args.map(String).join(" "));
-  };
-  return { messages, restore: () => (console.error = original) };
+  return import(`${bootstrapUrl.href}?test=${nextQuery}`) as Promise<{ bootstrap: () => Promise<void> }>;
 }
 
 function useHead(markup: string): void {
@@ -67,7 +58,7 @@ test("bootstrap: an empty declaration evaluates no implementation and still star
     },
   }));
 
-  useHead('<script type="module" implements=""></script>');
+  useHead('<script type="module" implementations=""></script>');
   const holder = document.createElement("div");
   holder.innerHTML = '<div id="probe-target" implements="probe"></div>';
   document.body.appendChild(holder);
@@ -86,7 +77,7 @@ test("bootstrap: every built-in resolves by its declared name", async (t) => {
   t.after(() => teardownJsdom(dom));
 
   const core = await import(coreUrl.href);
-  useHead(`<script type="module" implements="${IMPLEMENTATION_NAMES.join(" ")}"></script>`);
+  useHead(`<script type="module" implementations="${IMPLEMENTATION_NAMES.join(" ")}"></script>`);
   document.body.innerHTML = '<div id="r" implements="revealable" hidden></div>';
 
   await loadBootstrap();
@@ -97,24 +88,29 @@ test("bootstrap: every built-in resolves by its declared name", async (t) => {
   }
 });
 
-test("bootstrap: an unknown name reports and still attaches the recognised ones", async (t) => {
+test("bootstrap: an unknown name rejects observably and still attaches the recognised ones", async (t) => {
   const dom: JSDOM = setupJsdom();
   t.after(() => teardownJsdom(dom));
 
-  const { messages, restore } = captureErrors();
-  t.after(restore);
-
-  useHead('<script type="module" implements="revealable definitely-not-real"></script>');
+  // Import with a valid declaration: the auto-run path leaves a rejection
+  // unhandled (that is the loud mechanism), so a test that names an unknown
+  // implementation must assert the exported bootstrap() directly instead of
+  // letting the auto-run kill the runner.
+  useHead('<script type="module" implementations="revealable"></script>');
   document.body.innerHTML =
     '<button id="b" on-click="#r.show()">x</button><div id="r" implements="revealable" hidden></div>';
 
-  await loadBootstrap();
+  const mod = await loadBootstrap();
   await flush();
 
-  const report = messages.find((message) => message.includes("definitely-not-real"));
-  assert.ok(report !== undefined, `the unknown name is reported: ${JSON.stringify(messages)}`);
-  assert.ok(report.includes("available implementations"), "the error lists what is available");
-  assert.ok(report.includes("revealable"), "the available list names a real implementation");
+  useHead('<script type="module" implementations="revealable definitely-not-real"></script>');
+  await assert.rejects(mod.bootstrap(), (error: unknown) => {
+    assert.ok(error instanceof Error, "the failure is an Error");
+    assert.match(error.message, /definitely-not-real/, "the unknown name is named");
+    assert.match(error.message, /available implementations/, "the error lists what is available");
+    assert.match(error.message, /revealable/, "the available list names a real implementation");
+    return true;
+  });
 
   document.getElementById("b")!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   await flush();
@@ -126,8 +122,8 @@ test("bootstrap: two declaring tags union their lists and start is idempotent pe
   t.after(() => teardownJsdom(dom));
 
   useHead(
-    '<script type="module" implements="revealable"></script>' +
-      '<script type="module" implements="attributable"></script>',
+    '<script type="module" implementations="revealable"></script>' +
+      '<script type="module" implementations="attributable"></script>',
   );
   document.body.innerHTML =
     '<div id="r" implements="revealable" hidden></div><div id="a" implements="attributable"></div>';
@@ -137,4 +133,24 @@ test("bootstrap: two declaring tags union their lists and start is idempotent pe
 
   const core = await import(coreUrl.href);
   assert.strictEqual(core.start(), core.start(), "start() is idempotent per root");
+});
+
+test("bootstrap: a declaration at the end of the body is read", async (t) => {
+  const dom: JSDOM = setupJsdom();
+  t.after(() => teardownJsdom(dom));
+
+  // Import with the declaration in the head so the auto-run has a valid page.
+  useHead('<script type="module" implementations="revealable"></script>');
+  const mod = await loadBootstrap();
+  await flush();
+
+  document.body.innerHTML =
+    '<div id="r" implements="revealable" hidden></div>' +
+    '<script type="module" implementations="revealable body-only-unknown"></script>';
+
+  await assert.rejects(
+    mod.bootstrap(),
+    /body-only-unknown/,
+    "the body-placed script[implementations] was read",
+  );
 });

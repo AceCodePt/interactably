@@ -82,7 +82,7 @@ function reportMissingBootstrap(analysis: DocumentAnalysis, add: Adder): void {
         candidate.nameStart,
         candidate.nameEnd,
         "This page uses Interactably phrases but has no bootstrap script, so nothing will attach. " +
-          'Add a <script type="module" implements="..."> that loads the Interactably bootstrap.',
+          'Add a <script type="module" implementations="..."> that loads the Interactably bootstrap.',
         "missing-bootstrap",
         DiagnosticSeverity.Information,
       );
@@ -93,34 +93,52 @@ function reportMissingBootstrap(analysis: DocumentAnalysis, add: Adder): void {
 
 function reportImplementations(analysis: DocumentAnalysis, add: Adder): void {
   for (const element of analysis.model.elements) {
-    const implementsAttribute = attribute(element, "implements");
-    if (implementsAttribute === undefined || implementsAttribute.value === null) continue;
-    const decoded = decodeHtml(implementsAttribute.value);
-    const spans = splitNames(decoded.text);
     if (isScriptElement(element)) {
-      for (const span of spans) {
-        if (analysis.vocabulary.byName.has(span.name)) continue;
-        add(
-          offsetIn(implementsAttribute, decoded.toRaw(span.start)),
-          offsetIn(implementsAttribute, decoded.toRaw(span.end)),
-          `"${span.name}" is not a built-in implementation`,
-          "unknown-implementation",
-          DiagnosticSeverity.Error,
-        );
-      }
+      reportUnknownDeclarations(analysis, element, add);
       continue;
     }
-    if (!analysis.hasBootstrap) continue;
-    for (const span of spans) {
-      if (analysis.declarations.has(span.name)) continue;
-      add(
-        offsetIn(implementsAttribute, decoded.toRaw(span.start)),
-        offsetIn(implementsAttribute, decoded.toRaw(span.end)),
-        `"${span.name}" is used here but not declared by the bootstrap script's implements attribute`,
-        "undeclared-implementation",
-        DiagnosticSeverity.Error,
-      );
-    }
+    reportUndeclaredUsages(analysis, element, add);
+  }
+}
+
+function reportUnknownDeclarations(
+  analysis: DocumentAnalysis,
+  element: HtmlElement,
+  add: Adder,
+): void {
+  const implementationsAttribute = attribute(element, "implementations");
+  if (implementationsAttribute === undefined || implementationsAttribute.value === null) return;
+  const decoded = decodeHtml(implementationsAttribute.value);
+  for (const span of splitNames(decoded.text)) {
+    if (analysis.vocabulary.byName.has(span.name)) continue;
+    add(
+      offsetIn(implementationsAttribute, decoded.toRaw(span.start)),
+      offsetIn(implementationsAttribute, decoded.toRaw(span.end)),
+      `"${span.name}" is not a built-in implementation`,
+      "unknown-implementation",
+      DiagnosticSeverity.Error,
+    );
+  }
+}
+
+function reportUndeclaredUsages(
+  analysis: DocumentAnalysis,
+  element: HtmlElement,
+  add: Adder,
+): void {
+  if (!analysis.hasBootstrap) return;
+  const implementsAttribute = attribute(element, "implements");
+  if (implementsAttribute === undefined || implementsAttribute.value === null) return;
+  const decoded = decodeHtml(implementsAttribute.value);
+  for (const span of splitNames(decoded.text)) {
+    if (analysis.declarations.has(span.name)) continue;
+    add(
+      offsetIn(implementsAttribute, decoded.toRaw(span.start)),
+      offsetIn(implementsAttribute, decoded.toRaw(span.end)),
+      `"${span.name}" is used here but not declared by the bootstrap script's implementations attribute`,
+      "undeclared-implementation",
+      DiagnosticSeverity.Error,
+    );
   }
 }
 

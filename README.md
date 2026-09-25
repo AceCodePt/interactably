@@ -2,10 +2,10 @@
 
 A declarative interaction language for plain HTML elements.
 
-You write plain HTML. An `on-*` attribute makes a **trigger**; `implements="…"` makes a **receiver**; a `script` tag in the head declares the implementations the page uses ([§ Quick start](#quick-start)).
+You write plain HTML. An `on-*` attribute makes a **trigger**; `implements="…"` makes a **receiver**; a `script` tag lists the implementations the page loads in its `implementations="…"` attribute ([§ Quick start](#quick-start)).
 
 ```html
-<script type="module" implements="revealable"
+<script type="module" implementations="revealable"
         src="interactably/dist/cdn/interactably-bootstrap.js"></script>
 
 <button on-click="#modal.show()">Open</button>
@@ -24,10 +24,10 @@ Clicking the button sends the verb `show()` to `#modal`, which implements `revea
 npm install interactably
 ```
 
-Load the shipped bootstrap and declare the implementations you use in the `implements` attribute of the head script tag. The bootstrap reads that attribute, imports exactly the implementations it names, and starts Interactably against the body.
+Load the shipped bootstrap and list the implementations you use in the `implementations` attribute of the bootstrap script tag. The bootstrap reads every `script[implementations]` in the document, imports exactly the implementations they name, and starts Interactably against the body.
 
 ```html
-<script type="module" implements="modifiable revealable"
+<script type="module" implementations="modifiable revealable"
         src="interactably/dist/cdn/interactably-bootstrap.js"></script>
 
 <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
@@ -45,11 +45,11 @@ Every click on `+` runs `#qty.set(#qty.value + 1)` and then `#preview.set(#qty.v
 
 | Bundle | Contents |
 | --- | --- |
-| `interactably-bootstrap.js` | the declarative entry: reads the head `script[implements]`, imports exactly those implementations, and starts. The documented way in. |
+| `interactably-bootstrap.js` | the declarative entry: reads every `script[implementations]` in the document, imports exactly those implementations, and starts. The documented way in. |
 | `interactably-core.js` | parser, executor, event, attachment, registry. No implementations, no bootstrap. |
 | `modifiable.js`, `dirtyable.js`, `renderable.js`, … | one implementation per file, registering into the core's registry on import |
 
-> **The participation rule.** An element is a participant — something `start()` attaches — when it has `implements`, any `on-*` attribute, or both. The runtime scans and observes the `<body>` element and everything it contains; nothing in the head is ever a participant, so the declaring script tag is never attached. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new `implements` or `on-*` attribute to an element after insertion does not attach it; re-insert the element.
+> **The participation rule.** An element is a participant — something `start()` attaches — when it has `implements`, any `on-*` attribute, or both. The runtime scans and observes the `<body>` element and everything it contains; the head is never scanned, so an element there is never a participant, even one carrying `on-*`. The bootstrap script is not a participant either: it lists implementations in `implementations`, while only an element's `implements` marks a receiver. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new `implements` or `on-*` attribute to an element after insertion does not attach it; re-insert the element.
 
 ---
 
@@ -224,10 +224,11 @@ config file.
 
 It diagnoses every parse error at its range, an unknown verb, an unknown receiver
 (`#id` with no element), an unknown event, an element `implements` name the bootstrap
-tag does not declare, a non-built-in on the bootstrap tag, and a page that uses phrases
-with no bootstrap tag. It completes ids after `#`, an element's verbs after `#id.` or
-`this.`, implementation names inside either `implements="…"`, and `on-<event>` at an
-attribute name.
+script's `implementations` does not list, a non-built-in in the bootstrap script's
+`implementations`, and a page that uses phrases with no bootstrap tag. It completes ids
+after `#`, an element's verbs after `#id.` or `this.`, implementation names inside an
+element's `implements="…"` and the bootstrap script's `implementations="…"`, and
+`on-<event>` at an attribute name.
 
 ```sh
 pnpm --filter interactably-language-server exec interactably-lsp --stdio

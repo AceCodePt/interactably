@@ -1,6 +1,5 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isRecognisedBootstrapSrc } from "../src/analysis.ts";
 import { analyze } from "../src/analysis.ts";
 import { diagnose, fixture, findByCode, positionAfter, siteExample, substringOf, documentFor, vocabulary } from "./support.ts";
 
@@ -113,8 +112,8 @@ test("diagnostics: a verb typo in todo-list.html yields exactly one diagnostic a
 
 test("diagnostics: dropping an implementation from the bootstrap reports each usage, never the script", () => {
   const text = siteExample("todo-list.html").replace(
-    'implements="attributable copyable modifiable renderable requestable storable"',
-    'implements="attributable copyable modifiable renderable requestable"',
+    'implementations="attributable copyable modifiable renderable requestable storable"',
+    'implementations="attributable copyable modifiable renderable requestable"',
   );
   const diagnostics = diagnose(text);
   const undeclared = diagnostics.filter(
@@ -135,49 +134,15 @@ test("diagnostics: dropping an implementation from the bootstrap reports each us
   }
 });
 
-test("bootstrap: every recognised URL shape anchors a page", () => {
-  const names = [
-    "url-jsdelivr.html",
-    "url-jsdelivr-noversion.html",
-    "url-esm-run.html",
-    "url-unpkg.html",
-    "url-esm-unpkg.html",
-    "url-esm-sh.html",
-    "url-node-modules.html",
-    "url-dist-cdn.html",
-    "url-unrecognised-implements.html",
-  ];
-  for (const name of names) {
-    const text = fixture(name);
-    assert.equal(findByCode(diagnose(text), "missing-bootstrap"), undefined, `${name} should have a bootstrap`);
-    assert.equal(analyze(text, vocabulary).hasBootstrap, true, `${name} should have a bootstrap`);
-  }
+test("bootstrap: a script is a bootstrap only when it carries implementations", () => {
+  const cdnSrc = '<script type="module" src="https://unpkg.com/interactably@1"></script>';
+  const text = `${cdnSrc}\n<button on-click="#x.show()">x</button>`;
+  assert.equal(analyze(text, vocabulary).hasBootstrap, false, "the src shape alone is not a bootstrap");
+  assert.ok(findByCode(diagnose(text), "missing-bootstrap"), "the page reports missing-bootstrap");
 });
 
-test("bootstrap: Skypack is not recognised", () => {
-  const text = fixture("url-skypack.html");
-  assert.ok(findByCode(diagnose(text), "missing-bootstrap"));
-  assert.equal(analyze(text, vocabulary).hasBootstrap, false);
-  assert.equal(isRecognisedBootstrapSrc("https://cdn.skypack.dev/interactably"), false);
-});
-
-test("bootstrap: the URL shapes match with and without a version", () => {
-  const recognised = [
-    "https://cdn.jsdelivr.net/npm/interactably/+esm",
-    "https://cdn.jsdelivr.net/npm/interactably@1.2.3/+esm",
-    "https://esm.run/interactably",
-    "https://esm.run/interactably@1",
-    "https://unpkg.com/interactably/dist/cdn/interactably-bootstrap.js",
-    "https://unpkg.com/interactably@1.2.3/dist/cdn/interactably-bootstrap.js",
-    "https://esm.unpkg.com/interactably@next",
-    "https://esm.sh/interactably@1?dev",
-    "/node_modules/interactably/dist/cdn/interactably-bootstrap.js",
-    "../../dist/cdn/interactably-bootstrap.js",
-  ];
-  for (const source of recognised) {
-    assert.equal(isRecognisedBootstrapSrc(source), true, source);
-  }
-  assert.equal(isRecognisedBootstrapSrc("https://example.com/interactably.js"), false);
-  assert.equal(isRecognisedBootstrapSrc("https://cdn.jsdelivr.net/npm/other@1/+esm"), false);
-  assert.equal(isRecognisedBootstrapSrc(""), false);
+test("bootstrap: a script[implementations] anywhere in the document anchors the page", () => {
+  const text = '<button on-click="#x.show()">x</button>\n<script type="module" implementations="revealable"></script>';
+  assert.equal(analyze(text, vocabulary).hasBootstrap, true, "a body-placed declaration is read");
+  assert.equal(findByCode(diagnose(text), "missing-bootstrap"), undefined);
 });
