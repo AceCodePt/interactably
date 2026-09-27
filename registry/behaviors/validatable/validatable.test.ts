@@ -138,11 +138,11 @@ test("user validity events require both touch and a transition", async () => {
 });
 
 test("a storable restore can install invalid data without firing user-invalid", async () => {
-  localStorage.setItem("draft", "17");
+  localStorage.setItem("draft", JSON.stringify({ value: "17" }));
   const holder = document.createElement("div");
   holder.innerHTML =
     '<input type="number" min="18" required implements="validatable storable modifiable" ' +
-    'storable-key="draft" storable-value="20" on-restore(value:string)="this.set(value)">';
+    'storable-id="draft" on-restore(value:string)="this.set(value)">';
   const input = holder.firstElementChild as HTMLInputElement;
   document.body.appendChild(input);
   await flush();

@@ -4,6 +4,7 @@ const GLOBAL_KEYS = [
   "window",
   "document",
   "customElements",
+  "Element",
   "HTMLElement",
   "HTMLInputElement",
   "HTMLButtonElement",

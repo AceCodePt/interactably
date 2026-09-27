@@ -35,7 +35,21 @@ export function exclusivePair(slot: ExclusiveSlot): { other: string; slot: Slot 
   return slot[EXCLUSIVE_SLOT];
 }
 
-export type Slot = string | Ctor | OptionalCtor | ExclusiveSlot;
+const SCALAR_OR_SLOT = Symbol("scalarOrSlot");
+
+export interface ScalarOrSlot<C extends Ctor = Ctor> {
+  readonly [SCALAR_OR_SLOT]: C;
+}
+
+export function scalarOr<C extends Ctor>(ctor: C): ScalarOrSlot<C> {
+  return { [SCALAR_OR_SLOT]: ctor };
+}
+
+export function isScalarOrSlot(slot: unknown): slot is ScalarOrSlot {
+  return typeof slot === "object" && slot !== null && SCALAR_OR_SLOT in slot;
+}
+
+export type Slot = string | Ctor | OptionalCtor | ExclusiveSlot | ScalarOrSlot;
 export type Sig = Slot | Readonly<Record<string, Slot>>;
 
 export interface CompiledSignature {
@@ -76,11 +90,30 @@ function compileSlot(slot: Slot): CompiledSignature {
   if (typeof slot === "function") return ctorSignature(slot, false);
   if (isOptionalCtor(slot)) return ctorSignature(slot[OPTIONAL_CTOR], true);
   if (isExclusiveSlot(slot)) return compileSlot(slot[EXCLUSIVE_SLOT].slot);
+  if (isScalarOrSlot(slot)) {
+    const scalar = compileSlot("string | number | boolean");
+    const element = compileSlot(slot[SCALAR_OR_SLOT]);
+    return {
+      validate(value: unknown): unknown {
+        try {
+          return scalar.validate(value);
+        } catch {
+          return element.validate(value);
+        }
+      },
+    };
+  }
   throw new Error("invalid signature slot");
 }
 
 export function compileSignature(sig: Sig): CompiledSignature {
-  if (typeof sig === "string" || typeof sig === "function" || isOptionalCtor(sig)) {
+  if (
+    typeof sig === "string" ||
+    typeof sig === "function" ||
+    isOptionalCtor(sig) ||
+    isExclusiveSlot(sig) ||
+    isScalarOrSlot(sig)
+  ) {
     return compileSlot(sig);
   }
   const fields = new Map<string, CompiledSignature>();

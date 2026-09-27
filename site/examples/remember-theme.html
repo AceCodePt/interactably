@@ -34,26 +34,24 @@
     <h1 class="doc-title">Remember my theme</h1>
     <p class="doc-lede">
           <code class="inline-code">storable</code> &times; <code class="inline-code">attributable</code> &times;
-          <code class="inline-code">revealable</code>. Three buttons declare a <code class="inline-code">storable-value</code>
-          under one key and save on click; exactly one of them also carries <code class="inline-code">on-load="this.restore()"</code>,
-          and its <code class="inline-code">on-restore(value:string)</code> hands the stored string to the phrase, which paints
-          <code class="inline-code">data-theme</code> on the card and flashes the toast. One restore site is enough because the
-          phrase paints whatever value it is handed; the other two buttons only save. Nothing is stored until a phrase calls
-          <code class="inline-code">save()</code>, and <em>Forget</em> clears the key. Reload the page to see it come back.
+          <code class="inline-code">revealable</code>. One element owns the storage &mdash; <code class="inline-code">#theme-store</code>
+          carries <code class="inline-code">storable-id="theme"</code>, <code class="inline-code">on-load="this.restore()"</code> and the
+          <code class="inline-code">on-restore(name:string)</code> handler. The three choice buttons target it by <code class="inline-code">id</code>
+          and call <code class="inline-code">save({name: &hellip;})</code> with their own value; the handler paints whatever
+          <code class="inline-code">data-theme</code> it is handed onto the card and flashes the toast. Nothing is stored until a phrase calls
+          <code class="inline-code">save()</code>, and <em>Forget</em> clears the owner. Reload the page to see it come back.
         </p>
     <div class="example-body">
 
               <div class="demo">
                 <div class="row">
-                  <button id="theme-light" type="button" implements="storable" storable-key="theme" storable-value="light"
+                  <button id="theme-light" type="button" on-click="#theme-store.save({name: 'light'}); #stage.setAttr({name: 'data-theme', value: 'light'})">Light</button>
+                  <button id="theme-dark" type="button" on-click="#theme-store.save({name: 'dark'}); #stage.setAttr({name: 'data-theme', value: 'dark'})">Dark</button>
+                  <button id="theme-sepia" type="button" on-click="#theme-store.save({name: 'sepia'}); #stage.setAttr({name: 'data-theme', value: 'sepia'})">Sepia</button>
+                  <button id="theme-forget" type="button" on-click="#theme-store.clear(); #stage.setAttr({name: 'data-theme', value: 'light'})">Forget</button>
+                  <button id="theme-store" type="button" implements="storable" storable-id="theme" hidden
                           on-load="this.restore()"
-                          on-click="#stage.setAttr({name: 'data-theme', value: 'light'}); this.save()"
-                          on-restore(value:string)="#stage.setAttr({name: 'data-theme', value: value}); #theme-toast.show()">Light</button>
-                  <button id="theme-dark" type="button" implements="storable" storable-key="theme" storable-value="dark"
-                          on-click="#stage.setAttr({name: 'data-theme', value: 'dark'}); this.save()">Dark</button>
-                  <button id="theme-sepia" type="button" implements="storable" storable-key="theme" storable-value="sepia"
-                          on-click="#stage.setAttr({name: 'data-theme', value: 'sepia'}); this.save()">Sepia</button>
-                  <button id="theme-forget" type="button" on-click="#theme-light.clear(); #stage.setAttr({name: 'data-theme', value: 'light'})">Forget</button>
+                          on-restore(name:string)="#stage.setAttr({name: 'data-theme', value: name}); #theme-toast.show()"></button>
                 </div>
                 <div id="stage" class="stage" implements="attributable" data-theme="light">
                   <p><code class="inline-code">storable</code> keeps the choice, <code class="inline-code">attributable</code> paints
@@ -72,21 +70,20 @@
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-theme" implements="copyable" on-copy="#copy-code-ex-theme.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button implements="storable" storable-key="theme" storable-value="light"
+              <pre class="code" id="code-ex-theme" implements="copyable" on-copy="#copy-code-ex-theme.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button id="theme-light" type="button" on-click="#theme-store.save({name: 'light'}); #stage.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
+    &lt;!-- Dark and Sepia target the same owner with their own value --&gt;
+    &lt;button id="theme-dark" type="button" on-click="#theme-store.save({name: 'dark'}); #stage.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
+    &lt;button id="theme-sepia" type="button" on-click="#theme-store.save({name: 'sepia'}); #stage.setAttr({name: 'data-theme', value: 'sepia'})"&gt;Sepia&lt;/button&gt;
+    &lt;!-- one element owns the storage: it restores, and its handler paints whatever name it is handed --&gt;
+    &lt;button id="theme-store" type="button" implements="storable" storable-id="theme" hidden
             on-load="this.restore()"
-            on-click="#stage.setAttr({name: 'data-theme', value: 'light'}); this.save()"
-            on-restore(value:string)="#stage.setAttr({name: 'data-theme', value: value}); #theme-toast.show()"&gt;Light&lt;/button&gt;
-    &lt;!-- Dark and Sepia keep the same storable-key and their own value, but only save --&gt;
-    &lt;button implements="storable" storable-key="theme" storable-value="dark"
-            on-click="#stage.setAttr({name: 'data-theme', value: 'dark'}); this.save()"&gt;Dark&lt;/button&gt;
-    &lt;button implements="storable" storable-key="theme" storable-value="sepia"
-            on-click="#stage.setAttr({name: 'data-theme', value: 'sepia'}); this.save()"&gt;Sepia&lt;/button&gt;
+            on-restore(name:string)="#stage.setAttr({name: 'data-theme', value: name}); #theme-toast.show()"&gt;&lt;/button&gt;
 
     &lt;div id="stage" class="stage" implements="attributable" data-theme="light"&gt;
       &lt;p&gt;&hellip;&lt;/p&gt;
       &lt;span id="theme-toast" class="toast" implements="revealable" hidden&gt;Restored from storage.&lt;/span&gt;
     &lt;/div&gt;
-    &lt;button on-click="#theme-light.clear()"&gt;Forget&lt;/button&gt;</code></pre>
+    &lt;button id="theme-forget" on-click="#theme-store.clear()"&gt;Forget&lt;/button&gt;</code></pre>
             </div>
           </details>
   </main>

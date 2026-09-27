@@ -52,16 +52,16 @@
                   </label>
                   <button id="todo-add" type="button" on-click="#todo-list.render({template: #todo-row-tpl, swap: 'beforeend', title: #todo-input.value, id: now()}); #todo-input.clear()">Add task</button>
                   <button id="todo-load" type="button" on-click="#todo-list.send()">Load the sample list</button>
-                  <button id="todo-undo" type="button" on-click="#todo-list.undo(); #todo-store.save()">Undo last</button>
+                  <button id="todo-undo" type="button" on-click="#todo-list.undo(); #todo-store.save({html: #todo-list})">Undo last</button>
                 </div>
                 <ul id="todo-list" implements="requestable renderable"
                     requestable-url="../fragments/todos.html" requestable-method="get"
                     on-response(html:string)="#todo-list.render({payload: html})"
-                    on-rendered="#todo-store.save()"></ul>
+                    on-rendered="#todo-store.save({html: #todo-list})"></ul>
                 <p class="demo-note">The list is empty before the first render and after the last delete; there is no conditional empty-state renderer.</p>
-                <span id="todo-store" implements="storable" storable-key="todos" storable-value="#todo-list"
+                <span id="todo-store" implements="storable" storable-id="todos"
                       on-load="this.restore()"
-                      on-restore(value:string)="#todo-list.render({payload: value})" hidden></span>
+                      on-restore(html:string)="#todo-list.render({payload: html})" hidden></span>
                 <template id="todo-row-tpl">
                   <li id="todo-row-{id}">
                     <span class="todo-title">{title}</span>
@@ -84,15 +84,15 @@
 &lt;/label&gt;
 &lt;button id="add" type="button" on-click="#list.render({template: #row-tpl, swap: 'beforeend', title: #input.value, id: now()}); #input.clear()"&gt;Add task&lt;/button&gt;
 &lt;button id="load" type="button" on-click="#list.send()"&gt;Load the sample list&lt;/button&gt;
-&lt;button id="undo" type="button" on-click="#list.undo(); #store.save()"&gt;Undo last&lt;/button&gt;
+&lt;button id="undo" type="button" on-click="#list.undo(); #store.save({html: #list})"&gt;Undo last&lt;/button&gt;
 &lt;ul id="list" implements="requestable renderable"
     requestable-url="../fragments/todos.html" requestable-method="get"
     on-response(html:string)="#list.render({payload: html})"
-    on-rendered="#store.save()"&gt;&lt;/ul&gt;
+    on-rendered="#store.save({html: #list})"&gt;&lt;/ul&gt;
 &lt;p class="demo-note"&gt;The list is empty before the first render and after the last delete; there is no conditional empty-state renderer.&lt;/p&gt;
-&lt;span id="store" implements="storable" storable-key="todos" storable-value="#list"
+&lt;span id="store" implements="storable" storable-id="todos"
       on-load="this.restore()"
-      on-restore(value:string)="#list.render({payload: value})" hidden&gt;&lt;/span&gt;
+      on-restore(html:string)="#list.render({payload: html})" hidden&gt;&lt;/span&gt;
 &lt;template id="row-tpl"&gt;
   &lt;li id="row-{id}"&gt;
     &lt;span class="todo-title"&gt;{title}&lt;/span&gt;

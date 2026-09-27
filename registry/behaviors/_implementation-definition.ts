@@ -1,6 +1,6 @@
 import { SUPPORTED_KEYWORDS, dslString } from "tsyntax";
 import type { DSLValidate } from "tsyntax";
-import { compileSignature, exclusivePair, isExclusiveSlot, isOptionalCtor } from "@interactable/signature.ts";
+import { compileSignature, exclusivePair, isExclusiveSlot, isOptionalCtor, isScalarOrSlot } from "@interactable/signature.ts";
 import type { CompiledSignature, Sig } from "@interactable/signature.ts";
 import { registerImplementation } from "@behaviors/implementation-registry.ts";
 import type { NormalizedImplementationDef } from "@behaviors/implementation-registry.ts";
@@ -86,6 +86,8 @@ function validateVerbSlot(name: string, verb: string, sig: Sig): void {
     validateScalar(name, `verb ${verb}()`, sig);
   } else if (isExclusiveSlot(sig)) {
     validateVerbSlot(name, verb, exclusivePair(sig).slot);
+  } else if (isScalarOrSlot(sig)) {
+    return;
   } else if (typeof sig !== "function" && !isOptionalCtor(sig)) {
     for (const [key, slot] of Object.entries(sig)) validateVerbSlot(name, `${verb}.${key}`, slot);
   }

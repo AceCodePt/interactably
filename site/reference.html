@@ -184,12 +184,14 @@
 
       <article class="ref-card">
         <h3><code class="inline-code">storable</code></h3>
-        <p class="ref-tags">input &middot; select &middot; textarea</p>
-        <p class="ref-desc">Persists a declared slot under a declared key to <code class="inline-code">local</code> or <code class="inline-code">session</code> storage &mdash; nothing is stored unless a phrase calls <code class="inline-code">save()</code>. <code class="inline-code">storable-value</code> is a literal, or a ref: a bare ref (<code class="inline-code">this</code>, <code class="inline-code">#cart</code>) means the element's contents, <code class="inline-code">this.value</code> means that property. <code class="inline-code">restore()</code> reads the key and fires <code class="inline-code">restore</code> carrying the stored string as its declared value <code class="inline-code">value</code> (<code class="inline-code">on-restore(value:string)</code>), writing nothing to the DOM; the phrase receives the value and decides where it lands, and an <code class="inline-code">on-restore(value:`&hellip;`)</code> literal is how it runs for one stored value only. Nothing restores without <code class="inline-code">on-load="this.restore()"</code>. <code class="inline-code">clear()</code> removes the key.</p>
+        <p class="ref-tags">any element</p>
+        <p class="ref-desc">The element owns its storage. <code class="inline-code">storable-id</code> names it (page-unique by the <code class="inline-code">-id</code> convention); nothing is stored unless a phrase calls <code class="inline-code">save()</code>. <code class="inline-code">save({name: &rsquo;dark&rsquo;, size: 12})</code> writes the named fields as one JSON object &mdash; a field is a scalar or a bare ref (<code class="inline-code">#cart</code>), stored as that element&rsquo;s <code class="inline-code">innerHTML</code>; <code class="inline-code">save()</code> writes <code class="inline-code">{}</code>. <code class="inline-code">restore()</code> reads the id, parses the JSON object, and matches it by field names and JSON types against the shapes the element&rsquo;s own <code class="inline-code">on-restore</code> handlers declare; the matching handler runs, a non-match is silent, and invalid JSON or a non-object fires <code class="inline-code">restore-error</code> (<code class="inline-code">reason: parse</code>). A failed write fires <code class="inline-code">save-error</code> with <code class="inline-code">reason</code> <code class="inline-code">quota</code>, <code class="inline-code">denied</code> or <code class="inline-code">serialize</code>. Nothing restores without <code class="inline-code">on-load="this.restore()"</code>; <code class="inline-code">clear()</code> removes the object.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">save</span><span class="verb-tag">restore</span><span class="verb-tag">clear</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">scope</span><span class="verb-tag">key</span><span class="verb-tag">value</span></div>
+        <div><span class="verb-tag">id</span></div>
+        <p class="ref-labels">Events</p>
+        <div><span class="verb-tag">restore</span><span class="verb-tag">save-error</span><span class="verb-tag">restore-error</span></div>
       </article>
 
       <article class="ref-card">

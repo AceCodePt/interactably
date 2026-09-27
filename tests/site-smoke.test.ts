@@ -267,10 +267,10 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   // runs. start() defers the initial scan to DOMContentLoaded, which is when
   // on-load="this.restore()" replays the stored selection and the matching
   // buttons' on-restore phrases flip the panels.
-  localStorage.setItem("pm", "pnpm");
-  localStorage.setItem("theme", "sepia");
-  localStorage.setItem("maintab", "notes");
-  localStorage.setItem("todos", todoFragment);
+  localStorage.setItem("pm", JSON.stringify({ pnpm: true }));
+  localStorage.setItem("theme", JSON.stringify({ name: "sepia" }));
+  localStorage.setItem("maintab", JSON.stringify({ notes: true }));
+  localStorage.setItem("todos", JSON.stringify({ html: todoFragment }));
   setReadyState("loading");
   const holder = document.createElement("div");
   holder.innerHTML = examplePagesBody();
@@ -300,8 +300,12 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(todoList.children.length, 0, "every restored delete phrase removes its row");
   localStorage.removeItem("todos");
 
-  const pmNpm = document.querySelector('button[storable-value="npm"]') as HTMLButtonElement;
-  const pmBun = document.querySelector('button[storable-value="bun"]') as HTMLButtonElement;
+  const pmNpm = document.querySelector(
+    'button[on-click*="pm-store.save({npm: true})"]',
+  ) as HTMLButtonElement;
+  const pmBun = document.querySelector(
+    'button[on-click*="pm-store.save({bun: true})"]',
+  ) as HTMLButtonElement;
   assert.equal(byId("install-pnpm").hidden, false, "the stored pnpm buttons' on-load restore opens the pnpm install panel");
   assert.equal(byId("config-pnpm").hidden, false, "the stored pnpm buttons' on-load restore opens the pnpm config panel");
   assert.equal(byId("trouble-pnpm").hidden, false, "the stored pnpm buttons' on-load restore opens the pnpm trouble panel");
@@ -317,13 +321,17 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(byId("config-pnpm").hidden, true, "the pnpm config panel closes");
   assert.equal(byId("trouble-pnpm").hidden, true, "the pnpm trouble panel closes");
   assert.equal(byId("install-bun").hidden, true, "the bun install panel stays closed");
-  assert.equal(localStorage.getItem("pm"), "npm", "clicking stores the new selection");
+  assert.equal(
+    localStorage.getItem("pm"),
+    JSON.stringify({ npm: true }),
+    "clicking stores the new selection",
+  );
   await click(pmBun);
   assert.equal(byId("install-bun").hidden, false, "the bun button opens all three bun panels");
   assert.equal(byId("config-bun").hidden, false);
   assert.equal(byId("trouble-bun").hidden, false);
   assert.equal(byId("install-pnpm").hidden, true, "the pnpm panels close when bun is picked");
-  assert.equal(localStorage.getItem("pm"), "bun", "the bun selection is stored");
+  assert.equal(localStorage.getItem("pm"), JSON.stringify({ bun: true }), "the bun selection is stored");
 
   const autoPanel = byId("auto-demo-panel");
   assert.equal(autoPanel.hidden, true, "the plain panel starts closed");
@@ -538,7 +546,7 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(byId("theme-toast").hidden, false, "restore reveals the toast");
   await click(byId("theme-dark"));
   assert.equal(stage.getAttribute("data-theme"), "dark", "the button paints immediately");
-  assert.equal(localStorage.getItem("theme"), "dark", "and saves the choice");
+  assert.equal(localStorage.getItem("theme"), JSON.stringify({ name: "dark" }), "and saves the choice");
   await click(byId("theme-forget"));
   assert.equal(localStorage.getItem("theme"), null, "Forget clears the key");
   assert.equal(stage.getAttribute("data-theme"), "light", "and reverts the card to its authored theme");
@@ -547,7 +555,11 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(byId("mp-notes").hidden, false, "the stored tab's panel is open on load");
   assert.equal(byId("mp-overview").hidden, true, "and the authored default is closed");
   await click(byId("mp-tab-overview"));
-  assert.equal(localStorage.getItem("maintab"), "overview", "the live switch saves the new tab");
+  assert.equal(
+    localStorage.getItem("maintab"),
+    JSON.stringify({ overview: true }),
+    "the live switch saves the new tab",
+  );
   assert.equal(byId("mp-notes").hidden, true, "and closes the remembered panel");
 
   // Open + focus (revealable × focusable × modifiable)
@@ -643,7 +655,11 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   todoFetch.resolve(fakeResponse(true, 200, todoFragment));
   await flush();
   assert.equal(todoList.children.length, 3, "the GET response renders the seeded rows");
-  assert.equal(localStorage.getItem("todos"), todoList.innerHTML, "rendered snapshots the list into storage");
+  assert.equal(
+    localStorage.getItem("todos"),
+    JSON.stringify({ html: todoList.innerHTML }),
+    "rendered snapshots the list into storage",
+  );
 
   const todoInput = byId("todo-input") as HTMLInputElement;
   todoInput.value = "Write the handoff";
@@ -653,11 +669,19 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   const addedTodo = todoList.lastElementChild as HTMLElement;
   assert.match(addedTodo.id, /^todo-row-\d+$/);
   assert.equal(addedTodo.querySelector(".todo-title")?.textContent, "Write the handoff");
-  assert.equal(localStorage.getItem("todos"), todoList.innerHTML, "adding snapshots the stamped row");
+  assert.equal(
+    localStorage.getItem("todos"),
+    JSON.stringify({ html: todoList.innerHTML }),
+    "adding snapshots the stamped row",
+  );
 
   await click(todoList.querySelector("li button")!);
   assert.equal(todoList.children.length, 3, "delete removes a row by its stamped id");
-  assert.equal(localStorage.getItem("todos"), todoList.innerHTML, "deleting snapshots the list");
+  assert.equal(
+    localStorage.getItem("todos"),
+    JSON.stringify({ html: todoList.innerHTML }),
+    "deleting snapshots the list",
+  );
 
   todoInput.value = "Undo this row";
   await click(byId("todo-add"));
@@ -666,12 +690,16 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   await click(byId("todo-undo"));
   assert.equal(todoList.children.length, 3, "undo removes the last stamped row");
   assert.equal(document.getElementById(undoTodoId), null);
-  assert.equal(localStorage.getItem("todos"), todoList.innerHTML, "undo explicitly snapshots the list");
+  assert.equal(
+    localStorage.getItem("todos"),
+    JSON.stringify({ html: todoList.innerHTML }),
+    "undo explicitly snapshots the list",
+  );
 
   const todoStore = byId("todo-store");
   const storedTodo = todoList.innerHTML;
   todoList.replaceChildren();
-  localStorage.setItem("todos", storedTodo);
+  localStorage.setItem("todos", JSON.stringify({ html: storedTodo }));
   todoStore.remove();
   await flush();
   document.body.append(todoStore);
@@ -691,7 +719,11 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(cart.querySelector(".cart-name")?.textContent, "Enamel mug");
   assert.equal(cart.querySelector(".cart-price")?.textContent, "12");
   assert.equal(cartTotal.textContent, "$12.00", "the rendered event recomputes the total");
-  assert.equal(localStorage.getItem("cart"), cart.innerHTML, "the rendered event mirrors the cart markup");
+  assert.equal(
+    localStorage.getItem("cart"),
+    JSON.stringify({ html: cart.innerHTML }),
+    "the rendered event mirrors the cart markup",
+  );
 
   await new Promise((resolve) => setTimeout(resolve, 2));
   await click(byId("shop-add-mug"));
@@ -721,7 +753,11 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   await click(byId("cart-empty"));
   assert.equal(cart.children.length, 0, "empty cart removes every line");
   assert.equal(cartTotal.textContent, "$0.00", "empty cart zeroes the total");
-  assert.equal(localStorage.getItem("cart"), "", "empty cart saves the empty DOM snapshot");
+  assert.equal(
+    localStorage.getItem("cart"),
+    JSON.stringify({ html: "" }),
+    "empty cart saves the empty DOM snapshot",
+  );
 
   cartStore.remove();
   await flush();

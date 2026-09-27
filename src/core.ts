@@ -34,5 +34,5 @@ export type { InteractionEventInit } from "@interactable/interaction-event.ts";
 export { ImplementationEvent } from "@interactable/implementation-event.ts";
 export type { ImplementationEventInit } from "@interactable/implementation-event.ts";
 export { isImplementationEvent } from "@interactable/events.ts";
-export { compileSignature, exclusive, optionalCtor } from "@interactable/signature.ts";
-export type { CompiledSignature, Ctor, ExclusiveSlot, OptionalCtor, Sig as SignatureSlot } from "@interactable/signature.ts";
+export { compileSignature, exclusive, optionalCtor, scalarOr } from "@interactable/signature.ts";
+export type { CompiledSignature, Ctor, ExclusiveSlot, OptionalCtor, ScalarOrSlot, Sig as SignatureSlot } from "@interactable/signature.ts";

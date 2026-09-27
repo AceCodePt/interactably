@@ -1,5 +1,6 @@
 import { isAttached } from "@interactable/attachment.ts";
 import { parse, isNumericUnion } from "@interactable/parser.ts";
+import { compileSignature } from "@interactable/signature.ts";
 import { getEventFieldTypes } from "@interactable/events.ts";
 import { INTERSECT_EVENT_NAMES } from "@interactable/intersect.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
@@ -69,7 +70,7 @@ function runPhrase(
   ev: Event,
   eventAttribute?: EventAttribute,
 ): void {
-  if (eventAttribute !== undefined && !matchesLiteralDeclarations(source, eventAttribute, ev)) return;
+  if (eventAttribute !== undefined && !matchesDeclarations(source, eventAttribute, ev)) return;
   if (ev instanceof ImplementationEvent && ev.key !== undefined) {
     if (!INTERSECT_EVENT_NAMES.has(ev.type) && phrase.key !== ev.key) {
       return;
@@ -99,12 +100,31 @@ function runPhrase(
   }
 }
 
-function matchesLiteralDeclarations(source: Element, eventAttribute: EventAttribute, ev: Event): boolean {
+const typeAcceptsUndefined = new Map<string, boolean>();
+
+function declarationTypeAcceptsUndefined(type: string): boolean {
+  const cached = typeAcceptsUndefined.get(type);
+  if (cached !== undefined) return cached;
+  let accepts = false;
+  try {
+    compileSignature(type).validate(undefined);
+    accepts = true;
+  } catch {}
+  typeAcceptsUndefined.set(type, accepts);
+  return accepts;
+}
+
+function matchesDeclarations(source: Element, eventAttribute: EventAttribute, ev: Event): boolean {
   const declaration = eventAttribute.declaration;
   if (declaration === undefined) return true;
   const fields = getEventFieldTypes(source, ev.type);
   for (const value of declaration) {
-    if (value.kind !== "literal") continue;
+    if (value.kind !== "literal") {
+      if (fieldValue(ev, value.name) === undefined && !declarationTypeAcceptsUndefined(value.type)) {
+        return false;
+      }
+      continue;
+    }
     const raw = fieldValue(ev, value.name);
     if (raw === undefined) return false;
     const fieldType = fields?.[value.name];

@@ -280,8 +280,7 @@ test("editing implements attaches a new name and detaches a removed one individu
   assert.ok(getAttachment(el)?.implementations.has("revealable"), "revealable attaches");
 
   el.setAttribute("implements", "revealable storable");
-  el.setAttribute("storable-key", "k");
-  el.setAttribute("storable-value", "v");
+  el.setAttribute("storable-id", "k");
   el.setAttribute("on-load", "this.restore()");
   await flush();
   assert.ok(getAttachment(el)?.implementations.has("storable"), "storable attaches when named");
@@ -726,7 +725,7 @@ test("open events accept any field and literal at wire time", async () => {
   mountMarkup(
     `<div id="t" implements="attributable"></div>
      <div implements="requestable" on-response(code:\`404\`)="#t.setAttr({name: 'data-r', value: ''})"></div>
-     <div implements="storable" storable-key="k" storable-value="v" on-restore(code:\`404\`)="#t.setAttr({name: 'data-s', value: ''})"></div>`,
+     <div implements="storable" storable-id="k" on-restore(code:\`404\`)="#t.setAttr({name: 'data-s', value: ''})"></div>`,
   );
   try {
     await flush();
@@ -734,6 +733,42 @@ test("open events accept any field and literal at wire time", async () => {
     restore();
   }
   assert.deepEqual(errors, [], `open events accept any field and literal: ${JSON.stringify(errors)}`);
+  dispose();
+});
+
+test("a type binding gates silently: an absent name skips the handler without logging", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  mountMarkup(
+    `<div id="gate" implements="requestable attributable" ` +
+      `on-response(html:string)="#gate.setAttr({name: 'data-html', value: html})"></div>`,
+  );
+  const gate = byId("gate");
+  try {
+    await flush();
+    gate.dispatchEvent(
+      new ImplementationEventClass("response", { values: { html: "<p>x</p>" } }),
+    );
+    assert.equal(gate.getAttribute("data-html"), "<p>x</p>", "a carried name runs the handler");
+    gate.dispatchEvent(new ImplementationEventClass("response", { values: { other: "y" } }));
+    assert.equal(gate.getAttribute("data-html"), "<p>x</p>", "an absent bound name skips the handler");
+  } finally {
+    restore();
+  }
+  assert.deepEqual(errors, [], `an absent bound name is skipped silently: ${JSON.stringify(errors)}`);
+  dispose();
+});
+
+test("a binding whose declared type accepts undefined runs when the name is absent", async () => {
+  const dispose = start();
+  mountMarkup(
+    `<div id="gate" implements="requestable attributable" ` +
+      `on-response(html:string|undefined)="#gate.setAttr({name: 'data-ran', value: ''})"></div>`,
+  );
+  const gate = byId("gate");
+  await flush();
+  gate.dispatchEvent(new ImplementationEventClass("response", { values: {} }));
+  assert.equal(gate.hasAttribute("data-ran"), true, "an optional binding is not gated on absence");
   dispose();
 });
 

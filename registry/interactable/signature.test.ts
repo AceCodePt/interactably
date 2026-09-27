@@ -2,7 +2,7 @@ import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
-import { compileSignature, exclusive, optionalCtor } from "@interactable/signature.ts";
+import { compileSignature, exclusive, optionalCtor, scalarOr } from "@interactable/signature.ts";
 import type { Ctor } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 
@@ -112,6 +112,26 @@ test("a record whose fields are all optional may be omitted even with a '*' rest
   const sig = compileSignature({ method: "'get' | undefined", "*": "string | number" });
   assert.equal(sig.validate(undefined), undefined);
   assert.deepEqual(sig.validate({ q: "x" }), { q: "x" });
+});
+
+test("a scalar-or-Ctor slot accepts a DSL scalar or an instance and rejects anything else", () => {
+  const sig = compileSignature(scalarOr(WidgetCtor));
+  assert.equal(sig.validate("x"), "x");
+  assert.equal(sig.validate(2), 2);
+  assert.equal(sig.validate(true), true);
+  assert.ok(sig.validate(new Widget()) instanceof Widget);
+  assert.throws(() => sig.validate(new Gadget()));
+  assert.throws(() => sig.validate({ nested: 1 }));
+  assert.throws(() => sig.validate(["a"]));
+});
+
+test("a scalar-or-Ctor slot works as a '*' rest slot", () => {
+  const sig = compileSignature({ "*": scalarOr(WidgetCtor) });
+  assert.deepEqual(sig.validate({ a: "x", b: 2, c: true }), { a: "x", b: 2, c: true });
+  const withWidget = sig.validate({ w: new Widget() }) as { w: Widget };
+  assert.ok(withWidget.w instanceof Widget);
+  assert.throws(() => sig.validate({ w: new Gadget() }));
+  assert.throws(() => sig.validate({ w: { nested: 1 } }));
 });
 
 test("an optional-Ctor slot may be omitted but instance-checks when present", () => {

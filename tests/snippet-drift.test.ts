@@ -120,22 +120,27 @@ function count(pattern: RegExp, text: string): number {
   return (text.match(pattern) ?? []).length;
 }
 
-test("storable restore sites are one per distinct value", () => {
+test("each storable example has one owner that declares its own shapes", () => {
   const theme = extractDemo(readExample("remember-theme"));
-  assert.equal(count(/on-load="this\.restore\(\)"/g, theme), 1, "remember-theme has one restore site");
-  assert.equal(count(/on-restore\(/g, theme), 1, "and one on-restore handler");
+  assert.equal(count(/storable-id="theme"/g, theme), 1, "remember-theme has one owner");
+  assert.equal(count(/on-load="this\.restore\(\)"/g, theme), 1, "with one restore site");
+  assert.equal(count(/on-restore\(/g, theme), 1, "and one declared shape");
 
   const tab = extractDemo(readExample("remembered-tab"));
-  assert.equal(count(/on-load="this\.restore\(\)"/g, tab), 1, "remembered-tab has one restore site");
-  assert.equal(count(/on-restore\(/g, tab), 3, "its one site matches each stored literal");
+  assert.equal(count(/storable-id="maintab"/g, tab), 1, "remembered-tab has one owner");
+  assert.equal(count(/on-load="this\.restore\(\)"/g, tab), 1, "with one restore site");
+  assert.equal(count(/on-restore\(/g, tab), 3, "and one shape per tab");
 
   const synced = extractDemo(readExample("synced-sections"));
-  assert.equal(count(/on-load="this\.restore\(\)"/g, synced), 3, "synced-sections has one restore site per value");
-  for (const value of ["npm", "bun", "pnpm"]) {
+  assert.equal(count(/storable-id="pm"/g, synced), 1, "synced-sections has one owner");
+  assert.equal(count(/on-load="this\.restore\(\)"/g, synced), 1, "with one restore site");
+  assert.equal(count(/on-restore\(/g, synced), 3, "and one shape per package manager");
+
+  for (const name of ["remember-theme", "remembered-tab", "synced-sections", "shop-cart", "todo-list"]) {
     assert.equal(
-      count(new RegExp(`on-restore\\(value:\`${value}\`\\)`, "g"), synced),
-      1,
-      `exactly one literal restore site for ${value}`,
+      /storable-(key|value)/.test(readExample(name)),
+      false,
+      `${name} no longer carries storable-key or storable-value`,
     );
   }
 });
