@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { analyze } from "../src/analysis.ts";
-import { diagnose, fixture, findByCode, positionAfter, siteExample, substringOf, documentFor, vocabulary } from "./support.ts";
+import { diagnose, fixture, findByCode, positionAfter, siteExample, siteExampleNames, substringOf, documentFor, vocabulary } from "./support.ts";
 
 test("diagnostics: a parse error is reported verbatim at its range", () => {
   const text = fixture("parse-error.html");
@@ -130,6 +130,71 @@ test("diagnostics: dropping an implementation from the bootstrap reports each us
     assert.ok(
       start < scriptStart || start >= scriptEnd,
       `the bootstrap script is never blamed: ${diagnostic.message}`,
+    );
+  }
+});
+
+test("diagnostics: a duplicate native id is reported on each occurrence", () => {
+  const text = '<script type="module" implementations="revealable"></script>\n<div id="x"></div><span id="x"></span>';
+  const duplicates = diagnose(text).filter((diagnostic) => diagnostic.code === "duplicate-id");
+  assert.equal(duplicates.length, 2);
+  for (const diagnostic of duplicates) {
+    assert.equal(diagnostic.severity, 1);
+    assert.equal(substringOf(text, diagnostic), "x");
+  }
+});
+
+test("diagnostics: a three-way duplicate reports three diagnostics, one per occurrence", () => {
+  const text =
+    '<script type="module" implementations="revealable"></script>\n' +
+    '<div id="x"></div><div id="x"></div><div id="x"></div>';
+  const duplicates = diagnose(text).filter((diagnostic) => diagnostic.code === "duplicate-id");
+  assert.equal(duplicates.length, 3);
+  const starts = duplicates.map((diagnostic) => documentFor(text).offsetAt(diagnostic.range.start));
+  assert.equal(new Set(starts).size, 3, "each diagnostic covers its own occurrence");
+  for (const diagnostic of duplicates) assert.equal(substringOf(text, diagnostic), "x");
+});
+
+test("diagnostics: a duplicated -id config attribute is reported per attribute name", () => {
+  const text =
+    '<script type="module" implementations="revealable"></script>\n' +
+    '<div storable-id="b"></div><div storable-id="b"></div>';
+  const diagnostics = diagnose(text);
+  const duplicates = diagnostics.filter((diagnostic) => diagnostic.code === "duplicate-named-id");
+  assert.equal(duplicates.length, 2);
+  for (const diagnostic of duplicates) assert.equal(substringOf(text, diagnostic), "b");
+  assert.equal(findByCode(diagnostics, "duplicate-id"), undefined, "the native id namespace is untouched");
+});
+
+test("diagnostics: a -id value matching an element native id is clean", () => {
+  const text =
+    '<script type="module" implementations="revealable"></script>\n' +
+    '<div id="same"></div><div storable-id="same"></div>';
+  assert.deepEqual(
+    diagnose(text).map((diagnostic) => diagnostic.code),
+    [],
+  );
+});
+
+test("diagnostics: a document with no duplicates is clean", () => {
+  const text =
+    '<script type="module" implementations="revealable"></script>\n' +
+    '<div id="a"></div><div id="b"></div><div storable-id="c"></div>';
+  assert.deepEqual(
+    diagnose(text).map((diagnostic) => diagnostic.code),
+    [],
+  );
+});
+
+test("diagnostics: every site example reports zero diagnostics", () => {
+  const names = siteExampleNames();
+  assert.equal(names.length, 35, "all 35 site examples are covered");
+  for (const name of names) {
+    const diagnostics = diagnose(siteExample(name));
+    assert.deepEqual(
+      diagnostics.map((diagnostic) => diagnostic.code),
+      [],
+      `${name} must be diagnostic-free`,
     );
   }
 });

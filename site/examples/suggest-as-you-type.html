@@ -54,6 +54,14 @@
                          on-keydown(code:`Escape`)="#city-list.show(false)">
                 </div>
                 <ul id="city-list" implements="renderable revealable" hidden></ul>
+                <!-- the fetched fragment supplies these positional ids; declaring them keeps static tooling aware of them -->
+                <template id="city-option-ids">
+                  <button id="sug-1" implements="focusable"></button>
+                  <button id="sug-2" implements="focusable"></button>
+                  <button id="sug-3" implements="focusable"></button>
+                  <button id="sug-4" implements="focusable"></button>
+                  <button id="sug-5" implements="focusable"></button>
+                </template>
               </div>
     </div>
         <details class="example-code">

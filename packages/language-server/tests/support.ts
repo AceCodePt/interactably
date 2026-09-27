@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import type { Diagnostic } from "vscode-languageserver";
 import { loadVocabulary } from "../src/vocabulary.ts";
@@ -13,6 +13,12 @@ export function fixture(name: string): string {
 
 export function siteExample(name: string): string {
   return readFileSync(new URL(`../../../site/examples/${name}`, import.meta.url), "utf8");
+}
+
+export function siteExampleNames(): string[] {
+  return readdirSync(new URL("../../../site/examples/", import.meta.url))
+    .filter((name) => name.endsWith(".html"))
+    .sort();
 }
 
 export function documentFor(text: string): TextDocument {
