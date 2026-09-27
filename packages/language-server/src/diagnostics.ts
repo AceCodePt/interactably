@@ -16,7 +16,9 @@ export type DiagnosticCode =
   | "unknown-event"
   | "undeclared-implementation"
   | "unknown-implementation"
-  | "missing-bootstrap";
+  | "missing-bootstrap"
+  | "duplicate-id"
+  | "duplicate-named-id";
 
 interface PendingDiagnostic {
   readonly start: number;
@@ -58,6 +60,7 @@ export function computeDiagnostics(analysis: DocumentAnalysis): Diagnostic[] {
   for (const element of analysis.model.elements) {
     reportElementTriggers(analysis, element, add);
   }
+  reportIdUniqueness(analysis, add);
 
   pending.sort((a, b) => a.start - b.start || a.end - b.end);
   return pending.map((item) => item.diagnostic);
@@ -139,6 +142,53 @@ function reportUndeclaredUsages(
       "undeclared-implementation",
       DiagnosticSeverity.Error,
     );
+  }
+}
+
+function reportIdUniqueness(analysis: DocumentAnalysis, add: Adder): void {
+  const nativeValues = new Map<string, { start: number; end: number }[]>();
+  for (const occurrence of analysis.model.idOccurrences) {
+    const occurrences = nativeValues.get(occurrence.value) ?? [];
+    occurrences.push({ start: occurrence.valueStart, end: occurrence.valueEnd });
+    nativeValues.set(occurrence.value, occurrences);
+  }
+  for (const [value, occurrences] of nativeValues) {
+    if (occurrences.length < 2) continue;
+    for (const occurrence of occurrences) {
+      add(
+        occurrence.start,
+        occurrence.end,
+        `duplicate id "${value}": another element in this document already carries it`,
+        "duplicate-id",
+        DiagnosticSeverity.Error,
+      );
+    }
+  }
+
+  const namedValues = new Map<string, Map<string, { start: number; end: number }[]>>();
+  for (const element of analysis.model.elements) {
+    for (const candidate of element.attributes) {
+      if (candidate.name === "id" || !candidate.name.endsWith("-id") || candidate.value === null) continue;
+      const perName = namedValues.get(candidate.name) ?? new Map<string, { start: number; end: number }[]>();
+      const occurrences = perName.get(candidate.value) ?? [];
+      occurrences.push({ start: candidate.valueStart, end: candidate.valueEnd });
+      perName.set(candidate.value, occurrences);
+      namedValues.set(candidate.name, perName);
+    }
+  }
+  for (const [name, perName] of namedValues) {
+    for (const [value, occurrences] of perName) {
+      if (occurrences.length < 2) continue;
+      for (const occurrence of occurrences) {
+        add(
+          occurrence.start,
+          occurrence.end,
+          `duplicate ${name} "${value}": another element in this document already carries it`,
+          "duplicate-named-id",
+          DiagnosticSeverity.Error,
+        );
+      }
+    }
   }
 }
 

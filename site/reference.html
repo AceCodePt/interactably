@@ -37,6 +37,13 @@
     </p>
 
     <h2 style="margin-top:2rem">Shipped implementations</h2>
+    <p class="note">
+      Config attributes are named <code class="inline-code">&lt;impl&gt;-&lt;key&gt;</code>. When the name ends in
+      <code class="inline-code">-id</code>, the value is a page-unique name: each such attribute name is its own
+      namespace, and the language server reports <code class="inline-code">duplicate-named-id</code> when two elements
+      share a value. A native <code class="inline-code">id</code> is checked the same way as
+      <code class="inline-code">duplicate-id</code>.
+    </p>
     <div class="ref-grid">
 
       <article class="ref-card">

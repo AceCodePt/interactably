@@ -18,10 +18,17 @@ export interface HtmlElement {
   readonly attributes: readonly HtmlAttribute[];
 }
 
+export interface IdOccurrence {
+  readonly value: string;
+  readonly valueStart: number;
+  readonly valueEnd: number;
+}
+
 export interface HtmlDocumentModel {
   readonly elements: readonly HtmlElement[];
   readonly ids: ReadonlySet<string>;
   readonly byId: ReadonlyMap<string, HtmlElement>;
+  readonly idOccurrences: readonly IdOccurrence[];
 }
 
 const languageService = getLanguageService();
@@ -30,6 +37,7 @@ export function parseHtml(text: string): HtmlDocumentModel {
   const scanner = languageService.createScanner(text);
   const elements: HtmlElement[] = [];
   const byId = new Map<string, HtmlElement>();
+  const idOccurrences: IdOccurrence[] = [];
   let tag: string | null = null;
   let tagStart = 0;
   let tagOpenStart = 0;
@@ -92,8 +100,14 @@ export function parseHtml(text: string): HtmlDocumentModel {
           const element: HtmlElement = { tag, start: tagStart, startTagEnd, attributes };
           elements.push(element);
           for (const attribute of attributes) {
-            if (attribute.name === "id" && attribute.value !== null && attribute.value !== "") {
-              if (!byId.has(attribute.value)) byId.set(attribute.value, element);
+            if (attribute.name !== "id" || attribute.value === null) continue;
+            idOccurrences.push({
+              value: attribute.value,
+              valueStart: attribute.valueStart,
+              valueEnd: attribute.valueEnd,
+            });
+            if (attribute.value !== "" && !byId.has(attribute.value)) {
+              byId.set(attribute.value, element);
             }
           }
         }
@@ -107,7 +121,7 @@ export function parseHtml(text: string): HtmlDocumentModel {
     }
   }
 
-  return { elements, ids: new Set(byId.keys()), byId };
+  return { elements, ids: new Set(byId.keys()), byId, idOccurrences };
 }
 
 export function attribute(element: HtmlElement, name: string): HtmlAttribute | undefined {
