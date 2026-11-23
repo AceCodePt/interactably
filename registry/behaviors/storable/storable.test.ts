@@ -152,12 +152,12 @@ test("save() then restore() round-trips the fields as declared values", async ()
   const holder = document.createElement("div");
   holder.innerHTML =
     `<div storable attributable storable-id="draft" ` +
-    `on-restore(size:number)="this.setAttr({name: 'data-size', value: size})"></div>`;
+    `on-restore="({size: string}) => { this.setAttr({name: 'data-size', value: size}) }"></div>`;
   const el = holder.firstElementChild as HTMLDivElement;
   document.body.appendChild(el);
   await flush();
 
-  interact(el, "save", { size: 12 });
+  interact(el, "save", { size: "12" });
   el.removeAttribute("data-size");
   interact(el, "restore");
   assert.equal(el.getAttribute("data-size"), "12");
@@ -193,7 +193,7 @@ test("a stored object matching a declared shape runs that handler", async () => 
   const holder = document.createElement("div");
   holder.innerHTML =
     `<div storable attributable storable-id="draft" ` +
-    `on-restore(name:string)="this.setAttr({name: 'data-name', value: name})"></div>`;
+    `on-restore="({name: string}) => { this.setAttr({name: 'data-name', value: name}) }"></div>`;
   const el = holder.firstElementChild as HTMLDivElement;
   document.body.appendChild(el);
   await flush();
@@ -209,7 +209,7 @@ test("a stored object matching no declared shape is silent", async () => {
   const holder = document.createElement("div");
   holder.innerHTML =
     `<div storable attributable storable-id="draft" ` +
-    `on-restore(name:string)="this.setAttr({name: 'data-name', value: name})"></div>`;
+    `on-restore="({name: string}) => { this.setAttr({name: 'data-name', value: name}) }"></div>`;
   const el = holder.firstElementChild as HTMLDivElement;
   document.body.appendChild(el);
   await flush();
@@ -234,12 +234,12 @@ test("a JSON type mismatch is a silent non-match, not a parse error", async () =
   const holder = document.createElement("div");
   holder.innerHTML =
     `<div storable attributable storable-id="draft" ` +
-    `on-restore(size:number)="this.setAttr({name: 'data-size', value: size})"></div>`;
+    `on-restore="({size: string}) => { this.setAttr({name: 'data-size', value: size}) }"></div>`;
   const el = holder.firstElementChild as HTMLDivElement;
   document.body.appendChild(el);
   await flush();
 
-  localStorage.setItem("draft", JSON.stringify({ size: "12" }));
+  localStorage.setItem("draft", JSON.stringify({ size: 12 }));
   const restores = restoreValues(el);
   const errors = seen(el, "restore-error");
   interact(el, "restore");
@@ -254,8 +254,8 @@ test("only the matching shape's handler runs; the others stay quiet", async () =
   const holder = document.createElement("div");
   holder.innerHTML =
     `<div storable attributable storable-id="pm" ` +
-    `on-restore(npm:boolean)="this.setAttr({name: 'data-npm', value: ''})" ` +
-    `on-restore(pnpm:boolean)="this.setAttr({name: 'data-pnpm', value: ''})"></div>`;
+    `on-restore="[({npm: boolean}) => { this.setAttr({name: 'data-npm', value: ''}) }, ({pnpm: boolean}) => { this.setAttr({name: 'data-pnpm', value: ''}) }]" ` +
+    `></div>`;
   const el = holder.firstElementChild as HTMLDivElement;
   document.body.appendChild(el);
   await flush();
@@ -278,7 +278,7 @@ test("a declared name whose type accepts undefined is satisfied by its absence",
   const holder = document.createElement("div");
   holder.innerHTML =
     `<div storable attributable storable-id="draft" ` +
-    `on-restore(name:string,size:number|undefined)="this.setAttr({name: 'data-name', value: name})"></div>`;
+    `on-restore="({name: string, size: number|undefined}) => { this.setAttr({name: 'data-name', value: name}) }"></div>`;
   const el = holder.firstElementChild as HTMLDivElement;
   document.body.appendChild(el);
   await flush();
@@ -299,8 +299,8 @@ test("ambiguous on-restore handlers are logged once, and a widened handler repla
   const holder = document.createElement("div");
   holder.innerHTML =
     `<div storable attributable storable-id="draft" ` +
-    `on-restore(name:string)="this.setAttr({name: 'data-a', value: name})" ` +
-    `on-restore(name:string,size:number|undefined)="this.setAttr({name: 'data-b', value: name})"></div>`;
+    `on-restore="[({name: string}) => { this.setAttr({name: 'data-a', value: name}) }, ({name: string, size: number|undefined}) => { this.setAttr({name: 'data-b', value: name}) }]" ` +
+    `></div>`;
   const el = holder.firstElementChild as HTMLDivElement;
   document.body.appendChild(el);
   await flush();

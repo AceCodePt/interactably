@@ -34,7 +34,7 @@
     <h1 class="doc-title">Open, and focus lands</h1>
     <p class="doc-lede">
           <code class="inline-code">revealable</code> &times; <code class="inline-code">focusable</code>. One chain does both:
-          <code class="inline-code">on-click="#of-dlg.show(); #of-name.focus()"</code> opens the dialog through
+          <code class="inline-code">on-click="() => { #of-dlg.show(); #of-name.focus() }"</code> opens the dialog through
           <code class="inline-code">showModal()</code> and moves focus to the field inside it. Closing returns focus to the
           opener &mdash; focus is just another verb in the phrase.
         </p>
@@ -42,13 +42,13 @@
 
               <div class="demo">
                 <div class="row">
-                  <button id="of-opener" type="button" focusable on-click="#of-dlg.show(); #of-name.focus()">Open dialog</button>
+                  <button id="of-opener" type="button" focusable on-click="() => { #of-dlg.show(); #of-name.focus() }">Open dialog</button>
                 </div>
                 <dialog id="of-dlg" revealable>
                   <label>Name
                     <input id="of-name" modifiable focusable type="text" placeholder="Focus lands here">
                   </label>
-                  <button type="button" on-click="#of-dlg.show(false); #of-opener.focus()">Close</button>
+                  <button type="button" on-click="() => { #of-dlg.show(false); #of-opener.focus() }">Close</button>
                 </dialog>
               </div>
     </div>
@@ -57,18 +57,18 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" attributable id="copy-code-ex-open-focus" on-click="#code-ex-open-focus.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-open-focus" on-click="() => { #code-ex-open-focus.copy() }" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-open-focus" copyable on-copy="#copy-code-ex-open-focus.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button id="opener" focusable
-            on-click="#dlg.show(); #name.focus()"&gt;Open dialog&lt;/button&gt;
+              <pre class="code" id="code-ex-open-focus" copyable on-copy="() => { #copy-code-ex-open-focus.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button id="opener" focusable
+            on-click="() => { #dlg.show(); #name.focus() }"&gt;Open dialog&lt;/button&gt;
 
     &lt;dialog id="dlg" revealable&gt;
       &lt;label&gt;Name
         &lt;input id="name" modifiable focusable type="text"&gt;
       &lt;/label&gt;
-      &lt;button on-click="#dlg.show(false); #opener.focus()"&gt;Close&lt;/button&gt;
+      &lt;button on-click="() => { #dlg.show(false); #opener.focus() }"&gt;Close&lt;/button&gt;
     &lt;/dialog&gt;</code></pre>
             </div>
           </details>

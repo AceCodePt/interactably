@@ -353,7 +353,7 @@ test("substitution reaches attribute values, so a stamped delete button targets 
   const list = mount();
   await flush();
   const tpl = template(
-    '<li id="row-{id}"><button on-click="#list.render({swap: \'delete\', target: \'#row-{id}\'})">x</button></li>',
+    `<li id="row-{id}"><button on-click="() => { #list.render({swap: 'delete', target: '#row-{id}'}) }">x</button></li>`,
   );
 
   dispatchInteraction(list, "render", { template: tpl, swap: "beforeend", id: 42 });

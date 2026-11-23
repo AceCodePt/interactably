@@ -173,7 +173,7 @@ function dispatchInteraction(
 
 test("a trigger binds one passive listener per on-* attribute and routes to the receiver", async (t) => {
   const dispose = start();
-  const trigger = hostElement("button", { "on-click": "#recv.go()" });
+  const trigger = hostElement("button", { "on-click": "() => { #recv.go() }" });
   const receiver = hostElement("div", { id: "recv", alpha: "" });
   document.body.append(trigger, receiver);
   await flush();
@@ -186,13 +186,13 @@ test("a trigger binds one passive listener per on-* attribute and routes to the 
 
 test("the on-* value is read at fire time, so edits take effect without an observer", async () => {
   const dispose = start();
-  const trigger = hostElement("button", { "on-click": "#recv2.go()" });
+  const trigger = hostElement("button", { "on-click": "() => { #recv2.go() }" });
   const receiver = hostElement("div", { id: "recv2", alpha: "" });
   document.body.append(trigger, receiver);
   await flush();
 
   trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-  trigger.setAttribute("on-click", "#recv2.echo('edited')");
+  trigger.setAttribute("on-click", "() => { #recv2.echo('edited') }");
   trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   assert.deepEqual(calls, ["alpha.go"]);
   dispose();
@@ -200,7 +200,7 @@ test("the on-* value is read at fire time, so edits take effect without an obser
 
 test("listeners are cleaned up on disconnect and re-bound on reconnect", async () => {
   const dispose = start();
-  const trigger = hostElement("button", { "on-click": "#recv3.go()" });
+  const trigger = hostElement("button", { "on-click": "() => { #recv3.go() }" });
   const receiver = hostElement("div", { id: "recv3", alpha: "" });
   document.body.append(trigger, receiver);
   await flush();
@@ -225,13 +225,13 @@ test("listeners are cleaned up on disconnect and re-bound on reconnect", async (
 test("an on-<type> the element has no event for warns once, including custom events", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const trigger = hostElement("button", { "on-clcik": "#recv.go()" });
+  const trigger = hostElement("button", { "on-clcik": "() => { #recv.go() }" });
   document.body.appendChild(trigger);
   await flush();
   assert.ok(warn.mock.callCount() >= 1);
   assert.ok(String(warn.mock.calls[0]!.arguments[0]).includes('no "clcik" event'));
 
-  const custom = hostElement("button", { "on-cart-updated": "#recv.go()" });
+  const custom = hostElement("button", { "on-cart-updated": "() => { #recv.go() }" });
   document.body.appendChild(custom);
   await flush();
   assert.ok(String(warn.mock.calls[1]!.arguments[0]).includes('no "cart-updated" event'));
@@ -244,8 +244,8 @@ test("an unknown on-* attribute warns naming the element and attribute but the e
   const receiver = hostElement("div", { id: "recv-d2", alpha: "" });
   const div = hostElement("div", {
     id: "half",
-    "on-intersect-half": "#recv-d2.go()",
-    "on-click": "#recv-d2.go()",
+    "on-intersect-half": "() => { #recv-d2.go() }",
+    "on-click": "() => { #recv-d2.go() }",
   });
   document.body.append(receiver, div);
   await flush();
@@ -270,7 +270,7 @@ test("an unknown on-* attribute warns naming the element and attribute but the e
 test("a native action that will also run warns at attach", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const form = hostElement("form", { "on-submit": "#recv.go()" });
+  const form = hostElement("form", { "on-submit": "() => { #recv.go() }" });
   document.body.appendChild(form);
   await flush();
   assert.ok(warn.mock.calls.some((call) => String(call.arguments[0]).includes("also submits natively")));
@@ -281,7 +281,7 @@ test("prevent-default silences the native-action warning", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
   const form = hostElement("form", {
-    "on-submit": "#recv.go()",
+    "on-submit": "() => { #recv.go() }",
     "prevent-default": "",
   });
   document.body.appendChild(form);
@@ -295,11 +295,11 @@ test("prevent-default silences the native-action warning", async (t) => {
 test("a keyed button on-keydown/on-keyup does not warn; an unkeyed one does", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const keyed = hostElement("button", { "on-keydown(key:`Escape`)": "#recv.go()" });
+  const keyed = hostElement("button", { "on-keydown": "({key: 'Escape'}) => { #recv.go() }" });
   document.body.appendChild(keyed);
-  const unkeyedDown = hostElement("button", { "on-keydown": "#recv.go()" });
+  const unkeyedDown = hostElement("button", { "on-keydown": "() => { #recv.go() }" });
   document.body.appendChild(unkeyedDown);
-  const unkeyedUp = hostElement("button", { "on-keyup": "#recv.go()" });
+  const unkeyedUp = hostElement("button", { "on-keyup": "() => { #recv.go() }" });
   document.body.appendChild(unkeyedUp);
   await flush();
 
@@ -363,7 +363,7 @@ test("attribute order decides shared verbs when an earlier name registers after 
 test("a verb no implementation owns leaves handled false for the executor to report", async (t) => {
   const dispose = start();
   const error = t.mock.method(console, "error");
-  const trigger = hostElement("button", { "on-click": "#recv4.nope()" });
+  const trigger = hostElement("button", { "on-click": "() => { #recv4.nope() }" });
   const receiver = hostElement("div", { id: "recv4", alpha: "" });
   document.body.append(trigger, receiver);
   await flush();
@@ -645,32 +645,24 @@ test("an unknown bare attribute is ignored: nothing attaches and nothing is repo
 test("on-intersect needs no implementation attribute and never warns about a missing event", (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const trigger = hostElement("section", { "on-intersect(state:`enter`)": "#recv.go()" });
+  const trigger = hostElement("section", { "on-intersect": "({state: 'enter'}) => { #recv.go() }" });
   document.body.appendChild(trigger);
   assert.equal(warn.mock.callCount(), 0);
   trigger.remove();
   dispose();
 });
 
-test("an intersect crossing runs only the phrases whose margin matches", async () => {
+test("handlers that disagree on the margin are a wire-time error", async () => {
   const dispose = start();
   const receiver = hostElement("div", { id: "spy", alpha: "" });
   const trigger = hostElement("section", {
-    "on-intersect(state:`enter`, block-start:`0px`)": "#spy.go()",
-    "on-intersect(state:`enter`, block-start:`50px`)": "#spy.go()",
+    "on-intersect":
+      "[({state: 'enter', block-start: '0px'}) => { #spy.go() }, ({state: 'enter', block-start: '50px'}) => { #spy.go() }]",
   });
   document.body.append(trigger, receiver);
   await flush();
 
-  const zero = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "0px 0px 0px 0px");
-  const fifty = FakeIntersectionObserver.instances.find((o) => o.rootMargin === "50px 0px 0px 0px");
-  assert.ok(zero && fifty);
-
-  zero!.trigger([{ target: trigger, isIntersecting: true }]);
-  assert.deepEqual(calls, ["alpha.go"], "only the 0px phrase runs on the 0px observer");
-  calls.length = 0;
-  fifty!.trigger([{ target: trigger, isIntersecting: true }]);
-  assert.deepEqual(calls, ["alpha.go"], "the 50px phrase runs on the 50px observer");
+  assert.equal(FakeIntersectionObserver.instances.length, 0);
   dispose();
 });
 
@@ -678,8 +670,8 @@ test("enter fires on entering and leave on leaving from one observer", async () 
   const dispose = start();
   const receiver = hostElement("div", { id: "both", alpha: "" });
   const trigger = hostElement("section", {
-    "on-intersect(state:`enter`)": "#both.go()",
-    "on-intersect(state:`leave`)": "#both.go()",
+    "on-intersect":
+      "[({state: 'enter'}) => { #both.go() }, ({state: 'leave'}) => { #both.go() }]",
   });
   document.body.append(trigger, receiver);
   await flush();
@@ -698,7 +690,7 @@ test("enter fires on entering and leave on leaving from one observer", async () 
 test("once() is the only filter for intersect crossings", async () => {
   const dispose = start();
   const receiver = hostElement("div", { id: "once", alpha: "" });
-  const trigger = hostElement("section", { "on-intersect(state:`enter`)": "#once.once().go()" });
+  const trigger = hostElement("section", { "on-intersect": "({state: 'enter'}) => { #once.once().go() }" });
   document.body.append(trigger, receiver);
   await flush();
 
@@ -712,15 +704,15 @@ test("once() is the only filter for intersect crossings", async () => {
 
 test("intersect observers are rebuilt on attribute change and torn down on disconnect", async () => {
   const dispose = start();
-  const trigger = hostElement("section", { "on-intersect(state:`enter`, block-start:`10px`)": "#recv.go()" });
+  const trigger = hostElement("section", { "on-intersect": "({state: 'enter', block-start: '10px'}) => { #recv.go() }" });
   await flush();
   assert.equal(FakeIntersectionObserver.instances.length, 1);
   assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "10px 0px 0px 0px");
 
-  const replaced = replaceAttribute(
-    trigger,
-    "on-intersect(state:`enter`,block-start:`10px`)",
-    "on-intersect(state:`enter`,block-start:`20px`)",
+  const replaced = replaceAttribute(trigger, "on-intersect", "on-intersect");
+  replaced.setAttribute(
+    "on-intersect",
+    "({state: 'enter', block-start: '20px'}) => { #recv.go() }",
   );
   await flush();
   assert.equal(FakeIntersectionObserver.instances.length, 2);
@@ -773,7 +765,7 @@ test("a modifiable attached with its #id dependency resolves the expression", as
   const output = hostElement("output", {
     id: "sum",
     modifiable: "",
-    "on-load": "this.set(#a.value + 1)",
+    "on-load": "() => { this.set(#a.value + 1) }",
   });
   document.body.appendChild(output);
   assert.equal(output.textContent, "", "the output is untouched while the batch is pending");

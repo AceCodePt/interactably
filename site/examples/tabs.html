@@ -42,11 +42,11 @@
               <div class="demo">
                 <div class="tabbar">
                   <button type="button"
-                          on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)">Overview</button>
+                          on-click="() => { #tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false) }">Overview</button>
                   <button type="button"
-                          on-click="#tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false)">Specs</button>
+                          on-click="() => { #tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false) }">Specs</button>
                   <button type="button"
-                          on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()">Notes</button>
+                          on-click="() => { #tab-overview.show(false); #tab-specs.show(false); #tab-notes.show() }">Notes</button>
                 </div>
                 <section id="tab-overview" revealable class="tabpanel" revealable-open="true">
                   <p><strong>Overview.</strong> A plain <code class="inline-code">&lt;section&gt;</code> whose visibility is driven by
@@ -66,17 +66,17 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" attributable id="copy-code-ex-tabs" on-click="#code-ex-tabs.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-tabs" on-click="() => { #code-ex-tabs.copy() }" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-tabs" copyable on-copy="#copy-code-ex-tabs.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="tabbar"&gt;
+              <pre class="code" id="code-ex-tabs" copyable on-copy="() => { #copy-code-ex-tabs.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;div class="tabbar"&gt;
       &lt;button
-              on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)"&gt;Overview&lt;/button&gt;
+              on-click="() => { #tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false) }"&gt;Overview&lt;/button&gt;
       &lt;button
-              on-click="#tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false)"&gt;Specs&lt;/button&gt;
+              on-click="() => { #tab-overview.show(false); #tab-specs.show(); #tab-notes.show(false) }"&gt;Specs&lt;/button&gt;
       &lt;button
-              on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()"&gt;Notes&lt;/button&gt;
+              on-click="() => { #tab-overview.show(false); #tab-specs.show(false); #tab-notes.show() }"&gt;Notes&lt;/button&gt;
     &lt;/div&gt;
 
     &lt;section id="tab-overview" revealable class="tabpanel" revealable-open="true"&gt;

@@ -1,11 +1,11 @@
 import { describeElement } from "@interactable/describe-element.ts";
 import { LEGACY_EVENTS_WITHOUT_IDL, getEventSpec, isImplementationEvent } from "@interactable/events.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
-import { isIntersectAttribute, readIntersectSpec, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
-import { clearPhraseState, runPhrases } from "@interactable/executor.ts";
+import { readIntersectSpec, syncIntersect, teardownIntersect } from "@interactable/intersect.ts";
+import { clearPhraseState, runEventValue } from "@interactable/executor.ts";
 import { ANCHOR } from "@utils/formula.ts";
-import { isBareNumber, isNumberLiteral, isNumericUnion, parse, parseEventAttribute } from "@interactable/parser.ts";
-import type { Arg, EventAttribute, EventValueDeclaration } from "@interactable/parser.ts";
+import { isBareNumber, isNumberLiteral, parseEventValueWithErrors } from "@interactable/parser.ts";
+import type { Arg, EventHandler } from "@interactable/parser.ts";
 import { compileSignature } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
@@ -130,7 +130,7 @@ export function ensureAttachment(el: Element): void {
 export function fireOnLoad(el: Element): void {
   const value = el.getAttribute("on-load");
   if (value === null) return;
-  runPhrases(el, value, new ImplementationEvent("load"));
+  runEventValue(el, value, new ImplementationEvent("load"));
 }
 
 function ensureImplementations(el: Element, attachment: Attachment): void {
@@ -229,17 +229,39 @@ function wireTriggers(el: Element, attachment: Attachment): void {
 function bindTrigger(el: Element, attachment: Attachment, attribute: string): void {
   if (attribute === "on-load") return;
   if (attachment.triggers.has(attribute)) return;
-  let type: string;
-  let declaration: readonly EventValueDeclaration[] | undefined;
-  try {
-    const parsed = parseEventAttribute(attribute.slice(3));
-    type = parsed.type;
-    declaration = parsed.declaration;
-  } catch (err) {
-    console.error(`[Interactable] on ${describeElement(el)}, "${attribute}": ${(err as Error).message}`);
+  if (attribute.includes("(")) {
+    console.error(
+      `[Interactable] on ${describeElement(el)}, "${attribute}": value declarations no longer belong in the attribute name; ` +
+        `write ${attribute.slice(0, attribute.indexOf("("))}="({ name: type }) => { … }"`,
+    );
     return;
   }
-  if (declaration !== undefined) validateTriggerDeclaration(el, attribute, type, declaration);
+  const type = attribute.slice(3);
+  if (type === "") {
+    console.error(`[Interactable] on ${describeElement(el)}, "${attribute}": missing event type`);
+    return;
+  }
+  const value = el.getAttribute(attribute) ?? "";
+  const { handlers, errors } = parseEventValueWithErrors(value);
+  if (errors.length > 0) {
+    for (const error of errors) {
+      console.error(
+        `[Interactable] on ${describeElement(el)}, "${attribute}": ${error.message}`,
+      );
+    }
+    return;
+  }
+  if (!validateHandlers(el, attribute, type, handlers)) return;
+  if (type === "intersect") {
+    try {
+      readIntersectSpec(handlers);
+    } catch (err) {
+      console.error(
+        `[Interactable] on ${describeElement(el)}, "${attribute}": ${(err as Error).message}`,
+      );
+      return;
+    }
+  }
   const owner = implementationOwningEvent(type);
   if (owner !== undefined && !el.hasAttribute(owner.name) && !isNativeEventType(el, type)) {
     console.error(
@@ -248,28 +270,12 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
     );
     return;
   }
-  let intersectMargin: string | undefined;
-  let fireDeclaration: readonly EventValueDeclaration[] | undefined = declaration;
-  if (isIntersectAttribute(attribute)) {
-    try {
-      const spec = readIntersectSpec(declaration);
-      intersectMargin = spec.margin;
-      fireDeclaration = spec.match;
-    } catch (err) {
-      console.error(`[Interactable] on ${describeElement(el)}, "${attribute}": ${(err as Error).message}`);
-      return;
-    }
-  }
   const handler = (ev: Event): void => {
     if (!(ev instanceof ImplementationEvent) && isImplementationEvent(el, type)) return;
-    if (intersectMargin !== undefined) {
-      if (!(ev instanceof ImplementationEvent) || ev.key !== intersectMargin) return;
-    }
-    const eventAttribute: EventAttribute | undefined =
-      intersectMargin !== undefined ? { type, declaration: fireDeclaration } : parseFireTimeAttribute(attribute);
-    runPhrases(el, el.getAttribute(attribute) ?? "", ev, eventAttribute);
+    runEventValue(el, el.getAttribute(attribute) ?? "", ev);
   };
   el.addEventListener(type, handler, { passive: true });
+  attachment.triggers.set(attribute, () => el.removeEventListener(type, handler));
   if (!isImplementationEvent(el, type)) {
     if (!isNativeEventType(el, type)) {
       console.warn(
@@ -279,96 +285,131 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
     }
     warnIfNativeActionLikelyUnwanted(el as HTMLElement, type, attribute);
   }
-  attachment.triggers.set(attribute, () => el.removeEventListener(type, handler));
 }
 
 function isNativeEventType(el: Element, type: string): boolean {
   return ("on" + type) in el || LEGACY_EVENTS_WITHOUT_IDL.has(type);
 }
 
-function parseFireTimeAttribute(attribute: string): EventAttribute | undefined {
-  try {
-    return parseEventAttribute(attribute.slice(3));
-  } catch {
-    return undefined;
-  }
-}
-
-function validateTriggerDeclaration(
+function validateHandlers(
   el: Element,
   attribute: string,
   type: string,
-  declaration: readonly EventValueDeclaration[],
-): void {
-  const declared = new Set<string>();
+  handlers: readonly EventHandler[],
+): boolean {
   const spec = getEventSpec(el, type);
   const closed = spec !== undefined && spec.open !== true;
-  for (const value of declaration) {
-    if (declared.has(value.name)) {
-      console.error(`[Interactable] on ${describeElement(el)}, "${attribute}": value "${value.name}" is declared twice`);
-      return;
-    }
-    declared.add(value.name);
-    if (value.kind === "literal") {
-      if (closed) {
-        const fieldType = spec.fields?.[value.name];
-        if (fieldType === undefined) {
-          console.error(
-            `[Interactable] on ${describeElement(el)}, "${attribute}": "${value.name}" is not a field of event "${type}"`,
-          );
-          return;
-        }
-        if (isBareNumber(fieldType)) {
-          console.error(
-            `[Interactable] on ${describeElement(el)}, "${attribute}": cannot match a literal against "${value.name}"; ` +
-              `numbers bind but do not match`,
-          );
-          return;
-        }
-        if (isNumericUnion(fieldType) && !isNumberLiteral(value.literal)) {
-          console.error(
-            `[Interactable] on ${describeElement(el)}, "${attribute}": \`${value.literal}\` is not a number; ` +
-              `"${value.name}" is declared ${fieldType}`,
-          );
-          return;
-        }
+  for (const handler of handlers) {
+    const declared = new Set<string>();
+    const bound = new Set<string>();
+    for (const field of handler.parameter.fields) {
+      if (declared.has(field.name)) {
+        console.error(
+          `[Interactable] on ${describeElement(el)}, "${attribute}": "${field.name}" is declared twice in one handler`,
+        );
+        return false;
       }
-      continue;
+      declared.add(field.name);
+      const fieldType = closed ? spec.fields?.[field.name] : undefined;
+      if (closed && fieldType === undefined) {
+        console.error(
+          `[Interactable] on ${describeElement(el)}, "${attribute}": "${field.name}" is not a field of event "${type}"`,
+        );
+        return false;
+      }
+      if (field.kind === "literal") {
+        if (fieldType !== undefined && !literalFits(fieldType, field.value)) {
+          console.error(
+            `[Interactable] on ${describeElement(el)}, "${attribute}": ${describeLiteral(field.value)} does not match ` +
+              `"${field.name}", declared ${fieldType}`,
+          );
+          return false;
+        }
+        continue;
+      }
+      try {
+        compileSignature(field.type);
+      } catch (err) {
+        console.error(
+          `[Interactable] on ${describeElement(el)}, "${attribute}": "${field.type}" is not a valid value type for "${field.name}" ` +
+            `(${(err as Error).message})`,
+        );
+        return false;
+      }
+      if (fieldType !== undefined && !typesOverlap(fieldType, field.type)) {
+        console.error(
+          `[Interactable] on ${describeElement(el)}, "${attribute}": "${field.type}" does not overlap ` +
+            `"${field.name}", declared ${fieldType}`,
+        );
+        return false;
+      }
+      bound.add(field.name);
     }
-    if (closed && !(value.name in (spec.fields ?? {}))) {
-      console.error(
-        `[Interactable] on ${describeElement(el)}, "${attribute}": "${value.name}" is not a field of event "${type}"`,
-      );
-      return;
-    }
-    try {
-      compileSignature(value.type);
-    } catch (err) {
-      console.error(
-        `[Interactable] on ${describeElement(el)}, "${attribute}": "${value.type}" is not a valid value type for "${value.name}" ` +
-          `(${(err as Error).message})`,
-      );
-      return;
-    }
-  }
-  const value = el.getAttribute(attribute);
-  if (value === null) return;
-  const phrases = parse(value, type);
-  for (const phrase of phrases) {
-    for (const unit of phrase.units) {
-      for (const call of unit.calls) {
-        for (const name of namesInArg(call.arg)) {
-          if (!declared.has(name)) {
+    for (const phrase of handler.phrases) {
+      for (const unit of phrase.units) {
+        for (const call of unit.calls) {
+          for (const name of namesInArg(call.arg)) {
+            if (bound.has(name)) continue;
             console.error(
-              `[Interactable] on ${describeElement(el)}, "${attribute}": "${name}" is not declared by this event; ` +
-                `declared: ${[...declared].join(", ")}`,
+              `[Interactable] on ${describeElement(el)}, "${attribute}": "${name}" is not bound by this handler; ` +
+                `declare it in the parameter, e.g. ({ ${name}: string })`,
             );
-            return;
+            return false;
           }
         }
       }
     }
   }
+  return true;
+}
+
+function describeLiteral(literal: string | number | boolean): string {
+  return typeof literal === "string" ? `'${literal}'` : String(literal);
+}
+
+function literalFits(fieldType: string, literal: string | number | boolean): boolean {
+  const parts = fieldType.split("|").map((part) => part.trim());
+  const numericUnion = parts.every(isNumberLiteral);
+  if (numericUnion) return typeof literal === "number" && parts.includes(String(literal));
+  if (isBareNumber(fieldType)) return typeof literal === "number";
+  const stringUnion = parts.every((part) => STRING_UNION.test(part));
+  if (stringUnion) return typeof literal === "string" && parts.some((part) => unquote(part) === literal);
+  if (fieldType.trim() === "string") return typeof literal === "string";
+  if (fieldType.trim() === "boolean") return typeof literal === "boolean";
+  if (parts.includes("number") && typeof literal === "number") return true;
+  if (parts.includes("string") && typeof literal === "string") return true;
+  if (parts.includes("boolean") && typeof literal === "boolean") return true;
+  return typeof literal === "string";
+}
+
+const STRING_UNION = /^'[^']*'$/;
+
+function unquote(part: string): string {
+  return part.slice(1, -1);
+}
+
+function typeKinds(type: string): ReadonlySet<string> {
+  const kinds = new Set<string>();
+  for (const raw of type.split("|")) {
+    const part = raw.trim();
+    if (part === "string") kinds.add("string");
+    else if (part === "number") kinds.add("number");
+    else if (part === "boolean") kinds.add("boolean");
+    else if (NUMBER_CONTROL.test(part)) kinds.add("number");
+    else if (STRING_UNION.test(part)) kinds.add("string");
+    else if (part === "true" || part === "false") kinds.add("boolean");
+  }
+  return kinds;
+}
+
+const NUMBER_CONTROL = /^-?\d+(?:\.\d+)?$/;
+
+function typesOverlap(fieldType: string, declaredType: string): boolean {
+  const fieldKinds = typeKinds(fieldType);
+  const declaredKinds = typeKinds(declaredType);
+  if (fieldKinds.size === 0 || declaredKinds.size === 0) return true;
+  for (const kind of declaredKinds) if (fieldKinds.has(kind)) return true;
+  return false;
 }
 
 function namesInArg(arg: Arg | undefined): string[] {
@@ -424,10 +465,8 @@ function wireAttributeObserver(el: Element, attachment: Attachment): void {
         reportLegacyImplements(el);
       } else if (getImplementationDef(name) !== undefined) {
         ensureImplementations(el, attachment);
-      } else if (isIntersectAttribute(name)) {
-        syncIntersect(el);
-        handleTriggerAttribute(el, attachment, name, oldValue, newValue);
       } else if (name.startsWith("on-")) {
+        if (name === "on-intersect") syncIntersect(el);
         handleTriggerAttribute(el, attachment, name, oldValue, newValue);
       } else {
         for (const implementation of attachment.implementations.values()) {
@@ -459,23 +498,17 @@ function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string, attribu
   } else if (el instanceof HTMLAnchorElement && el.href && type === "click") {
     console.warn(`[Interactable] on-click on ${describeElement(el)}: also navigates; add the prevent-default attribute to cancel it`);
   } else if (el instanceof HTMLButtonElement && (type === "keydown" || type === "keyup")) {
-    if (!hasKeyLiteral(attribute)) {
+    if (!hasKeyLiteral(el, attribute)) {
       console.warn(`[Interactable] on-${type} on ${describeElement(el)}: also activates on Enter/Space; add the prevent-default attribute to cancel it`);
     }
   }
 }
 
-function hasKeyLiteral(attribute: string): boolean {
-  let declaration: ReturnType<typeof parseEventAttribute>["declaration"];
-  try {
-    ({ declaration } = parseEventAttribute(attribute.slice(3)));
-  } catch {
-    return false;
-  }
-  return (
-    declaration !== undefined &&
-    declaration.some(
-      (value) => value.kind === "literal" && (value.name === "key" || value.name === "code"),
-    )
+function hasKeyLiteral(el: Element, attribute: string): boolean {
+  const { handlers } = parseEventValueWithErrors(el.getAttribute(attribute) ?? "");
+  return handlers.some((handler) =>
+    handler.parameter.fields.some(
+      (field) => field.kind === "literal" && (field.name === "key" || field.name === "code"),
+    ),
   );
 }

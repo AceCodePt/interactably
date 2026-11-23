@@ -275,7 +275,7 @@ test("no ARIA sync when the element triggers itself", async () => {
 });
 
 test("wiring: a button controlling #p gets aria-controls and aria-expanded when #p connects", async () => {
-  const button = hostElement("button", { "on-click": "#p.show()" });
+  const button = hostElement("button", { "on-click": "() => { #p.show() }" });
   document.body.appendChild(button);
   const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
@@ -286,7 +286,7 @@ test("wiring: a button controlling #p gets aria-controls and aria-expanded when 
 });
 
 test("wiring: a radio gets aria-controls but no aria-expanded", async () => {
-  const input = hostElement("input", { type: "radio", name: "g", "on-change": "#p.show()" });
+  const input = hostElement("input", { type: "radio", name: "g", "on-change": "() => { #p.show() }" });
   document.body.appendChild(input);
   const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
@@ -297,8 +297,8 @@ test("wiring: a radio gets aria-controls but no aria-expanded", async () => {
 });
 
 test("wiring: hosts whose role cannot be expanded get aria-controls but no aria-expanded", async () => {
-  const age = hostElement("input", { type: "number", "on-change": "#p.show()" });
-  const signup = hostElement("form", { "on-submit": "#p.show()" });
+  const age = hostElement("input", { type: "number", "on-change": "() => { #p.show() }" });
+  const signup = hostElement("form", { "on-submit": "() => { #p.show() }" });
   document.body.append(age, signup);
   const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
@@ -311,7 +311,7 @@ test("wiring: hosts whose role cannot be expanded get aria-controls but no aria-
 });
 
 test("wiring: a host controlling another panel is not wired", async () => {
-  const button = hostElement("button", { "on-click": "#px.show()" });
+  const button = hostElement("button", { "on-click": "() => { #px.show() }" });
   document.body.appendChild(button);
   const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
@@ -322,7 +322,7 @@ test("wiring: a host controlling another panel is not wired", async () => {
 });
 
 test("wiring: existing aria-controls tokens are preserved", async () => {
-  const button = hostElement("button", { "aria-controls": "other", "on-click": "#p.show()" });
+  const button = hostElement("button", { "aria-controls": "other", "on-click": "() => { #p.show() }" });
   document.body.appendChild(button);
   const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
@@ -332,7 +332,7 @@ test("wiring: existing aria-controls tokens are preserved", async () => {
 });
 
 test("wiring: a #p.show(false)-only host is not wired", async () => {
-  const button = hostElement("button", { "on-click": "#p.show(false)" });
+  const button = hostElement("button", { "on-click": "() => { #p.show(false) }" });
   document.body.appendChild(button);
   const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
@@ -343,7 +343,7 @@ test("wiring: a #p.show(false)-only host is not wired", async () => {
 });
 
 test("wiring: a mixed #a.show(); #b.show(false) host wires only a", async () => {
-  const button = hostElement("button", { "on-click": "#a.show(); #b.show(false)" });
+  const button = hostElement("button", { "on-click": "() => { #a.show(); #b.show(false) }" });
   document.body.appendChild(button);
   const a = hostElement("section", { revealable: "", id: "a", hidden: "" });
   const b = hostElement("section", { revealable: "", id: "b", hidden: "" });
@@ -370,7 +370,7 @@ test("wiring: a #p.show(this.checked) host is not wired, but claims at fire time
     type: "radio",
     name: "g",
     checked: "checked",
-    "on-change": "#p.show(this.checked)",
+    "on-change": "() => { #p.show(this.checked) }",
   });
   document.body.appendChild(input);
   const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
@@ -385,7 +385,7 @@ test("wiring: a #p.show(this.checked) host is not wired, but claims at fire time
 });
 
 test("wiring: a #p.show(true) host is wired", async () => {
-  const button = hostElement("button", { "on-click": "#p.show(true)" });
+  const button = hostElement("button", { "on-click": "() => { #p.show(true) }" });
   document.body.appendChild(button);
   const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
@@ -396,8 +396,8 @@ test("wiring: a #p.show(true) host is wired", async () => {
 });
 
 test("a show() from a checked radio leaves a same-name sibling's open panel open", async () => {
-  const rA = hostElement("input", { type: "radio", name: "g", id: "r-a", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
-  const rB = hostElement("input", { type: "radio", name: "g", id: "r-b", "on-change": "#b.show()" }) as HTMLInputElement;
+  const rA = hostElement("input", { type: "radio", name: "g", id: "r-a", checked: "checked", "on-change": "() => { #a.show() }" }) as HTMLInputElement;
+  const rB = hostElement("input", { type: "radio", name: "g", id: "r-b", "on-change": "() => { #b.show() }" }) as HTMLInputElement;
   const a = hostElement("div", { revealable: "", id: "a", hidden: "" });
   const b = hostElement("div", { revealable: "", id: "b", "revealable-open": "true" });
   document.body.append(rA, rB, a, b);
@@ -415,7 +415,7 @@ test("on-load fires at attach: this.show() reveals the panel once implementation
   const originalWarn = console.warn;
   console.warn = (...args: unknown[]) => warnings.push(args.map(String).join(" "));
   try {
-    const p = hostElement("div", { revealable: "", id: "p", "on-load": "this.show()" });
+    const p = hostElement("div", { revealable: "", id: "p", "on-load": "() => { this.show() }" });
     document.body.appendChild(p);
     await flush();
     assert.equal(p.hidden, false, "on-load ran this.show() after revealable attached");

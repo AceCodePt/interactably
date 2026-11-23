@@ -1,17 +1,18 @@
 import { isAttached } from "@interactable/attachment.ts";
-import { parse, isNumericUnion } from "@interactable/parser.ts";
+import { isBareNumber, parse, parseEventValue } from "@interactable/parser.ts";
 import { compileSignature } from "@interactable/signature.ts";
-import { getEventFieldTypes } from "@interactable/events.ts";
-import { INTERSECT_EVENT_NAMES } from "@interactable/intersect.ts";
+import { INTERSECT_EVENT_NAMES, MARGIN_SLOTS } from "@interactable/intersect.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
-import type { Arg, EventAttribute, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
+import type { Arg, EventHandler, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
 import { readValue } from "@behaviors/implementation-utils.ts";
 import { evaluateFormula, FormulaError } from "@utils/formula.ts";
 import { logOnce, clearLogs } from "@interactable/log.ts";
 import { describeElement } from "@interactable/describe-element.ts";
 
 const KEYBOARD_EVENT_TYPES = new Set(["keydown", "keyup"]);
+
+type Bindings = Readonly<Record<string, unknown>>;
 
 interface ElementPhraseState {
   spentOnce: Set<string>;
@@ -45,7 +46,7 @@ export function clearPhraseState(el: Element): void {
   stateByElement.delete(el);
 }
 
-export function runPhrases(source: Element, value: string, ev: Event, eventAttribute?: EventAttribute): void {
+export function runPhrases(source: Element, value: string, ev: Event): void {
   let phrases: Phrase[];
   try {
     phrases = parse(value, ev.type);
@@ -55,11 +56,82 @@ export function runPhrases(source: Element, value: string, ev: Event, eventAttri
   }
   for (let index = 0; index < phrases.length; index++) {
     try {
-      runPhrase(source, value, index, phrases[index]!, ev, eventAttribute);
+      runPhrase(source, value, index, phrases[index]!, ev, {});
     } catch (err) {
       console.error("[Interactable] phrase skipped:", err);
     }
   }
+}
+
+export function runEventValue(source: Element, value: string, ev: Event): void {
+  const handlers = parseEventValue(value);
+  for (let handlerIndex = 0; handlerIndex < handlers.length; handlerIndex++) {
+    const handler = handlers[handlerIndex]!;
+    const bindings = matchHandler(handler, ev);
+    if (bindings === null) continue;
+    for (let index = 0; index < handler.phrases.length; index++) {
+      try {
+        runPhrase(source, `${value}\u0000${handlerIndex}`, index, handler.phrases[index]!, ev, bindings);
+      } catch (err) {
+        console.error("[Interactable] phrase skipped:", err);
+      }
+    }
+  }
+}
+
+function matchHandler(handler: EventHandler, ev: Event): Record<string, unknown> | null {
+  const bindings: Record<string, unknown> = {};
+  for (const field of handler.parameter.fields) {
+    if (ev.type === "intersect" && (MARGIN_SLOTS as readonly string[]).includes(field.name)) {
+      if (field.kind === "literal") continue;
+      bindings[field.name] = coerceBinding(field.type, fieldValue(ev, field.name) ?? "0px");
+      continue;
+    }
+    const raw = fieldValue(ev, field.name);
+    if (raw === undefined) {
+      if (field.kind === "type" && acceptsUndefined(field.type)) {
+        bindings[field.name] = undefined;
+        continue;
+      }
+      return null;
+    }
+    if (field.kind === "literal") {
+      if (!literalMatches(field.value, raw)) return null;
+      continue;
+    }
+    bindings[field.name] = coerceBinding(field.type, raw);
+  }
+  return bindings;
+}
+
+const typeAcceptsUndefined = new Map<string, boolean>();
+
+function acceptsUndefined(type: string): boolean {
+  const cached = typeAcceptsUndefined.get(type);
+  if (cached !== undefined) return cached;
+  let accepts = false;
+  try {
+    compileSignature(type).validate(undefined);
+    accepts = true;
+  } catch {}
+  typeAcceptsUndefined.set(type, accepts);
+  return accepts;
+}
+
+function literalMatches(literal: string | number | boolean, raw: string): boolean {
+  if (typeof literal === "string") return raw === literal;
+  if (typeof literal === "number") return Number(raw) === literal;
+  return raw === (literal ? "true" : "false");
+}
+
+function coerceBinding(type: string, raw: string): unknown {
+  const trimmed = type.trim();
+  if (isBareNumber(trimmed)) {
+    const numeric = Number(raw);
+    return Number.isFinite(numeric) ? numeric : Number.parseFloat(raw);
+  }
+  if (trimmed === "boolean") return raw === "true";
+  return raw;
 }
 
 function runPhrase(
@@ -68,9 +140,8 @@ function runPhrase(
   index: number,
   phrase: Phrase,
   ev: Event,
-  eventAttribute?: EventAttribute,
+  bindings: Bindings,
 ): void {
-  if (eventAttribute !== undefined && !matchesDeclarations(source, eventAttribute, ev)) return;
   if (ev instanceof ImplementationEvent && ev.key !== undefined) {
     if (!INTERSECT_EVENT_NAMES.has(ev.type) && phrase.key !== ev.key) {
       return;
@@ -92,50 +163,13 @@ function runPhrase(
     callIndex: 0,
     modIndex: 0,
     spentOnces: [],
+    bindings,
   };
   try {
     walk(walkState);
   } catch (err) {
     console.error("[Interactable]", err);
   }
-}
-
-const typeAcceptsUndefined = new Map<string, boolean>();
-
-function declarationTypeAcceptsUndefined(type: string): boolean {
-  const cached = typeAcceptsUndefined.get(type);
-  if (cached !== undefined) return cached;
-  let accepts = false;
-  try {
-    compileSignature(type).validate(undefined);
-    accepts = true;
-  } catch {}
-  typeAcceptsUndefined.set(type, accepts);
-  return accepts;
-}
-
-function matchesDeclarations(source: Element, eventAttribute: EventAttribute, ev: Event): boolean {
-  const declaration = eventAttribute.declaration;
-  if (declaration === undefined) return true;
-  const fields = getEventFieldTypes(source, ev.type);
-  for (const value of declaration) {
-    if (value.kind !== "literal") {
-      if (fieldValue(ev, value.name) === undefined && !declarationTypeAcceptsUndefined(value.type)) {
-        return false;
-      }
-      continue;
-    }
-    const raw = fieldValue(ev, value.name);
-    if (raw === undefined) return false;
-    const fieldType = fields?.[value.name];
-    if (fieldType !== undefined && isNumericUnion(fieldType)) {
-      const numeric = Number(raw);
-      if (!Number.isFinite(numeric) || numeric !== Number(value.literal)) return false;
-    } else if (raw.toLowerCase() !== value.literal.toLowerCase()) {
-      return false;
-    }
-  }
-  return true;
 }
 
 function fieldValue(ev: Event, name: string): string | undefined {
@@ -164,6 +198,7 @@ interface WalkState {
   callIndex: number;
   modIndex: number;
   spentOnces: string[];
+  bindings: Bindings;
 }
 
 function walk(state: WalkState): ChainResult {
@@ -236,7 +271,7 @@ function walkUnit(state: WalkState, unit: Unit): ChainResult {
     state.callIndex += 1;
     let arg: unknown;
     try {
-      arg = resolveArg(call.arg, source, { ev: state.ev, verb: call.verb });
+      arg = resolveArg(call.arg, source, { ev: state.ev, verb: call.verb, bindings: state.bindings });
     } catch (err) {
       if (err instanceof FormulaError && err.label !== undefined) {
         logOnce(source, `${err.label}${err.message}`);
@@ -335,7 +370,7 @@ function resolveRef(ref: Ref, source: Element): Element | null {
 function resolveArg(
   arg: Arg | undefined,
   source: Element,
-  context: { ev: Event; verb: string; fieldName?: string },
+  context: { ev: Event; verb: string; fieldName?: string; bindings: Bindings },
 ): unknown {
   if (arg === undefined) return undefined;
   switch (arg.kind) {
@@ -354,17 +389,12 @@ function resolveArg(
       return readValue(el, arg.property);
     }
     case "name": {
-      if (KEYBOARD_EVENT_TYPES.has(context.ev.type)) {
-        if (arg.name === "key") return (context.ev as KeyboardEvent).key;
-        if (arg.name === "code") return (context.ev as KeyboardEvent).code;
-      }
-      if (context.ev instanceof ImplementationEvent) {
-        const value = context.ev.values[arg.name];
-        if (value !== undefined) return value;
+      if (Object.prototype.hasOwnProperty.call(context.bindings, arg.name)) {
+        return context.bindings[arg.name];
       }
       throw new Error(
-        `"${arg.name}" is not a value of event "${context.ev.type}"; ` +
-          `declare it on the attribute, e.g. on-${context.ev.type}(${arg.name}: string)`,
+        `"${arg.name}" is not bound by this handler; ` +
+          `declare it in the parameter, e.g. ({ ${arg.name}: string })`,
       );
     }
     case "expr": {

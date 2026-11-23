@@ -22,6 +22,15 @@ export const KEYBOARD_EVENT_FIELDS: Readonly<Record<string, Readonly<Record<stri
   keyup: { key: "string", code: "string" },
 };
 
+export const INTERSECT_EVENT_FIELDS: Readonly<Record<string, string>> = {
+  state: "'enter' | 'leave'",
+  full: "boolean",
+  "block-start": "string | number",
+  "block-end": "string | number",
+  "inline-start": "string | number",
+  "inline-end": "string | number",
+};
+
 export function isImplementationEvent(el: Element, type: string): boolean {
   if (INTERSECT_EVENT_NAMES.has(type)) return true;
   for (const name of presentImplementationNames(el)) {
@@ -44,6 +53,7 @@ function implementationEventSpec(el: Element, type: string): EventSpec | undefin
 export function getEventSpec(el: Element, type: string): EventSpec | undefined {
   const builtin = KEYBOARD_EVENT_FIELDS[type];
   if (builtin !== undefined) return { fields: builtin };
+  if (type === "intersect") return { fields: INTERSECT_EVENT_FIELDS };
   return implementationEventSpec(el, type);
 }
 

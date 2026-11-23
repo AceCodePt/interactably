@@ -41,8 +41,8 @@
       <aside class="sidebar">
         <h2>Contents</h2>
         <!-- The sidebar lights every nav link whose section is on screen: each section
-             sets its own link's data-visible on-intersect(state:`enter`) and clears it
-             on-intersect(state:`leave`), so several links can be lit at once - a true
+             sets its own link's data-visible from a <code class="inline-code">({state: 'enter'}) =&gt; { &hellip; }</code> handler and clears it
+             from <code class="inline-code">({state: 'leave'}) =&gt; { &hellip; }</code>, so several links can be lit at once - a true
              report, not a single current item. -->
         <nav id="toc" aria-label="Documentation sections">
           <a id="toc-quick-start" attributable href="#quick-start">Quick start</a>
@@ -85,16 +85,16 @@
 
       <div class="content">
 
-        <section id="sec-quick-start" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-quick-start.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-quick-start.removeAttr('data-visible')">
+        <section id="sec-quick-start" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-quick-start.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-quick-start.removeAttr('data-visible') }]">
         <h2 id="quick-start">Quick start <a class="anchor" href="#quick-start">#</a></h2>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Shell</span>
-            <button class="copy-btn" attributable id="copy-code-docs-install" on-click="#code-docs-install.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-install" on-click="() => { #code-docs-install.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-install" copyable on-copy="#copy-code-docs-install.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="sh"><code>npm install interactably</code></pre>
+          <pre class="code" id="code-docs-install" copyable on-copy="() => { #copy-code-docs-install.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="sh"><code>npm install interactably</code></pre>
         </div>
         <p>
           Load the shipped bootstrap and list the implementations you use in an
@@ -105,22 +105,22 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-load" on-click="#code-docs-load.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-load" on-click="() => { #code-docs-load.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-load" copyable on-copy="#copy-code-docs-load.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implementations="modifiable revealable"
+          <pre class="code" id="code-docs-load" copyable on-copy="() => { #copy-code-docs-load.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;script type="module" implementations="modifiable revealable"
         src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
-&lt;button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
+&lt;button id="inc" on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }"&gt;+&lt;/button&gt;
 
 &lt;label&gt;Qty
   &lt;input id="qty" modifiable
          type="number" value="1" min="0" max="10"
-         on-input="#preview.set(this.value)"&gt;
+         on-input="() => { #preview.set(this.value) }"&gt;
 &lt;/label&gt;
 
-&lt;output id="preview" modifiable on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;</code></pre>
+&lt;output id="preview" modifiable on-load="() => { this.set(#qty.value) }"&gt;1&lt;/output&gt;</code></pre>
         </div>
         <p class="note">No <code class="inline-code">is=</code> anywhere: the runtime attaches every element that carries
           at least one implementation attribute such as <code class="inline-code">modifiable</code> or an
@@ -131,24 +131,24 @@
         <p>Every click on <code class="inline-code">+</code> runs <code class="inline-code">#qty.set(#qty.value + 1)</code> and then
           <code class="inline-code">#preview.set(#qty.value)</code>; typing in the field still pushes
           through <code class="inline-code">on-input</code>. <code class="inline-code">#preview</code>&rsquo;s own
-          <code class="inline-code">on-load="this.set(#qty.value)"</code> computes it once at attach.</p>
+          <code class="inline-code">on-load="() => { this.set(#qty.value) }"</code> computes it once at attach.</p>
 
         <p class="note" style="margin-top:1.5rem">Here is that exact markup, running live. No page JavaScript powers the button, the dialog, or the close button.</p>
         <div class="demo" style="padding:1.1rem;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)">
           <div class="row">
-            <button type="button" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
+            <button type="button" on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }">+</button>
             <input id="qty" modifiable aria-label="Qty" type="number" value="1" min="0" max="10"
-                   on-input="#preview.set(this.value)">
-            <output id="preview" modifiable on-load="this.set(#qty.value)">1</output>
+                   on-input="() => { #preview.set(this.value) }">
+            <output id="preview" modifiable on-load="() => { this.set(#qty.value) }">1</output>
           </div>
           <div class="row">
-            <button type="button" on-click="#doc-modal.show()">Open a dialog</button>
+            <button type="button" on-click="() => { #doc-modal.show() }">Open a dialog</button>
           </div>
           <dialog id="doc-modal" revealable>
             <p>You clicked it. This native <code class="inline-code">&lt;dialog&gt;</code> was opened by
-              <code class="inline-code">on-click="#doc-modal.show()"</code> and closed by
-              <code class="inline-code">on-click="#doc-modal.show(false)"</code>.</p>
-            <button type="button" on-click="#doc-modal.show(false)">Close</button>
+              <code class="inline-code">on-click="() => { #doc-modal.show() }"</code> and closed by
+              <code class="inline-code">on-click="() => { #doc-modal.show(false) }"</code>.</p>
+            <button type="button" on-click="() => { #doc-modal.show(false) }">Close</button>
           </dialog>
         </div>
 
@@ -181,38 +181,38 @@
         </div>
 
         </section>
-        <section id="sec-trigger-grammar" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-trigger-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-trigger-grammar.removeAttr('data-visible')">
+        <section id="sec-trigger-grammar" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-trigger-grammar.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-trigger-grammar.removeAttr('data-visible') }]">
         <h2 id="trigger-grammar">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
         <p>One attribute per interaction; the value is the phrase language.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-grammar-examples" on-click="#code-docs-grammar-examples.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-grammar-examples" on-click="() => { #code-docs-grammar-examples.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-grammar-examples" copyable on-copy="#copy-code-docs-grammar-examples.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#pop.show().focus()"&gt;
-&lt;input  on-input="#echo.set(this.value); #results.debounce(300).filter(this.value)"&gt;
-&lt;input  on-keydown(key:`Escape`)="this.reset()" on-keydown(key:`Enter`)="#form.validate().send()"&gt;
-&lt;button on-click="#tour.once().show()"&gt;
-&lt;button on-click="#pb.show(false); #pc.show(false); #pa.show()"&gt;
-&lt;button on-click="#note.transform({mode: 'upper', shift: 2})"&gt;
-&lt;button on-click="#snippet.copy()"&gt;
-&lt;form   on-submit="#order.validate().send() || #alert.show()"&gt;
-&lt;input  on-change="#form.validate() &amp;&amp; #hint.show()"&gt;</code></pre>
+          <pre class="code" id="code-docs-grammar-examples" copyable on-copy="() => { #copy-code-docs-grammar-examples.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button on-click="() => { #pop.show().focus() }"&gt;
+&lt;input  on-input="() => { #echo.set(this.value); #results.debounce(300).filter(this.value) }"&gt;
+&lt;input  on-keydown="({key: 'Escape'}) => { this.reset() }" on-keydown="({key: 'Enter'}) => { #form.validate().send() }"&gt;
+&lt;button on-click="() => { #tour.once().show() }"&gt;
+&lt;button on-click="() => { #pb.show(false); #pc.show(false); #pa.show() }"&gt;
+&lt;button on-click="() => { #note.transform({mode: 'upper', shift: 2}) }"&gt;
+&lt;button on-click="() => { #snippet.copy() }"&gt;
+&lt;form   on-submit="() => { #order.validate().send() || #alert.show() }"&gt;
+&lt;input  on-change="() => { #form.validate() &amp;&amp; #hint.show() }"&gt;</code></pre>
         </div>
 
         </section>
-        <section id="sec-grammar" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-grammar.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-grammar.removeAttr('data-visible')">
+        <section id="sec-grammar" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-grammar.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-grammar.removeAttr('data-visible') }]">
         <h3 id="grammar">Grammar <a class="anchor" href="#grammar">#</a></h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button class="copy-btn" attributable id="copy-code-docs-grammar" on-click="#code-docs-grammar.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-grammar" on-click="() => { #code-docs-grammar.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-grammar" copyable on-copy="#copy-code-docs-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>value     := phrase (';' phrase)*
+          <pre class="code" id="code-docs-grammar" copyable on-copy="() => { #copy-code-docs-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text"><code>value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#'id | this
@@ -225,15 +225,15 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </div>
 
         </section>
-        <section id="sec-constructs" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-constructs.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-constructs.removeAttr('data-visible')">
+        <section id="sec-constructs" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-constructs.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-constructs.removeAttr('data-visible') }]">
         <h3 id="constructs">Constructs <a class="anchor" href="#constructs">#</a></h3>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
             <tbody>
-              <tr><td>Trigger</td><td><code class="inline-code">on-click="#pop.show()"</code></td><td>On <code class="inline-code">click</code>, run the phrase</td></tr>
-              <tr><td>Implementation event</td><td><code class="inline-code">on-copy="#flash.show()"</code></td><td>On a copyable element <code class="inline-code">on-copy</code> catches both the native clipboard event and copyable&rsquo;s success — one attribute, one fact — differing underneath only in cancelability and <code class="inline-code">clipboardData</code>; if the sharing ever bites, the fix is a rename to <code class="inline-code">copied</code>, not a redesign.</td></tr>
-              <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect(state:`enter`,block-start:`-#topnav.height`)="#link.setAttr({name: 'data-visible', value: ''})"</code></td><td><code class="inline-code">IntersectionObserver</code> against the viewport. <code class="inline-code">state</code> matches <code class="inline-code">enter</code> or <code class="inline-code">leave</code>; <code class="inline-code">full</code> matches <code class="inline-code">true</code> on becoming entirely inside the box and <code class="inline-code">false</code> on leaving that state; the four margin slots (<code class="inline-code">block-start</code>, <code class="inline-code">block-end</code>, <code class="inline-code">inline-start</code>, <code class="inline-code">inline-end</code>) configure the observer&rsquo;s <code class="inline-code">rootMargin</code>, mapped to physical sides by writing mode</td></tr>
+              <tr><td>Trigger</td><td><code class="inline-code">on-click="() => { #pop.show() }"</code></td><td>On <code class="inline-code">click</code>, run the phrase</td></tr>
+              <tr><td>Implementation event</td><td><code class="inline-code">on-copy="() => { #flash.show() }"</code></td><td>On a copyable element <code class="inline-code">on-copy</code> catches both the native clipboard event and copyable&rsquo;s success — one attribute, one fact — differing underneath only in cancelability and <code class="inline-code">clipboardData</code>; if the sharing ever bites, the fix is a rename to <code class="inline-code">copied</code>, not a redesign.</td></tr>
+              <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect="({state: 'enter', block-start: '-#topnav.height'}) => { #link.setAttr({name: 'data-visible', value: ''}) }"</code></td><td><code class="inline-code">IntersectionObserver</code> against the viewport. <code class="inline-code">state</code> matches <code class="inline-code">enter</code> or <code class="inline-code">leave</code>; <code class="inline-code">full</code> matches <code class="inline-code">true</code> on becoming entirely inside the box and <code class="inline-code">false</code> on leaving that state; the four margin slots (<code class="inline-code">block-start</code>, <code class="inline-code">block-end</code>, <code class="inline-code">inline-start</code>, <code class="inline-code">inline-end</code>) configure the observer&rsquo;s <code class="inline-code">rootMargin</code>, mapped to physical sides by writing mode</td></tr>
               <tr><td>Receiver</td><td><code class="inline-code">#pop.show()</code></td><td>Send verb <code class="inline-code">show()</code> to the element with <code class="inline-code">id="pop"</code></td></tr>
               <tr><td>Self</td><td><code class="inline-code">this.reset()</code></td><td>The element the phrase was read from (the trigger for <code class="inline-code">on-*</code>)</td></tr>
               <tr><td>Chain</td><td><code class="inline-code">#pop.show().focus()</code></td><td><code class="inline-code">.show()</code> then <code class="inline-code">.focus()</code> on the same receiver, in order</td></tr>
@@ -242,10 +242,10 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td>Or</td><td><code class="inline-code">#form.validate().send() || #alert.show()</code></td><td><code class="inline-code">#alert.show()</code> only if a guard aborted the first unit</td></tr>
               <tr><td>Scalar arg</td><td><code class="inline-code">#qty.set(#qty.value + 5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
               <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code>, the type the element declares; absent <code class="inline-code">min</code>/<code class="inline-code">max</code> reads empty, absent <code class="inline-code">step</code> on a number/range input reads <code class="inline-code">1</code></td></tr>
-              <tr><td>Key filter</td><td><code class="inline-code">on-keydown(key:`Enter`)="#f.send()"</code></td><td>Match an event field to a literal; the phrase runs only when it matches</td></tr>
+              <tr><td>Key filter</td><td><code class="inline-code">on-keydown="({key: 'Enter'}) => { #f.send() }"</code></td><td>Match an event field to a literal; the phrase runs only when it matches</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
-              <tr><td>Event value</td><td><code class="inline-code">on-response(html:string)="#receipt.set(html)"</code></td><td>A value the event declares on the attribute, resolved by name inside that phrase</td></tr>
-              <tr><td>Event literal</td><td><code class="inline-code">on-keydown(code:`Escape`)="#dialog.close()"</code></td><td>A backticked literal on the attribute: the phrase runs only when the event&rsquo;s field equals it; an unbackticked word is a type, binding instead</td></tr>
+              <tr><td>Event value</td><td><code class="inline-code">on-response="({html: string}) => { #receipt.set(html) }"</code></td><td>A value the event declares on the attribute, resolved by name inside that phrase</td></tr>
+              <tr><td>Event literal</td><td><code class="inline-code">on-keydown="({code: 'Escape'}) => { #dialog.close() }"</code></td><td>A backticked literal on the attribute: the phrase runs only when the event&rsquo;s field equals it; an unbackticked word is a type, binding instead</td></tr>
               <tr><td>Debounce</td><td><code class="inline-code">#echo.debounce(300).set(this.value)</code></td><td>Defers this receiver&rsquo;s chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref</td></tr>
               <tr><td>Throttle</td><td><code class="inline-code">#viewport.throttle(16).zoom(this)</code></td><td>Leading-edge throttle of this receiver&rsquo;s chain; per element</td></tr>
               <tr><td>Once</td><td><code class="inline-code">#tour.once().show()</code></td><td>Gates the rest of the chain; spent when the walk passes it</td></tr>
@@ -274,7 +274,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <strong>match</strong>, exactly as a declaration matches a literal elsewhere: <code class="inline-code">state:`enter`</code>
           fires when the element&rsquo;s intersection with the box gains non-zero area &mdash; including the observer&rsquo;s initial
           report for an element visible at load &mdash; <code class="inline-code">state:`leave`</code> when it loses it, and
-          <code class="inline-code">full:`true`</code> / <code class="inline-code">full:`false`</code> on either side of a change between
+          <code class="inline-code">full: true</code> / <code class="inline-code">full: false</code> on either side of a change between
           the element being entirely inside the box and not. <code class="inline-code">full</code> is not a third position on the
           <code class="inline-code">state</code> axis: it is a direction, so it is a boolean slot, not a <code class="inline-code">state</code>
           value. <code class="inline-code">full</code> means the whole element is inside the box, so an element taller than the box is
@@ -310,38 +310,27 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           platform itself has no logical <code class="inline-code">rootMargin</code> at all, which is why the mapping lives here. If a
           logical <code class="inline-code">rootMargin</code> ever lands in the platform these names become a passthrough and nothing
           breaks. A <code class="inline-code">-50%</code> block-start margin shrinks the box to the viewport&rsquo;s centre line:
-          <code class="inline-code">on-intersect(state:`enter`,block-start:`-50%`)="&hellip;"</code> fires when the element&rsquo;s leading
+          <code class="inline-code">on-intersect="({state: 'enter', block-start: '-50%'}) => { &hellip; }"</code> fires when the element&rsquo;s leading
           edge reaches it, for an element of any height.
         </p>
 
-        <p><strong>An event may declare values, bound by name at the trigger site.</strong> A parenthesised form on the
-          attribute name — <code class="inline-code">on-response(html:string)</code>, <code class="inline-code">on-pasted(text:string)</code>,
-          <code class="inline-code">on-restore(tab:string)</code> — names the values the event carries, and each declared name resolves
-          as an argument inside that phrase and nowhere else: as a bare argument (<code class="inline-code">this.set(html)</code>) or as an
+        <p><strong>An event's data lives in its handler parameter.</strong> A value like
+          <code class="inline-code">on-response="({html: string}) =&gt; { &hellip; }"</code> binds the event&rsquo;s
+          <code class="inline-code">html</code> field inside that handler, and each type field resolves
+          as an argument inside that handler and nowhere else: as a bare argument (<code class="inline-code">this.set(html)</code>) or as an
           object-field value (<code class="inline-code">#list.render({body: html})</code>), never inside formula expressions
-          (<code class="inline-code">replace(html, &hellip;)</code> stays an error — the formula has its own resolver). The payload is the
-          argument list, flat and never nested: split on commas, then on colons; each right-hand side is an ordinary flat tsyntax scalar,
-          validated at wire time (a brace form <code class="inline-code">on-response(payload:{name:string})</code> would describe structure, not a value, and is
-          rejected). A bare identifier that is not a declared name keeps failing as before. The form is written without spaces:
-          attribute names may not contain ASCII whitespace, NULL, <code class="inline-code">/</code>, <code class="inline-code">=</code> or
-          <code class="inline-code">&gt;</code> — parentheses, colons and commas are all permitted and the DOM preserves such names intact, so
-          <code class="inline-code">on-response(html:string)</code> is one legal attribute. The caveats are cosmetic, not behavioural:
-          coloned and bracketed attribute names trip HTML validators, and CSS selectors must escape the colon
-          (<code class="inline-code">[on-response(html\:string)]</code>). Checking is definition-time: a name used in a phrase that the event
-          does not declare is an error when the element is wired (<code class="inline-code">bindTrigger</code>), never a throw when the event
-          fires, and a malformed declaration or declared type errors the same way.</p>
+          (<code class="inline-code">replace(html, &hellip;)</code> stays an error &mdash; the formula has its own resolver). The parameter is flat
+          and never nested: <code class="inline-code">({name: type, &hellip;})</code>, with each right-hand side an ordinary flat tsyntax
+          scalar validated at wire time. A name a handler does not bind is an error when the element is wired
+          (<code class="inline-code">bindTrigger</code>), never a throw when the event fires, and a malformed type errors the same way.
+          <code class="inline-code">()</code> matches every firing, and a bracketed list holds several handlers.</p>
 
-        <p><strong>A declaration may match a literal instead of binding a type.</strong> The right-hand side is a
-          discriminated union: an unbackticked word is a type name and binds, a backticked one is a literal to match.
-          <code class="inline-code">on-keydown(code:`Escape`)="#dialog.close()"</code> runs the phrase only when the key&rsquo;s
-          <code class="inline-code">code</code> is <code class="inline-code">Escape</code>; backticks because quotes are illegal in
-          attribute names and entities are not substituted there, so no other delimiter survives. The comparison is typed: the literal
-          is source text and the field&rsquo;s declared type decides how to read it — a field declared <code class="inline-code">string</code>
-          compares the literal as text, case-insensitively (the HTML parser lowercases attribute names, so the author&rsquo;s
-          <code class="inline-code">Escape</code> arrives as <code class="inline-code">escape</code>), and a field declared as a small closed
-          set of numbers compares the literal as a number. A declaration is all literals or all types, never mixed, and every matching
-          declaration fires — two literal declarations on the same element that both match an event both run, with no most-specific rule
-          and no first-match-wins.</p>
+        <p><strong>A literal field filters; a type field binds.</strong> A single-quoted string, a number, or
+          <code class="inline-code">true</code> / <code class="inline-code">false</code> is a literal and filters.
+          <code class="inline-code">on-keydown="({code: 'Escape'}) =&gt; { #dialog.close() }"</code> runs the handler only when the key&rsquo;s
+          <code class="inline-code">code</code> is <code class="inline-code">Escape</code>. String comparison is exact and case-sensitive,
+          numeric literals compare numerically, and one parameter may mix literals and types. Every matching handler fires &mdash; two
+          handlers on the same element that both match an event both run, in source order, with no most-specific rule and no first-match-wins.</p>
 
         <p><strong>Events expose an allowlist of fields, not their whole platform interface.</strong> <code class="inline-code">keydown</code>
           and <code class="inline-code">keyup</code> expose <code class="inline-code">key</code> and <code class="inline-code">code</code>;
@@ -357,22 +346,16 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           numeric values (a numeric enum) can be matched, because general numeric equality is meaningless for floats and ranges are impossible
           in an attribute name — range-shaped configuration belongs in config attributes.</p>
 
-        <p><strong>Keyboard keys are matched by literal declarations.</strong> A backticked literal in an
-          <code class="inline-code">on-keydown</code> declaration filters the phrase: <code class="inline-code">on-keydown(key:`Enter`)</code> runs
-          only when <code class="inline-code">KeyboardEvent.key</code> is Enter, <code class="inline-code">on-keydown(code:`ArrowDown`)</code>
-          only when <code class="inline-code">KeyboardEvent.code</code> is ArrowDown. Comparison is case-insensitive on both sides &mdash;
-          <code class="inline-code">enter</code>, <code class="inline-code">Enter</code>, <code class="inline-code">ENTER</code> are the same
-          key &mdash; and there are no aliases, so <code class="inline-code">Esc</code> is not <code class="inline-code">escape</code>. A
-          declaration either matches literals or binds types, never both, so filtering and reading are two attributes; every matching
-          declaration fires, so Enter and Escape are two attributes on one element. A phrase key on an event that carries no routing key
-          (<code class="inline-code">on-click="enter: #f.send()"</code>) parses, but at fire time the phrase is skipped with a one-time
+        <p><strong>Keyboard keys are filtered by literal handler fields.</strong>
+          <code class="inline-code">({key: 'Enter'}) =&gt; { &hellip; }</code> runs only when <code class="inline-code">KeyboardEvent.key</code>
+          is Enter, <code class="inline-code">({code: 'ArrowDown'}) =&gt; { &hellip; }</code> only when
+          <code class="inline-code">KeyboardEvent.code</code> is ArrowDown. Comparison is exact and case-sensitive, and there are no
+          aliases, so <code class="inline-code">Esc</code> is not <code class="inline-code">escape</code>. A body name must be bound by its own
+          handler &mdash; there is no implicit <code class="inline-code">key</code> or <code class="inline-code">code</code>. Every matching
+          handler fires, so Enter and Escape are two handlers in one attribute. A phrase key on an event that carries no routing key
+          (<code class="inline-code">on-click="() =&gt; { enter: #f.send() }"</code>) parses, but at fire time the phrase is skipped with a one-time
           <code class="inline-code">console.error</code> (<code class="inline-code">key "enter" on event "click" that carries no routing key; phrase skipped</code>).
-          The <code class="inline-code">event:key</code> entries in the comma-separated config lists
-          (<code class="inline-code">prevent-default-events</code>, <code class="inline-code">no-propagate-events</code>) still match
-          <code class="inline-code">KeyboardEvent.key</code>; a third form <code class="inline-code">event:code:value</code> matches
-          <code class="inline-code">KeyboardEvent.code</code>, which is what a derived <code class="inline-code">code:</code> claim uses. A
-          keyed entry only ever matches a keyboard event (a non-keyboard event never carries a key), and listing the same entry twice is
-          harmless &mdash; the second occurrence is dropped.</p>
+          The <code class="inline-code">event:key</code> entries in the comma-separated config lists remain configuration, not phrasing.</p>
 
         <p><strong>Key versus code on the keyboard events.</strong> <code class="inline-code">code</code> is the physical key — the
           position on the keyboard — unchanged by layout, locale or modifiers. <code class="inline-code">key</code> is the character the
@@ -385,13 +368,13 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <code class="inline-code">key</code> agree across layouts; most real usage is there.</p>
 
         </section>
-        <section id="sec-rules" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-rules.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-rules.removeAttr('data-visible')">
+        <section id="sec-rules" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-rules.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-rules.removeAttr('data-visible') }]">
         <h3 id="rules">Rules <a class="anchor" href="#rules">#</a></h3>
         <ol>
           <li><strong>Parens are mandatory.</strong> <code class="inline-code">#pop.show</code> is a CSS selector; <code class="inline-code">#pop.show()</code> is a call.</li>
           <li><strong>Receivers are <code class="inline-code">#id</code> or <code class="inline-code">this</code>.</strong> Ids may not contain <code class="inline-code">.</code>. Class or attribute selectors are never receivers.</li>
           <li><strong>One receiver per unit.</strong> A <code class="inline-code">.</code> chain stays on one receiver; <code class="inline-code">&amp;&amp;</code>/<code class="inline-code">||</code> units may each name a different one. There is no group form: <code class="inline-code">#a.show(false); #b.show(false)</code> is still two phrases.</li>
-          <li><strong>A phrase key routes implementation events; keyboard keys are filtered on the declaration.</strong> Under an implementation event that carries a routing key, <code class="inline-code">timeout: #alert.show()</code> runs only for the <code class="inline-code">timeout</code> key, one per phrase, matched case-sensitively. Keyboard events filter with a declaration literal instead: <code class="inline-code">on-keydown(key:`Enter`)</code>, <code class="inline-code">on-keydown(code:`ArrowDown`)</code>, both case-insensitive. Two keyboard keys is two attributes: <code class="inline-code">on-keydown(code:`Enter`)</code> and <code class="inline-code">on-keydown(code:`NumpadEnter`)</code>. A phrase key on any event that carries no routing key is skipped with a one-time error. <code class="inline-code">intersect</code> is not keyed: its <code class="inline-code">state</code>, <code class="inline-code">full</code> and margin slots all live in the attribute name.</li>
+          <li><strong>A phrase key routes implementation events; keyboard keys are filtered through a handler parameter.</strong> Under an implementation event that carries a routing key, <code class="inline-code">timeout: #alert.show()</code> runs only for the <code class="inline-code">timeout</code> key, one per phrase, matched case-sensitively. Keyboard events filter with a literal handler field instead: <code class="inline-code">({key: 'Enter'})</code>, <code class="inline-code">({code: 'ArrowDown'})</code>, both case-sensitive. Two keyboard keys is two handlers in one attribute: <code class="inline-code">[{({code: 'Enter'}) =&gt; { &hellip; }}, ({code: 'NumpadEnter'}) =&gt; { &hellip; }]</code>. A phrase key on any event that carries no routing key is skipped with a one-time error. <code class="inline-code">intersect</code> is not keyed: its <code class="inline-code">state</code>, <code class="inline-code">full</code> and margin slots are handler parameter fields.</li>
           <li><strong>A modifier is a step in a receiver&rsquo;s chain and governs the rest of that chain from where it sits.</strong> <code class="inline-code">#a.once().x().y()</code> runs both once ever; <code class="inline-code">#a.x().once().y()</code> runs <code class="inline-code">x</code> every time and <code class="inline-code">y</code> once. It never crosses <code class="inline-code">&amp;&amp;</code>: each receiver carries its own modifiers, so <code class="inline-code">#a.once().x() &amp;&amp; #b.y()</code> runs <code class="inline-code">#b.y()</code> every time the first half runs. <code class="inline-code">debounce</code>/<code class="inline-code">throttle</code> are legal only right after the ref (a timer mid-chain is a parse error); <code class="inline-code">once</code> and <code class="inline-code">delay</code> may sit anywhere. Modifiers stack and repeat freely — the parser has no duplicate check.</li>
           <li><strong><code class="inline-code">;</code> is independent, <code class="inline-code">.</code> is sequential and abortable, <code class="inline-code">&amp;&amp;</code>/<code class="inline-code">||</code> continue across receivers.</strong> A <code class="inline-code">.</code> chain stops if a verb&rsquo;s event is <code class="inline-code">preventDefault()</code>-ed, if the verb threw, or if no implementation owns the verb. <code class="inline-code">&amp;&amp;</code> runs the next unit only if the previous one completed; <code class="inline-code">||</code> runs it only if the previous one was stopped by a guard&rsquo;s <code class="inline-code">preventDefault()</code>. An error or unowned verb stops both &mdash; <code class="inline-code">||</code> fires only on a guard abort. One phrase is all <code class="inline-code">&amp;&amp;</code> or all <code class="inline-code">||</code>; mixing is a parse error.</li>
           <li><strong><code class="inline-code">once()</code> spends on passing through, not on completion.</strong> The gate is about entry: the moment the walk reaches the <code class="inline-code">once</code> it is spent, and whether the rest of the chain then aborts, pauses or fails does not refund it. A spent gate cuts the chain where it sits — links before it still run, links after it never do.</li>
@@ -403,12 +386,12 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         </ol>
 
         </section>
-        <section id="sec-reserved-names" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-reserved-names.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-reserved-names.removeAttr('data-visible')">
+        <section id="sec-reserved-names" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-reserved-names.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-reserved-names.removeAttr('data-visible') }]">
         <h3 id="reserved-names">Reserved names <a class="anchor" href="#reserved-names">#</a></h3>
         <p><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code> are modifiers — an implementation may not name a verb that way. <code class="inline-code">this</code> is the only keyword. <code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">min</code>, <code class="inline-code">max</code>, <code class="inline-code">step</code> are property reads, not verbs; an implementation may still define a verb called <code class="inline-code">value()</code> (distinguished by its parens). An implementation name is a lowercase attribute name matching <code class="inline-code">[a-z][a-z0-9-]*</code> that must not collide with a native HTML attribute, an <code class="inline-code">on-</code> / <code class="inline-code">aria-</code> / <code class="inline-code">data-</code> prefix, or the reserved names <code class="inline-code">implements</code>, <code class="inline-code">implementations</code> and <code class="inline-code">intersect</code>. Event names are unique across all implementations, regardless of their <code class="inline-code">tags</code>.</p>
 
         </section>
-        <section id="sec-expressions" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-expressions.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-expressions.removeAttr('data-visible')">
+        <section id="sec-expressions" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-expressions.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-expressions.removeAttr('data-visible') }]">
         <h3 id="expressions">Expressions <a class="anchor" href="#expressions">#</a></h3>
         <p>An argument is a literal, a reference, an object literal, or an expression. The expression grammar lives
           inside the trigger: <code class="inline-code">#total.set(sum('#list .amount'))</code>,
@@ -417,11 +400,11 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button class="copy-btn" attributable id="copy-code-docs-formula" on-click="#code-docs-formula.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-formula" on-click="() => { #code-docs-formula.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-formula" copyable on-copy="#copy-code-docs-formula.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>expression := term (('+' | '-') term)*
+<pre class="code" id="code-docs-formula" copyable on-copy="() => { #copy-code-docs-formula.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text"><code>expression := term (('+' | '-') term)*
 term       := factor (('*' | '/') factor)*
 factor     := '-' factor | primary
 primary    := number | 'string' | reference | function'(' args ')' | '(' expression ')'
@@ -449,22 +432,22 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <p>Sharp edge: a checkbox&rsquo;s <code class="inline-code">value="..."</code> attribute is unreachable through <code class="inline-code">.value</code> — a checkbox reads its checked boolean, whatever spelling, so the price belongs on a number element and the tick on the checkbox.</p>
         <p>Sharp edge: <code class="inline-code">set()</code> does not clamp. Say it: <code class="inline-code">min(#q.max, &hellip;)</code>. Writing past a bound is a real state (<code class="inline-code">:out-of-range</code>, <code class="inline-code">validity.rangeOverflow</code>), and <code class="inline-code">validatable</code> is where it is reported.</p>
         <p>Syntax is checked at parse time: <code class="inline-code">#total.set(1 +)</code> is a trigger parse error naming the position, reported once per attribute like every other parse error. Fire time only ever carries data errors &mdash; empty, not-a-number, division by zero, not-a-string, invalid pattern, a missing reference &mdash; each a failed unit reported with <code class="inline-code">on-&lt;event&gt; on &lt;element&gt;, argument 1 of set():</code>.</p>
-        <p>Mask on <code class="inline-code">on-input</code>, clean on <code class="inline-code">on-pasted</code>, same input: <code class="inline-code">on-input="this.set(replace(this.value, '\D', ''))"</code> filters keys as you type, and <code class="inline-code">on-pasted="this.set(replace(this.value, '\D', ''))"</code> catches what a paste inserts whole &mdash; <code class="inline-code">on-pasted</code> runs after <code class="inline-code">on-input</code> for the same paste, so if both write the value, <code class="inline-code">on-pasted</code> wins.</p>
-        <p>The live character counter under a bounded field is the same shape: <code class="inline-code">on-input="#bio-count.set(length(this.value) + ' of 200')"</code> writes <code class="inline-code">"42 of 200"</code> as the textarea fills, and the amber-at-the-edge style is the author&rsquo;s own CSS reading an attribute &mdash; <code class="inline-code">on-input="#bio-count.set(length(this.value) + ' of 200'); this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))})"</code> on <code class="inline-code">attributable</code>, with the <code class="inline-code">[data-remaining="0"]</code>-style rule left to them.</p>
+        <p>Mask on <code class="inline-code">on-input</code>, clean on <code class="inline-code">on-pasted</code>, same input: <code class="inline-code">on-input="() => { this.set(replace(this.value, '\\D', '')) }"</code> filters keys as you type, and <code class="inline-code">on-pasted="() => { this.set(replace(this.value, '\\D', '')) }"</code> catches what a paste inserts whole &mdash; <code class="inline-code">on-pasted</code> runs after <code class="inline-code">on-input</code> for the same paste, so if both write the value, <code class="inline-code">on-pasted</code> wins.</p>
+        <p>The live character counter under a bounded field is the same shape: <code class="inline-code">on-input="() => { #bio-count.set(length(this.value) + ' of 200') }"</code> writes <code class="inline-code">"42 of 200"</code> as the textarea fills, and the amber-at-the-edge style is the author&rsquo;s own CSS reading an attribute &mdash; <code class="inline-code">on-input="() => { #bio-count.set(length(this.value) + ' of 200'); this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))}) }"</code> on <code class="inline-code">attributable</code>, with the <code class="inline-code">[data-remaining="0"]</code>-style rule left to them.</p>
         <p>An id is produced by the clock, not the set: <code class="inline-code">'row-' + now()</code> is the epoch millisecond as a number, prefixed into a stable id. Two renders inside the same millisecond collide, and ids must not begin with a digit in older specs, so templates should prefix: <code class="inline-code">id="row-{id}"</code>.</p>
 
         </section>
-        <section id="sec-interaction-event" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-interaction-event.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-interaction-event.removeAttr('data-visible')">
+        <section id="sec-interaction-event" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-interaction-event.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-interaction-event.removeAttr('data-visible') }]">
         <h2 id="interaction-event">The <code class="inline-code">interaction</code> event <a class="anchor" href="#interaction-event">#</a></h2>
         <p>The host wraps every verb call in its own event, dispatched at the receiver:</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" attributable id="copy-code-docs-event" on-click="#code-docs-event.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-event" on-click="() => { #code-docs-event.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-event" copyable on-copy="#copy-code-docs-event.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>class InteractionEvent extends Event {
+          <pre class="code" id="code-docs-event" copyable on-copy="() => { #copy-code-docs-event.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="ts"><code>class InteractionEvent extends Event {
   readonly verb: string;          // "show"
   readonly arg: unknown;          // resolved: 5 | "currency" | HTMLElement | { name, value } | undefined
   readonly source: Element;       // the element whose attribute the phrase came from (what `this` resolved to)
@@ -484,7 +467,7 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         </ul>
 
         </section>
-        <section id="sec-attachment" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-attachment.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-attachment.removeAttr('data-visible')">
+        <section id="sec-attachment" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-attachment.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-attachment.removeAttr('data-visible') }]">
         <h2 id="attachment">Attachment <a class="anchor" href="#attachment">#</a></h2>
         <p>
           <code class="inline-code">start()</code> attaches every participant &mdash; any element carrying a registered
@@ -500,18 +483,20 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" attributable id="copy-code-docs-attach-trigger" on-click="#code-docs-attach-trigger.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-attach-trigger" on-click="() => { #code-docs-attach-trigger.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-attach-trigger" copyable on-copy="#copy-code-docs-attach-trigger.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>for (const attribute of el.getAttributeNames()) {
+<pre class="code" id="code-docs-attach-trigger" copyable on-copy="() => { #copy-code-docs-attach-trigger.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="ts"><code>for (const attribute of el.getAttributeNames()) {
   if (!attribute.startsWith("on-")) continue;
-  const { type, declaration } = parseEventAttribute(attribute.slice(3));
-  // on-response(html:string) &rarr; type "response", declaration { html: "string" }
-  if (declaration !== undefined) validateTriggerDeclaration(el, attribute, type, declaration);
+  const type = attribute.slice(3);
+  const { handlers, errors } = parseEventValueWithErrors(el.getAttribute(attribute) ?? "");
+  // on-response="({html: string}) =&gt; { ... }" parses to a handler whose html field binds
+  if (errors.length &gt; 0) return;
+  validateHandlers(el, attribute, type, handlers);
   const handler = (ev: Event) =&gt; {
     if (!(ev instanceof ImplementationEvent) &amp;&amp; isImplementationEvent(el, type)) return;
-    runPhrases(el, el.getAttribute(attribute) ?? "", ev);   // value read at event time
+    runEventValue(el, el.getAttribute(attribute) ?? "", ev);   // value read at event time
   };
   el.addEventListener(type, handler, { passive: true });                          // the DSL never cancels
   if (!isImplementationEvent(el, type)) {                                          // declared events never warn
@@ -525,7 +510,7 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <p>
           A trigger is live one microtask after insertion, or at <code class="inline-code">DOMContentLoaded</code> for the
           initial document. Detach runs the cleanup list. The <code class="inline-code">on-*</code> <strong>value</strong> is
-          read at event time, so editing <code class="inline-code">on-click="#a.show()"</code> to
+          read at event time, so editing <code class="inline-code">on-click="() => { #a.show() }"</code> to
           <code class="inline-code">"#b.show()"</code> takes effect on the next click. An element that gains
           an implementation attribute or an <code class="inline-code">on-*</code> attribute after insertion is
           not a participant yet &mdash; re-insert it.
@@ -548,23 +533,23 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         </p>
 
         </section>
-        <section id="sec-four-kinds" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-four-kinds.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-four-kinds.removeAttr('data-visible')">
+        <section id="sec-four-kinds" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-four-kinds.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-four-kinds.removeAttr('data-visible') }]">
         <h3 id="four-kinds">Four kinds of element <a class="anchor" href="#four-kinds">#</a></h3>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Kind</th><th>Has</th><th>Example</th></tr></thead>
             <tbody>
               <tr><td><strong>Self-contained</strong></td><td>one implementation attribute</td><td><code class="inline-code">&lt;textarea auto-grow&gt;</code> — everything inside via the implementation&rsquo;s own <code class="inline-code">on*</code> handlers</td></tr>
-              <tr><td><strong>Trigger-only</strong></td><td><code class="inline-code">on-*</code></td><td><code class="inline-code">&lt;button on-click="#modal.show()"&gt;</code> — causes things elsewhere, never a receiver</td></tr>
+              <tr><td><strong>Trigger-only</strong></td><td><code class="inline-code">on-*</code></td><td><code class="inline-code">&lt;button on-click="() => { #modal.show() }"&gt;</code> — causes things elsewhere, never a receiver</td></tr>
               <tr><td><strong>Receiver</strong></td><td>implementation attribute + <code class="inline-code">id</code></td><td><code class="inline-code">&lt;dialog id="modal" revealable&gt;</code> — the id exists so others can address it</td></tr>
-              <tr><td><strong>Self-acting</strong></td><td>implementation attribute + <code class="inline-code">on-*</code></td><td><code class="inline-code">&lt;input modifiable on-keydown(key:`Escape`)="this.reset()"&gt;</code> — triggers on itself</td></tr>
+              <tr><td><strong>Self-acting</strong></td><td>implementation attribute + <code class="inline-code">on-*</code></td><td><code class="inline-code">&lt;input modifiable on-keydown="({key: 'Escape'}) => { this.reset() }"&gt;</code> — triggers on itself</td></tr>
             </tbody>
           </table>
         </div>
-        <p>The fourth kind is why <code class="inline-code">this</code> exists: <code class="inline-code">on-click="this.remove()"</code> works on every row cloned from a template, with no generated ids.</p>
+        <p>The fourth kind is why <code class="inline-code">this</code> exists: <code class="inline-code">on-click="() => { this.remove() }"</code> works on every row cloned from a template, with no generated ids.</p>
 
         </section>
-        <section id="sec-reporting" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-reporting.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-reporting.removeAttr('data-visible')">
+        <section id="sec-reporting" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-reporting.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-reporting.removeAttr('data-visible') }]">
         <h3 id="reporting">Reporting <a class="anchor" href="#reporting">#</a></h3>
         <p>The host and executor report through <code class="inline-code">console.error</code> / <code class="inline-code">console.warn</code>; they do not throw (host methods run on the browser&rsquo;s stack, which owns their exceptions). <code class="inline-code">throw</code> is reserved for <code class="inline-code">defineImplementation</code> and the registry, where the exception reaches the developer who wrote the call.</p>
         <ul>
@@ -573,7 +558,7 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         </ul>
 
         </section>
-        <section id="sec-implementations" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-implementations.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-implementations.removeAttr('data-visible')">
+        <section id="sec-implementations" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-implementations.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-implementations.removeAttr('data-visible') }]">
         <h2 id="implementations">The shipped implementations <a class="anchor" href="#implementations">#</a></h2>
         <div class="tbl-wrap">
           <table class="tbl">
@@ -583,7 +568,7 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
               <tr><td><code class="inline-code">dirtyable</code></td><td>input, textarea, select, output</td><td>&mdash;</td><td><code class="inline-code">dirty-on</code>; events <code class="inline-code">dirty</code>, <code class="inline-code">clean</code></td><td>fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing; move the baseline on an input with <code class="inline-code">setAttr({name: &rsquo;value&rsquo;, value: this.value})</code></td></tr>
               <tr><td><code class="inline-code">formattable</code></td><td>output, span, div, td, p, li, dd, b, strong, em, small</td><td>&mdash;</td><td><code class="inline-code">format</code></td><td>renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write</td></tr>
               <tr><td><code class="inline-code">renderable</code></td><td>any</td><td><code class="inline-code">render</code>, <code class="inline-code">undo</code></td><td><code class="inline-code">renderable-disable-view-transition</code>; event <code class="inline-code">rendered</code></td><td>stamps a template with flat scalar slots into text nodes and attribute values, or inserts a <code class="inline-code">payload</code> markup string as-is (the two are mutually exclusive, a signature error to supply both); every successful swap animates as a same-document view transition and fires <code class="inline-code">rendered</code> when it settles; <code class="inline-code">undo</code> reverses the one last render</td></tr>
-              <tr><td><code class="inline-code">requestable</code></td><td>any</td><td><code class="inline-code">send</code>, <code class="inline-code">abort</code></td><td><code class="inline-code">url</code>, <code class="inline-code">method</code>, <code class="inline-code">include</code>, <code class="inline-code">concurrency</code>, <code class="inline-code">timeout</code> + <code class="inline-code">status</code> state; events <code class="inline-code">response</code>, <code class="inline-code">request-error</code>, <code class="inline-code">request-timeout</code>, <code class="inline-code">request-offline</code></td><td>fetch and announce; never touches the DOM &mdash; <code class="inline-code">response</code> carries the response body text as <code class="inline-code">html</code> and the status, and the author places it (<code class="inline-code">on-response(html:string)="#list.render({payload: html, swap: 'beforeend'})"</code>); failures split into <code class="inline-code">request-error</code> (non-ok status, filtered by status literal), <code class="inline-code">request-timeout</code> and <code class="inline-code">request-offline</code></td></tr>
+              <tr><td><code class="inline-code">requestable</code></td><td>any</td><td><code class="inline-code">send</code>, <code class="inline-code">abort</code></td><td><code class="inline-code">url</code>, <code class="inline-code">method</code>, <code class="inline-code">include</code>, <code class="inline-code">concurrency</code>, <code class="inline-code">timeout</code> + <code class="inline-code">status</code> state; events <code class="inline-code">response</code>, <code class="inline-code">request-error</code>, <code class="inline-code">request-timeout</code>, <code class="inline-code">request-offline</code></td><td>fetch and announce; never touches the DOM &mdash; <code class="inline-code">response</code> carries the response body text as <code class="inline-code">html</code> and the status, and the author places it (<code class="inline-code">on-response="({html: string}) => { #list.render({payload: html, swap: 'beforeend'}) }"</code>); failures split into <code class="inline-code">request-error</code> (non-ok status, filtered by status literal), <code class="inline-code">request-timeout</code> and <code class="inline-code">request-offline</code></td></tr>
               <tr><td><code class="inline-code">attributable</code></td><td>any</td><td><code class="inline-code">setAttr</code>, <code class="inline-code">toggleAttr</code>, <code class="inline-code">removeAttr</code></td><td>&mdash;</td><td>attribute writes (<code class="inline-code">setAttr({name, value})</code>)</td></tr>
               <tr><td><code class="inline-code">classable</code></td><td>any</td><td><code class="inline-code">add</code>, <code class="inline-code">remove</code>, <code class="inline-code">toggle</code></td><td>&mdash;</td><td>classList writes, one class name per call; <code class="inline-code">toggle</code> has no force argument</td></tr>
               <tr><td><code class="inline-code">logger</code></td><td>any</td><td><code class="inline-code">log</code></td><td>&mdash;</td><td><code class="inline-code">console.log</code> from a phrase</td></tr>
@@ -606,13 +591,13 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <p><code class="inline-code">attributable</code> writes attributes whole. <code class="inline-code">class</code> is a token list, so <code class="inline-code">classable</code> exposes <code class="inline-code">classList</code> instead &mdash; <code class="inline-code">#menu.toggle('open')</code>, one name per call, browser rules for what a name may be.</p>
 
         </section>
-        <section id="sec-renderable" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-renderable.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-renderable.removeAttr('data-visible')">
+        <section id="sec-renderable" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-renderable.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-renderable.removeAttr('data-visible') }]">
         <h3 id="renderable">Renderable <a class="anchor" href="#renderable">#</a></h3>
         <p><code class="inline-code">render()</code> takes one source: a <code class="inline-code">template</code>, stamped with flat scalar slots, or a <code class="inline-code">payload</code>, a markup string inserted as-is (never stamped). The two are mutually exclusive — supplying both is a signature error before anything runs; there is no precedence rule. Every successful <code class="inline-code">render()</code> swap runs inside <code class="inline-code">document.startViewTransition</code> &mdash; a crossfade by default, instant where the API is absent. The transition defers the visible settle, so a <code class="inline-code">.</code> chain continues on the same receiver and a <code class="inline-code">;</code> phrase is fire-and-forget; timing-sensitive follow-up listens for <code class="inline-code">rendered</code>, which fires once the swap settles &mdash; after the transition&rsquo;s <code class="inline-code">finished</code> promise, or immediately after the mutation where there is no transition. It fires for every successful mutation (never for <code class="inline-code">swap="none"</code>, never when a slot or id validation throws). Opt out per element with <code class="inline-code">renderable-disable-view-transition</code> &mdash; the attribute appears in markup only when someone opts out.</p>
-        <p><strong>Naming what animates.</strong> The animation follows identity, not the tree: the browser matches an element&rsquo;s <code class="inline-code">view-transition-name</code> across the before/after snapshots. <code class="inline-code">view-transition-name</code> is identity &mdash; it must be unique in a snapshot, and when two elements share a name the ENTIRE transition is skipped silently: no exception, no console warning, the swap just lands instantly. <code class="inline-code">match-element</code> is the only reliable cross-browser auto-naming mechanism, and it is same-document only. <code class="inline-code">view-transition-class</code> is a styling-only grouping label: it does not name an element, so <code class="inline-code">::view-transition-group(*.card)</code> reaches every card that shares the class. <code class="inline-code">::view-transition-old</code> and <code class="inline-code">::view-transition-new</code> are the generated pseudo-elements custom keyframes target &mdash; wrap any such keyframes in <code class="inline-code">prefers-reduced-motion</code>.</p>
+        <p><strong>Naming what animates.</strong> The animation follows identity, not the tree: the browser matches an element&rsquo;s <code class="inline-code">view-transition-name</code> across the before/after snapshots. <code class="inline-code">view-transition-name</code> is identity &mdash; it must be unique in a snapshot, and when two elements share a name the ENTIRE transition is skipped silently: no exception, no console warning, the swap just lands instantly. <code class="inline-code">match-element</code> is the only reliable cross-browser auto-naming mechanism, and it is same-document only. <code class="inline-code">view-transition-class</code> is a styling-only grouping label: it does not name an element, so <code class="inline-code">::view-transition-group</code> reaches every card that shares the class. <code class="inline-code">::view-transition-old</code> and <code class="inline-code">::view-transition-new</code> are the generated pseudo-elements custom keyframes target &mdash; wrap any such keyframes in <code class="inline-code">prefers-reduced-motion</code>.</p>
 
         </section>
-        <section id="sec-prevent-default" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-prevent-default.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-prevent-default.removeAttr('data-visible')">
+        <section id="sec-prevent-default" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-prevent-default.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-prevent-default.removeAttr('data-visible') }]">
         <h3 id="prevent-default">prevent-default and no-propagate <a class="anchor" href="#prevent-default">#</a></h3>
         <p>
           The executor never calls <code class="inline-code">preventDefault()</code> or <code class="inline-code">stopPropagation()</code>
@@ -622,25 +607,25 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-prevent-default" on-click="#code-docs-prevent-default.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-prevent-default" on-click="() => { #code-docs-prevent-default.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-prevent-default" copyable on-copy="#copy-code-docs-prevent-default.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form prevent-default no-propagate no-propagate-events="submit"
-      on-submit="#api.send(); #status.set('Saving&hellip;')"&gt;                                  &lt;!-- derived from on-submit: submit --&gt;
+          <pre class="code" id="code-docs-prevent-default" copyable on-copy="() => { #copy-code-docs-prevent-default.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;form prevent-default no-propagate no-propagate-events="submit"
+      on-submit="() => { #api.send(); #status.set('Saving&hellip;') }"&gt;                                  &lt;!-- derived from on-submit: submit --&gt;
 
 &lt;div prevent-default prevent-default-events="contextmenu"
-     on-contextmenu="#menu.showAt(this)"&gt;                                                &lt;!-- not derivable: stated --&gt;
+     on-contextmenu="() => { #menu.showAt(this) }"&gt;                                                &lt;!-- not derivable: stated --&gt;
 
 &lt;input prevent-default
-       on-keydown(key:`Enter`)="#search.run(this.value)"&gt;                                 &lt;!-- derived from the key literal: keydown:enter --&gt;
+       on-keydown="({key: 'Enter'}) => { #search.run(this.value) }"&gt;                                 &lt;!-- derived from the key literal: keydown:enter --&gt;
 
 &lt;section prevent-default no-propagate
          prevent-default-events="dragover,drop" no-propagate-events="drop"
-         on-drop="#uploads.accept(this)"&gt;                                                &lt;!-- not derivable; dragover must be cancelled or drop never fires --&gt;
+         on-drop="() => { #uploads.accept(this) }"&gt;                                                &lt;!-- not derivable; dragover must be cancelled or drop never fires --&gt;
 
 &lt;canvas prevent-default prevent-default-events="wheel"
-        on-wheel="#viewport.throttle(16).zoom(this)"&gt;                                    &lt;!-- never derived: blocks scrolling, always stated --&gt;</code></pre>
+        on-wheel="() => { #viewport.throttle(16).zoom(this) }"&gt;                                    &lt;!-- never derived: blocks scrolling, always stated --&gt;</code></pre>
         </div>
         <p>
           With <code class="inline-code">prevent-default-events</code> omitted, <code class="inline-code">prevent-default</code> derives
@@ -656,13 +641,13 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <p>
           A literal-matched <code class="inline-code">on-keydown</code> that <em>replaces</em> a browser default should always carry
           <code class="inline-code">prevent-default</code>. Escape is the case that bites: the browser cancels an in-progress edit (clears <code class="inline-code">type="search"</code>, reverts the field to its last committed value) as the keydown
-          <strong>default action</strong>, which runs <em>after</em> the page&rsquo;s listeners. So <code class="inline-code">on-keydown(key:`Escape`)="this.reset()"</code>
+          <strong>default action</strong>, which runs <em>after</em> the page&rsquo;s listeners. So <code class="inline-code">on-keydown="({key: 'Escape'}) => { this.reset() }"</code>
           on its own sets the value first and the browser then overwrites it &mdash; Escape appears to do nothing. Deriving <code class="inline-code">keydown:escape</code> cancels that default and leaves the phrase as the only action.
         </p>
         <p><code class="inline-code">no-propagate</code> is its twin: <code class="inline-code">no-propagate-events</code>, default <code class="inline-code">"click"</code>, handler is <code class="inline-code">stopPropagation</code>. Both listen on the element, so both also receive events bubbling up from descendants — put them on the element whose keys or actions are meant, not an ancestor.</p>
 
         </section>
-        <section id="sec-revealable" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-revealable.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-revealable.removeAttr('data-visible')">
+        <section id="sec-revealable" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-revealable.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-revealable.removeAttr('data-visible') }]">
         <h3 id="revealable">Revealable <a class="anchor" href="#revealable">#</a></h3>
         <p><code class="inline-code">revealable</code> is the model generic implementation: it declares nothing the platform already holds, derives its strategy from the element at connect, and invents state only where nothing exists. Two verbs and one boolean: <code class="inline-code">show()</code> opens, <code class="inline-code">show(false)</code> closes, <code class="inline-code">toggle()</code> flips.</p>
         <div class="tbl-wrap">
@@ -681,55 +666,55 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <p>Nothing closes a panel unless a phrase says <code class="inline-code">show(false)</code>. Mutually exclusive panels are written out: each trigger names what it opens and what it closes.</p>
 
         </section>
-        <section id="sec-storable" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-storable.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-storable.removeAttr('data-visible')">
+        <section id="sec-storable" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-storable.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-storable.removeAttr('data-visible') }]">
         <h3 id="storable">Storable <a class="anchor" href="#storable">#</a></h3>
 <p><code class="inline-code">storable</code> persists an element&rsquo;s own state to <code class="inline-code">localStorage</code> through three verbs: <code class="inline-code">save()</code>, <code class="inline-code">restore()</code> and <code class="inline-code">clear()</code>. The element owns the storage: <code class="inline-code">storable-id</code> names it, and by the config-attribute convention above a name ending in <code class="inline-code">-id</code> must be unique within the page. Nothing is stored unless a phrase calls <code class="inline-code">save()</code> &mdash; saving is an act you can see in the markup. <code class="inline-code">save({tab: 'specs', size: 12})</code> writes its named fields as one JSON object under that name; a field is a scalar, or a bare ref such as <code class="inline-code">#cart</code>, which is stored as that element&rsquo;s <code class="inline-code">innerHTML</code>. <code class="inline-code">save()</code> with no arguments writes <code class="inline-code">{}</code>, and the single-field case is still an object. Because the payload is JSON, <code class="inline-code">"12"</code> and <code class="inline-code">12</code> survive the round trip and are distinguishable. The element never inspects the tag name; the field name is the author&rsquo;s.</p>
-<p>Nothing restores without <code class="inline-code">on-load="this.restore()"</code> written by the author. <code class="inline-code">restore()</code> reads the element&rsquo;s <code class="inline-code">storable-id</code> and returns silently when nothing is stored &mdash; a first visit, not a failure. When something is stored it must parse to a JSON object; invalid JSON, or JSON that is not an object, dispatches <code class="inline-code">restore-error</code> with <code class="inline-code">reason: parse</code>. The object is then matched against the shapes the element&rsquo;s own <code class="inline-code">on-restore</code> handlers declare, by field names and JSON types; the matching handler runs and receives the fields as declared values. A shape is a handler&rsquo;s declared names, so two handlers that bind the same names are ambiguous and are reported once through <code class="inline-code">logOnce</code>; a declared name whose type accepts <code class="inline-code">undefined</code> is optional, and a value whose JSON type does not fit the declaration falls through to the silent non-match. A stored object that matches no declared shape dispatches nothing and logs nothing: the author retired that format deliberately. Keeping an old handler is how storage that has held more than one shape over time keeps working &mdash; a stale value matches the old handler, and migration needs no mechanism; an optional field widens one handler to cover both. <code class="inline-code">storable</code> still writes nothing to the DOM: the phrase decides where the value lands, and when a shape matches the <code class="inline-code">restore</code> event also lets <code class="inline-code">dirtyable</code> re-baseline a field. Failures are events on the element whose verb was called: <code class="inline-code">save-error</code> carries <code class="inline-code">reason</code> <code class="inline-code">quota</code>, <code class="inline-code">denied</code> or <code class="inline-code">serialize</code>, leaves any previously stored value intact and never aborts the phrase. <code class="inline-code">clear()</code> removes the element&rsquo;s stored object and dispatches nothing.</p>
+<p>Nothing restores without <code class="inline-code">on-load="() => { this.restore() }"</code> written by the author. <code class="inline-code">restore()</code> reads the element&rsquo;s <code class="inline-code">storable-id</code> and returns silently when nothing is stored &mdash; a first visit, not a failure. When something is stored it must parse to a JSON object; invalid JSON, or JSON that is not an object, dispatches <code class="inline-code">restore-error</code> with <code class="inline-code">reason: parse</code>. The object is then matched against the shapes the element&rsquo;s own <code class="inline-code">on-restore</code> handlers declare, by field names and JSON types; the matching handler runs and receives the fields as declared values. A shape is a handler&rsquo;s declared names, so two handlers that bind the same names are ambiguous and are reported once through <code class="inline-code">logOnce</code>; a declared name whose type accepts <code class="inline-code">undefined</code> is optional, and a value whose JSON type does not fit the declaration falls through to the silent non-match. A stored object that matches no declared shape dispatches nothing and logs nothing: the author retired that format deliberately. Keeping an old handler is how storage that has held more than one shape over time keeps working &mdash; a stale value matches the old handler, and migration needs no mechanism; an optional field widens one handler to cover both. <code class="inline-code">storable</code> still writes nothing to the DOM: the phrase decides where the value lands, and when a shape matches the <code class="inline-code">restore</code> event also lets <code class="inline-code">dirtyable</code> re-baseline a field. Failures are events on the element whose verb was called: <code class="inline-code">save-error</code> carries <code class="inline-code">reason</code> <code class="inline-code">quota</code>, <code class="inline-code">denied</code> or <code class="inline-code">serialize</code>, leaves any previously stored value intact and never aborts the phrase. <code class="inline-code">clear()</code> removes the element&rsquo;s stored object and dispatches nothing.</p>
 
         </section>
-        <section id="sec-focusable" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-focusable.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-focusable.removeAttr('data-visible')">
+        <section id="sec-focusable" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-focusable.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-focusable.removeAttr('data-visible') }]">
         <h3 id="focusable">Focusable <a class="anchor" href="#focusable">#</a></h3>
         <p><code class="inline-code">focusable</code> contributes two verbs that call the platform directly: <code class="inline-code">focus()</code> calls <code class="inline-code">HTMLElement.focus()</code> and <code class="inline-code">blur()</code> calls <code class="inline-code">blur()</code>; <code class="inline-code">focus()</code> reports once, through <code class="inline-code">console.error</code>, when the element stayed unfocused — the failure that would otherwise hide. It is how a combobox with a server-rendered options list roves real DOM focus, the MDN &ldquo;common convention&rdquo; for popups: the options list is a <code class="inline-code">&lt;ul&gt;</code> of <code class="inline-code">&lt;li&gt;&lt;button&gt;</code>s that <code class="inline-code">renderable</code> re-fills from each <code class="inline-code">requestable</code> response, and each option carries an id, <code class="inline-code">focusable</code>, and a phrase pointing at its neighbour:</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-focusable" on-click="#code-docs-focusable.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-focusable" on-click="() => { #code-docs-focusable.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-focusable" copyable on-copy="#copy-code-docs-focusable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="search" focusable prevent-default requestable
+          <pre class="code" id="code-docs-focusable" copyable on-copy="() => { #copy-code-docs-focusable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;input id="search" focusable prevent-default requestable
        role="combobox" aria-controls="results" aria-expanded="true"
        requestable-url="/api/search" requestable-include="#q"
-       on-response(html:string)="#results.render({payload: html})"
-       on-input="this.debounce(150).send()"
-       on-keydown(code:`ArrowDown`)="#results-1.focus()"&gt;   &lt;!-- ids are positional and regenerated with each response, so #results-1 is always the current first option --&gt;
+       on-response="({html: string}) => { #results.render({payload: html}) }"
+       on-input="() => { this.debounce(150).send() }"
+       on-keydown="({code: 'ArrowDown'}) => { #results-1.focus() }"&gt;   &lt;!-- ids are positional and regenerated with each response, so #results-1 is always the current first option --&gt;
 
 &lt;ul id="results" role="listbox" renderable&gt;
   &lt;li role="option"&gt;&lt;button id="results-1" focusable prevent-default
-      on-keydown(code:`ArrowDown`)="#results-2.focus()"
-      on-keydown(code:`ArrowUp`)="#search.focus()"&gt;first&lt;/button&gt;&lt;/li&gt;
+      on-keydown="({code: 'ArrowDown'}) => { #results-2.focus() }"
+      on-keydown="({code: 'ArrowUp'}) => { #search.focus() }"&gt;first&lt;/button&gt;&lt;/li&gt;
   &lt;li role="option"&gt;&lt;button id="results-2" focusable prevent-default
-      on-keydown(code:`ArrowDown`)="#results-3.focus()"
-      on-keydown(code:`ArrowUp`)="#results-1.focus()"&gt;second&lt;/button&gt;&lt;/li&gt;
+      on-keydown="({code: 'ArrowDown'}) => { #results-3.focus() }"
+      on-keydown="({code: 'ArrowUp'}) => { #results-1.focus() }"&gt;second&lt;/button&gt;&lt;/li&gt;
   &lt;li role="option"&gt;&lt;button id="results-3" focusable prevent-default
-      on-keydown(code:`ArrowDown`)="#results-1.focus()"
-      on-keydown(code:`ArrowUp`)="#results-2.focus()"&gt;third&lt;/button&gt;&lt;/li&gt;
+      on-keydown="({code: 'ArrowDown'}) => { #results-1.focus() }"
+      on-keydown="({code: 'ArrowUp'}) => { #results-2.focus() }"&gt;third&lt;/button&gt;&lt;/li&gt;
 &lt;/ul&gt;</code></pre>
         </div>
         <p><code class="inline-code">aria-activedescendant</code> is not set and must not be — real focus is on the option, so the screen reader announces it as the current item. The library never walks siblings or picks a &ldquo;first focusable&rdquo; descendant; every hop is a phrase the server wrote when it generated the list. Wrap-around is whatever the last option&rsquo;s phrase points at, a choice visible in the markup, not a mode. Every literal-matched <code class="inline-code">on-keydown</code> here carries <code class="inline-code">prevent-default</code> so the derived <code class="inline-code">keydown:code:arrowdown</code> / <code class="inline-code">keydown:code:arrowup</code> cancel page scroll and caret movement (<a href="#prevent-default">§ prevent-default and no-propagate</a>). <code class="inline-code">blur()</code> is legal on any receiver, logs nothing, and is a native no-op when the element is not the one focused.</p>
 
         </section>
-        <section id="sec-writing-an-implementation" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-writing-an-implementation.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-writing-an-implementation.removeAttr('data-visible')">
+        <section id="sec-writing-an-implementation" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-writing-an-implementation.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-writing-an-implementation.removeAttr('data-visible') }]">
         <h2 id="writing-an-implementation">Writing an implementation <a class="anchor" href="#writing-an-implementation">#</a></h2>
         <p>One call declares the name, the tags it may attach to, the config and state it brings, its verb signatures, and the factory — and the factory is type-checked against the signatures.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" attributable id="copy-code-docs-implementation" on-click="#code-docs-implementation.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-implementation" on-click="() => { #code-docs-implementation.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-implementation" copyable on-copy="#copy-code-docs-implementation.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>import { defineImplementation } from "interactably";
+          <pre class="code" id="code-docs-implementation" copyable on-copy="() => { #copy-code-docs-implementation.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="ts"><code>import { defineImplementation } from "interactably";
 
 export const modifiable = defineImplementation("modifiable", {
   tags: ["input", "textarea", "output", "select"],
@@ -775,7 +760,7 @@ export const modifiable = defineImplementation("modifiable", {
         </div>
 
         </section>
-        <section id="sec-signatures" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-signatures.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-signatures.removeAttr('data-visible')">
+        <section id="sec-signatures" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-signatures.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-signatures.removeAttr('data-visible') }]">
         <h3 id="signatures">Signatures <a class="anchor" href="#signatures">#</a></h3>
         <p>
           Every <code class="inline-code">config</code>, <code class="inline-code">state</code> and verb scalar signature is a
@@ -793,11 +778,11 @@ export const modifiable = defineImplementation("modifiable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" attributable id="copy-code-docs-signatures" on-click="#code-docs-signatures.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-signatures" on-click="() => { #code-docs-signatures.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-signatures" copyable on-copy="#copy-code-docs-signatures.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>export const renderable = defineImplementation("renderable", {
+          <pre class="code" id="code-docs-signatures" copyable on-copy="() => { #copy-code-docs-signatures.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="ts"><code>export const renderable = defineImplementation("renderable", {
   verbs: {
     render: {
       template: optionalCtor(HTMLTemplateElement),        // optional, but instance-checked when present
@@ -830,7 +815,7 @@ export const attributable = defineImplementation("attributable", {
         </div>
 
         </section>
-        <section id="sec-declare-only" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-declare-only.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-declare-only.removeAttr('data-visible')">
+        <section id="sec-declare-only" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-declare-only.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-declare-only.removeAttr('data-visible') }]">
         <h3 id="declare-only">Declare only what you invent <a class="anchor" href="#declare-only">#</a></h3>
         <p>
           An implementation never declares an attribute the platform already owns. <code class="inline-code">min</code>, <code class="inline-code">max</code>,
@@ -849,7 +834,7 @@ export const attributable = defineImplementation("attributable", {
         <p>Most implementations declare no <code class="inline-code">state</code>: <code class="inline-code">dirtyable</code>&rsquo;s closure holds one boolean, the last-reported dirtiness, and its baseline is the platform default &mdash; by element kind, <code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code> or <code class="inline-code">defaultSelected</code> (<code class="inline-code">defaultValue</code> is live, so a script writing the <code class="inline-code">value</code> attribute moves the baseline); <code class="inline-code">validatable</code> keeps the last validity and touched bit in its closure rather than inventing DOM state; <code class="inline-code">revealable</code> on a <code class="inline-code">&lt;dialog&gt;</code> reads <code class="inline-code">el.open</code>, <code class="inline-code">modifiable</code> writes <code class="inline-code">el.value</code>. A <code class="inline-code">state</code> entry is the exception, and the smell to check is whether the platform already has the thing under another name.</p>
 
         </section>
-        <section id="sec-attrs" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-attrs.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-attrs.removeAttr('data-visible')">
+        <section id="sec-attrs" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-attrs.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-attrs.removeAttr('data-visible') }]">
         <h3 id="attrs">attrs is a typed proxy <a class="anchor" href="#attrs">#</a></h3>
         <p>Built once per instance by <code class="inline-code">bindAttributes(el, name, def)</code>. Each getter reads the attribute live and validates it through the same compiled signature verbs use:</p>
         <ul>
@@ -859,7 +844,7 @@ export const attributable = defineImplementation("attributable", {
         </ul>
 
         </section>
-        <section id="sec-conventions" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-conventions.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-conventions.removeAttr('data-visible')">
+        <section id="sec-conventions" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-conventions.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-conventions.removeAttr('data-visible') }]">
         <h3 id="conventions">Conventions <a class="anchor" href="#conventions">#</a></h3>
         <ul>
           <li><strong><code class="inline-code">on*</code> methods are event handlers</strong> on the host element (<code class="inline-code">auto-grow</code>&rsquo;s <code class="inline-code">onInput</code> still works). <strong>Every other method is a verb</strong> and must appear in <code class="inline-code">verbs</code>.</li>
@@ -871,7 +856,7 @@ export const attributable = defineImplementation("attributable", {
         </ul>
 
         </section>
-        <section id="sec-state" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-state.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-state.removeAttr('data-visible')">
+        <section id="sec-state" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-state.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-state.removeAttr('data-visible') }]">
         <h2 id="state">State: three tiers <a class="anchor" href="#state">#</a></h2>
         <p>A verb&rsquo;s job is to <strong>mutate state</strong>; the reaction (text, classes, ARIA, <code class="inline-code">hidden</code>) happens in <code class="inline-code">attributeChangedCallback</code> or in response to the platform&rsquo;s own events. Verbs do not render.</p>
         <div class="tbl-wrap">
@@ -888,11 +873,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" attributable id="copy-code-docs-dirtyable" on-click="#code-docs-dirtyable.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-dirtyable" on-click="() => { #code-docs-dirtyable.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-dirtyable" copyable on-copy="#copy-code-docs-dirtyable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>// dirtyable — reports one decision as events; the baseline is the platform default
+          <pre class="code" id="code-docs-dirtyable" copyable on-copy="() => { #copy-code-docs-dirtyable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="ts"><code>// dirtyable — reports one decision as events; the baseline is the platform default
 (el, attrs) =&gt; {
   const isDirty = () =&gt;
     el instanceof HTMLSelectElement
@@ -917,23 +902,23 @@ export const attributable = defineImplementation("attributable", {
   };
 }</code></pre>
         </div>
-        <p>The implementation writes nothing; the author paints the effect with the events, two lines of markup. The baseline is the platform default; on an <code class="inline-code">&lt;input&gt;</code> the author moves it with <code class="inline-code">on-dirty="this.setAttr({name: &rsquo;value&rsquo;, value: this.value})"</code> (and, after a matching restore, <code class="inline-code">on-restore="this.setAttr({name: &rsquo;value&rsquo;, value: this.value})"</code>). On a <code class="inline-code">&lt;textarea&gt;</code> or <code class="inline-code">&lt;select&gt;</code> <code class="inline-code">setAttr</code> cannot move the baseline; this release gives them no mechanism.</p>
+        <p>The implementation writes nothing; the author paints the effect with the events, two lines of markup. The baseline is the platform default; on an <code class="inline-code">&lt;input&gt;</code> the author moves it with <code class="inline-code">on-dirty="() => { this.setAttr({name: &rsquo;value&rsquo;, value: this.value}) }"</code> (and, after a matching restore, <code class="inline-code">on-restore="() => { this.setAttr({name: &rsquo;value&rsquo;, value: this.value}) }"</code>). On a <code class="inline-code">&lt;textarea&gt;</code> or <code class="inline-code">&lt;select&gt;</code> <code class="inline-code">setAttr</code> cannot move the baseline; this release gives them no mechanism.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
           </div>
           <pre class="code" data-lang="html"><code>&lt;input dirtyable attributable
-       on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-       on-clean="this.removeAttr('data-dirty')"&gt;</code></pre>
+       on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
+       on-clean="() => { this.removeAttr('data-dirty') }"&gt;</code></pre>
         </div>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">TS</span>
-            <button class="copy-btn" attributable id="copy-code-docs-revealable" on-click="#code-docs-revealable.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-revealable" on-click="() => { #code-docs-revealable.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-revealable" copyable on-copy="#copy-code-docs-revealable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="ts"><code>// revealable on a plain panel — the one case with invented state
+          <pre class="code" id="code-docs-revealable" copyable on-copy="() => { #copy-code-docs-revealable.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="ts"><code>// revealable on a plain panel — the one case with invented state
 // state: { open: "boolean | undefined" } → revealable-open
 (el, attrs) =&gt; ({
   show:   (_e, value) =&gt; { attrs.open = value === false ? undefined : true; },
@@ -951,16 +936,16 @@ export const attributable = defineImplementation("attributable", {
         <p>There is no store, no signals, no cross-element watching. The DOM is the store; ids are the addresses. Whoever changes B fires A.</p>
 
         </section>
-        <section id="sec-dynamics" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-dynamics.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-dynamics.removeAttr('data-visible')">
+        <section id="sec-dynamics" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-dynamics.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-dynamics.removeAttr('data-visible') }]">
         <h2 id="dynamics">Dynamics <a class="anchor" href="#dynamics">#</a></h2>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Case</th><th>Answer</th></tr></thead>
             <tbody>
-              <tr><td><strong>Dynamic triggers</strong> (rows rendered from a template)</td><td>Put the implementation / <code class="inline-code">on-*</code> attributes in the template; <code class="inline-code">render()</code> stamps each clone with an author-supplied <code class="inline-code">id</code> slot, and the row&rsquo;s delete button targets that id directly — <code class="inline-code">on-click="#list.render({swap: 'delete', target: '#row-{id}'})"</code> — no closest-style walk-up, no generated ids</td></tr>
+              <tr><td><strong>Dynamic triggers</strong> (rows rendered from a template)</td><td>Put the implementation / <code class="inline-code">on-*</code> attributes in the template; <code class="inline-code">render()</code> stamps each clone with an author-supplied <code class="inline-code">id</code> slot, and the row&rsquo;s delete button targets that id directly — <code class="inline-code">on-click="() => { #list.render({swap: 'delete', target: '#row-{id}'}) }"</code> — no closest-style walk-up, no generated ids</td></tr>
               <tr><td><strong>Dynamic receivers</strong> (a row&rsquo;s own subtotal)</td><td>Receivers stay ids or <code class="inline-code">this</code>. Stamp ids in the template — <code class="inline-code">render()</code> fills <code class="inline-code">row-{id}</code> from a slot — so a row&rsquo;s own fields are addressed directly, or the row totals them with the <code class="inline-code">&amp;</code> selector below</td></tr>
-              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>An expression with a selector: the row&rsquo;s <code class="inline-code">on-input="#total.set(sum('#list .amount:valid'))"</code>, and <code class="inline-code">on-load="this.set(sum('#list .amount:valid'))"</code> on the total to compute at attach. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. <code class="inline-code">sum</code> is strict; filter blanks in the selector — <code class="inline-code">sum('#list .amount:valid')</code> (blank <code class="inline-code">required</code> inputs are <code class="inline-code">:invalid</code>), <code class="inline-code">sum('#list .amount:not(:placeholder-shown)')</code> (blank inputs carrying a <code class="inline-code">placeholder</code>, even <code class="inline-code">placeholder=" "</code>), <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes. A <code class="inline-code">&amp;</code> in the selector names the element the phrase is on, so a row can total its own fields — see the row example below</td></tr>
-              <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change fires its own event (<code class="inline-code">on-response="#count.set(count('#results &gt; li'))"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
+              <tr><td><strong>Dynamic data sources</strong> (sum whatever inputs exist)</td><td>An expression with a selector: the row&rsquo;s <code class="inline-code">on-input="() => { #total.set(sum('#list .amount:valid')) }"</code>, and <code class="inline-code">on-load="() => { this.set(sum('#list .amount:valid')) }"</code> on the total to compute at attach. <code class="inline-code">sum(selector)</code> / <code class="inline-code">count(selector)</code> run <code class="inline-code">querySelectorAll</code> at fire time. <code class="inline-code">sum</code> is strict; filter blanks in the selector — <code class="inline-code">sum('#list .amount:valid')</code> (blank <code class="inline-code">required</code> inputs are <code class="inline-code">:invalid</code>), <code class="inline-code">sum('#list .amount:not(:placeholder-shown)')</code> (blank inputs carrying a <code class="inline-code">placeholder</code>, even <code class="inline-code">placeholder=" "</code>), <code class="inline-code">sum('#list .amount:checked')</code> sums only ticked checkboxes. A <code class="inline-code">&amp;</code> in the selector names the element the phrase is on, so a row can total its own fields — see the row example below</td></tr>
+              <tr><td><strong>Change without interaction</strong> (server swap, external mutation)</td><td>The implementation that performed the change fires its own event (<code class="inline-code">on-response="() => { #count.set(count('#results &gt; li')) }"</code>), a new synchronous chain with <code class="inline-code">this</code> bound to that element</td></tr>
             </tbody>
           </table>
         </div>
@@ -968,11 +953,11 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-row-example" on-click="#code-docs-row-example.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-row-example" on-click="() => { #code-docs-row-example.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-row-example" copyable on-copy="#copy-code-docs-row-example.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;li class="row" on-input="this.setAttr({name: 'data-total', value: '' + sum('&amp; .amount')})"&gt;
+<pre class="code" id="code-docs-row-example" copyable on-copy="() => { #copy-code-docs-row-example.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;li class="row" on-input="() => { this.setAttr({name: 'data-total', value: '' + sum('&amp; .amount')}) }"&gt;
   &lt;input class="amount" type="number" value="10"&gt;
   &lt;input class="amount" type="number" value="20"&gt;
 &lt;/li&gt;</code></pre>
@@ -980,31 +965,31 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">CSS</span>
-            <button class="copy-btn" attributable id="copy-code-docs-row-css" on-click="#code-docs-row-css.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-row-css" on-click="() => { #code-docs-row-css.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-<pre class="code" id="code-docs-row-css" copyable on-copy="#copy-code-docs-row-css.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="css"><code>li.row::after { content: attr(data-total); }</code></pre>
+<pre class="code" id="code-docs-row-css" copyable on-copy="() => { #copy-code-docs-row-css.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="css"><code>li.row::after { content: attr(data-total); }</code></pre>
         </div>
         <p id="timing" style="scroll-margin-top:5rem"><strong>Timing is uniform.</strong> Every element &mdash; in the initial document or inserted later, server-rendered or cloned from a template &mdash; attaches one microtask after insertion, or at <code class="inline-code">DOMContentLoaded</code> for the initial document. The cost of that microtask gap is the one price of the model: code that inserts a trigger and drives it in the same task gets a <code class="inline-code">"is not attached"</code> error. Moving an element around the document is a no-op: it stays attached, its instance survives. An element that gains an implementation attribute or an <code class="inline-code">on-*</code> attribute after insertion is not attached by that attribute alone &mdash; re-insert it. An element carrying an attribute whose implementation registers later attaches then, without a re-insert.</p>
         <p>Selector rule: <strong>selectors may appear in arguments, never as receivers.</strong> The dispatch graph stays 1:1 — every interaction goes to one element with one implementation attribute, so completion, grep (<code class="inline-code">#pop.</code> finds every writer) and error rules stay exact.</p>
 
         </section>
-        <section id="sec-parser-and-executor" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-parser-and-executor.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-parser-and-executor.removeAttr('data-visible')">
+        <section id="sec-parser-and-executor" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-parser-and-executor.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-parser-and-executor.removeAttr('data-visible') }]">
         <h2 id="parser-and-executor">Parser and executor <a class="anchor" href="#parser-and-executor">#</a></h2>
         <p>There is no engine. Two pure functions, both called from the host.</p>
 
         </section>
-        <section id="sec-pipeline" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-pipeline.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-pipeline.removeAttr('data-visible')">
+        <section id="sec-pipeline" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-pipeline.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-pipeline.removeAttr('data-visible') }]">
         <h3 id="pipeline">Pipeline <a class="anchor" href="#pipeline">#</a></h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button class="copy-btn" attributable id="copy-code-docs-pipeline" on-click="#code-docs-pipeline.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-pipeline" on-click="() => { #code-docs-pipeline.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-pipeline" copyable on-copy="#copy-code-docs-pipeline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>DOM event on the trigger (passive listener bound in connectedCallback)
+          <pre class="code" id="code-docs-pipeline" copyable on-copy="() => { #copy-code-docs-pipeline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text"><code>DOM event on the trigger (passive listener bound in connectedCallback)
   → parse(attributeValue)          cached by string → Phrase[] with unresolved refs
   → runPhrases(this, phrases, ev)
       → key filter
@@ -1025,60 +1010,60 @@ export const attributable = defineImplementation("attributable", {
         <ul>
           <li><strong>Nested triggers behave like nested <code class="inline-code">onclick</code>.</strong> A click on a button inside a <code class="inline-code">&lt;div on-click&gt;</code> fires the button&rsquo;s phrase, then bubbles and fires the div&rsquo;s. No implicit innermost-wins; suppression is explicit via <code class="inline-code">no-propagate</code> on the inner element.</li>
           <li><strong>Timers and <code class="inline-code">once</code> state are keyed per element, per receiver-chain</strong> (in a <code class="inline-code">WeakMap</code>); delay remainders are per-walk pending timers, each dropped on disconnect via <code class="inline-code">clearPhraseState</code>.</li>
-          <li><strong>Imperative path:</strong> <code class="inline-code">runPhrases(el, "#pop.show()", someEvent)</code> is the one entry point, and its first argument is what <code class="inline-code">this</code> means — the trigger listener and every implementation-event handler call the same function.</li>
+          <li><strong>Imperative path:</strong> <code class="inline-code">runPhrases(el, "#pop.show()", someEvent)</code> is the raw-phrase entry point; <code class="inline-code">runEventValue</code> wraps it for attribute values, and their first argument is what <code class="inline-code">this</code> means — the trigger listener and every implementation-event handler call the same function.</li>
         </ul>
 
         </section>
-        <section id="sec-parse-cache" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-parse-cache.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-parse-cache.removeAttr('data-visible')">
+        <section id="sec-parse-cache" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-parse-cache.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-parse-cache.removeAttr('data-visible') }]">
         <h3 id="parse-cache">Parse cache and resolution <a class="anchor" href="#parse-cache">#</a></h3>
         <p><code class="inline-code">parse</code> caches by attribute string; the cached value is an AST in which <code class="inline-code">#id</code>, <code class="inline-code">this</code> and reads are <strong>tokens</strong>, not elements or values. Resolution happens per fire, inside <code class="inline-code">runPhrases</code>; two identical rows share one parse and resolve to two different elements. <code class="inline-code">this</code> is resolved as <code class="inline-code">token === "this" ? source : document.getElementById(id)</code> — never rewritten into the attribute, never stamped into an id, never consulted from <code class="inline-code">event.currentTarget</code>.</p>
         <p><strong>Argument validation is the receiver&rsquo;s job, not the parser&rsquo;s.</strong> The parser knows every literal&rsquo;s kind from syntax (bare <code class="inline-code">5</code> is a number, <code class="inline-code">'5'</code> is a string, <code class="inline-code">#id</code> / <code class="inline-code">this</code> are elements). Scalars go through <code class="inline-code">parseValueAgainstDSL</code> against the slot&rsquo;s tsyntax string; resolved elements go through <code class="inline-code">instanceof</code> against the slot&rsquo;s constructor. Reads carry the type the element declares: <code class="inline-code">this.value</code> on a number input is a number, on a text input a string, <code class="inline-code">#agree.checked</code> a boolean. There is no coercion — <code class="inline-code">#total.add(this.value)</code> with <code class="inline-code">add: "number"</code> fails and the message says so, and an expression argument is validated against the same signature once it has resolved.</p>
 
         </section>
-        <section id="sec-native-defaults" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-native-defaults.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-native-defaults.removeAttr('data-visible')">
+        <section id="sec-native-defaults" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-native-defaults.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-native-defaults.removeAttr('data-visible') }]">
         <h3 id="native-defaults">Native default actions and propagation <a class="anchor" href="#native-defaults">#</a></h3>
         <p>The executor does neither. Every <code class="inline-code">on-*</code> listener is passive; a phrase describes what happens, not what the browser is allowed to do.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-native-defaults" on-click="#code-docs-native-defaults.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-native-defaults" on-click="() => { #code-docs-native-defaults.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-native-defaults" copyable on-copy="#copy-code-docs-native-defaults.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form prevent-default on-submit="#api.send()"&gt;          &lt;!-- submit cancelled --&gt;
-&lt;a       href="/docs"                  on-click="#log.track('docs')"&gt;Docs&lt;/a&gt;   &lt;!-- navigates and tracks --&gt;
-&lt;a       href="#p" prevent-default on-click="#p.show()"&gt;&hellip;&lt;/a&gt;   &lt;!-- in-page action --&gt;
-&lt;button no-propagate on-click="#snippet.copy()"&gt;&times;&lt;/button&gt;  &lt;!-- the inner click never reaches the outer trigger --&gt;</code></pre>
+          <pre class="code" id="code-docs-native-defaults" copyable on-copy="() => { #copy-code-docs-native-defaults.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;form prevent-default on-submit="() => { #api.send() }"&gt;          &lt;!-- submit cancelled --&gt;
+&lt;a       href="/docs"                  on-click="() => { #log.track('docs') }"&gt;Docs&lt;/a&gt;   &lt;!-- navigates and tracks --&gt;
+&lt;a       href="#p" prevent-default on-click="() => { #p.show() }"&gt;&hellip;&lt;/a&gt;   &lt;!-- in-page action --&gt;
+&lt;button no-propagate on-click="() => { #snippet.copy() }"&gt;&times;&lt;/button&gt;  &lt;!-- the inner click never reaches the outer trigger --&gt;</code></pre>
         </div>
         <p><code class="inline-code">prevent-default</code> binds its own listeners with <code class="inline-code">passive: false</code>, so the executor has no list of non-passive events. Because cancellation is explicit, the forgetful case is caught where it is cheap: at connect, a host carrying <code class="inline-code">on-submit</code> on a <code class="inline-code">&lt;form&gt;</code> (or <code class="inline-code">on-click</code> on an <code class="inline-code">&lt;a href&gt;</code>, or <code class="inline-code">on-keydown</code> on a <code class="inline-code">&lt;button&gt;</code>) without <code class="inline-code">prevent-default</code> logs one <code class="inline-code">console.warn</code>. A pre-existing <code class="inline-code">defaultPrevented</code> does <strong>not</strong> suppress dispatch.</p>
 
         </section>
-        <section id="sec-asynchrony" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-asynchrony.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-asynchrony.removeAttr('data-visible')">
+        <section id="sec-asynchrony" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-asynchrony.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-asynchrony.removeAttr('data-visible') }]">
         <h2 id="asynchrony">Asynchrony <a class="anchor" href="#asynchrony">#</a></h2>
         <p><strong>Verbs are synchronous and chains never await.</strong> This is the HTMX shape the library exists to reproduce: the client says what to send and where the answer goes; everything that takes time happens elsewhere. A <code class="inline-code">.</code> chain is a sequence of DOM mutations that runs to completion inside one task, before the browser paints &mdash; unless a <code class="inline-code">delay()</code> link splits it. Work that finishes later belongs to an implementation that owns it — today <code class="inline-code">requestable</code> — and continues by dispatching an <code class="inline-code">ImplementationEvent</code> the author&rsquo;s <code class="inline-code">on-response</code> / <code class="inline-code">on-request-error</code> / <code class="inline-code">on-request-timeout</code> / <code class="inline-code">on-request-offline</code> attributes turn into a new synchronous chain.</p>
         <p><code class="inline-code">delay</code> is a phrase modifier, not a verb — it pauses the chain where it sits, and everything downstream, including past <code class="inline-code">&amp;&amp;</code>, waits, because <code class="inline-code">&amp;&amp;</code> is sequential:</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-pause" on-click="#code-docs-pause.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-pause" on-click="() => { #code-docs-pause.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-pause" copyable on-copy="#copy-code-docs-pause.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button attributable
-        on-click="this.delay(300).setAttr({name: 'aria-busy', value: 'true'})"&gt;&hellip;&lt;/button&gt;</code></pre>
+          <pre class="code" id="code-docs-pause" copyable on-copy="() => { #copy-code-docs-pause.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button attributable
+        on-click="() => { this.delay(300).setAttr({name: 'aria-busy', value: 'true'}) }"&gt;&hellip;&lt;/button&gt;</code></pre>
         </div>
-        <p>The executor stops the chain at <code class="inline-code">delay(ms)</code>, schedules the remainder to run <code class="inline-code">ms</code> later, and returns. Each re-fire that reaches the same delay schedules its own remainder — they stack, they do not reset each other, so two can be pending at once; superseding is <code class="inline-code">debounce</code>&rsquo;s job. A re-fire gated before it — for example by a spent <code class="inline-code">once()</code> — leaves the pending remainder to run. Every pending remainder is dropped on disconnect. The copy-flash pattern lives on the copied element&rsquo;s <code class="inline-code">on-copy</code> and points back at the button: <code class="inline-code">on-copy="#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"</code> marks the button, and the reset follows the chain&rsquo;s own 1.5&nbsp;s delay. A pause is a scheduling decision the executor owns — never an awaited interaction.</p>
+        <p>The executor stops the chain at <code class="inline-code">delay(ms)</code>, schedules the remainder to run <code class="inline-code">ms</code> later, and returns. Each re-fire that reaches the same delay schedules its own remainder — they stack, they do not reset each other, so two can be pending at once; superseding is <code class="inline-code">debounce</code>&rsquo;s job. A re-fire gated before it — for example by a spent <code class="inline-code">once()</code> — leaves the pending remainder to run. Every pending remainder is dropped on disconnect. The copy-flash pattern lives on the copied element&rsquo;s <code class="inline-code">on-copy</code> and points back at the button: <code class="inline-code">on-copy="() => { #copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }"</code> marks the button, and the reset follows the chain&rsquo;s own 1.5&nbsp;s delay. A pause is a scheduling decision the executor owns — never an awaited interaction.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-copy-flash" on-click="#code-docs-copy-flash.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-copy-flash" on-click="() => { #code-docs-copy-flash.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-copy-flash" copyable on-copy="#copy-code-docs-copy-flash.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;pre id="snippet" copyable
-      on-copy="#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"&gt;...&lt;/pre&gt;
+          <pre class="code" id="code-docs-copy-flash" copyable on-copy="() => { #copy-code-docs-copy-flash.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;pre id="snippet" copyable
+      on-copy="() => { #copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }"&gt;...&lt;/pre&gt;
 &lt;button id="copy-btn" attributable
-        on-click="#snippet.copy()" type="button"&gt;
+        on-click="() => { #snippet.copy() }" type="button"&gt;
   &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;
 &lt;/button&gt;</code></pre>
         </div>
@@ -1086,25 +1071,25 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-async" on-click="#code-docs-async.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-async" on-click="() => { #code-docs-async.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-async" copyable on-copy="#copy-code-docs-async.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="q" on-input="#results.debounce(300).send()"&gt;
+          <pre class="code" id="code-docs-async" copyable on-copy="() => { #copy-code-docs-async.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;input id="q" on-input="() => { #results.debounce(300).send() }"&gt;
 
 &lt;ul id="results" requestable renderable
     requestable-url="/api/search" requestable-include="#q"
-    on-response(html:string)="#results.render({payload: html}); #count.set(count('#results &gt; li')); #status.show(false)"
-    on-request-error="#status.show()"&gt;&lt;/ul&gt;
+    on-response="({html: string}) => { #results.render({payload: html}); #count.set(count('#results &gt; li')); #status.show(false) }"
+    on-request-error="() => { #status.show() }"&gt;&lt;/ul&gt;
 &lt;output id="count" modifiable&gt;&lt;/output&gt;</code></pre>
         </div>
-        <p>The trigger&rsquo;s chain is one synchronous link: <code class="inline-code">send()</code> aborts the previous in-flight request for <code class="inline-code">#results</code>, starts a new one, and returns. When the response lands, <code class="inline-code">requestable</code> dispatches <code class="inline-code">new ImplementationEvent("response", { originalEvent, values: { html, status } })</code>; the element&rsquo;s own <code class="inline-code">on-response(html:string)</code> attribute runs a second synchronous chain in which <code class="inline-code">this</code> is <code class="inline-code">#results</code> &mdash; <code class="inline-code">render({payload: html})</code> places the response, then the count and status follow. The network gap sits between two chains and has a name and a place in the markup.</p>
+        <p>The trigger&rsquo;s chain is one synchronous link: <code class="inline-code">send()</code> aborts the previous in-flight request for <code class="inline-code">#results</code>, starts a new one, and returns. When the response lands, <code class="inline-code">requestable</code> dispatches <code class="inline-code">new ImplementationEvent("response", { originalEvent, values: { html, status } })</code>; the element&rsquo;s own <code class="inline-code">on-response="({html: string}) =&gt; { &hellip; }"</code> attribute runs a second synchronous chain in which <code class="inline-code">this</code> is <code class="inline-code">#results</code> &mdash; <code class="inline-code">render({payload: html})</code> places the response, then the count and status follow. The network gap sits between two chains and has a name and a place in the markup.</p>
         <p><code class="inline-code">requestable-include</code> adds matched controls to the request collected as <code class="inline-code">FormData</code> would: disabled, unchecked and unselected controls are not sent, a multi-select contributes one entry per selected option, a file input one entry per file, and a matched <code class="inline-code">&lt;form&gt;</code> is spread whole. A matched control that already lives inside the requestable form itself is sent twice &mdash; the same as two <code class="inline-code">&lt;input name=x&gt;</code> in one form.</p>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Not possible</th><th>Because</th><th>Instead</th></tr></thead>
             <tbody>
-              <tr><td><code class="inline-code">#results.send().highlight()</code> — a link after the response</td><td>The chain would have to await, and every question about what happens while it waits needs an executor answer</td><td><code class="inline-code">on-response="this.highlight()"</code></td></tr>
+              <tr><td><code class="inline-code">#results.send().highlight()</code> — a link after the response</td><td>The chain would have to await, and every question about what happens while it waits needs an executor answer</td><td><code class="inline-code">on-response="() => { this.highlight() }"</code></td></tr>
               <tr><td>A verb returning a promise</td><td>The host ignores the value and warns; the chain has already moved on</td><td>Start the work in the verb; consume it in the closure; continue via a config phrase</td></tr>
               <tr><td>A guard that asks the server</td><td>A guard is a synchronous yes/no; a round trip is a request</td><td><code class="inline-code">send()</code> with the check server-side, and <code class="inline-code">on-request-error</code> for the no</td></tr>
               <tr><td><code class="inline-code">once()</code> as a double-submit guard for a request</td><td>It spends when the walk passes it, before the request returns, so a failed request leaves a dead trigger</td><td><code class="inline-code">requestable</code>&rsquo;s concurrency policy</td></tr>
@@ -1115,10 +1100,10 @@ export const attributable = defineImplementation("attributable", {
         <p><strong>Concurrency policy belongs to the implementation that owns the I/O.</strong> <code class="inline-code">requestable</code> derives it from the method, the way <code class="inline-code">revealable</code> derives its strategy from the tag: a GET is idempotent, so a new send aborts the previous one (<strong>latest wins</strong>); anything else may already have happened on the server, so a new send while one is in flight is refused (<strong>first wins</strong>). <code class="inline-code">requestable-concurrency="latest | first | all"</code> overrides. Because <code class="inline-code">send()</code> sets <code class="inline-code">aria-busy="true"</code> synchronously and clears it when the last in-flight request settles, <code class="inline-code">form[aria-busy="true"] button { pointer-events: none }</code> disables the trigger with no JavaScript.</p>
         <p><strong><code class="inline-code">aria-busy</code> is handled; <code class="inline-code">aria-live</code> is the author&rsquo;s.</strong> The library sets and clears <code class="inline-code">aria-busy</code> around the request, and that needs no author action. It does not set <code class="inline-code">aria-live</code>: a live region must exist before its content changes, or the update may not be announced, and choosing <code class="inline-code">polite</code> versus <code class="inline-code">assertive</code> is a judgement only the author can make.</p>
         <p><strong>Continuations run only if the element is still connected.</strong> <code class="inline-code">requestable</code> never touches the DOM, so a response always lands on a connected element; if the author&rsquo;s own <code class="inline-code">on-response</code> phrase replaces the element (<code class="inline-code">render({swap: 'outerHTML'})</code>), that replacement is the continuation&rsquo;s own work and has already run. Cancellation is <code class="inline-code">AbortError</code>, which runs neither event and logs nothing.</p>
-        <p><strong>Failures are partitioned into three events, not one bucket.</strong> A non-ok status &mdash; the server replied, just not with a success &mdash; dispatches <code class="inline-code">request-error</code> carrying the <code class="inline-code">status</code> as its only value. A timeout (<code class="inline-code">requestable-timeout</code> is milliseconds; the timer aborts the request&rsquo;s <code class="inline-code">AbortController</code> with a <code class="inline-code">TimeoutError</code> reason) dispatches <code class="inline-code">request-timeout</code>, and a fetch that rejected outright &mdash; no response ever arrived, for any reason, not only a <code class="inline-code">TypeError</code> &mdash; dispatches <code class="inline-code">request-offline</code>; the last two carry no values. The response path filters by status literal: <code class="inline-code">on-request-error(status:`401`)</code> fires only on a 401, <code class="inline-code">on-request-error(status:`404`)</code> only on a 404, and an unfiltered <code class="inline-code">on-request-error</code> phrase runs for every non-ok status. <code class="inline-code">abort()</code> stays silent.</p>
+        <p><strong>Failures are partitioned into three events, not one bucket.</strong> A non-ok status &mdash; the server replied, just not with a success &mdash; dispatches <code class="inline-code">request-error</code> carrying the <code class="inline-code">status</code> as its only value. A timeout (<code class="inline-code">requestable-timeout</code> is milliseconds; the timer aborts the request&rsquo;s <code class="inline-code">AbortController</code> with a <code class="inline-code">TimeoutError</code> reason) dispatches <code class="inline-code">request-timeout</code>, and a fetch that rejected outright &mdash; no response ever arrived, for any reason, not only a <code class="inline-code">TypeError</code> &mdash; dispatches <code class="inline-code">request-offline</code>; the last two carry no values. The response path filters by status literal: <code class="inline-code">({status: 401})</code> fires only on a 401, <code class="inline-code">({status: 404})</code> only on a 404, and an unfiltered <code class="inline-code">on-request-error</code> phrase runs for every non-ok status. <code class="inline-code">abort()</code> stays silent.</p>
 
         </section>
-        <section id="sec-full-examples" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-full-examples.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-full-examples.removeAttr('data-visible')">
+        <section id="sec-full-examples" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-full-examples.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-full-examples.removeAttr('data-visible') }]">
         <h2 id="full-examples">Full examples <a class="anchor" href="#full-examples">#</a></h2>
         <p>The examples below are live on the <a href="./examples.html">examples page</a>; the markup shown is the whole setup.</p>
 
@@ -1126,34 +1111,34 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-full-calc" on-click="#code-docs-full-calc.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-full-calc" on-click="() => { #code-docs-full-calc.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-full-calc" copyable on-copy="#copy-code-docs-full-calc.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;label&gt;Qty
+          <pre class="code" id="code-docs-full-calc" copyable on-copy="() => { #copy-code-docs-full-calc.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;label&gt;Qty
   &lt;input id="qty" modifiable dirtyable attributable prevent-default
          type="number" value="1" min="0" max="10"
-         on-input="#preview.set(this.value)"
-         on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-         on-clean="this.removeAttr('data-dirty')"
-         on-keydown(code:`Escape`)="this.reset(); #preview.set(#qty.value)"&gt;
+         on-input="() => { #preview.set(this.value) }"
+         on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
+         on-clean="() => { this.removeAttr('data-dirty') }"
+         on-keydown="({code: 'Escape'}) => { this.reset(); #preview.set(#qty.value) }"&gt;
 &lt;/label&gt;
-&lt;button on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)"&gt;&minus;&lt;/button&gt;
-&lt;button on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
-&lt;button on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)"&gt;+5&lt;/button&gt;
-&lt;button on-click="#qty.reset(); #preview.set(#qty.value)"&gt;Reset&lt;/button&gt;
-&lt;output id="preview" modifiable on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;
+&lt;button on-click="() => { #qty.set(#qty.value - 1); #preview.set(#qty.value) }"&gt;&minus;&lt;/button&gt;
+&lt;button on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }"&gt;+&lt;/button&gt;
+&lt;button on-click="() => { #qty.set(#qty.value + 5); #preview.set(#qty.value) }"&gt;+5&lt;/button&gt;
+&lt;button on-click="() => { #qty.reset(); #preview.set(#qty.value) }"&gt;Reset&lt;/button&gt;
+&lt;output id="preview" modifiable on-load="() => { this.set(#qty.value) }"&gt;1&lt;/output&gt;
 
 &lt;ul id="list" renderable&gt;
   &lt;li id="row-1"&gt;
-    &lt;input class="amount" type="number" step="any" required on-input="#total.set(sum('#list .amount:valid'))"&gt;
-    &lt;button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
+    &lt;input class="amount" type="number" step="any" required on-input="() => { #total.set(sum('#list .amount:valid')) }"&gt;
+    &lt;button on-click="() => { #list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid')) }"&gt;&times;&lt;/button&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
-&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid'))"&gt;Add row&lt;/button&gt;
+&lt;button on-click="() => { #list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid')) }"&gt;Add row&lt;/button&gt;
 &lt;template id="row-tpl"&gt;&lt;li id="row-{id}"&gt;&hellip;&lt;/li&gt;&lt;/template&gt;
 &lt;output id="total" modifiable formattable
-        on-load="this.set(sum('#list .amount:valid'))"
+        on-load="() => { this.set(sum('#list .amount:valid')) }"
         formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;</code></pre>
         </div>
         <p>Kinds present: <code class="inline-code">#qty</code> is self-acting (implementations + <code class="inline-code">on-*</code> + id because the buttons address it); the buttons are trigger-only; <code class="inline-code">#preview</code>, <code class="inline-code">#list</code> and <code class="inline-code">#total</code> are receivers. The <code class="inline-code">&lt;li&gt;</code> is a plain element carrying an author-supplied id: <code class="inline-code">render()</code> stamps <code class="inline-code">row-{id}</code> from a slot (the <code class="inline-code">&times;</code> button&rsquo;s <code class="inline-code">target: '#row-{id}'</code> resolves before the clone attaches), so a row deletes itself by id &mdash; no closest-style walk-up, no generated ids.</p>
@@ -1162,16 +1147,16 @@ export const attributable = defineImplementation("attributable", {
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-full-order" on-click="#code-docs-full-order.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-full-order" on-click="() => { #code-docs-full-order.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-full-order" copyable on-copy="#copy-code-docs-full-order.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="order" novalidate
+          <pre class="code" id="code-docs-full-order" copyable on-copy="() => { #copy-code-docs-full-order.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;form id="order" novalidate
       prevent-default validatable requestable
       requestable-url="/api/orders" requestable-method="post"
-      on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false)"
-      on-request-error="#alert.show()"
-      on-submit="this.validate().send() || #validate-alert.show()"&gt;
+      on-response="({html: string}) => { #receipt.render({payload: html}); #receipt.show(); #alert.show(false) }"
+      on-request-error="() => { #alert.show() }"
+      on-submit="() => { this.validate().send() || #validate-alert.show() }"&gt;
   &lt;input name="qty" type="number" min="1" required&gt;
   &lt;button&gt;Place order&lt;/button&gt;
 &lt;/form&gt;
@@ -1179,18 +1164,18 @@ export const attributable = defineImplementation("attributable", {
 &lt;div id="alert" revealable hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
 &lt;div id="validate-alert" revealable hidden role="alert"&gt;Please check the quantity.&lt;/div&gt;</code></pre>
         </div>
-        <p>The form is the receiver of both <code class="inline-code">validate()</code> and <code class="inline-code">send()</code> in the first unit; <code class="inline-code">||</code> switches to <code class="inline-code">#validate-alert</code> only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event. Placement is the receipt&rsquo;s: <code class="inline-code">on-response(html:string)</code> renders the response body into it and reveals it.</p>
+        <p>The form is the receiver of both <code class="inline-code">validate()</code> and <code class="inline-code">send()</code> in the first unit; <code class="inline-code">||</code> switches to <code class="inline-code">#validate-alert</code> only when validation aborts. The form is the right receiver: it validates, sends, and knows how to serialise itself (<code class="inline-code">new FormData(el)</code>). The trigger is <code class="inline-code">on-submit</code>, not a click on the button, so Enter in the field and the button produce the same one event. Placement is the receipt&rsquo;s: <code class="inline-code">on-response="({html: string}) =&gt; { &hellip; }"</code> renders the response body into it and reveals it.</p>
         <p><code class="inline-code">novalidate</code> is load-bearing: without it the browser&rsquo;s interactive validation runs first and, for an invalid form, never fires <code class="inline-code">submit</code> at all. The phrase decides <em>when</em> validation happens; the platform still decides <em>what</em> valid means.</p>
 
         <h3 id="scroll-spy">Scroll-spy &mdash; synthetic triggers</h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-docs-full-spy" on-click="#code-docs-full-spy.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-full-spy" on-click="() => { #code-docs-full-spy.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-full-spy" copyable on-copy="#copy-code-docs-full-spy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implementations="attributable"
+          <pre class="code" id="code-docs-full-spy" copyable on-copy="() => { #copy-code-docs-full-spy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;script type="module" implementations="attributable"
         src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
 &lt;nav id="toc"&gt;
@@ -1200,16 +1185,16 @@ export const attributable = defineImplementation("attributable", {
 
 &lt;!-- each section lights its own link while it is on screen --&gt;
 &lt;section id="sec-intro"
-         on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-intro.setAttr({name: 'data-visible', value: ''})"
-         on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-intro.removeAttr('data-visible')"&gt;&hellip;&lt;/section&gt;
+         on-intersect="({state: 'enter', block-start: '-#topnav.height'}) => { #toc-intro.setAttr({name: 'data-visible', value: ''}) }"
+         on-intersect="({state: 'leave', block-start: '-#topnav.height'}) => { #toc-intro.removeAttr('data-visible') }"&gt;&hellip;&lt;/section&gt;
 &lt;section id="sec-guide"
-         on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-guide.setAttr({name: 'data-visible', value: ''})"
-         on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-guide.removeAttr('data-visible')"&gt;&hellip;&lt;/section&gt;</code></pre>
+         on-intersect="({state: 'enter', block-start: '-#topnav.height'}) => { #toc-guide.setAttr({name: 'data-visible', value: ''}) }"
+         on-intersect="({state: 'leave', block-start: '-#topnav.height'}) => { #toc-guide.removeAttr('data-visible') }"&gt;&hellip;&lt;/section&gt;</code></pre>
         </div>
-        <p><code class="inline-code">on-intersect(state:`enter`)</code> fires when a section becomes intersecting and <code class="inline-code">on-intersect(state:`leave`)</code> when it stops, so each section sets and clears its own link&rsquo;s <code class="inline-code">data-visible</code>; several links may be lit at once when several sections are visible &mdash; a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. A margin slot narrows the window: <code class="inline-code">on-intersect(state:`enter`,block-start:`-50%`)="#a.mark()"</code> fires when the section&rsquo;s leading edge reaches the viewport&rsquo;s vertical centre, and each distinct resolved margin builds its own observer, so two <code class="inline-code">on-intersect</code> attributes with different <code class="inline-code">block-start</code> values are two observers on one element. The live sidebar of this page is exactly this shape, and <code class="inline-code">block-start</code> reads the sticky header&rsquo;s height instead of restating it: the header carries <code class="inline-code">id="topnav"</code> and every section names the same slot <code class="inline-code">block-start:`-#topnav.height`</code>, so the box is shrunk by whatever the header actually measures, and a style change to the header rebuilds the observers on resize.</p>
+        <p><code class="inline-code">on-intersect="({state: 'enter'}) =&gt; { &hellip; }"</code> fires when a section becomes intersecting and <code class="inline-code">({state: 'leave'}) =&gt; { &hellip; }</code> when it stops, so each section sets and clears its own link&rsquo;s <code class="inline-code">data-visible</code>; several links may be lit at once when several sections are visible &mdash; a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. A margin slot narrows the window: <code class="inline-code">on-intersect="({state: 'enter', block-start: '-50%'}) => { #a.mark() }"</code> fires when the section&rsquo;s leading edge reaches the viewport&rsquo;s vertical centre, and every handler on one element must agree on its margin set, which builds that element's single observer. A typed margin field such as <code class="inline-code">({block-start: number})</code> binds the resolved margin instead of configuring the observer. The live sidebar of this page is exactly this shape, and <code class="inline-code">block-start</code> reads the sticky header&rsquo;s height instead of restating it: the header carries <code class="inline-code">id="topnav"</code> and every section names the same slot <code class="inline-code">block-start: '-#topnav.height'</code>, so the box is shrunk by whatever the header actually measures, and a style change to the header rebuilds the observers on resize.</p>
 
         </section>
-        <section id="sec-api-reference" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-api-reference.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-api-reference.removeAttr('data-visible')">
+        <section id="sec-api-reference" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-api-reference.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-api-reference.removeAttr('data-visible') }]">
         <h2 id="api-reference">API reference <a class="anchor" href="#api-reference">#</a></h2>
         <p>All from <code class="inline-code">interactably</code> (or <code class="inline-code">interactably/dist/cdn/interactably-core.js</code> for the core subset).</p>
         <div class="tbl-wrap">
@@ -1220,9 +1205,9 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant through one observer &mdash; for a Document root, the <code class="inline-code">document.body</code> element and everything it contains, never the head; returns a dispose function that tears the attachment down (<a href="#attachment">§ Attachment</a>)</td></tr>
               <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition (used by <code class="inline-code">defineImplementation</code>)</td></tr>
               <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
-              <tr><td><code class="inline-code">runPhrases(el, value, ev)</code></td><td>Run an attribute string against an element and a DOM event; the one entry point</td></tr>
+              <tr><td><code class="inline-code">runEventValue(el, value, ev)</code></td><td>Parse an attribute value's handler list, match each parameter and run every matching handler</td></tr>
               <tr><td><code class="inline-code">parse(value, eventName?)</code></td><td>Parse an attribute string into phrases (cached by event name and value)</td></tr>
-              <tr><td><code class="inline-code">parseEventAttribute(name)</code></td><td>Parse an attribute name into its event type and value declaration (the parenthesised <code class="inline-code">on-&lt;type&gt;(&lt;name&gt;:&lt;type&gt;)</code> form)</td></tr>
+              <tr><td><code class="inline-code">parseEventValue(value)</code> / <code class="inline-code">parseEventValueWithErrors(value)</code></td><td>Parse one handler or a bracketed handler list into handlers with spans; the errors variant returns value-relative parse errors</td></tr>
               <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
               <tr><td><code class="inline-code">InteractionEvent</code></td><td>The event class (<a href="#interaction-event">§ The interaction event</a>)</td></tr>
               <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>, <code class="inline-code">request-timeout</code>, <code class="inline-code">request-offline</code>, <code class="inline-code">restore</code>, <code class="inline-code">valid</code>, <code class="inline-code">invalid</code>, <code class="inline-code">user-valid</code>, <code class="inline-code">user-invalid</code>); a synthetic intersect event carries the observed margin as <code class="inline-code">key</code>, and an event may carry declared values as <code class="inline-code">values</code> (<code class="inline-code">response</code> &rarr; <code class="inline-code">html</code> and <code class="inline-code">status</code>, <code class="inline-code">request-error</code> &rarr; <code class="inline-code">status</code>, <code class="inline-code">pasted</code> &rarr; <code class="inline-code">text</code>, <code class="inline-code">restore</code> &rarr; <code class="inline-code">value</code>)</td></tr>
@@ -1244,7 +1229,7 @@ export const attributable = defineImplementation("attributable", {
         </div>
 
         </section>
-        <section id="sec-why-built" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-why-built.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-why-built.removeAttr('data-visible')">
+        <section id="sec-why-built" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-why-built.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-why-built.removeAttr('data-visible') }]">
         <h2 id="why-built">Why it is built this way <a class="anchor" href="#why-built">#</a></h2>
         <p>The short versions of the decisions behind the design.</p>
         <ul>
@@ -1272,7 +1257,7 @@ export const attributable = defineImplementation("attributable", {
         </ul>
 
         </section>
-        <section id="sec-when-not-to-use" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-when-not-to-use.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-when-not-to-use.removeAttr('data-visible')">
+        <section id="sec-when-not-to-use" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-when-not-to-use.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-when-not-to-use.removeAttr('data-visible') }]">
         <h2 id="when-not-to-use">When not to use this library <a class="anchor" href="#when-not-to-use">#</a></h2>
         <p><strong>This is a push system, not a pull one.</strong> An event on a trigger pushes a verb onto a named receiver, the DOM changes once, and the interaction is over &mdash; there is no subscription, no reactivity, and no derived state. Nothing watches a value and re-runs phrases when it changes.</p>
         <p>The tabs example is the honest boundary case. Each button&rsquo;s <code class="inline-code">on-click</code> pushes <code class="inline-code">show()</code> onto its panels, and the six it closes; &ldquo;which tab is visible&rdquo; is never stored &mdash; every switch rewrites the panels&rsquo; visibility by hand. Adding a fourth section means editing every phrase, because the push is the whole mechanism. That is the price of push: the wiring that replaces a state variable grows with the page.</p>
@@ -1280,23 +1265,23 @@ export const attributable = defineImplementation("attributable", {
         <p>Input masks and format-as-you-type belong in a component library built on the same elements: both are caret-dependent, and formatting under a caret is not declarative. So does a visible-formatted / hidden-raw <code class="inline-code">&lt;input&gt;</code> pair, which needs markup of its own to fake. <code class="inline-code">formattable</code> is the whole declarative share &mdash; display elements only, formatted on connect and on each library write.</p>
 
         </section>
-        <section id="sec-not-supported" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-not-supported.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-not-supported.removeAttr('data-visible')">
+        <section id="sec-not-supported" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-not-supported.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-not-supported.removeAttr('data-visible') }]">
         <h2 id="not-supported">Not supported <a class="anchor" href="#not-supported">#</a></h2>
         <p>Shadow DOM (events are non-composed; receivers are document ids) &middot; modifier keys (<code class="inline-code">.ctrl</code>), <code class="inline-code">.self</code>, <code class="inline-code">.outside</code> (reserved as future postfix modifiers) &middot; class receivers &middot; property access beyond <code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code> (and <code class="inline-code">height</code> / <code class="inline-code">width</code> in expressions) &middot; attaching an element that gains an implementation attribute or an <code class="inline-code">on-*</code> attribute after insertion (re-insert it) &middot; a per-trigger <code class="inline-code">preventDefault</code> opt-out &middot; nested objects or arrays as arguments &middot; variadic verbs &middot; the native paste event (<code class="inline-code">on-paste</code> is not a trigger; <code class="inline-code">on-pasted</code> fires after the insertion).</p>
         <p><code class="inline-code">on-load</code>. On-load is not a DOM event and carries no native action; it runs once, after the batch that attached the element. Listen for it on anything that should run once its element is attached.</p>
 
         </section>
-        <section id="sec-appendices" on-intersect(state:`enter`,block-start:`-#topnav.height`)="#toc-appendices.setAttr({name: 'data-visible', value: ''})" on-intersect(state:`leave`,block-start:`-#topnav.height`)="#toc-appendices.removeAttr('data-visible')">
+        <section id="sec-appendices" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-appendices.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-appendices.removeAttr('data-visible') }]">
         <h2 id="appendices">Appendices <a class="anchor" href="#appendices">#</a></h2>
         <h3>Reference grammar</h3>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">Text</span>
-            <button class="copy-btn" attributable id="copy-code-docs-reference-grammar" on-click="#code-docs-reference-grammar.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-docs-reference-grammar" on-click="() => { #code-docs-reference-grammar.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-reference-grammar" copyable on-copy="#copy-code-docs-reference-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>attribute := 'on-' event-type
+          <pre class="code" id="code-docs-reference-grammar" copyable on-copy="() => { #copy-code-docs-reference-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text"><code>attribute := 'on-' event-type
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
@@ -1318,7 +1303,7 @@ modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')
         <p><strong>Why re-read the <code class="inline-code">on-*</code> value at fire time instead of parsing once at connect?</strong> Server swaps are a new node either way. They differ for in-place edits: re-reading makes the edit take effect on the next fire; parsing at connect makes the DOM lie unless per-element observers are added.</p>
         <p><strong>Why <code class="inline-code">this.value</code> rather than a <code class="inline-code">$value</code> keyword?</strong> <code class="inline-code">$value</code> had to be learned; <code class="inline-code">this.value</code> is already known by people and by models, it can read any ref (not just the trigger), and it drops the coercion <code class="inline-code">$value</code> needed. Why not general property access? Because that is an expression language, and every safety claim rests on there not being one.</p>
         <p><strong>Why <code class="inline-code">this</code> rather than <code class="inline-code">$self</code> or <code class="inline-code">$source</code>?</strong> <code class="inline-code">this</code> is the inline-handler word for exactly this element, needs no explanation, and works in both the receiver slot and the argument slot &mdash; one word replaces two.</p>
-        <p><strong>Why is there no key list, <code class="inline-code">on-keydown(key:`Enter`,key:`NumpadEnter`)</code>?</strong> It would be one declaration standing for two, and every per-phrase mechanism (does Enter spend <code class="inline-code">once()</code> for NumpadEnter? do debounce timers merge?) would then have to pick an answer. Two attributes already write two phrases.</p>
+        <p><strong>Why is there no multi-value key field, <code class="inline-code">({key: 'Enter' | 'NumpadEnter'})</code>?</strong> A handler parameter matches one literal, and every per-handler mechanism (does Enter spend <code class="inline-code">once()</code> for NumpadEnter? do debounce timers merge?) would then have to pick an answer. Two handlers in one bracketed list already write two phrases.</p>
         <p><strong>Why isn&rsquo;t an empty field zero?</strong> Because zero is an answer and an empty field is the lack of one &mdash; a blank quantity multiplied into a total of <code class="inline-code">0</code> invents the answer. The library refuses to invent it: an empty or non-numeric operand is a fire-time error, and the author filters blanks in the selector (<code class="inline-code">:valid</code>, <code class="inline-code">:not(:placeholder-shown)</code>) when a set is allowed to have gaps.</p>
         <p><strong>Why is there no group receiver, <code class="inline-code">(#a, #b).show(false)</code>?</strong> The chain aborts per receiver, so the group form is exactly <code class="inline-code">#a.show(false); #b.show(false)</code> with a second spelling and a bookkeeping key that has to survive <code class="inline-code">#b</code> being replaced in the DOM. A shorthand that needs a paragraph is not a shorthand.</p>
         <p><strong>Why not innermost-wins when triggers nest?</strong> It is a <code class="inline-code">closest()</code> walk per trigger per event, added solely to suppress the outer phrase in a rare case &mdash; and inline handlers fire inner and outer, so matching that is the least surprising default.</p>

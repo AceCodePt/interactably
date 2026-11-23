@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import type { TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { parse, parseEventAttribute, parseWithErrors } from "@interactable/parser.ts";
+import { parse, parseEventValue, parseEventValueWithErrors, parseWithErrors } from "@interactable/parser.ts";
 import type { Phrase, Unit } from "@interactable/parser.ts";
 
 function errorsOf(t: TestContext) {
@@ -415,99 +415,113 @@ test("the parse cache key includes the event name", () => {
   assert.strictEqual(parse("#a.show()", "intersect"), enter);
 });
 
-test("parseEventAttribute: an unparenthesised name is the whole type", () => {
-  assert.deepEqual(parseEventAttribute("response"), { type: "response", declaration: undefined });
-  assert.deepEqual(parseEventAttribute("click"), { type: "click", declaration: undefined });
+test("parseEventValue: one unbracketed handler with an empty parameter", () => {
+  const [ok] = parseEventValue("() => { #f.send() }");
+  assert.ok(ok);
+  assert.deepEqual(ok.parameter.fields, []);
+  assert.equal(ok.phrases.length, 1);
 });
 
-test("parseEventAttribute: the parenthesised form splits type from declaration", () => {
-  assert.deepEqual(parseEventAttribute("response(html:string)"), {
-    type: "response",
-    declaration: [{ kind: "type", name: "html", type: "string" }],
-  });
-  assert.deepEqual(parseEventAttribute("pasted(text:string)"), {
-    type: "pasted",
-    declaration: [{ kind: "type", name: "text", type: "string" }],
-  });
-});
-
-test("parseEventAttribute: several values differ only in arity", () => {
-  assert.deepEqual(parseEventAttribute("response(html:string,text:string)"), {
-    type: "response",
-    declaration: [
-      { kind: "type", name: "html", type: "string" },
-      { kind: "type", name: "text", type: "string" },
+test("parseEventValue: typed and literal parameter fields mix in one handler", () => {
+  const [handler] = parseEventValue(
+    "({status: 200, html: string, key: 'Enter', full: true}) => { #r.set(html) }",
+  );
+  assert.ok(handler);
+  assert.deepEqual(
+    handler.parameter.fields.map((field) => ({ name: field.name, kind: field.kind })),
+    [
+      { name: "status", kind: "literal" },
+      { name: "html", kind: "type" },
+      { name: "key", kind: "literal" },
+      { name: "full", kind: "literal" },
     ],
-  });
+  );
+  const [status, html, key, full] = handler.parameter.fields;
+  assert.deepEqual(status, { kind: "literal", name: "status", value: 200 });
+  assert.deepEqual(html, { kind: "type", name: "html", type: "string" });
+  assert.deepEqual(key, { kind: "literal", name: "key", value: "Enter" });
+  assert.deepEqual(full, { kind: "literal", name: "full", value: true });
 });
 
-test("parseEventAttribute: whitespace around the declaration is trimmed", () => {
-  assert.deepEqual(parseEventAttribute("response( html : string )"), {
-    type: "response",
-    declaration: [{ kind: "type", name: "html", type: "string" }],
-  });
+test("parseEventValue: a bracketed list holds several handlers, and [] is legal", () => {
+  const handlers = parseEventValue(
+    "[({status: 200}) => { #a.go() }, ({status: 409}) => { #b.go() }]",
+  );
+  assert.equal(handlers.length, 2);
+  const empty = parseEventValue("[]");
+  assert.deepEqual(empty, []);
 });
 
-test("parseEventAttribute: a backticked right-hand side is a literal, an unbackticked one a type", () => {
-  assert.deepEqual(parseEventAttribute("keydown(code:`Escape`)"), {
-    type: "keydown",
-    declaration: [{ kind: "literal", name: "code", literal: "Escape" }],
-  });
-  assert.deepEqual(parseEventAttribute("request-error(status:`404`)"), {
-    type: "request-error",
-    declaration: [{ kind: "literal", name: "status", literal: "404" }],
-  });
-  assert.deepEqual(parseEventAttribute("keydown(code:string)"), {
-    type: "keydown",
-    declaration: [{ kind: "type", name: "code", type: "string" }],
-  });
+test("parseEventValue: a single handler may not be followed by a comma", () => {
+  const { handlers, errors } = parseEventValueWithErrors("() => { #a.go() }, () => { #b.go() }");
+  assert.equal(handlers.length, 0);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0]!.message, /need brackets/);
 });
 
-test("parseEventAttribute: a declaration cannot mix literals and types", () => {
-  assert.throws(
-    () => parseEventAttribute("keydown(code:`Escape`,key:string)"),
-    /either matches literals or binds types/,
+test("parseEventValue: a separating comma is only legal after a body at depth zero", () => {
+  const { errors } = parseEventValueWithErrors(
+    "[() => { #a.go() }, ({n: number}) => { #b.go(n) }]",
+  );
+  assert.deepEqual(errors, []);
+});
+
+test("parseEventValue: concise bodies are a grammar error naming the braced form", () => {
+  const { handlers, errors } = parseEventValueWithErrors("({key: 'Enter'}) => #f.send()");
+  assert.deepEqual(handlers, []);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0]!.message, /braced/);
+  assert.match(errors[0]!.message, /\{ #f\.send\(\) \}/);
+});
+
+test("parseEventValue: parameters must be () or a parenthesised object", () => {
+  assert.match(
+    parseEventValueWithErrors("({html: string) => { #a.go() }").errors[0]!.message,
+    /parameter must be/,
+  );
+  assert.match(
+    parseEventValueWithErrors("(html) => { #a.go() }").errors[0]!.message,
+    /parameter must be/,
+  );
+  assert.match(
+    parseEventValueWithErrors("({}) => { #a.go() }").errors[0]!.message,
+    /empty parameter object/,
   );
 });
 
-test("parseEventAttribute: declaration names may be hyphenated", () => {
-  assert.deepEqual(parseEventAttribute("intersect(block-start:`-#nav.height`,full:`true`)"), {
-    type: "intersect",
-    declaration: [
-      { kind: "literal", name: "block-start", literal: "-#nav.height" },
-      { kind: "literal", name: "full", literal: "true" },
-    ],
-  });
-  assert.throws(() => parseEventAttribute("intersect(-bad:`x`)"), /is not a valid value name/);
+test("parseEventValue: body phrase spans are value-relative", () => {
+  const value = "({html: string}) => { #r.set(html) }";
+  const [handler] = parseEventValue(value);
+  assert.ok(handler);
+  const phrase = handler.phrases[0]!;
+  assert.equal(value.slice(phrase.start, phrase.end), "#r.set(html)");
+  const call = phrase.units[0]!.calls[0]!;
+  assert.equal(value.slice(call.start, call.end), "set(html)");
 });
 
-test("parseEventAttribute rejects a malformed literal", () => {
-  assert.throws(
-    () => parseEventAttribute("keydown(code:`Escape)"),
-    /unterminated backtick/,
-  );
-  assert.throws(() => parseEventAttribute("keydown(code:``)"), /empty literal/);
-  assert.throws(
-    () => parseEventAttribute("keydown(code:`a`b`)"),
-    /contains a backtick/,
-  );
+test("parseEventValue: body errors are value-relative", () => {
+  const value = "() => { #r.set( }";
+  const { errors } = parseEventValueWithErrors(value);
+  assert.equal(errors.length, 1);
+  assert.equal(value.slice(errors[0]!.start, errors[0]!.end), "set(");
 });
 
-test("parseEventAttribute: a literal value is exact source text", () => {
-  const parsed = parseEventAttribute("keydown(code:`  Escape  `)");
-  assert.deepEqual(parsed, {
-    type: "keydown",
-    declaration: [{ kind: "literal", name: "code", literal: "  Escape  " }],
-  });
+test("parseEventValue: a handler needs an arrow and a braced body", () => {
+  assert.equal(parseEventValue("").length, 0);
+  assert.match(parseEventValueWithErrors("#a()").errors[0]!.message, /expected a handler/);
+  assert.match(parseEventValueWithErrors("() => { #a()").errors[0]!.message, /braced/);
 });
 
-test("parseEventAttribute rejects a malformed declaration", () => {
-  assert.throws(() => parseEventAttribute("response(html)"), /expected "name:type"/);
-  assert.throws(() => parseEventAttribute("response(html:string"), /missing "\)"/);
-  assert.throws(() => parseEventAttribute("response()"), /empty value declaration/);
-  assert.throws(() => parseEventAttribute("(html:string)"), /empty event type/);
-  assert.throws(() => parseEventAttribute("response(1bad:string)"), /not a valid value name/);
-  assert.throws(() => parseEventAttribute("response(html:)"), /missing type/);
+test("parseEventValue: the task's after examples parse", () => {
+  for (const value of [
+    "({key: 'Enter'}) => { #f.send() }",
+    "({html: string}) => { #receipt.set(html) }",
+    "[({status: 200, html: string}) => { #receipt.render({payload: html}) }, ({status: 409}) => { #email-taken.show() }]",
+  ]) {
+    const { handlers, errors } = parseEventValueWithErrors(value);
+    assert.deepEqual(errors, [], value);
+    assert.equal(handlers.length, value.startsWith("[") ? 2 : 1);
+  }
 });
 
 test("a bare identifier parses as a name argument, not an expression", () => {

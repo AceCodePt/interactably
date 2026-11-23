@@ -42,9 +42,9 @@
               <div class="demo">
                 <p class="demo-note">Open the devtools console, then click.</p>
                 <div class="row">
-                  <button id="lg-hello" type="button" logger on-click="this.log('hello from a button')">Log &ldquo;hello from a button&rdquo;</button>
-                  <button id="lg-math" type="button" logger on-click="this.log(2 + 3)">Log a computed number</button>
-                  <button id="lg-truth" type="button" logger on-click="this.log(true)">Log a boolean</button>
+                  <button id="lg-hello" type="button" logger on-click="() => { this.log('hello from a button') }">Log &ldquo;hello from a button&rdquo;</button>
+                  <button id="lg-math" type="button" logger on-click="() => { this.log(2 + 3) }">Log a computed number</button>
+                  <button id="lg-truth" type="button" logger on-click="() => { this.log(true) }">Log a boolean</button>
                 </div>
               </div>
     </div>
@@ -53,15 +53,15 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" attributable id="copy-code-ex-lg" on-click="#code-ex-lg.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-lg" on-click="() => { #code-ex-lg.copy() }" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-lg" copyable on-copy="#copy-code-ex-lg.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button logger on-click="this.log('hello from a button')"&gt;
+              <pre class="code" id="code-ex-lg" copyable on-copy="() => { #copy-code-ex-lg.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button logger on-click="() => { this.log('hello from a button') }"&gt;
   Log &ldquo;hello from a button&rdquo;
 &lt;/button&gt;
-&lt;button logger on-click="this.log(2 + 3)"&gt;Log a computed number&lt;/button&gt;
-&lt;button logger on-click="this.log(true)"&gt;Log a boolean&lt;/button&gt;</code></pre>
+&lt;button logger on-click="() => { this.log(2 + 3) }"&gt;Log a computed number&lt;/button&gt;
+&lt;button logger on-click="() => { this.log(true) }"&gt;Log a boolean&lt;/button&gt;</code></pre>
             </div>
           </details>
   </main>

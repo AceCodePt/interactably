@@ -231,12 +231,12 @@ test("nothing recomputes on connect: an element with no on-load keeps its author
 
 test("set evaluates an expression against #id references at fire time", async () => {
   const price = numDep("price", "2");
-  price.setAttribute("on-input", "#total.set(#price.value * #qty.value + 1)");
+  price.setAttribute("on-input", "() => { #total.set(#price.value * #qty.value + 1) }");
   const qty = numDep("qty", "3");
   const total = hostElement("output", {
     modifiable: "",
     id: "total",
-    "on-load": "this.set(#price.value * #qty.value + 1)",
+    "on-load": "() => { this.set(#price.value * #qty.value + 1) }",
   }) as HTMLOutputElement;
   document.body.append(price, qty, total);
   await flush();
@@ -253,7 +253,7 @@ test("this.set(this.value * 2) reads the element's own number value", async () =
     modifiable: "",
     type: "number",
     value: "21",
-    "on-click": "this.set(this.value * 2)",
+    "on-click": "() => { this.set(this.value * 2) }",
   }) as HTMLInputElement;
   document.body.appendChild(self);
   await flush();
@@ -267,7 +267,7 @@ test("this.set(this.value * 2) reads the element's own number value", async () =
 test("set(expr) writes the derived value without dispatching a synthetic input event", async () => {
   const total = hostElement("output", {
     modifiable: "",
-    "on-click": "this.set(1 + 1)",
+    "on-click": "() => { this.set(1 + 1) }",
   }) as HTMLOutputElement;
   document.body.appendChild(total);
   await flush();
@@ -285,11 +285,11 @@ test("set(sum('.amount')) adds matched elements and set(count('.amount')) counts
     '<input class="amount" type="number" value="2.5"><input class="amount" type="number" value="3.25">';
   const total = hostElement("output", {
     modifiable: "",
-    "on-load": "this.set(sum('.amount'))",
+    "on-load": "() => { this.set(sum('.amount')) }",
   }) as HTMLOutputElement;
   const tally = hostElement("output", {
     modifiable: "",
-    "on-load": "this.set(count('.amount'))",
+    "on-load": "() => { this.set(count('.amount')) }",
   }) as HTMLOutputElement;
   document.body.append(root, total, tally);
   await flush();
@@ -303,7 +303,7 @@ test("expressions support parentheses, unary minus and min/max/floor/ceil/round"
   const b = numDep("b", "5");
   const out = hostElement("output", {
     modifiable: "",
-    "on-load": "this.set(min(#a.value, #b.value) + round(2.6) * floor(2.7) - (1 + 1))",
+    "on-load": "() => { this.set(min(#a.value, #b.value) + round(2.6) * floor(2.7) - (1 + 1)) }",
   }) as HTMLOutputElement;
   document.body.append(a, b, out);
   await flush();
@@ -312,7 +312,7 @@ test("expressions support parentheses, unary minus and min/max/floor/ceil/round"
 
   const neg = hostElement("output", {
     modifiable: "",
-    "on-load": "this.set(-#a.value + 10)",
+    "on-load": "() => { this.set(-#a.value + 10) }",
   }) as HTMLOutputElement;
   document.body.appendChild(neg);
   await flush();
@@ -323,7 +323,7 @@ test("a malformed expression is a trigger parse error reported once, never at fi
   const error = t.mock.method(console, "error");
   const out = hostElement("output", {
     modifiable: "",
-    "on-load": "this.set(1 +)",
+    "on-load": "() => { this.set(1 +) }",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
   await flush();
@@ -332,7 +332,7 @@ test("a malformed expression is a trigger parse error reported once, never at fi
   const messages = error.mock.calls.map((call) => String(call.arguments[0]));
   assert.ok(
     messages.some(
-      (message) => message.includes("invalid phrase") && message.includes("expression at position 0"),
+      (message) => message.includes("invalid event value") && message.includes("expression at position 0"),
     ),
     messages.join(" | "),
   );
@@ -347,7 +347,7 @@ test("a fire-time expression error fails the unit and leaves the element untouch
   const error = t.mock.method(console, "error");
   const out = hostElement("output", {
     modifiable: "",
-    "on-load": "this.set(#ghost.value * 2)",
+    "on-load": "() => { this.set(#ghost.value * 2) }",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
   await flush();
@@ -361,7 +361,7 @@ test("a division by zero is a fire-time error, not a fallback", async (t) => {
   const error = t.mock.method(console, "error");
   const out = hostElement("output", {
     modifiable: "",
-    "on-load": "this.set(1 / 0)",
+    "on-load": "() => { this.set(1 / 0) }",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
   await flush();

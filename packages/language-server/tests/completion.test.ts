@@ -22,7 +22,7 @@ function labels(analysis: DocumentAnalysis, offset: number): string[] {
 test("completion: after # lists the document's ids", () => {
   const text = fixture("completion-hash.html");
   const analysis = analysisOf(text);
-  const offset = text.indexOf('on-click="#') + 'on-click="#'.length;
+  const offset = text.indexOf("#go.set") + 1;
   assert.deepEqual(labels(analysis, offset), ["field", "go"]);
 });
 
@@ -39,7 +39,7 @@ test("completion: after #id. lists that element's verbs with signatures", () => 
 });
 
 test("completion: after this. lists the source element's verbs", () => {
-  const text = '<script type="module" implementations="modifiable" src="x"></script>\n<button implements="modifiable" on-click="this.set(\'x\')">x</button>';
+  const text = `<script type="module" implementations="modifiable" src="x"></script>\n<button implements="modifiable" on-click="() => { this.set('x') }">x</button>`;
   const analysis = analysisOf(text);
   const offset = text.indexOf("this.set") + "this.".length;
   assert.deepEqual(labels(analysis, offset), ["clear", "reset", "set"]);
@@ -92,7 +92,7 @@ test("completion: a partial attribute name filters to its event prefix", () => {
 test("completion: todo-list.html lists ids and verbs", () => {
   const text = siteExample("todo-list.html");
   const analysis = analysisOf(text);
-  const hashOffset = text.indexOf('on-click="#todo-list') + 'on-click="#'.length;
+  const hashOffset = text.indexOf("#todo-list") + 1;
   const ids = labels(analysis, hashOffset);
   assert.ok(ids.includes("todo-list"));
   assert.ok(ids.includes("todo-input"));

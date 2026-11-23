@@ -52,14 +52,14 @@
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
-            <button class="copy-btn" attributable id="copy-code-quickstart" on-click="#code-quickstart.copy()" type="button">
+            <button class="copy-btn" attributable id="copy-code-quickstart" on-click="() => { #code-quickstart.copy() }" type="button">
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-quickstart" copyable on-copy="#copy-code-quickstart.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implementations="revealable"
+          <pre class="code" id="code-quickstart" copyable on-copy="() => { #copy-code-quickstart.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;script type="module" implementations="revealable"
         src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
-&lt;button on-click="#modal.show()"&gt;Open&lt;/button&gt;
+&lt;button on-click="() => { #modal.show() }"&gt;Open&lt;/button&gt;
 &lt;dialog id="modal" revealable&gt;&hellip;&lt;/dialog&gt;</code></pre>
         </div>
         <p class="note"><strong>One phrase.</strong> Clicking the button sends the verb
@@ -77,35 +77,35 @@
             <label>Qty
               <input id="qty" modifiable dirtyable attributable prevent-default
                      type="number" value="1" min="1" max="10"
-                     on-input="#preview.set(this.value)"
-                     on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-                     on-clean="this.removeAttr('data-dirty')"
-                     on-keydown(code:`Escape`)="this.reset(); #preview.set(#qty.value)">
+                     on-input="() => { #preview.set(this.value) }"
+                     on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
+                     on-clean="() => { this.removeAttr('data-dirty') }"
+                     on-keydown="({code: 'Escape'}) => { this.reset(); #preview.set(#qty.value) }">
             </label>
-            <button id="dec" on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)" type="button">&minus;</button>
-            <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)" type="button">+</button>
-            <button id="inc5" on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)" type="button">+5</button>
-            <button id="reset" on-click="#qty.reset(); #preview.set(#qty.value)" type="button">Reset</button>
-            <output id="preview" modifiable on-load="this.set(#qty.value)">1</output>
+            <button id="dec" on-click="() => { #qty.set(#qty.value - 1); #preview.set(#qty.value) }" type="button">&minus;</button>
+            <button id="inc" on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }" type="button">+</button>
+            <button id="inc5" on-click="() => { #qty.set(#qty.value + 5); #preview.set(#qty.value) }" type="button">+5</button>
+            <button id="reset" on-click="() => { #qty.reset(); #preview.set(#qty.value) }" type="button">Reset</button>
+            <output id="preview" modifiable on-load="() => { this.set(#qty.value) }">1</output>
           </div>
 
           <ul id="list" renderable>
             <li id="row-1">
-              <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
-              <button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
+              <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="() => { #total.set(sum('#list .amount:valid')) }">
+              <button on-click="() => { #list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid')) }" type="button">&times;</button>
             </li>
           </ul>
-          <button id="add-row" on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid'))" type="button">Add row</button>
+          <button id="add-row" on-click="() => { #list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid')) }" type="button">Add row</button>
           <template id="row-tpl">
             <li id="row-{id}">
-              <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
-              <button on-click="#list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
+              <input class="amount" aria-label="Amount" type="number" value="3.25" step="any" required on-input="() => { #total.set(sum('#list .amount:valid')) }">
+              <button on-click="() => { #list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount:valid')) }" type="button">&times;</button>
             </li>
           </template>
           <p class="total">
             Total:
             <output id="total" modifiable formattable
-                    on-load="this.set(sum('#list .amount:valid'))"
+                    on-load="() => { this.set(sum('#list .amount:valid')) }"
                     formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
           </p>
         </div>
@@ -119,7 +119,7 @@
           <span class="why-n">1</span>
           <div>
             <span class="why-q">Why should an interaction hide in a <code class="inline-code">.js</code> file when the trigger is right here in the markup?</span>
-            <span class="why-a">Put the phrase where the action happens: <code class="inline-code">on-click="#pop.show().focus()"</code>. The button says what it does &mdash; no hunting through handlers.</span>
+            <span class="why-a">Put the phrase where the action happens: <code class="inline-code">on-click="() => { #pop.show().focus() }"</code>. The button says what it does &mdash; no hunting through handlers.</span>
           </div>
         </li>
         <li>
@@ -140,7 +140,7 @@
           <span class="why-n">4</span>
           <div>
             <span class="why-q">Why should &ldquo;when the request finishes&rdquo; hide in a callback?</span>
-            <span class="why-a">The work that takes time owns its moment. The follow-up is a trigger attribute in the markup: <code class="inline-code">on-response="#receipt.show()"</code>. An event may also name its values on the attribute &mdash; <code class="inline-code">on-response(html:string)="#receipt.set(html)"</code> &mdash; written without spaces, because attribute names cannot hold them; the coloned, bracketed name is legal HTML but trips validators and needs escaping in CSS selectors.</span>
+            <span class="why-a">The work that takes time owns its moment. The follow-up is a trigger attribute in the markup: <code class="inline-code">on-response="() => { #receipt.show() }"</code>. An event may also name its values on the attribute &mdash; <code class="inline-code">on-response="({html: string}) => { #receipt.set(html) }"</code> &mdash; written without spaces, because attribute names cannot hold them; the coloned, bracketed name is legal HTML but trips validators and needs escaping in CSS selectors.</span>
           </div>
         </li>
         <li>
@@ -154,7 +154,7 @@
           <span class="why-n">6</span>
           <div>
             <span class="why-q">Why should a failed validation be a dead end?</span>
-            <span class="why-a">A guard&rsquo;s <code class="inline-code">preventDefault()</code> stops the chain, and <code class="inline-code">||</code> is the fallback: <code class="inline-code">on-submit="this.validate().send() || #alert.show()"</code>. <code class="inline-code">&amp;&amp;</code> is the success branch, on whatever element you name.</span>
+            <span class="why-a">A guard&rsquo;s <code class="inline-code">preventDefault()</code> stops the chain, and <code class="inline-code">||</code> is the fallback: <code class="inline-code">on-submit="() => { this.validate().send() || #alert.show() }"</code>. <code class="inline-code">&amp;&amp;</code> is the success branch, on whatever element you name.</span>
           </div>
         </li>
       </ul>
@@ -166,7 +166,7 @@
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
           <h3>A trigger grammar</h3>
-          <p>One attribute per event, and the value is a tiny phrase language. <code class="inline-code">on-click="#pop.show().focus()"</code> reads like a sentence.</p>
+          <p>One attribute per event, and the value is a tiny phrase language. <code class="inline-code">on-click="() => { #pop.show().focus() }"</code> reads like a sentence.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg></span>

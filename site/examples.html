@@ -53,7 +53,7 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/price-calculator.html">Price calculator</a>
-        <p class="examples-blurb">Rows, quantities and a total recomputed from sum('#list .amount') after every change; <code class="inline-code">on-keydown(code:`Escape`)</code> resets a field.</p>
+        <p class="examples-blurb">Rows, quantities and a total recomputed from sum('#list .amount') after every change; <code class="inline-code">({code: 'Escape'}) =&gt; { &hellip; }</code> resets a field.</p>
         <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; renderable &middot; formattable &middot; prevent-default</span>
       </li>
       <li>
@@ -63,12 +63,12 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/live-preview.html">Live preview: debounce, keys & once</a>
-        <p class="examples-blurb">Literal-matched <code class="inline-code">on-keydown(code:`Enter`)</code> / <code class="inline-code">(code:`Escape`)</code> declarations, a debounce, and a once() that spends itself on the first click.</p>
+        <p class="examples-blurb">Literal-matched <code class="inline-code">({code: 'Enter'})</code> / <code class="inline-code">({code: 'Escape'})</code> handlers, a debounce, and a once() that spends itself on the first click.</p>
         <span class="examples-tags">modifiable &middot; dirtyable &middot; attributable &middot; prevent-default &middot; revealable &middot; on-keydown</span>
       </li>
       <li>
         <a class="examples-title" href="./examples/roving-focus.html">Roving focus, written out</a>
-        <p class="examples-blurb">Arrow keys, literal-matched <code class="inline-code">on-keydown(code:`ArrowDown`)</code>, move real focus through a list; the ids are positional and the wrap is written out.</p>
+        <p class="examples-blurb">Arrow keys, literal-matched <code class="inline-code">({code: 'ArrowDown'})</code>, move real focus through a list; the ids are positional and the wrap is written out.</p>
         <span class="examples-tags">focusable &middot; prevent-default &middot; on-keydown</span>
       </li>
       <li>
@@ -187,7 +187,7 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/suggest-as-you-type.html">Suggest as you type</a>
-        <p class="examples-blurb">A debounced send() renders options into a listbox; literal-matched <code class="inline-code">on-keydown(code:`ArrowDown`)</code> roves real focus through them.</p>
+        <p class="examples-blurb">A debounced send() renders options into a listbox; literal-matched <code class="inline-code">({code: 'ArrowDown'})</code> roves real focus through them.</p>
         <span class="examples-tags">requestable &middot; renderable &middot; focusable &middot; revealable &middot; on-keydown</span>
       </li>
       <li>

@@ -92,7 +92,7 @@ test("a successful copy dispatches copy and runs on-copy with this bound to the 
   const code = hostElement("pre", {
     copyable: "", attributable: "",
     id: "code",
-    "on-copy": "this.setAttr({name: 'data-done', value: 'yes'})",
+    "on-copy": "() => { this.setAttr({name: 'data-done', value: 'yes'}) }",
   });
   code.textContent = "copy me";
   document.body.append(code, receipt);
@@ -109,7 +109,7 @@ test("the flash pattern marks the button via a back-pointer on the copied elemen
   const code = hostElement("pre", {
     copyable: "",
     id: "code",
-    "on-copy": "#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(20).removeAttr('data-copied')",
+    "on-copy": "() => { #copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(20).removeAttr('data-copied') }",
   });
   code.textContent = "copy me";
   document.body.append(button, code);
@@ -129,7 +129,7 @@ test("a native copy event on a copyable element does run on-copy", async () => {
   const code = hostElement("pre", {
     copyable: "",
     id: "code",
-    "on-copy": "#receipt.show()",
+    "on-copy": "() => { #receipt.show() }",
   });
   code.textContent = "copy me";
   document.body.append(code, receipt);
@@ -142,7 +142,7 @@ test("a native copy event on a copyable element does run on-copy", async () => {
 
 test("a native copy event on a non-copyable element does run on-copy", async () => {
   const receipt = hostElement("section", { revealable: "", id: "receipt", hidden: "" });
-  const code = hostElement("pre", { id: "code", "on-copy": "#receipt.show()" });
+  const code = hostElement("pre", { id: "code", "on-copy": "() => { #receipt.show() }" });
   code.textContent = "copy me";
   document.body.append(code, receipt);
   await flush();
@@ -162,8 +162,8 @@ test("a total failure fires on-copy-error and never on-copy, with no console.war
   const code = hostElement("pre", {
     copyable: "",
     id: "code",
-    "on-copy": "#receipt.show()",
-    "on-copy-error": "#alert.show()",
+    "on-copy": "() => { #receipt.show() }",
+    "on-copy-error": "() => { #alert.show() }",
   });
   code.textContent = "copy me";
   document.body.append(code, receipt, alert);
@@ -182,7 +182,7 @@ test("without a clipboard API a failed fallback fires on-copy-error, never on-co
   const code = hostElement("pre", {
     copyable: "",
     id: "code",
-    "on-copy-error": "#alert.show()",
+    "on-copy-error": "() => { #alert.show() }",
   });
   code.textContent = "plain text";
   document.body.append(code, alert);

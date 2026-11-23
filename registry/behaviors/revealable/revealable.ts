@@ -1,5 +1,5 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
-import { parse } from "@interactable/parser.ts";
+import { parseEventValue } from "@interactable/parser.ts";
 import type { Call } from "@interactable/parser.ts";
 
 type Strategy =
@@ -111,11 +111,12 @@ function controlledPanelIds(host: Element): Set<string> {
   for (const name of host.getAttributeNames()) {
     if (!name.startsWith("on-")) continue;
     const value = host.getAttribute(name) ?? "";
-    const phrases = parse(value, name.slice(3));
-    for (const phrase of phrases) {
-      for (const unit of phrase.units) {
-        if (unit.ref.kind !== "id") continue;
-        if (unit.calls.some(isControllingCall)) ids.add(unit.ref.id);
+    for (const handler of parseEventValue(value)) {
+      for (const phrase of handler.phrases) {
+        for (const unit of phrase.units) {
+          if (unit.ref.kind !== "id") continue;
+          if (unit.calls.some(isControllingCall)) ids.add(unit.ref.id);
+        }
       }
     }
   }

@@ -103,8 +103,8 @@ test("for one paste the sequence is on-input phrase, then implementation onInput
   recv.id = "recv";
   recv.setAttribute("spy", "");
   const el = pastableElement("input");
-  el.setAttribute("on-input", "#recv.mark('input')");
-  el.setAttribute("on-pasted", "#recv.mark('pasted')");
+  el.setAttribute("on-input", "() => { #recv.mark('input') }");
+  el.setAttribute("on-pasted", "() => { #recv.mark('pasted') }");
   document.body.append(el, recv);
   await flush();
 
@@ -117,7 +117,7 @@ test("on-pasted cleaning leaves digits only after a paste", async () => {
   const dispose = start();
   const el = pastableElement("input");
   el.setAttribute("pastable", ""); el.setAttribute("modifiable", "");
-  el.setAttribute("on-pasted", "this.set(replace(this.value, '\\D', ''))");
+  el.setAttribute("on-pasted", "() => { this.set(replace(this.value, '\\\\D', '')) }");
   document.body.appendChild(el);
   await flush();
 
@@ -131,8 +131,8 @@ test("on-input masking and on-pasted cleaning coexist, each for its own reason",
   const dispose = start();
   const el = pastableElement("input");
   el.setAttribute("pastable", ""); el.setAttribute("modifiable", "");
-  el.setAttribute("on-input", "this.set(replace(this.value, '[a-z]', ''))");
-  el.setAttribute("on-pasted", "this.set(replace(this.value, '[^0-9]', ''))");
+  el.setAttribute("on-input", "() => { this.set(replace(this.value, '[a-z]', '')) }");
+  el.setAttribute("on-pasted", "() => { this.set(replace(this.value, '[^0-9]', '')) }");
   document.body.appendChild(el);
   await flush();
 
@@ -152,8 +152,8 @@ test("on-pasted runs after on-input for the same paste; if both write the value,
   el.setAttribute("pastable", ""); el.setAttribute("modifiable", "");
   const order: string[] = [];
   el.addEventListener("pasted", () => order.push("pasted-event"));
-  el.setAttribute("on-input", "this.set(replace(this.value, '[a-z]', ''))");
-  el.setAttribute("on-pasted", "this.set(replace(this.value, '[^0-9]', ''))");
+  el.setAttribute("on-input", "() => { this.set(replace(this.value, '[a-z]', '')) }");
+  el.setAttribute("on-pasted", "() => { this.set(replace(this.value, '[^0-9]', '')) }");
   document.body.appendChild(el);
   await flush();
 

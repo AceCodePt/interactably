@@ -118,7 +118,7 @@ test("server: todo-list.html produces no diagnostics and completes", { skip: !ha
     assert.equal(report.kind, "full");
     assert.deepEqual(report.items, []);
 
-    const hashLine = text.slice(0, text.indexOf('on-click="#todo-list') + 'on-click="#'.length).split("\n");
+    const hashLine = text.slice(0, text.indexOf("#todo-list") + 1).split("\n");
     const line = hashLine.length - 1;
     const character = hashLine[hashLine.length - 1]!.length;
     const completionResponse = await client.request("textDocument/completion", {

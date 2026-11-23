@@ -98,7 +98,7 @@ test("bootstrap: an unknown name rejects observably and still attaches the recog
   // letting the auto-run kill the runner.
   useHead('<script type="module" implementations="revealable"></script>');
   document.body.innerHTML =
-    '<button id="b" on-click="#r.show()">x</button><div id="r" revealable hidden></div>';
+    '<button id="b" on-click="() => { #r.show() }">x</button><div id="r" revealable hidden></div>';
 
   const mod = await loadBootstrap();
   await flush();

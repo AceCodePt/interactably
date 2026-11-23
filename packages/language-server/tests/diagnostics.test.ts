@@ -11,7 +11,8 @@ test("diagnostics: a parse error is reported verbatim at its range", () => {
   assert.match(parseError.message, /verb call with parens/);
   assert.equal(diagnostics.filter((diagnostic) => diagnostic.code === "parse-error").length, 1);
   const valueStart = text.indexOf('on-click="') + 'on-click="'.length;
-  assert.deepEqual(parseError.range.start, documentFor(text).positionAt(valueStart + 3));
+  assert.ok(valueStart > 0);
+  assert.equal(substringOf(text, parseError), "set(");
 });
 
 test("diagnostics: an unknown verb is reported at the call", () => {
@@ -201,13 +202,13 @@ test("diagnostics: every site example reports zero diagnostics", () => {
 
 test("bootstrap: a script is a bootstrap only when it carries implementations", () => {
   const cdnSrc = '<script type="module" src="https://unpkg.com/interactably@1"></script>';
-  const text = `${cdnSrc}\n<button on-click="#x.show()">x</button>`;
+  const text = `${cdnSrc}\n<button on-click="() => { #x.show() }">x</button>`;
   assert.equal(analyze(text, vocabulary).hasBootstrap, false, "the src shape alone is not a bootstrap");
   assert.ok(findByCode(diagnose(text), "missing-bootstrap"), "the page reports missing-bootstrap");
 });
 
 test("bootstrap: a script[implementations] anywhere in the document anchors the page", () => {
-  const text = '<button on-click="#x.show()">x</button>\n<script type="module" implementations="revealable"></script>';
+  const text = '<button on-click="() => { #x.show() }">x</button>\n<script type="module" implementations="revealable"></script>';
   assert.equal(analyze(text, vocabulary).hasBootstrap, true, "a body-placed declaration is read");
   assert.equal(findByCode(diagnose(text), "missing-bootstrap"), undefined);
 });

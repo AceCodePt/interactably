@@ -105,9 +105,9 @@ function click(el: Element): void {
 test("start() attaches exactly the participants of its initial scan and skips bystanders", () => {
   const holder = document.createElement("div");
   holder.innerHTML = `
-    <button id="t1" on-click="#r.go()">x</button>
+    <button id="t1" on-click="() => { #r.go() }">x</button>
     <div id="r" traceable></div>
-    <div id="t2" on-click="#r.go()"></div>
+    <div id="t2" on-click="() => { #r.go() }"></div>
     <p id="b1"></p>
     <p id="b2"></p>
   `;
@@ -152,7 +152,7 @@ test("an element inserted after start() is not attached synchronously, then is o
   const dispose = start();
   const el = document.createElement("button");
   el.id = "late";
-  el.setAttribute("on-click", "#r.ping()");
+  el.setAttribute("on-click", "() => { #r.ping() }");
   document.body.appendChild(el);
   assert.equal(isAttached(el), false, "not attached synchronously after insertion");
 
@@ -168,7 +168,7 @@ test("a programmatic click() in the microtask gap runs nothing", async () => {
   receiver.setAttribute("traceable", "");
   const trigger = document.createElement("button");
   trigger.id = "b";
-  trigger.setAttribute("on-click", "#r.go()");
+  trigger.setAttribute("on-click", "() => { #r.go() }");
   document.body.append(trigger, receiver);
   await flush();
 
@@ -176,7 +176,7 @@ test("a programmatic click() in the microtask gap runs nothing", async () => {
   trigger.remove();
   const reinserted = document.createElement("button");
   reinserted.id = "b2";
-  reinserted.setAttribute("on-click", "#r.go()");
+  reinserted.setAttribute("on-click", "() => { #r.go() }");
   document.body.appendChild(reinserted);
   const pinged: string[] = [];
   receiver.addEventListener("interaction", (raw) => {
@@ -195,7 +195,7 @@ test("removing an element detaches it: listeners gone, phrase state cleared, int
   const trigger = document.createElement("section");
   trigger.id = "s";
   trigger.setAttribute("traceable", "");
-  trigger.setAttribute("on-intersect", "#r.go()");
+  trigger.setAttribute("on-intersect", "() => { #r.go() }");
   const receiver = document.createElement("div");
   receiver.id = "r";
   receiver.setAttribute("traceable", "");
@@ -203,13 +203,13 @@ test("removing an element detaches it: listeners gone, phrase state cleared, int
   await flush();
   assert.equal(FakeIntersectionObserver.instances.length, 1, "the intersect observer exists");
 
-  trigger.setAttribute("on-click", "#r.go()");
+  trigger.setAttribute("on-click", "() => { #r.go() }");
   await flush();
   trigger.click();
   assert.deepEqual(lifecycle, ["traceable.connected", "traceable.connected", "traceable.go"], "the trigger fires while attached");
 
   lifecycle.length = 0;
-  trigger.setAttribute("on-click", "#r.debounce(20).go()");
+  trigger.setAttribute("on-click", "() => { #r.debounce(20).go() }");
   trigger.click();
   trigger.remove();
   await flush();
@@ -253,7 +253,7 @@ test("an on-click attribute added to an attached element binds on the next click
   document.body.append(trigger, receiver);
   await flush();
 
-  trigger.setAttribute("on-click", "#r.go()");
+  trigger.setAttribute("on-click", "() => { #r.go() }");
   await flush();
   const pinged: string[] = [];
   receiver.addEventListener("interaction", (raw) => {
@@ -282,7 +282,7 @@ test("adding an implementation attribute attaches it and removing one detaches i
 
   el.setAttribute("storable", "");
   el.setAttribute("storable-id", "k");
-  el.setAttribute("on-load", "this.restore()");
+  el.setAttribute("on-load", "() => { this.restore() }");
   await flush();
   assert.ok(getAttachment(el)?.implementations.has("storable"), "storable attaches when its attribute is added");
   assert.ok(getAttachment(el)?.implementations.has("revealable"), "revealable stays");
@@ -318,7 +318,7 @@ test("dispose() from start() disconnects the observer: a later insertion is not 
   const dispose = start();
   dispose();
   const el = document.createElement("button");
-  el.setAttribute("on-click", "#r.go()");
+  el.setAttribute("on-click", "() => { #r.go() }");
   document.body.appendChild(el);
   await flush();
   assert.equal(isAttached(el), false, "the observer is gone");
@@ -329,7 +329,7 @@ test("on-load fires once per attach, after implementations are instantiated", as
   const el = document.createElement("div");
   el.id = "self";
   el.setAttribute("attributable", "");
-  el.setAttribute("on-load", "this.setAttr({name: 'data-loaded', value: ''})");
+  el.setAttribute("on-load", "() => { this.setAttr({name: 'data-loaded', value: ''}) }");
   document.body.appendChild(el);
   await flush();
   assert.equal(el.hasAttribute("data-loaded"), true, "on-load ran after attributable attached");
@@ -339,8 +339,8 @@ test("on-load fires once per attach, after implementations are instantiated", as
 test("on-load in the initial scan fires once per element", () => {
   const holder = document.createElement("div");
   holder.innerHTML = `
-    <div id="x" attributable on-load="this.setAttr({name: 'a', value: '1'})"></div>
-    <div id="y" attributable on-load="this.setAttr({name: 'a', value: '2'})"></div>
+    <div id="x" attributable on-load="() => { this.setAttr({name: 'a', value: '1'}) }"></div>
+    <div id="y" attributable on-load="() => { this.setAttr({name: 'a', value: '2'}) }"></div>
   `;
   document.body.appendChild(holder);
   const dispose = start();
@@ -352,7 +352,7 @@ test("on-load in the initial scan fires once per element", () => {
 test("a template is inert: nothing inside attaches until a clone is inserted, then its on-load fires once", async () => {
   const dispose = start();
   const template = document.createElement("template");
-  template.innerHTML = `<div attributable on-load="this.setAttr({name: 'data-c', value: ''})"></div>`;
+  template.innerHTML = `<div attributable on-load="() => { this.setAttr({name: 'data-c', value: ''}) }"></div>`;
   document.body.appendChild(template);
   await flush();
   assert.equal(template.content.querySelector("div")!.hasAttribute("data-c"), false, "template content is inert");
@@ -369,7 +369,7 @@ test("a move does not re-fire on-load", async () => {
   const el = document.createElement("div");
   el.id = "m";
   el.setAttribute("attributable", "");
-  el.setAttribute("on-load", "this.setAttr({name: 'data-n', value: '1'})");
+  el.setAttribute("on-load", "() => { this.setAttr({name: 'data-n', value: '1'}) }");
   document.body.appendChild(el);
   await flush();
   assert.equal(el.getAttribute("data-n"), "1");
@@ -385,7 +385,7 @@ test("a move does not re-fire on-load", async () => {
 test("on-load fires in document order across the batch, so a button before its panel resolves", async () => {
   const holder = document.createElement("div");
   holder.innerHTML = `
-    <button id="open" on-load="#panel.show()">x</button>
+    <button id="open" on-load="() => { #panel.show() }">x</button>
     <div id="panel" revealable hidden></div>
   `;
   document.body.appendChild(holder);
@@ -400,7 +400,7 @@ test("on-load fires at attach, not when a native load event is dispatched", asyn
   const img = document.createElement("img");
   img.id = "i";
   img.setAttribute("attributable", "");
-  img.setAttribute("on-load", "this.setAttr({name: 'data-l', value: ''})");
+  img.setAttribute("on-load", "() => { this.setAttr({name: 'data-l', value: ''}) }");
   document.body.appendChild(img);
   await flush();
   assert.equal(img.hasAttribute("data-l"), true, "on-load fired at attach");
@@ -416,7 +416,7 @@ test("on-load resolves this.verb() against an implementation on the same element
   const el = document.createElement("div");
   el.id = "s";
   el.setAttribute("traceable", ""); el.setAttribute("attributable", "");
-  el.setAttribute("on-load", "this.setAttr({name: 'data-s', value: 'yes'})");
+  el.setAttribute("on-load", "() => { this.setAttr({name: 'data-s', value: 'yes'}) }");
   document.body.appendChild(el);
   await flush();
   assert.equal(el.getAttribute("data-s"), "yes");
@@ -427,11 +427,11 @@ test("a row's own fields: & in sum() totals the row the phrase is on", async () 
   const dispose = start();
   const holder = document.createElement("div");
   holder.innerHTML = `
-    <li class="row" attributable on-input="this.setAttr({name: 'data-total', value: '' + sum('& .amount')})">
+    <li class="row" attributable on-input="() => { this.setAttr({name: 'data-total', value: '' + sum('& .amount')}) }">
       <input class="amount" type="number" value="10">
       <input class="amount" type="number" value="20">
     </li>
-    <li class="row" attributable on-input="this.setAttr({name: 'data-total', value: '' + sum('& .amount')})">
+    <li class="row" attributable on-input="() => { this.setAttr({name: 'data-total', value: '' + sum('& .amount')}) }">
       <input class="amount" type="number" value="5">
       <input class="amount" type="number" value="7">
     </li>`;
@@ -454,7 +454,7 @@ test("the & anchor set/remove never reaches attributeChangedCallback", async () 
   const dispose = start();
   const el = document.createElement("div");
   el.setAttribute("attr-spy", "");
-  el.setAttribute("on-input", "this.record(count('& *'))");
+  el.setAttribute("on-input", "() => { this.record(count('& *')) }");
   el.innerHTML = "<span></span><b></b>";
   document.body.appendChild(el);
   await flush();
@@ -474,7 +474,7 @@ test("length() drives a live character counter from a bounded textarea", async (
   const dispose = start();
   const holder = document.createElement("div");
   holder.innerHTML = `
-    <textarea id="bio" maxlength="200" on-input="#bio-count.set(length(this.value) + ' of 200')"></textarea>
+    <textarea id="bio" maxlength="200" on-input="() => { #bio-count.set(length(this.value) + ' of 200') }"></textarea>
     <output id="bio-count" modifiable></output>`;
   document.body.appendChild(holder);
   await flush();
@@ -492,7 +492,7 @@ test("now() supplies a distinct row id on each click", async () => {
   const dispose = start();
   const row = document.createElement("div");
   row.setAttribute("attributable", "");
-  row.setAttribute("on-click", "this.setAttr({name: 'id', value: 'row-' + now()})");
+  row.setAttribute("on-click", "() => { this.setAttr({name: 'id', value: 'row-' + now()}) }");
   document.body.appendChild(row);
   await flush();
 
@@ -527,75 +527,71 @@ function mountMarkup(markup: string): void {
   document.body.appendChild(holder);
 }
 
-function byAttribute(name: string): HTMLElement {
-  for (const el of Array.from(document.body.querySelectorAll("*"))) {
-    if (el.hasAttribute(name)) return el as HTMLElement;
-  }
-  throw new Error(`no element with attribute "${name}"`);
-}
-
-test("a parenthesised trigger with an undeclared name in the phrase is a wire-time error", async () => {
+test("a handler name not bound by its own parameter is a wire-time error", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   try {
-    mountMarkup(`<div on-response(html:string)="#target.set(text)"></div>`);
+    mountMarkup(`<div on-response="({html: string}) => { #target.set(text) }"></div>`);
     await flush();
   } finally {
     restore();
   }
   assert.ok(
-    errors.some((m) => m.includes('"text" is not declared by this event') && m.includes("declared: html")),
-    `expected an undeclared-name wire-time error, got: ${JSON.stringify(errors)}`,
+    errors.some((m) => m.includes('"text" is not bound by this handler')),
+    `expected an unbound-name wire-time error, got: ${JSON.stringify(errors)}`,
   );
   dispose();
 });
 
-test("a declared name used in a parenthesised trigger raises nothing at wire time and resolves at fire time", async () => {
+test("a bound name used in a handler raises nothing at wire time and resolves at fire time", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   mountMarkup(
-    `<div id="target" attributable></div><div requestable on-response(html:string)="#target.setAttr({name: 'data-body', value: html})"></div>`,
+    `<div id="target" attributable></div><div id="req" requestable on-response="({html: string}) => { #target.setAttr({name: 'data-body', value: html}) }"></div>`,
   );
   try {
     await flush();
   } finally {
     restore();
   }
-  assert.deepEqual(errors, [], `no wire-time error for a correctly declared name, got: ${JSON.stringify(errors)}`);
+  assert.deepEqual(errors, [], `no wire-time error for a bound name, got: ${JSON.stringify(errors)}`);
 
-  const trigger = byAttribute("on-response(html:string)");
+  const trigger = byId("req");
   trigger.dispatchEvent(new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } }));
-  assert.equal(byId("target").getAttribute("data-body"), "<p>hi</p>", "the declared name resolves at fire time");
+  assert.equal(byId("target").getAttribute("data-body"), "<p>hi</p>", "the bound name resolves at fire time");
   dispose();
 });
 
-test("an unparenthesised trigger raises nothing at wire time for a bare identifier", async () => {
+test("a bare identifier not bound by its handler is a wire-time error", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   try {
     const el = document.createElement("div");
-    el.setAttribute("on-click", "#target.set(html)");
+    el.setAttribute("on-click", "() => { #target.set(html) }");
     document.body.appendChild(el);
     await flush();
   } finally {
     restore();
   }
-  assert.deepEqual(errors, [], `unparenthesised error timing is unchanged: ${JSON.stringify(errors)}`);
+  assert.ok(
+    errors.some((m) => m.includes('"html" is not bound by this handler')),
+    `expected an unbound-name wire-time error: ${JSON.stringify(errors)}`,
+  );
   dispose();
 });
 
-test("a malformed parenthesised declaration is a wire-time error", async () => {
+test("an on-x(...) attribute name is a wire-time error naming the new form", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   try {
-    mountMarkup(`<div on-response(html:string="#target.set(html)"></div>`);
+    mountMarkup(`<div on-response(html:string)="({html: string}) => { #target.set(html) }"></div>`);
     await flush();
   } finally {
     restore();
   }
   assert.ok(
-    errors.some((m) => m.includes("missing \")\"")),
-    `expected an unterminated-declaration error, got: ${JSON.stringify(errors)}`,
+    errors.some((m) => m.includes("value declarations no longer belong in the attribute name")),
+    `expected the migration error, got: ${JSON.stringify(errors)}`,
   );
   dispose();
 });
@@ -604,7 +600,7 @@ test("a non-scalar declared type is a wire-time error", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   try {
-    mountMarkup(`<div on-response(html:{name:string})="#target.set(html)"></div>`);
+    mountMarkup(`<div on-response="({html: {name:string}}) => { #target.set(html) }"></div>`);
     await flush();
   } finally {
     restore();
@@ -620,7 +616,7 @@ test("several declared values resolve inside the phrase", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   mountMarkup(
-    `<div id="target" attributable></div><div requestable on-response(html:string,text:string)="#target.setAttr({name: 'data-a', value: html}); #target.setAttr({name: 'data-b', value: text})"></div>`,
+    `<div id="target" attributable></div><div id="req" requestable on-response="({html: string, text: string}) => { #target.setAttr({name: 'data-a', value: html}); #target.setAttr({name: 'data-b', value: text}) }"></div>`,
   );
   try {
     await flush();
@@ -629,7 +625,7 @@ test("several declared values resolve inside the phrase", async () => {
   }
   assert.deepEqual(errors, [], `two declared values raise nothing at wire time: ${JSON.stringify(errors)}`);
 
-  const trigger = byAttribute("on-response(html:string,text:string)");
+  const trigger = byId("req");
   trigger.dispatchEvent(new ImplementationEventClass("response", { values: { html: "h", text: "t" } }));
   assert.equal(byId("target").getAttribute("data-a"), "h");
   assert.equal(byId("target").getAttribute("data-b"), "t");
@@ -641,8 +637,8 @@ test("a literal keydown declaration fires only when code matches, and a type dec
   mountMarkup(
     `<div id="t" traceable></div>
      <div id="target" attributable></div>
-     <div id="kbd-lit" on-keydown(code:\`Escape\`)="#t.go()"></div>
-     <div id="kbd-bind" on-keydown(code:string)="#target.setAttr({name: 'data-code', value: code})"></div>`,
+     <div id="kbd-lit" on-keydown="({code: 'Escape'}) => { #t.go() }"></div>
+     <div id="kbd-bind" on-keydown="({code: string}) => { #target.setAttr({name: 'data-code', value: code}) }"></div>`,
   );
   await flush();
   const goCount = (): number => lifecycle.filter((entry) => entry === "traceable.go").length;
@@ -663,8 +659,8 @@ test("two overlapping literal declarations on the same element both fire", async
     `<div id="a" attributable></div>
      <div id="b" attributable></div>
      <div id="st" statusful
-          on-status(code:\`404\`)="#a.setAttr({name: 'data-hit', value: 'code'})"
-          on-status(kind:\`not-found\`)="#b.setAttr({name: 'data-hit', value: 'kind'})"></div>`,
+          on-status="[({code: 404}) => { #a.setAttr({name: 'data-hit', value: 'code'}) }, ({kind: 'not-found'}) => { #b.setAttr({name: 'data-hit', value: 'kind'}) }]"
+         ></div>`,
   );
   await flush();
   byId("st").dispatchEvent(
@@ -679,7 +675,7 @@ test("a numeric literal matches the declared numeric value, compared by type", a
   const dispose = start();
   mountMarkup(
     `<div id="t" attributable></div>
-     <div id="st" statusful on-status(code:\`404\`)="#t.setAttr({name: 'data-code', value: ''})"></div>`,
+     <div id="st" statusful on-status="({code: 404}) => { #t.setAttr({name: 'data-code', value: ''}) }"></div>`,
   );
   await flush();
   byId("st").dispatchEvent(new ImplementationEventClass("status", { values: { code: "404" } }));
@@ -693,15 +689,15 @@ test("a numeric literal matches the declared numeric value, compared by type", a
 test("wire-time rejects an unknown field, a wrong-typed literal, and a literal on a bare number for a closed event", async () => {
   const dispose = start();
   const cases = [
-    `<div id="t" attributable></div><div statusful on-status(nope:\`404\`)="#t.setAttr({name: 'data-x', value: ''})"></div>`,
-    `<div id="t" attributable></div><div statusful on-status(code:\`abc\`)="#t.setAttr({name: 'data-x', value: ''})"></div>`,
-    `<div id="t" attributable></div><div statusful on-status(count:\`3\`)="#t.setAttr({name: 'data-x', value: ''})"></div>`,
-    `<div id="t" attributable></div><div statusful on-note(foo:string)="#t.setAttr({name: 'data-x', value: ''})"></div>`,
+    `<div id="t" attributable></div><div statusful on-status="({nope: '404'}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+    `<div id="t" attributable></div><div statusful on-status="({code: 'abc'}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+    `<div id="t" attributable></div><div statusful on-status="({count: '3'}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+    `<div id="t" attributable></div><div statusful on-note="({foo: string}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
   ];
   const messages = [
     '"nope" is not a field of event "status"',
-    '`abc` is not a number; "code" is declared 200 | 404 | 500',
-    'cannot match a literal against "count"',
+    '\'abc\' does not match "code", declared 200 | 404 | 500',
+    '\'3\' does not match "count", declared number',
     '"foo" is not a field of event "note"',
   ];
   for (let i = 0; i < cases.length; i++) {
@@ -721,13 +717,31 @@ test("wire-time rejects an unknown field, a wrong-typed literal, and a literal o
   dispose();
 });
 
+test("a declared type with no overlap with the event field is a wire-time error", async () => {
+  const dispose = start();
+  const { errors, restore } = captureErrors();
+  try {
+    mountMarkup(
+      `<div id="t" attributable></div><div statusful on-status="({code: string}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+    );
+    await flush();
+  } finally {
+    restore();
+  }
+  assert.ok(
+    errors.some((m) => m.includes('"string" does not overlap "code"') && m.includes("200 | 404 | 500")),
+    `expected a type-overlap wire-time error, got: ${JSON.stringify(errors)}`,
+  );
+  dispose();
+});
+
 test("open events accept any field and literal at wire time", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   mountMarkup(
     `<div id="t" attributable></div>
-     <div requestable on-response(code:\`404\`)="#t.setAttr({name: 'data-r', value: ''})"></div>
-     <div storable storable-id="k" on-restore(code:\`404\`)="#t.setAttr({name: 'data-s', value: ''})"></div>`,
+     <div requestable on-response="({code: '404'}) => { #t.setAttr({name: 'data-r', value: ''}) }"></div>
+     <div storable storable-id="k" on-restore="({code: '404'}) => { #t.setAttr({name: 'data-s', value: ''}) }"></div>`,
   );
   try {
     await flush();
@@ -743,7 +757,7 @@ test("a type binding gates silently: an absent name skips the handler without lo
   const { errors, restore } = captureErrors();
   mountMarkup(
     `<div id="gate" requestable attributable ` +
-      `on-response(html:string)="#gate.setAttr({name: 'data-html', value: html})"></div>`,
+      `on-response="({html: string}) => { #gate.setAttr({name: 'data-html', value: html}) }"></div>`,
   );
   const gate = byId("gate");
   try {
@@ -765,7 +779,7 @@ test("a binding whose declared type accepts undefined runs when the name is abse
   const dispose = start();
   mountMarkup(
     `<div id="gate" requestable attributable ` +
-      `on-response(html:string|undefined)="#gate.setAttr({name: 'data-ran', value: ''})"></div>`,
+      `on-response="({html: string|undefined}) => { #gate.setAttr({name: 'data-ran', value: ''}) }"></div>`,
   );
   const gate = byId("gate");
   await flush();
@@ -827,7 +841,7 @@ test("an implements attribute logs one error, names the replacement, and grants 
   try {
     mountMarkup(
       `<div id="legacy" implements="traceable"></div>` +
-        `<div id="legacy-live" implements="traceable" on-click="this.go()"></div>`,
+        `<div id="legacy-live" implements="traceable" on-click="() => { this.go() }"></div>`,
     );
     await flush();
   } finally {
@@ -855,7 +869,7 @@ test("an implementation event is a wire-time error without the owning presence a
   try {
     mountMarkup(
       `<div id="target" attributable></div>` +
-        `<div id="bad" on-response(html:string)="#target.setAttr({name: 'data-body', value: html})"></div>`,
+        `<div id="bad" on-response="({html: string}) => { #target.setAttr({name: 'data-body', value: html}) }"></div>`,
     );
     await flush();
   } finally {
@@ -881,8 +895,8 @@ test("a native event name an implementation also declares keeps the native shado
   try {
     mountMarkup(
       `<div id="target" attributable></div>` +
-        `<form id="native-gate" on-invalid="#target.setAttr({name: 'data-native', value: ''})"></form>` +
-        `<form id="impl-gate" validatable on-invalid="#target.setAttr({name: 'data-impl', value: ''})"></form>`,
+        `<form id="native-gate" on-invalid="() => { #target.setAttr({name: 'data-native', value: ''}) }"></form>` +
+        `<form id="impl-gate" validatable on-invalid="() => { #target.setAttr({name: 'data-impl', value: ''}) }"></form>`,
     );
     await flush();
   } finally {

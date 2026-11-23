@@ -1,6 +1,6 @@
 import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { bindEvents } from "@behaviors/implementation-utils.ts";
-import { parseEventAttribute } from "@interactable/parser.ts";
+import { parseEventValueWithErrors } from "@interactable/parser.ts";
 
 const DERIVABLE = new Set(["submit", "click", "keydown"]);
 
@@ -8,22 +8,21 @@ export function derivedDefaults(el: HTMLElement): string {
   const claimed: string[] = [];
   for (const name of el.getAttributeNames()) {
     if (!name.startsWith("on-")) continue;
-    let type: string;
-    let declaration: ReturnType<typeof parseEventAttribute>["declaration"];
-    try {
-      ({ type, declaration } = parseEventAttribute(name.slice(3)));
-    } catch {
-      continue;
-    }
+    const type = name.slice(3);
     if (!DERIVABLE.has(type)) continue;
     if (type !== "keydown") {
       claimed.push(type);
       continue;
     }
-    for (const value of declaration ?? []) {
-      if (value.kind !== "literal") continue;
-      if (value.name === "code") claimed.push(`keydown:code:${value.literal}`);
-      else if (value.name === "key") claimed.push(`keydown:${value.literal}`);
+    const value = el.getAttribute(name);
+    if (value === null) continue;
+    const { handlers } = parseEventValueWithErrors(value);
+    for (const handler of handlers) {
+      for (const field of handler.parameter.fields) {
+        if (field.kind !== "literal") continue;
+        if (field.name === "code") claimed.push(`keydown:code:${String(field.value).toLowerCase()}`);
+        else if (field.name === "key") claimed.push(`keydown:${String(field.value).toLowerCase()}`);
+      }
     }
   }
   if (claimed.length > 0) return claimed.join(",");

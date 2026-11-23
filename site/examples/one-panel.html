@@ -35,7 +35,7 @@
     <p class="doc-lede">
           The whole idea in a few lines: a declaring
           <code class="inline-code">&lt;script type="module" implementations="revealable"&gt;</code> in the head, a trigger
-          with <code class="inline-code">on-click="#panel.toggle()"</code>, and a receiver. No
+          with <code class="inline-code">on-click="() => { #panel.toggle() }"</code>, and a receiver. No
           <code class="inline-code">is=</code>, no per-tag setup &mdash; the shipped bootstrap reads the tag and the
           button is live one microtask after it attaches.
         </p>
@@ -43,26 +43,26 @@
 
               <div class="demo">
                 <div class="row">
-                  <button id="auto-demo-btn" type="button" on-click="#auto-demo-panel.toggle()"
+                  <button id="auto-demo-btn" type="button" on-click="() => { #auto-demo-panel.toggle() }"
                           aria-expanded="false" aria-controls="auto-demo-panel">Toggle panel</button>
                 </div>
                 <section id="auto-demo-panel" revealable hidden>
                   <p>This panel is a plain <code class="inline-code">&lt;section revealable&gt;</code>. The button&rsquo;s
-                    phrase is <code class="inline-code">on-click="#auto-demo-panel.toggle()"</code>, and
+                    phrase is <code class="inline-code">on-click="() => { #auto-demo-panel.toggle() }"</code>, and
                     <code class="inline-code">revealable</code> keeps the <code class="inline-code">aria-expanded</code> state in sync.</p>
                 </section>
               </div>
               <div class="codeblock">
                 <div class="codeblock-bar">
                   <span class="codeblock-lang">HTML</span>
-                  <button class="copy-btn" attributable id="copy-code-ex-auto" on-click="#code-ex-auto.copy()" type="button">
+                  <button class="copy-btn" attributable id="copy-code-ex-auto" on-click="() => { #code-ex-auto.copy() }" type="button">
                     <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                   </button>
                 </div>
-                <pre class="code" id="code-ex-auto" copyable on-copy="#copy-code-ex-auto.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implementations="revealable"
+                <pre class="code" id="code-ex-auto" copyable on-copy="() => { #copy-code-ex-auto.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;script type="module" implementations="revealable"
           src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
-      &lt;button on-click="#panel.toggle()" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
+      &lt;button on-click="() => { #panel.toggle() }" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
       &lt;section id="panel" revealable hidden&gt;
         &lt;p&gt;&hellip;&lt;/p&gt;
       &lt;/section&gt;</code></pre>

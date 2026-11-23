@@ -42,10 +42,10 @@
 
               <div class="demo">
                 <div class="row">
-                  <button id="faq-toggle" type="button" on-click="#faq.toggle()"
+                  <button id="faq-toggle" type="button" on-click="() => { #faq.toggle() }"
                           aria-expanded="false" aria-controls="faq">Toggle details</button>
-                  <button type="button" on-click="#dlg.show()">Open dialog</button>
-                  <button type="button" on-click="#pop.toggle()"
+                  <button type="button" on-click="() => { #dlg.show() }">Open dialog</button>
+                  <button type="button" on-click="() => { #pop.toggle() }"
                           aria-expanded="false" aria-controls="pop">Toggle popover</button>
                 </div>
                 <details id="faq" revealable>
@@ -54,7 +54,7 @@
                 </details>
                 <dialog id="dlg" revealable>
                   <p>A native <code class="inline-code">&lt;dialog&gt;</code>, opened with <code class="inline-code">showModal()</code>.</p>
-                  <button type="button" on-click="#dlg.show(false)">Close</button>
+                  <button type="button" on-click="() => { #dlg.show(false) }">Close</button>
                 </dialog>
                 <div id="pop" revealable popover>
                   A popover in the top layer, toggled through <code class="inline-code">showPopover()</code>.
@@ -66,13 +66,13 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" attributable id="copy-code-ex-strat" on-click="#code-ex-strat.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-strat" on-click="() => { #code-ex-strat.copy() }" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-strat" copyable on-copy="#copy-code-ex-strat.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#faq.toggle()" aria-expanded="false" aria-controls="faq"&gt;Toggle details&lt;/button&gt;
-    &lt;button on-click="#dlg.show()"&gt;Open dialog&lt;/button&gt;
-    &lt;button on-click="#pop.toggle()" aria-expanded="false" aria-controls="pop"&gt;Toggle popover&lt;/button&gt;
+              <pre class="code" id="code-ex-strat" copyable on-copy="() => { #copy-code-ex-strat.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button on-click="() => { #faq.toggle() }" aria-expanded="false" aria-controls="faq"&gt;Toggle details&lt;/button&gt;
+    &lt;button on-click="() => { #dlg.show() }"&gt;Open dialog&lt;/button&gt;
+    &lt;button on-click="() => { #pop.toggle() }" aria-expanded="false" aria-controls="pop"&gt;Toggle popover&lt;/button&gt;
 
     &lt;details id="faq" revealable&gt;
       &lt;summary&gt;Why not just use &lt;code&gt;hidden&lt;/code&gt;?&lt;/summary&gt;
@@ -81,7 +81,7 @@
 
     &lt;dialog id="dlg" revealable&gt;
       &lt;p&gt;A native &lt;code&gt;&amp;lt;dialog&amp;gt;&lt;/code&gt;, opened with &lt;code&gt;showModal()&lt;/code&gt;.&lt;/p&gt;
-      &lt;button on-click="#dlg.show(false)"&gt;Close&lt;/button&gt;
+      &lt;button on-click="() => { #dlg.show(false) }"&gt;Close&lt;/button&gt;
     &lt;/dialog&gt;
 
     &lt;div id="pop" revealable popover&gt;

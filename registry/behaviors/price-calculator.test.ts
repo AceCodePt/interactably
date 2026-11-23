@@ -31,28 +31,28 @@ const MARKUP = `
 <label>Qty
   <input id="qty" modifiable dirtyable attributable
          type="number" value="1" min="0" max="10"
-         on-input="#preview.set(this.value)"
-         on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
-         on-clean="this.removeAttr('data-dirty')"
-         on-keydown(code:\`Escape\`)="this.reset(); #preview.set(#qty.value)">
+         on-input="() => { #preview.set(this.value) }"
+         on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
+         on-clean="() => { this.removeAttr('data-dirty') }"
+         on-keydown="({code: 'Escape'}) => { this.reset(); #preview.set(#qty.value) }">
 </label>
-<button id="dec" on-click="#qty.set(#qty.value - 1); #preview.set(#qty.value)">−</button>
-<button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
-<button id="inc5" on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)">+5</button>
-<button id="reset" on-click="#qty.reset(); #preview.set(#qty.value)">Reset</button>
+<button id="dec" on-click="() => { #qty.set(#qty.value - 1); #preview.set(#qty.value) }">−</button>
+<button id="inc" on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }">+</button>
+<button id="inc5" on-click="() => { #qty.set(#qty.value + 5); #preview.set(#qty.value) }">+5</button>
+<button id="reset" on-click="() => { #qty.reset(); #preview.set(#qty.value) }">Reset</button>
 <output id="preview" modifiable
-        on-load="this.set(#qty.value)">1</output>
+        on-load="() => { this.set(#qty.value) }">1</output>
 
 <ul id="list" renderable>
   <li id="row-1">
-    <input class="amount" type="number" value="2.5" on-input="#total.set(sum('#list .amount'))">
-    <button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount'))">×</button>
+    <input class="amount" type="number" value="2.5" on-input="() => { #total.set(sum('#list .amount')) }">
+    <button on-click="() => { #list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount')) }">×</button>
   </li>
 </ul>
-<button id="add-row" on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount'))">Add row</button>
-<template id="row-tpl"><li id="row-{id}"><input class="amount" type="number" value="3.25" on-input="#total.set(sum('#list .amount'))"><button on-click="#list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount'))">×</button></li></template>
+<button id="add-row" on-click="() => { #list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount')) }">Add row</button>
+<template id="row-tpl"><li id="row-{id}"><input class="amount" type="number" value="3.25" on-input="() => { #total.set(sum('#list .amount')) }"><button on-click="() => { #list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount')) }">×</button></li></template>
 <output id="total" modifiable formattable
-        on-load="this.set(sum('#list .amount'))"
+        on-load="() => { this.set(sum('#list .amount')) }"
         formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
 `;
 

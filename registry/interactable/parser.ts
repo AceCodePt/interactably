@@ -82,11 +82,35 @@ export interface ParseResult {
   errors: ParseError[];
 }
 
+export type HandlerLiteral = string | number | boolean;
+
+type HandlerFieldBase = { name: string };
+
+export type HandlerField =
+  | (HandlerFieldBase & { kind: "literal"; value: HandlerLiteral })
+  | (HandlerFieldBase & { kind: "type"; type: string });
+
+export type LocatedHandlerField = HandlerField & Span;
+
+export interface HandlerParameter extends Span {
+  fields: LocatedHandlerField[];
+}
+
+export interface EventHandler extends Span {
+  parameter: HandlerParameter;
+  phrases: Phrase[];
+}
+
+export interface EventValueResult {
+  handlers: EventHandler[];
+  errors: ParseError[];
+}
+
 const CALL = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*\(([\s\S]*)\)$/;
 const NUMBER = /^-?\d+(?:\.\d+)?$/;
 const STRING = /^'([^']*)'$/;
 const IDENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-const DECL_NAME = /^[A-Za-z_$][A-Za-z0-9_$-]*$/;
+const HYPHENATED_NAME = /^[A-Za-z_$][A-Za-z0-9_$-]*$/;
 const ID = /^[^\s,;.()&|{}:'"#]+$/;
 const KEY = /^[^\s.,;()&|{}:'"#]+$/;
 const TIMING = /^(debounce|throttle|delay)\(([^)]*)\)$/;
@@ -108,8 +132,8 @@ function trimPiece(piece: Piece): Piece {
 
 const cache = new Map<string, ParseResult>();
 
-function cacheKeyOf(value: string, eventName?: string): string {
-  return `${eventName ?? ""}\u0000${value}`;
+function cacheKeyOf(value: string, eventName?: string, base = 0): string {
+  return `${eventName ?? ""}\u0000${base}\u0000${value}`;
 }
 
 export function parse(value: string, eventName?: string): Phrase[] {
@@ -124,15 +148,15 @@ export function parse(value: string, eventName?: string): Phrase[] {
   return phrases;
 }
 
-export function parseWithErrors(value: string, eventName?: string): ParseResult {
-  const cacheKey = cacheKeyOf(value, eventName);
+export function parseWithErrors(value: string, eventName?: string, base = 0): ParseResult {
+  const cacheKey = cacheKeyOf(value, eventName, base);
   const hit = cache.get(cacheKey);
   if (hit !== undefined) return hit;
 
   const phrases: Phrase[] = [];
   const errors: ParseError[] = [];
   for (const piece of splitTopLevel(value, ";")) {
-    const trimmed = trimPiece(piece);
+    const trimmed = trimPiece({ text: piece.text, start: base + piece.start });
     if (trimmed.text === "") continue;
     try {
       phrases.push(parsePhrase(trimmed.text, trimmed.start));
@@ -326,54 +350,246 @@ export function parseRefOrRead(text: string): RefOrRead | undefined {
   return undefined;
 }
 
-export type EventValueDeclaration =
-  | { kind: "type"; name: string; type: string }
-  | { kind: "literal"; name: string; literal: string };
+const FIELD_NAME = /^[A-Za-z_$][A-Za-z0-9_$-]*$/;
 
-export interface EventAttribute {
-  type: string;
-  declaration: readonly EventValueDeclaration[] | undefined;
+const eventValueCache = new Map<string, EventValueResult>();
+
+function eventValueCacheKey(value: string): string {
+  return value;
 }
 
-export function parseEventAttribute(name: string): EventAttribute {
-  const open = name.indexOf("(");
-  if (open === -1) return { type: name, declaration: undefined };
-  const type = name.slice(0, open);
-  if (type === "") throw new Error(`empty event type before "(" in "${name}"`);
-  if (!name.endsWith(")")) throw new Error(`unterminated value declaration in "${name}": missing ")"`);
-  const parts = name
-    .slice(open + 1, -1)
-    .split(",")
-    .map((part) => part.trim())
-    .filter((part) => part !== "");
-  if (parts.length === 0) throw new Error(`empty value declaration in "${name}"; expected "name:type"`);
-  const declaration = parts.map((part, index): EventValueDeclaration => {
-    const colon = part.indexOf(":");
-    if (colon === -1) throw new Error(`value ${index + 1} in "${name}": expected "name:type", got "${part}"`);
-    const declName = part.slice(0, colon).trim();
-    const rhs = part.slice(colon + 1).trim();
-    if (!DECL_NAME.test(declName)) {
-      throw new Error(`value ${index + 1} in "${name}": "${declName}" is not a valid value name`);
+export function parseEventValue(value: string): EventHandler[] {
+  const cacheKey = eventValueCacheKey(value);
+  const cached = eventValueCache.has(cacheKey);
+  const { handlers, errors } = parseEventValueWithErrors(value);
+  if (!cached) {
+    for (const error of errors) {
+      console.error(`[Interactable] invalid event value: ${error.message}`);
     }
-    if (rhs === "") throw new Error(`value ${index + 1} in "${name}": missing type for "${declName}"`);
-    if (rhs.startsWith("`")) {
-      if (!rhs.endsWith("`")) {
-        throw new Error(`value ${index + 1} in "${name}": unterminated backtick in literal for "${declName}"`);
-      }
-      const literal = rhs.slice(1, -1);
-      if (literal === "") throw new Error(`value ${index + 1} in "${name}": empty literal for "${declName}"`);
-      if (literal.includes("`")) {
-        throw new Error(`value ${index + 1} in "${name}": literal for "${declName}" contains a backtick`);
-      }
-      return { kind: "literal", name: declName, literal };
-    }
-    return { kind: "type", name: declName, type: rhs };
-  });
-  const literalCount = declaration.reduce((count, value) => (value.kind === "literal" ? count + 1 : count), 0);
-  if (literalCount > 0 && literalCount < declaration.length) {
-    throw new Error(`value declaration in "${name}": a declaration either matches literals or binds types, not both`);
   }
-  return { type, declaration };
+  return handlers;
+}
+
+export function parseEventValueWithErrors(value: string): EventValueResult {
+  const cacheKey = eventValueCacheKey(value);
+  const hit = eventValueCache.get(cacheKey);
+  if (hit !== undefined) return hit;
+
+  const handlers: EventHandler[] = [];
+  const errors: ParseError[] = [];
+  const trimmed = trimPiece({ text: value, start: 0 });
+  if (trimmed.text === "") {
+    const result: EventValueResult = { handlers, errors };
+    eventValueCache.set(cacheKey, result);
+    return result;
+  }
+
+  let pieces: Piece[];
+  try {
+    if (trimmed.text.startsWith("[") || trimmed.text.endsWith("]")) {
+      pieces = splitHandlerList(trimmed);
+    } else {
+      pieces = splitTopLevel(trimmed.text, ",").map((piece) => ({
+        text: piece.text,
+        start: trimmed.start + piece.start,
+      }));
+      if (pieces.filter((piece) => trimPiece(piece).text !== "").length > 1) {
+        throw new ParseError(
+          "two or more handlers need brackets: write \"[() => { … }, () => { … }]\"",
+          trimmed.start,
+          trimmed.start + trimmed.text.length,
+        );
+      }
+    }
+  } catch (err) {
+    const error = err as ParseError;
+    errors.push(new ParseError(error.message, error.start, error.end, trimmed.text));
+    const result: EventValueResult = { handlers, errors };
+    eventValueCache.set(cacheKey, result);
+    return result;
+  }
+
+  for (const piece of pieces) {
+    const handler = trimPiece({ text: piece.text, start: piece.start });
+    if (handler.text === "") continue;
+    try {
+      handlers.push(parseHandler(handler.text, handler.start, errors));
+    } catch (err) {
+      if (err instanceof ParseError) {
+        errors.push(new ParseError(err.message, err.start, err.end, handler.text));
+      } else {
+        errors.push(
+          new ParseError(
+            (err as Error).message,
+            handler.start,
+            handler.start + handler.text.length,
+            handler.text,
+          ),
+        );
+      }
+    }
+  }
+
+  const result: EventValueResult = { handlers, errors };
+  eventValueCache.set(cacheKey, result);
+  return result;
+}
+
+function splitHandlerList(trimmed: Piece): Piece[] {
+  if (!trimmed.text.startsWith("[") || !trimmed.text.endsWith("]")) {
+    throw new ParseError(
+      "unterminated handler list: a list must be wrapped in \"[ … ]\"",
+      trimmed.start,
+      trimmed.start + trimmed.text.length,
+    );
+  }
+  const body = trimmed.text.slice(1, -1);
+  const base = trimmed.start + 1;
+  if (trimPiece({ text: body, start: base }).text === "") return [];
+  const pieces = splitTopLevel(body, ",").map((piece) => ({
+    text: piece.text,
+    start: base + piece.start,
+  }));
+  for (const piece of pieces) {
+    if (trimPiece(piece).text === "") {
+      throw new ParseError("empty handler in list", piece.start, piece.start + piece.text.length);
+    }
+  }
+  return pieces;
+}
+
+function parseHandler(source: string, base: number, errors: ParseError[]): EventHandler {
+  const arrow = findHandlerArrow(source);
+  if (arrow === -1) {
+    throw new ParseError(
+      `expected a handler "() => { … }" or "({ name: type }) => { … }", got "${source}"`,
+      base,
+      base + source.length,
+    );
+  }
+  const parameterText = source.slice(0, arrow);
+  const parameter = trimPiece({ text: parameterText, start: base });
+  const bodyStart = base + arrow + 2;
+  const body = trimPiece({ text: source.slice(arrow + 2), start: bodyStart });
+  if (!body.text.startsWith("{") || !body.text.endsWith("}")) {
+    throw new ParseError(
+      `handler bodies must be braced: write "${parameter.text} => { ${body.text} }"`,
+      body.start,
+      body.start + body.text.length,
+    );
+  }
+  const parsedParameter = parseHandlerParameter(parameter.text, parameter.start);
+  const innerStart = body.start + 1;
+  const inner = body.text.slice(1, -1);
+  const parsedBody = parseWithErrors(inner, undefined, innerStart);
+  errors.push(...parsedBody.errors);
+  return located<{
+    parameter: HandlerParameter;
+    phrases: Phrase[];
+  }>(
+    { parameter: parsedParameter, phrases: parsedBody.phrases },
+    base,
+    base + source.length,
+  ) as EventHandler;
+}
+
+function findHandlerArrow(source: string): number {
+  let single = false;
+  let paren = 0;
+  for (let i = 0; i + 1 < source.length; i++) {
+    const ch = source[i]!;
+    if (ch === "'") {
+      single = !single;
+      continue;
+    }
+    if (single) {
+      if (ch === "\\") i++;
+      continue;
+    }
+    if (ch === "(") paren++;
+    else if (ch === ")") paren--;
+    else if (ch === "=" && source[i + 1] === ">" && paren === 0) return i;
+  }
+  return -1;
+}
+
+function parseHandlerParameter(source: string, base: number): HandlerParameter {
+  if (source === "()") {
+    return located<{ fields: LocatedHandlerField[] }>({ fields: [] }, base, base + source.length);
+  }
+  if (!source.startsWith("({") || !source.endsWith("})")) {
+    throw new ParseError(
+      `parameter must be "()" or "({ name: type })", got "${source}"`,
+      base,
+      base + source.length,
+    );
+  }
+  const inner = source.slice(2, -2);
+  const innerBase = base + 2;
+  if (trimPiece({ text: inner, start: innerBase }).text === "") {
+    throw new ParseError(
+      `empty parameter object; use "()" for no fields`,
+      base,
+      base + source.length,
+    );
+  }
+  const fields = splitTopLevel(inner, ",").map((rawField) => {
+    const field = trimPiece({ text: rawField.text, start: innerBase + rawField.start });
+    return parseHandlerField(field.text, field.start);
+  });
+  return located<{ fields: LocatedHandlerField[] }>({ fields }, base, base + source.length);
+}
+
+function parseHandlerField(source: string, base: number): LocatedHandlerField {
+  const colon = source.indexOf(":");
+  if (colon === -1) {
+    throw new ParseError(
+      `parameter field "${source}" needs "name: type"`,
+      base,
+      base + source.length,
+    );
+  }
+  const namePiece = trimPiece({ text: source.slice(0, colon), start: base });
+  const name = namePiece.text;
+  if (!FIELD_NAME.test(name)) {
+    throw new ParseError(
+      `invalid parameter field name "${name}"`,
+      namePiece.start,
+      namePiece.start + name.length,
+    );
+  }
+  const valuePiece = trimPiece({ text: source.slice(colon + 1), start: base + colon + 1 });
+  const value = valuePiece.text;
+  if (value === "") {
+    throw new ParseError(
+      `missing type for parameter field "${name}"`,
+      valuePiece.start,
+      valuePiece.start,
+    );
+  }
+  const stringLiteral = STRING.exec(value);
+  if (stringLiteral !== null) {
+    return located<HandlerField>(
+      { kind: "literal", name, value: unescapeString(stringLiteral[1]!) },
+      base,
+      base + source.length,
+    );
+  }
+  if (NUMBER.test(value)) {
+    return located<HandlerField>(
+      { kind: "literal", name, value: Number(value) },
+      base,
+      base + source.length,
+    );
+  }
+  if (value === "true" || value === "false") {
+    return located<HandlerField>(
+      { kind: "literal", name, value: value === "true" },
+      base,
+      base + source.length,
+    );
+  }
+  return located<HandlerField>({ kind: "type", name, type: value }, base, base + source.length);
 }
 
 export function isNumberLiteral(text: string): boolean {
@@ -517,6 +733,9 @@ function parseArg(text: string, base: number, position: number): Arg {
     );
   }
   if (IDENT.test(text)) {
+    return located<ArgBase>({ kind: "name", name: text }, base, base + text.length);
+  }
+  if (text.includes("-") && HYPHENATED_NAME.test(text)) {
     return located<ArgBase>({ kind: "name", name: text }, base, base + text.length);
   }
   return expressionArg(text, base, position);

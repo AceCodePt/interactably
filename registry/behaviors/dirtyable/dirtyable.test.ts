@@ -205,7 +205,7 @@ test("moving the baseline via setAttr commits the current state and fires clean"
   const input = hostElement("input", {
     dirtyable: "", attributable: "",
     value: "a",
-    "on-dirty": "this.setAttr({name: 'value', value: this.value})",
+    "on-dirty": "() => { this.setAttr({name: 'value', value: this.value}) }",
   }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
@@ -238,7 +238,7 @@ test("an on-restore baseline move after a restore counts as pristine", async () 
   const holder = document.createElement("div");
   holder.innerHTML =
     `<input dirtyable storable modifiable attributable storable-id="draft" ` +
-    `on-restore(value:string)="this.set(value).setAttr({name: 'value', value: value})">`;
+    `on-restore="({value: string}) => { this.set(value).setAttr({name: 'value', value: value}) }">`;
   const input = holder.firstElementChild as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
@@ -260,8 +260,8 @@ test("no class or attribute is ever written to the element", async () => {
   const input = hostElement("input", {
     dirtyable: "", attributable: "",
     value: "a",
-    "on-dirty": "this.setAttr({name: 'data-dirty', value: ''})",
-    "on-clean": "this.removeAttr('data-dirty')",
+    "on-dirty": "() => { this.setAttr({name: 'data-dirty', value: ''}) }",
+    "on-clean": "() => { this.removeAttr('data-dirty') }",
   }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
@@ -289,8 +289,8 @@ test("an authored-dirty connect fires nothing; the first flip fires clean", asyn
   const input = hostElement("input", {
     dirtyable: "", attributable: "",
     value: "a",
-    "on-dirty": "this.setAttr({name: 'data-dirty', value: ''})",
-    "on-clean": "this.removeAttr('data-dirty')",
+    "on-dirty": "() => { this.setAttr({name: 'data-dirty', value: ''}) }",
+    "on-clean": "() => { this.removeAttr('data-dirty') }",
   }) as HTMLInputElement;
   input.value = "b";
   document.body.appendChild(input);

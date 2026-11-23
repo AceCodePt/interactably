@@ -33,7 +33,7 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">A collapsible help panel</h1>
     <p class="doc-lede">
-          One button, one phrase: <code class="inline-code">on-click="#panel.toggle()"</code>.
+          One button, one phrase: <code class="inline-code">on-click="() => { #panel.toggle() }"</code>.
           <code class="inline-code">revealable</code> figures out the element on its own — it toggles a
           <code class="inline-code">revealable-open</code> attribute here, <code class="inline-code">el.open</code> on a
           <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>, popover state on a
@@ -43,7 +43,7 @@
 
               <div class="demo">
                 <div class="row">
-                  <button id="panel-toggle" on-click="#panel.toggle()"
+                  <button id="panel-toggle" on-click="() => { #panel.toggle() }"
                           aria-expanded="false" aria-controls="panel" type="button">Toggle panel</button>
                 </div>
                 <section id="panel" revealable hidden>
@@ -52,7 +52,7 @@
                     <code class="inline-code">revealable</code> reads the element: <code class="inline-code">revealable-open</code> here,
                     <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
                     popover state on a <code class="inline-code">[popover]</code>. The trigger is
-                    <code class="inline-code">on-click="#panel.toggle()"</code>, and the implementation keeps the button&rsquo;s
+                    <code class="inline-code">on-click="() => { #panel.toggle() }"</code>, and the implementation keeps the button&rsquo;s
                     <code class="inline-code">aria-expanded</code> in sync.
                   </p>
                 </section>
@@ -63,11 +63,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" attributable id="copy-code-ex-reveal" on-click="#code-ex-reveal.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-reveal" on-click="() => { #code-ex-reveal.copy() }" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-reveal" copyable on-copy="#copy-code-ex-reveal.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#panel.toggle()"
+              <pre class="code" id="code-ex-reveal" copyable on-copy="() => { #copy-code-ex-reveal.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button on-click="() => { #panel.toggle() }"
             aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
     &lt;section id="panel" revealable hidden&gt;
       &lt;p&gt;&hellip;&lt;/p&gt;

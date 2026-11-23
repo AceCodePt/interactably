@@ -45,7 +45,7 @@
                 <div class="row">
                   <label>Price
                     <input id="nf-price" modifiable attributable placeholder="e.g. 1234.5"
-                           on-input="#nf-usd.set(this.value); #nf-eur.set(this.value)">
+                           on-input="() => { #nf-usd.set(this.value); #nf-eur.set(this.value) }">
                   </label>
                   <p class="demo-note">USD: <output id="nf-usd" modifiable formattable formattable-format="{ style: 'currency', currency: 'USD' }">0</output></p>
                   <p class="demo-note">EUR (de-DE): <output id="nf-eur" modifiable formattable formattable-format="{ locale: 'de-DE', style: 'currency', currency: 'EUR' }">0</output></p>
@@ -53,8 +53,8 @@
                 <div class="row">
                   <label>Date
                     <input id="nf-date" modifiable attributable value="2026-09-22"
-                           on-load="#nf-when.set(this.value)"
-                           on-input="#nf-when.set(this.value)">
+                           on-load="() => { #nf-when.set(this.value) }"
+                           on-input="() => { #nf-when.set(this.value) }">
                   </label>
                   <p class="demo-note">Formatted: <output id="nf-when" modifiable formattable formattable-format="{ type: 'date', dateStyle: 'full' }"></output></p>
                 </div>
@@ -65,19 +65,19 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" attributable id="copy-code-ex-nf" on-click="#code-ex-nf.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-nf" on-click="() => { #code-ex-nf.copy() }" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-nf" copyable on-copy="#copy-code-ex-nf.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="price" modifiable attributable
-       on-input="#usd.set(this.value); #eur.set(this.value)"&gt;
+              <pre class="code" id="code-ex-nf" copyable on-copy="() => { #copy-code-ex-nf.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;input id="price" modifiable attributable
+       on-input="() => { #usd.set(this.value); #eur.set(this.value) }"&gt;
 &lt;output id="usd" modifiable formattable
         formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;
 &lt;output id="eur" modifiable formattable
         formattable-format="{ locale: 'de-DE', style: 'currency', currency: 'EUR' }"&gt;0&lt;/output&gt;
 
 &lt;input id="when" modifiable attributable value="2026-09-22"
-       on-load="#full.set(this.value)" on-input="#full.set(this.value)"&gt;
+       on-load="() => { #full.set(this.value) }" on-input="() => { #full.set(this.value) }"&gt;
 &lt;output id="full" modifiable formattable
         formattable-format="{ type: 'date', dateStyle: 'full' }"&gt;&lt;/output&gt;</code></pre>
             </div>

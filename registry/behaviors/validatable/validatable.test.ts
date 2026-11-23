@@ -142,7 +142,7 @@ test("a storable restore can install invalid data without firing user-invalid", 
   const holder = document.createElement("div");
   holder.innerHTML =
     '<input type="number" min="18" required validatable storable modifiable ' +
-    'storable-id="draft" on-restore(value:string)="this.set(value)">';
+    'storable-id="draft" on-restore="({value: string}) => { this.set(value) }">';
   const input = holder.firstElementChild as HTMLInputElement;
   document.body.appendChild(input);
   await flush();

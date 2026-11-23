@@ -128,7 +128,7 @@ test("executor path through attach(): #menu.toggle('open') from a button, then a
   const button = hostElement("button", {
     id: "menu-btn",
     classable: "",
-    "on-click": "#menu.toggle('open')",
+    "on-click": "() => { #menu.toggle('open') }",
   });
   const menu = hostElement("nav", { id: "menu", classable: "" });
   document.body.append(button, menu);
@@ -140,7 +140,7 @@ test("executor path through attach(): #menu.toggle('open') from a button, then a
   button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   assert.equal(menu.classList.contains("open"), false);
 
-  button.setAttribute("on-click", "#menu.add('open') && #menu.remove('closed')");
+  button.setAttribute("on-click", "() => { #menu.add('open') && #menu.remove('closed') }");
   menu.className = "closed";
   await flush();
 

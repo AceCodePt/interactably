@@ -80,8 +80,8 @@ function rovingOptions(ids: string[], searchId: string): HTMLUListElement {
     const prev = index === 0 ? searchId : ids[index - 1]!;
     const li = fromMarkup<HTMLLIElement>(
       `<li id="${id}" tabindex="-1" focusable prevent-default ` +
-        `on-keydown(code:\`ArrowDown\`)="#${next}.focus()" ` +
-        `on-keydown(code:\`ArrowUp\`)="#${prev}.focus()">${id}</li>`,
+        `on-keydown="[({code: 'ArrowDown'}) => { #${next}.focus() }, ({code: 'ArrowUp'}) => { #${prev}.focus() }]" ` +
+        `>${id}</li>`,
     );
     ul.appendChild(li);
   }
@@ -90,7 +90,7 @@ function rovingOptions(ids: string[], searchId: string): HTMLUListElement {
 
 function combobox(optionIds: string[]): HTMLInputElement {
   const search = fromMarkup<HTMLInputElement>(
-    `<input id="search" focusable prevent-default on-keydown(code:\`ArrowDown\`)="#results-1.focus()">`,
+    `<input id="search" focusable prevent-default on-keydown="({code: 'ArrowDown'}) => { #results-1.focus() }">`,
   );
   document.body.append(search, rovingOptions(optionIds, "search"));
   return search;

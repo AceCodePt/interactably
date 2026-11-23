@@ -260,7 +260,7 @@ test("an out-of-set requestable-concurrency is rejected before anything is sent"
 
 test("send sets status=loading and aria-busy synchronously; success clears both and runs on-response", async (t) => {
   const warn = t.mock.method(console, "warn");
-  const el = await mount({ "requestable-url": "/api", "on-response": "#receipt.show()" });
+  const el = await mount({ "requestable-url": "/api", "on-response": "() => { #receipt.show() }" });
   const receipt = revealable("section", "receipt");
   document.body.appendChild(receipt);
   await flush();
@@ -278,7 +278,7 @@ test("send sets status=loading and aria-busy synchronously; success clears both 
 });
 
 test("a non-ok response sets status=error and runs on-request-error", async () => {
-  const el = await mount({ "requestable-url": "/api", "on-request-error": "#alert.show()" });
+  const el = await mount({ "requestable-url": "/api", "on-request-error": "() => { #alert.show() }" });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
   await flush();
@@ -292,7 +292,7 @@ test("a non-ok response sets status=error and runs on-request-error", async () =
 });
 
 test("a network failure sets status=error and fires on-request-offline", async () => {
-  const el = await mount({ "requestable-url": "/api", "on-request-offline": "#alert.show()" });
+  const el = await mount({ "requestable-url": "/api", "on-request-offline": "() => { #alert.show() }" });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
   await flush();
@@ -306,7 +306,7 @@ test("a network failure sets status=error and fires on-request-offline", async (
 });
 
 test("abort() aborts the request and clears status and aria-busy without running on-response", async () => {
-  const el = await mount({ "requestable-url": "/api", "on-response": "#receipt.show()" });
+  const el = await mount({ "requestable-url": "/api", "on-response": "() => { #receipt.show() }" });
   const receipt = revealable("section", "receipt");
   document.body.appendChild(receipt);
   await flush();
@@ -409,7 +409,7 @@ test("requestable-include spreads a matched form's fields as FormData would", as
 test("any non-abort, non-timeout rejection is request-offline, and it carries no values", async () => {
   const el = await mount({
     "requestable-url": "/api",
-    "on-request-offline": "#alert.show()",
+    "on-request-offline": "() => { #alert.show() }",
   });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
@@ -430,7 +430,7 @@ test("a timeout fires on-request-timeout, exactly once, carrying no values, and 
   const el = await mount({
     "requestable-url": "/api",
     "requestable-timeout": "10",
-    "on-request-timeout": "#alert.show()",
+    "on-request-timeout": "() => { #alert.show() }",
   });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);
@@ -457,10 +457,10 @@ test("a timeout fires on-request-timeout, exactly once, carrying no values, and 
   assert.equal(el.hasAttribute("aria-busy"), false);
 });
 
-test("on-request-error(status:`401`) fires only when the non-ok status is 401, and request-error carries status", async () => {
+test("on-request-error filters on the status handler field, and request-error carries status", async () => {
   const holder = document.createElement("div");
   holder.innerHTML =
-    '<div id="req-401" requestable requestable-url="/api" on-request-error(status:`401`)="#alert.show()"></div>';
+    `<div id="req-401" requestable requestable-url="/api" on-request-error="({status: '401'}) => { #alert.show() }"></div>`;
   const el = holder.querySelector("#req-401") as HTMLElement;
   document.body.appendChild(el);
   const alert = revealable("div", "alert");
@@ -488,7 +488,7 @@ test("on-request-error(status:`401`) fires only when the non-ok status is 401, a
 test("a user abort() is silent: no request-error, and a timeout is not an abort", async () => {
   const el = await mount({
     "requestable-url": "/api",
-    "on-request-error": "#alert.show()",
+    "on-request-error": "() => { #alert.show() }",
   });
   const alert = revealable("div", "alert");
   document.body.appendChild(alert);

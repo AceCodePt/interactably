@@ -246,7 +246,7 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   // Mirror the deployed page-load sequence: the markup is already being parsed
   // (readyState "loading") when the declared implementations register and start()
   // runs. start() defers the initial scan to DOMContentLoaded, which is when
-  // on-load="this.restore()" replays the stored selection and the matching
+  // on-load="() => { this.restore() }" replays the stored selection and the matching
   // buttons' on-restore phrases flip the panels.
   localStorage.setItem("pm", JSON.stringify({ pnpm: true }));
   localStorage.setItem("theme", JSON.stringify({ name: "sepia" }));
@@ -388,10 +388,10 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   await new Promise((resolve) => setTimeout(resolve, 350));
   assert.equal(mirror.textContent, "hello", "the debounced phrase ran after the quiet period");
   typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape" }));
-  assert.equal(typer.value, "", "on-keydown(code:`Escape`) this.clear() empties the field");
+  assert.equal(typer.value, "", "the Escape handler empties the field");
   typer.value = "echo";
   typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter" }));
-  assert.equal(mirror.textContent, "echo", "on-keydown(code:`Enter`) fires without debounce");
+  assert.equal(mirror.textContent, "echo", "the Enter handler fires without debounce");
 
   const tip = byId("tip");
   const tipButton = byId("tip-button");
@@ -507,8 +507,8 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(fetchCalls.length, 3, "after the quiet period the fragment is fetched");
   assert.equal(cityList.hidden, true, "the listbox stays hidden until the response lands");
   const options = [
-    `<li role="option"><button id="sug-1" focusable prevent-default on-click="#city.set('Lisbon'); #city-list.show(false)" on-keydown(code:\`ArrowDown\`)="#sug-2.focus()" on-keydown(code:\`ArrowUp\`)="#city.focus()">Lisbon</button></li>`,
-    `<li role="option"><button id="sug-2" focusable prevent-default on-click="#city.set('London'); #city-list.show(false)" on-keydown(code:\`ArrowDown\`)="#city.focus()" on-keydown(code:\`ArrowUp\`)="#sug-1.focus()">London</button></li>`,
+    `<li role="option"><button id="sug-1" focusable prevent-default on-click="() => { #city.set('Lisbon'); #city-list.show(false) }" on-keydown="[({code: 'ArrowDown'}) => { #sug-2.focus() }, ({code: 'ArrowUp'}) => { #city.focus() }]">Lisbon</button></li>`,
+    `<li role="option"><button id="sug-2" focusable prevent-default on-click="() => { #city.set('London'); #city-list.show(false) }" on-keydown="[({code: 'ArrowDown'}) => { #city.focus() }, ({code: 'ArrowUp'}) => { #sug-1.focus() }]">London</button></li>`,
   ];
   fetchCalls[2]!.resolve(fakeResponse(true, 200, options.join("")));
   await flush();
@@ -1076,8 +1076,8 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
   const navMatch = /<nav id="toc"[\s\S]*?<\/nav>/.exec(html);
   assert.ok(navMatch !== null, "docs.html has the sidebar nav");
   const navIds = new Set([...navMatch[0].matchAll(/id="(toc-[a-z0-9-]+)"/g)].map((match) => match[1]!));
-  const enterTargets = [...html.matchAll(/<section [^>]*on-intersect\(state:`enter`[^>]*="[^"]*#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
-  const leaveTargets = [...html.matchAll(/<section [^>]*on-intersect\(state:`leave`[^>]*="[^"]*#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
+  const enterTargets = [...html.matchAll(/<section [^>]*on-intersect="[^"]*state: 'enter'[^"]*#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
+  const leaveTargets = [...html.matchAll(/<section [^>]*on-intersect="[^"]*state: 'leave'[^"]*#(toc-[a-z0-9-]+)\./g)].map((match) => match[1]!);
   assert.ok(navIds.size > 0, "the sidebar has nav links");
   for (const target of enterTargets) {
     assert.ok(navIds.has(target), `#${target} exists in the nav`);
@@ -1182,7 +1182,7 @@ test("site: the scroll-spy example lights, resizes and records a full view", asy
   assert.equal(document.querySelector("[on-load]"), null, "the example has no page-load phrase");
   assert.equal(
     [...document.querySelectorAll("*")].filter((element) =>
-      element.getAttributeNames().some((name) => name.includes("full:`true`")),
+      element.getAttributeNames().some((name) => name.startsWith("on-intersect") && (element.getAttribute(name) ?? "").includes("full: true")),
     ).length,
     1,
     "the live demo has one full:true matcher",

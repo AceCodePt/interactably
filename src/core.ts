@@ -5,13 +5,24 @@ export { getImplementationDef, registerImplementation } from "@behaviors/impleme
 export type { NormalizedImplementationDef } from "@behaviors/implementation-registry.ts";
 export { bindEvents, formatWrite, readValue, registerFormatter, writeValue } from "@behaviors/implementation-utils.ts";
 export type { BindEventsOptions, BoundEvents, ImplementationInstance } from "@behaviors/implementation-utils.ts";
-export { clearPhraseState, runPhrases } from "@interactable/executor.ts";
-export { parse, parseEventAttribute, parseRefOrRead, parseWithErrors, ParseError } from "@interactable/parser.ts";
+export { clearPhraseState, runEventValue, runPhrases } from "@interactable/executor.ts";
+export {
+  parse,
+  parseEventValue,
+  parseEventValueWithErrors,
+  parseRefOrRead,
+  parseWithErrors,
+  ParseError,
+} from "@interactable/parser.ts";
 export type {
   Arg,
   Call,
-  EventAttribute,
-  EventValueDeclaration,
+  EventHandler,
+  EventValueResult,
+  HandlerField,
+  HandlerLiteral,
+  HandlerParameter,
+  LocatedHandlerField,
   Modifier,
   ParseResult,
   Phrase,

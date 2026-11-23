@@ -2,7 +2,7 @@ import { defineImplementation } from "@behaviors/_implementation-definition.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import type { ImplementationEventInit } from "@interactable/implementation-event.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
-import { parseEventAttribute } from "@interactable/parser.ts";
+import { parseEventValueWithErrors } from "@interactable/parser.ts";
 import { compileSignature, scalarOr } from "@interactable/signature.ts";
 import { logOnce } from "@interactable/log.ts";
 
@@ -41,28 +41,22 @@ interface Shape {
 
 function readShapes(el: Element): Shape[] {
   const shapes: Shape[] = [];
-  for (const attribute of el.getAttributeNames()) {
-    if (!attribute.startsWith("on-")) continue;
-    let parsed: ReturnType<typeof parseEventAttribute>;
-    try {
-      parsed = parseEventAttribute(attribute.slice(3));
-    } catch {
-      continue;
-    }
-    if (parsed.type !== "restore" || parsed.declaration === undefined) continue;
-    if (parsed.declaration.some((value) => value.kind === "literal")) continue;
+  const value = el.getAttribute("on-restore");
+  if (value === null) return shapes;
+  const { handlers } = parseEventValueWithErrors(value);
+  for (const handler of handlers) {
     const entries: ShapeEntry[] = [];
     let valid = true;
-    for (const value of parsed.declaration) {
-      if (value.kind !== "type") continue;
+    for (const field of handler.parameter.fields) {
+      if (field.kind !== "type") continue;
       try {
-        entries.push({ name: value.name, type: value.type, required: !typeInfo(value.type).optional });
+        entries.push({ name: field.name, type: field.type, required: !typeInfo(field.type).optional });
       } catch {
         valid = false;
         break;
       }
     }
-    if (!valid) continue;
+    if (!valid || entries.length === 0) continue;
     shapes.push({
       entries,
       names: new Set(entries.map((entry) => entry.name)),

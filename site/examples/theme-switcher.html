@@ -44,15 +44,15 @@
               <div class="demo">
                 <div class="row">
                   <button id="swatch-dark" type="button"
-                          on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})">Dark</button>
+                          on-click="() => { #swatch.setAttr({name: 'data-theme', value: 'dark'}) }">Dark</button>
                   <button id="swatch-light" type="button"
-                          on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})">Light</button>
+                          on-click="() => { #swatch.setAttr({name: 'data-theme', value: 'light'}) }">Light</button>
                   <button id="swatch-border" type="button"
-                          on-click="#swatch.toggleAttr('data-bordered')">Toggle border</button>
+                          on-click="() => { #swatch.toggleAttr('data-bordered') }">Toggle border</button>
                   <button id="swatch-clear" type="button"
-                          on-click="#swatch.removeAttr('data-theme')">Clear theme</button>
+                          on-click="() => { #swatch.removeAttr('data-theme') }">Clear theme</button>
                   <button id="swatch-log" type="button"
-                          on-click="#swatch.log('button clicked')">Log</button>
+                          on-click="() => { #swatch.log('button clicked') }">Log</button>
                 </div>
                 <div id="swatch" class="swatch" attributable logger data-theme="light">Swatch</div>
               </div>
@@ -62,15 +62,15 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" attributable id="copy-code-ex-attr" on-click="#code-ex-attr.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-attr" on-click="() => { #code-ex-attr.copy() }" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-attr" copyable on-copy="#copy-code-ex-attr.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
-    &lt;button on-click="#swatch.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
-    &lt;button on-click="#swatch.toggleAttr('data-bordered')"&gt;Toggle border&lt;/button&gt;
-    &lt;button on-click="#swatch.removeAttr('data-theme')"&gt;Clear theme&lt;/button&gt;
-    &lt;button on-click="#swatch.log('button clicked')"&gt;Log&lt;/button&gt;
+              <pre class="code" id="code-ex-attr" copyable on-copy="() => { #copy-code-ex-attr.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button on-click="() => { #swatch.setAttr({name: 'data-theme', value: 'dark'}) }"&gt;Dark&lt;/button&gt;
+    &lt;button on-click="() => { #swatch.setAttr({name: 'data-theme', value: 'light'}) }"&gt;Light&lt;/button&gt;
+    &lt;button on-click="() => { #swatch.toggleAttr('data-bordered') }"&gt;Toggle border&lt;/button&gt;
+    &lt;button on-click="() => { #swatch.removeAttr('data-theme') }"&gt;Clear theme&lt;/button&gt;
+    &lt;button on-click="() => { #swatch.log('button clicked') }"&gt;Log&lt;/button&gt;
 
     &lt;div id="swatch" class="swatch" attributable logger data-theme="light"&gt;Swatch&lt;/div&gt;</code></pre>
             </div>

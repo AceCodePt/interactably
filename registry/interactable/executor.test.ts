@@ -7,13 +7,14 @@ import type { InteractionEvent } from "@interactable/interaction-event.ts";
 let dom: JSDOM;
 let clearPhraseState: typeof import("@interactable/executor.ts").clearPhraseState;
 let runPhrases: typeof import("@interactable/executor.ts").runPhrases;
+let runEventValue: typeof import("@interactable/executor.ts").runEventValue;
 let attach: typeof import("@interactable/attachment.ts").attach;
 let detach: typeof import("@interactable/attachment.ts").detach;
 let ImplementationEventClass: typeof import("@interactable/implementation-event.ts").ImplementationEvent;
 
 before(async () => {
   dom = setupJsdom();
-  ({ clearPhraseState, runPhrases } = await import("@interactable/executor.ts"));
+  ({ clearPhraseState, runPhrases, runEventValue } = await import("@interactable/executor.ts"));
   ({ attach, detach } = await import("@interactable/attachment.ts"));
   ({ ImplementationEvent: ImplementationEventClass } = await import("@interactable/implementation-event.ts"));
   const { defineImplementation } = await import("@behaviors/_implementation-definition.ts");
@@ -84,6 +85,10 @@ function observe(receiver: Element, into: InteractionEvent[]): void {
 
 function run(source: Element, value: string, ev: Event): void {
   runPhrases(source, value, ev);
+}
+
+function runValue(source: Element, value: string, ev: Event): void {
+  runEventValue(source, value, ev);
 }
 
 function delay(ms: number): Promise<void> {
@@ -1141,54 +1146,187 @@ test("a keyed ImplementationEvent on a non-intersect type matches phrase.key exa
   assert.equal(showCalls, 2, "impl-event keys match case-sensitively, unlike keyboard keys");
 });
 
-test("a declared name resolves as a bare argument from the event's values", () => {
+test("a bound name resolves as a bare argument from the handler parameter", () => {
   const receiver = el("total");
   const seen: unknown[] = [];
   wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
 
-  run(el(), "#total.set(html)", new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } }));
+  runValue(
+    el(),
+    "({html: string}) => { #total.set(html) }",
+    new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } }),
+  );
   assert.deepEqual(seen, ["<p>hi</p>"]);
 });
 
-test("a declared name resolves as an object-field value", () => {
+test("a bound name resolves as an object-field value", () => {
   const receiver = el("list");
   const seen: unknown[] = [];
   wireHost(receiver, { render: (_, arg) => void seen.push(arg) });
 
-  run(el(), "#list.render({body: html})", new ImplementationEventClass("response", { values: { html: "<li>one</li>" } }));
+  runValue(
+    el(),
+    "({html: string}) => { #list.render({body: html}) }",
+    new ImplementationEventClass("response", { values: { html: "<li>one</li>" } }),
+  );
   assert.deepEqual(seen, [{ body: "<li>one</li>" }]);
 });
 
-test("a declared name inside a formula expression stays an error", (t) => {
+test("a bound name inside a formula expression stays an error", (t) => {
   const spy = t.mock.method(console, "error");
   const receiver = el("total");
   let setCalls = 0;
   wireHost(receiver, { set: () => void setCalls++ });
 
-  run(el(), "#total.set(replace(html, 'a', ''))", new ImplementationEventClass("response", { values: { html: "ab" } }));
-  assert.equal(setCalls, 0, "the formula never resolves the declared name");
+  runValue(
+    el(),
+    "({html: string}) => { #total.set(replace(html, 'a', '')) }",
+    new ImplementationEventClass("response", { values: { html: "ab" } }),
+  );
+  assert.equal(setCalls, 0, "the formula never resolves the bound name");
   assert.equal(spy.mock.callCount(), 1);
 });
 
-test("a name the event does not carry fails at fire time with a helpful error", (t) => {
+test("a name not bound by its own handler fails at fire time", (t) => {
   const spy = t.mock.method(console, "error");
   const receiver = el("total");
   let setCalls = 0;
   wireHost(receiver, { set: () => void setCalls++ });
 
-  run(el(), "#total.set(text)", new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } }));
-  assert.equal(setCalls, 0);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('"text" is not a value of event "response"'));
+  runValue(
+    el(),
+    "({html: string}) => { #total.set(text) }",
+    new ImplementationEventClass("response", { values: { html: "<p>hi</p>", text: "no" } }),
+  );
+  assert.equal(setCalls, 0, "there is no fallback to event values");
+  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('"text" is not bound by this handler'));
 });
 
-test("a name on a plain DOM event fails at fire time", (t) => {
-  const spy = t.mock.method(console, "error");
+test("a typed name on a plain DOM event matches nothing", () => {
   const receiver = el("total");
   let setCalls = 0;
   wireHost(receiver, { set: () => void setCalls++ });
 
-  run(el(), "#total.set(html)", new Event("click"));
-  assert.equal(setCalls, 0);
-  assert.equal(spy.mock.callCount(), 1);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('"html" is not a value of event "click"'));
+  runValue(el(), "({html: string}) => { #total.set(html) }", new Event("click"));
+  assert.equal(setCalls, 0, "the event carries no html field, so the handler does not match");
+});
+
+test("a literal field filters and a type field binds in one parameter", () => {
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+  const value = "({status: 200, html: string}) => { #total.set(html) }";
+
+  runValue(el(), value, new ImplementationEventClass("response", { values: { html: "a", status: "200" } }));
+  runValue(el(), value, new ImplementationEventClass("response", { values: { html: "b", status: "409" } }));
+  assert.deepEqual(seen, ["a"], "only the matching status runs the handler");
+});
+
+test("string literals compare exactly and case-sensitively", () => {
+  const receiver = el("total");
+  let calls = 0;
+  wireHost(receiver, { set: () => void calls++ });
+  const value = "({key: 'Enter'}) => { #total.set() }";
+
+  runValue(el(), value, new ImplementationEventClass("keyed", { values: { key: "Enter" } }));
+  runValue(el(), value, new ImplementationEventClass("keyed", { values: { key: "enter" } }));
+  assert.equal(calls, 1);
+});
+
+test("number and boolean bindings coerce from the raw value", () => {
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+  const value =
+    "({status: number, full: boolean}) => { #total.set(status); #total.set(full) }";
+
+  runValue(el(), value, new ImplementationEventClass("intersect", { values: { status: "404", full: "true" } }));
+  assert.deepEqual(seen, [404, true]);
+});
+
+test("two handlers matching one firing both run in source order", () => {
+  const receiver = el("total");
+  const seen: string[] = [];
+  wireHost(receiver, {
+    first: () => void seen.push("first"),
+    second: () => void seen.push("second"),
+  });
+  const value =
+    "[({state: 'enter'}) => { #total.first() }, ({state: 'enter'}) => { #total.second() }]";
+
+  runValue(el(), value, new ImplementationEventClass("intersect", { values: { state: "enter" } }));
+  assert.deepEqual(seen, ["first", "second"]);
+});
+
+test("a single unbracketed handler and a one-element list behave identically", () => {
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+  const ev = (): Event =>
+    new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } });
+
+  runValue(el(), "({html: string}) => { #total.set(html) }", ev());
+  runValue(el(), "[({html: string}) => { #total.set(html) }]", ev());
+  assert.deepEqual(seen, ["<p>hi</p>", "<p>hi</p>"]);
+});
+
+test("a delayed chain keeps its handler bindings", async () => {
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+
+  runValue(
+    el(),
+    "({html: string}) => { #total.delay(5).set(html) }",
+    new ImplementationEventClass("response", { values: { html: "late" } }),
+  );
+  assert.deepEqual(seen, []);
+  await delay(20);
+  assert.deepEqual(seen, ["late"]);
+});
+
+test("every matching handler's grouped body runs before the next handler", () => {
+  const receiver = el("total");
+  const seen: string[] = [];
+  wireHost(receiver, {
+    a: () => void seen.push("a"),
+    b: () => void seen.push("b"),
+    c: () => void seen.push("c"),
+  });
+  const value =
+    "[({n: 1}) => { #total.a(); #total.b() }, ({n: 1}) => { #total.c() }]";
+
+  runValue(el(), value, new ImplementationEventClass("counted", { values: { n: "1" } }));
+  assert.deepEqual(seen, ["a", "b", "c"]);
+});
+
+test("the task's before/after examples run through runEventValue", () => {
+  const receiver = el("f");
+  const order: string[] = [];
+  wireHost(receiver, {
+    send: () => void order.push("send"),
+    render: (_, arg) => void order.push(`render:${(arg as { payload: string }).payload}`),
+    show: () => void order.push("show"),
+  });
+
+  runValue(
+    el(),
+    "({key: 'Enter'}) => { #f.send() }",
+    new dom.window.KeyboardEvent("keydown", { key: "Enter" }),
+  );
+  assert.deepEqual(order, ["send"]);
+
+  runValue(
+    el(),
+    "({html: string}) => { #f.render({payload: html}) }",
+    new ImplementationEventClass("response", { values: { html: "<p>ok</p>" } }),
+  );
+  assert.deepEqual(order, ["send", "render:<p>ok</p>"]);
+
+  const list =
+    "[({status: 200, html: string}) => { #f.render({payload: html}) }, ({status: 409}) => { #f.show() }]";
+  runValue(el(), list, new ImplementationEventClass("response", { values: { status: "409", html: "x" } }));
+  assert.deepEqual(order, ["send", "render:<p>ok</p>", "show"]);
+  runValue(el(), list, new ImplementationEventClass("response", { values: { status: "200", html: "y" } }));
+  assert.deepEqual(order, ["send", "render:<p>ok</p>", "show", "render:y"]);
 });

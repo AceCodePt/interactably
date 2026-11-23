@@ -69,7 +69,7 @@ test("dispatchInteraction dispatches, checks handled, rethrows e.error and retur
 
 test("fire dispatches a real DOM event on an upgraded trigger through the full path", async () => {
   const receiver = hostElement("div", { id: "recv2", echoer: "" });
-  const trigger = hostElement("button", { "on-click": "#recv2.echo('clicked')" });
+  const trigger = hostElement("button", { "on-click": "() => { #recv2.echo('clicked') }" });
   document.body.append(trigger, receiver);
   await flush();
 

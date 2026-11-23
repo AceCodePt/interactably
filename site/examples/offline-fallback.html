@@ -50,13 +50,13 @@
                     <input id="of-text" type="text" value="hello from the optimistic path">
                   </label>
                   <button id="of-send" type="button"
-                          on-click="#of-msg-error.show(false); #of-msg-timeout.show(false); #of-msg-offline.show(false); #of-list.render({template: #of-row-tpl, swap: 'beforeend', text: #of-text.value, id: now()}); #of-form.send()">Send</button>
+                          on-click="() => { #of-msg-error.show(false); #of-msg-timeout.show(false); #of-msg-offline.show(false); #of-list.render({template: #of-row-tpl, swap: 'beforeend', text: #of-text.value, id: now()}); #of-form.send() }">Send</button>
                 </div>
                 <form id="of-form" prevent-default requestable
                       requestable-url="/api/messages" requestable-method="post"
-                      on-request-error="#of-list.undo(); #of-msg-error.show()"
-                      on-request-timeout="#of-list.undo(); #of-msg-timeout.show()"
-                      on-request-offline="#of-list.undo(); #of-msg-offline.show()">
+                      on-request-error="() => { #of-list.undo(); #of-msg-error.show() }"
+                      on-request-timeout="() => { #of-list.undo(); #of-msg-timeout.show() }"
+                      on-request-offline="() => { #of-list.undo(); #of-msg-offline.show() }">
                   <p class="demo-pending" hidden>Sending&hellip;</p>
                 </form>
                 <ul id="of-list" renderable></ul>
@@ -72,16 +72,16 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" attributable id="copy-code-ex-offline" on-click="#code-ex-offline.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-offline" on-click="() => { #code-ex-offline.copy() }" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-offline" copyable on-copy="#copy-code-ex-offline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#msg-error.show(false); #msg-timeout.show(false); #msg-offline.show(false); #list.render({template: #row-tpl, swap: 'beforeend', text: #text.value, id: now()}); #form.send()"&gt;Send&lt;/button&gt;
+              <pre class="code" id="code-ex-offline" copyable on-copy="() => { #copy-code-ex-offline.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button on-click="() => { #msg-error.show(false); #msg-timeout.show(false); #msg-offline.show(false); #list.render({template: #row-tpl, swap: 'beforeend', text: #text.value, id: now()}); #form.send() }"&gt;Send&lt;/button&gt;
 &lt;form id="form" prevent-default requestable
       requestable-url="/api/messages" requestable-method="post"
-      on-request-error="#list.undo(); #msg-error.show()"
-      on-request-timeout="#list.undo(); #msg-timeout.show()"
-      on-request-offline="#list.undo(); #msg-offline.show()"&gt;
+      on-request-error="() => { #list.undo(); #msg-error.show() }"
+      on-request-timeout="() => { #list.undo(); #msg-timeout.show() }"
+      on-request-offline="() => { #list.undo(); #msg-offline.show() }"&gt;
   &lt;p class="demo-pending" hidden&gt;Sending&hellip;&lt;/p&gt;
 &lt;/form&gt;
 &lt;ul id="list" renderable&gt;&lt;/ul&gt;

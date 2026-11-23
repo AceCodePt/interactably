@@ -1,7 +1,7 @@
 import "./dom-standins.ts";
 import { DiagnosticSeverity } from "vscode-languageserver";
 import type { Diagnostic } from "vscode-languageserver";
-import { INTERSECT_EVENT_NAMES, parseEventAttribute, parseWithErrors } from "interactably";
+import { INTERSECT_EVENT_NAMES, parseEventValueWithErrors } from "interactably";
 import type { Arg, Ref, Unit } from "interactably";
 import { attribute, attributeValue, decodeAttributeValue, isScriptElement, splitNames } from "./html.ts";
 import type { HtmlAttribute, HtmlElement } from "./html.ts";
@@ -224,14 +224,12 @@ function reportTrigger(
   add: Adder,
 ): void {
   const declaredEvent = attributeValue.name.slice(3);
-  let eventType = declaredEvent;
-  try {
-    eventType = parseEventAttribute(declaredEvent).type;
-  } catch (error) {
+  const eventType = declaredEvent;
+  if (declaredEvent.includes("(")) {
     add(
       attributeValue.nameStart,
       attributeValue.nameEnd,
-      (error as Error).message,
+      `value declarations no longer belong in the attribute name; write ${declaredEvent.slice(0, declaredEvent.indexOf("("))}="({ name: type }) => { … }"`,
       "parse-error",
       DiagnosticSeverity.Error,
     );
@@ -254,16 +252,18 @@ function reportTrigger(
 
   const raw = attributeValue.value ?? "";
   const decoded = decodeHtml(raw);
-  const { phrases, errors } = parseWithErrors(decoded.text, eventType);
+  const { handlers, errors } = parseEventValueWithErrors(decoded.text);
   const documentOffset = (offset: number): number => attributeValue.valueStart + decoded.toRaw(offset);
 
   for (const error of errors) {
     add(documentOffset(error.start), documentOffset(error.end), error.message, "parse-error", DiagnosticSeverity.Error);
   }
 
-  for (const phrase of phrases) {
-    for (const unit of phrase.units) {
-      reportUnit(analysis, element, unit, documentOffset, add);
+  for (const handler of handlers) {
+    for (const phrase of handler.phrases) {
+      for (const unit of phrase.units) {
+        reportUnit(analysis, element, unit, documentOffset, add);
+      }
     }
   }
 }
