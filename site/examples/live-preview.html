@@ -73,8 +73,7 @@
            on-input="() => { #mirror.debounce(300).set(this.value) }"
            on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
            on-clean="() => { this.removeAttr('data-dirty') }"
-           on-keydown="({code: 'Enter'}) => { #mirror.set(this.value) }"
-           on-keydown="({code: 'Escape'}) => { this.clear() }"&gt;
+           on-keydown="[({code: 'Enter'}) => { #mirror.set(this.value) }, ({code: 'Escape'}) => { this.clear() }]"&gt;
     &lt;output id="mirror" modifiable&gt;&hellip;&lt;/output&gt;
 
     &lt;button on-click="() => { #tip.once().toggle() }"&gt;Toggle tip (once)&lt;/button&gt;

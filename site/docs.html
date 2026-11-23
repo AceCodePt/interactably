@@ -176,14 +176,14 @@
             an element may have either, both, or neither. If nothing else addresses an element, it does not need an
             <code class="inline-code">id</code>. Adding a brand-new implementation or
             <code class="inline-code">on-*</code> attribute to an element after insertion does not attach it; re-insert the
-            element. The old <code class="inline-code">implements</code> attribute is a hard error: it logs once per
-            element and grants no implementations.</p>
+            element. The removed implementation-list attribute is a hard error: it logs once per element and names
+            the implementation attributes to use instead.</p>
         </div>
 
         </section>
         <section id="sec-trigger-grammar" on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-trigger-grammar.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-trigger-grammar.removeAttr('data-visible') }]">
         <h2 id="trigger-grammar">The trigger grammar <a class="anchor" href="#trigger-grammar">#</a></h2>
-        <p>One attribute per interaction; the value is the phrase language.</p>
+        <p>One attribute per event; its value is a handler, and the handler&rsquo;s braced body is the phrase language.</p>
         <div class="codeblock">
           <div class="codeblock-bar">
             <span class="codeblock-lang">HTML</span>
@@ -193,7 +193,7 @@
           </div>
           <pre class="code" id="code-docs-grammar-examples" copyable on-copy="() => { #copy-code-docs-grammar-examples.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button on-click="() => { #pop.show().focus() }"&gt;
 &lt;input  on-input="() => { #echo.set(this.value); #results.debounce(300).filter(this.value) }"&gt;
-&lt;input  on-keydown="({key: 'Escape'}) => { this.reset() }" on-keydown="({key: 'Enter'}) => { #form.validate().send() }"&gt;
+&lt;input  on-keydown="[({key: 'Escape'}) => { this.reset() }, ({key: 'Enter'}) => { #form.validate().send() }]"&gt;
 &lt;button on-click="() => { #tour.once().show() }"&gt;
 &lt;button on-click="() => { #pb.show(false); #pc.show(false); #pa.show() }"&gt;
 &lt;button on-click="() => { #note.transform({mode: 'upper', shift: 2}) }"&gt;
@@ -212,16 +212,21 @@
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-grammar" copyable on-copy="() => { #copy-code-docs-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text"><code>value     := phrase (';' phrase)*
-phrase    := unit (('&amp;&amp;' | '||') unit)*
-unit      := ref ('.' (call | modifier))+
-ref       := '#'id | this
-call      := verb '(' [arg | object] ')'
-arg       := number | 'string' | true | false | ref | read | expr
-read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
-expr      := <expression>  (see §Expressions)
-object    := '{' name ':' arg (',' name ':' arg)* '}'
-modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
+          <pre class="code" id="code-docs-grammar" copyable on-copy="() => { #copy-code-docs-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text"><code>attribute   := 'on-' event-type
+value       := handler | '[' handler (',' handler)* ']'
+handler     := parameter '=&gt;' '{' phrase (';' phrase)* '}'
+parameter   := '()' | '({' param-field (',' param-field)* '})'
+param-field := name ':' (literal | tsyntax-scalar)
+literal     := number | "'" string "'" | 'true' | 'false'
+phrase      := unit (('&amp;&amp;' | '||') unit)*
+unit        := ref ('.' (call | modifier))+
+ref         := '#' id | this
+call        := verb '(' [arg | object] ')'
+arg         := number | "'" string "'" | 'true' | 'false' | ref | read | name | expr
+read        := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
+expr        := &lt;expression&gt;  (see §Expressions)
+object      := '{' name ':' arg (',' name ':' arg)* '}'
+modifier    := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'</code></pre>
         </div>
 
         </section>
@@ -231,7 +236,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <table class="tbl">
             <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
             <tbody>
-              <tr><td>Trigger</td><td><code class="inline-code">on-click="() => { #pop.show() }"</code></td><td>On <code class="inline-code">click</code>, run the phrase</td></tr>
+              <tr><td>Trigger</td><td><code class="inline-code">on-click="() => { #pop.show() }"</code></td><td>On <code class="inline-code">click</code>, run the handler&rsquo;s phrases</td></tr>
               <tr><td>Implementation event</td><td><code class="inline-code">on-copy="() => { #flash.show() }"</code></td><td>On a copyable element <code class="inline-code">on-copy</code> catches both the native clipboard event and copyable&rsquo;s success — one attribute, one fact — differing underneath only in cancelability and <code class="inline-code">clipboardData</code>; if the sharing ever bites, the fix is a rename to <code class="inline-code">copied</code>, not a redesign.</td></tr>
               <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect="({state: 'enter', block-start: '-#topnav.height'}) => { #link.setAttr({name: 'data-visible', value: ''}) }"</code></td><td><code class="inline-code">IntersectionObserver</code> against the viewport. <code class="inline-code">state</code> matches <code class="inline-code">enter</code> or <code class="inline-code">leave</code>; <code class="inline-code">full</code> matches <code class="inline-code">true</code> on becoming entirely inside the box and <code class="inline-code">false</code> on leaving that state; the four margin slots (<code class="inline-code">block-start</code>, <code class="inline-code">block-end</code>, <code class="inline-code">inline-start</code>, <code class="inline-code">inline-end</code>) configure the observer&rsquo;s <code class="inline-code">rootMargin</code>, mapped to physical sides by writing mode</td></tr>
               <tr><td>Receiver</td><td><code class="inline-code">#pop.show()</code></td><td>Send verb <code class="inline-code">show()</code> to the element with <code class="inline-code">id="pop"</code></td></tr>
@@ -244,8 +249,8 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
               <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code>, the type the element declares; absent <code class="inline-code">min</code>/<code class="inline-code">max</code> reads empty, absent <code class="inline-code">step</code> on a number/range input reads <code class="inline-code">1</code></td></tr>
               <tr><td>Key filter</td><td><code class="inline-code">on-keydown="({key: 'Enter'}) => { #f.send() }"</code></td><td>Match an event field to a literal; the phrase runs only when it matches</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
-              <tr><td>Event value</td><td><code class="inline-code">on-response="({html: string}) => { #receipt.set(html) }"</code></td><td>A value the event declares on the attribute, resolved by name inside that phrase</td></tr>
-              <tr><td>Event literal</td><td><code class="inline-code">on-keydown="({code: 'Escape'}) => { #dialog.close() }"</code></td><td>A backticked literal on the attribute: the phrase runs only when the event&rsquo;s field equals it; an unbackticked word is a type, binding instead</td></tr>
+              <tr><td>Event value</td><td><code class="inline-code">on-response="({html: string}) => { #receipt.set(html) }"</code></td><td>A type field binds the event&rsquo;s value to that name inside the handler, and nowhere else</td></tr>
+              <tr><td>Literal filter</td><td><code class="inline-code">on-request-error="({status: 401}) => { #login.show() }"</code></td><td>A literal field matches the event&rsquo;s value: the handler runs only when it equals the literal, while a type field binds instead</td></tr>
               <tr><td>Debounce</td><td><code class="inline-code">#echo.debounce(300).set(this.value)</code></td><td>Defers this receiver&rsquo;s chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref</td></tr>
               <tr><td>Throttle</td><td><code class="inline-code">#viewport.throttle(16).zoom(this)</code></td><td>Leading-edge throttle of this receiver&rsquo;s chain; per element</td></tr>
               <tr><td>Once</td><td><code class="inline-code">#tour.once().show()</code></td><td>Gates the rest of the chain; spent when the walk passes it</td></tr>
@@ -269,29 +274,31 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           for the implementation&rsquo;s <code class="inline-code">ImplementationEvent</code>, never for a same-named DOM event. The synthetic
           trigger <code class="inline-code">on-intersect</code>
           is evaluated from an <code class="inline-code">IntersectionObserver</code> against the viewport, so it needs no
-          implementation attribute and never warns about a missing event. Its slots split into two jobs, and the split
+          implementation attribute and never warns about a missing event. Its parameter fields split into two jobs, and the split
           is the point of the named form. <code class="inline-code">state</code> and <code class="inline-code">full</code>
-          <strong>match</strong>, exactly as a declaration matches a literal elsewhere: <code class="inline-code">state:`enter`</code>
+          <strong>match</strong>, exactly as a literal field matches elsewhere: <code class="inline-code">({state: 'enter'})</code>
           fires when the element&rsquo;s intersection with the box gains non-zero area &mdash; including the observer&rsquo;s initial
-          report for an element visible at load &mdash; <code class="inline-code">state:`leave`</code> when it loses it, and
-          <code class="inline-code">full: true</code> / <code class="inline-code">full: false</code> on either side of a change between
+          report for an element visible at load &mdash; <code class="inline-code">({state: 'leave'})</code> when it loses it, and
+          <code class="inline-code">({full: true})</code> / <code class="inline-code">({full: false})</code> on either side of a change between
           the element being entirely inside the box and not. <code class="inline-code">full</code> is not a third position on the
           <code class="inline-code">state</code> axis: it is a direction, so it is a boolean slot, not a <code class="inline-code">state</code>
           value. <code class="inline-code">full</code> means the whole element is inside the box, so an element taller than the box is
-          never <code class="inline-code">full</code>; shrink the box with a margin and use <code class="inline-code">state:`enter`</code>
+          never <code class="inline-code">full</code>; shrink the box with a margin and use <code class="inline-code">({state: 'enter'})</code>
           instead. One dispatch carries the union of what changed: a crossing that is both an enter and a becoming-full carries both
           <code class="inline-code">state</code> <code class="inline-code">enter</code> and <code class="inline-code">full</code>
-          <code class="inline-code">true</code>, and the declaration that names either runs.
+          <code class="inline-code">true</code>, and every handler that names either runs.
         </p>
 
-        <p><strong>The four margin slots configure the observer, they do not match.</strong> <code class="inline-code">block-start</code>,
+        <p><strong>The four margin slots are parameter fields that configure the element&rsquo;s observer.</strong> <code class="inline-code">block-start</code>,
           <code class="inline-code">block-end</code>, <code class="inline-code">inline-start</code>, <code class="inline-code">inline-end</code>
           are the logical sides of the box. Each takes one token &mdash; a <code class="inline-code">px</code>/<code class="inline-code">%</code>
           length or a <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code> reference &mdash; and an omitted
-          slot is <code class="inline-code">0px</code>. They are configuration, not event values: they are consumed when the observers are
-          built (one observer per distinct resolved margin), they never appear in the dispatched values, and nothing binds or matches on
-          them. The reference form is what makes the sticky-nav pattern work: <code class="inline-code">block-start:`-#topnav.height`</code>
+          slot is <code class="inline-code">0px</code>. A literal margin field configures: <code class="inline-code">({state: 'enter', block-start: '-#topnav.height'})</code>
           reads the header&rsquo;s actual measured height instead of restating it, and a resize rebuilds the observer with the new number.
+          A typed margin field binds instead: <code class="inline-code">({block-start: string}) =&gt; { &hellip; }</code> receives the resolved
+          margin as a value, exactly as any other typed field does, so a handler can read what the box used without duplicating the expression.
+          Every handler on one element must agree on its margin set, because the element has <strong>one observer</strong>; changing the
+          attribute re-syncs it.
         </p>
 
         <p><strong>The slot names are logical; the platform is physical.</strong> <code class="inline-code">IntersectionObserver.rootMargin</code>
@@ -322,7 +329,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           (<code class="inline-code">replace(html, &hellip;)</code> stays an error &mdash; the formula has its own resolver). The parameter is flat
           and never nested: <code class="inline-code">({name: type, &hellip;})</code>, with each right-hand side an ordinary flat tsyntax
           scalar validated at wire time. A name a handler does not bind is an error when the element is wired
-          (<code class="inline-code">bindTrigger</code>), never a throw when the event fires, and a malformed type errors the same way.
+          (the attach pass), never a throw when the event fires, and a malformed type errors the same way.
           <code class="inline-code">()</code> matches every firing, and a bracketed list holds several handlers.</p>
 
         <p><strong>A literal field filters; a type field binds.</strong> A single-quoted string, a number, or
@@ -341,7 +348,7 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           Three events are open &mdash; <code class="inline-code">response</code>, <code class="inline-code">restore</code> and <code class="inline-code">request-error</code>:
           <code class="inline-code">response</code> and <code class="inline-code">restore</code> because their values
           arrive as opaque strings from outside the document, <code class="inline-code">request-error</code> because its <code class="inline-code">status</code>
-          is a number that status literals filter on, and a closed number field could not match one. The trigger-site declaration is the type there, verified only when the value
+          is a number that status literals filter on, and a closed number field could not match one. The handler&rsquo;s parameter field is the type there, verified only when the value
           arrives. A bare <code class="inline-code">number</code> field binds but cannot be matched by a literal; only a small closed set of
           numeric values (a numeric enum) can be matched, because general numeric equality is meaningless for floats and ranges are impossible
           in an attribute name — range-shaped configuration belongs in config attributes.</p>
@@ -352,14 +359,14 @@ modifier  := debounce(ms) | throttle(ms) | once() | delay(ms)</code></pre>
           <code class="inline-code">KeyboardEvent.code</code> is ArrowDown. Comparison is exact and case-sensitive, and there are no
           aliases, so <code class="inline-code">Esc</code> is not <code class="inline-code">escape</code>. A body name must be bound by its own
           handler &mdash; there is no implicit <code class="inline-code">key</code> or <code class="inline-code">code</code>. Every matching
-          handler fires, so Enter and Escape are two handlers in one attribute. A phrase may not carry a key prefix: that is a
-          grammar error, because filtering is the handler parameter&rsquo;s job.
+          handler fires, so Enter and Escape are two handlers in one attribute. Filtering is the handler parameter&rsquo;s job,
+          never a prefix on a phrase.
           The <code class="inline-code">event:key</code> entries in the comma-separated config lists remain configuration, not phrasing.</p>
 
         <p><strong>Key versus code on the keyboard events.</strong> <code class="inline-code">code</code> is the physical key — the
           position on the keyboard — unchanged by layout, locale or modifiers. <code class="inline-code">key</code> is the character the
           layout produces. Use <code class="inline-code">code</code> for positional things (a game control, roving focus) and
-          <code class="inline-code">key</code> when the character is what matters. Both break somewhere: <code class="inline-code">code:`KeyA`</code>
+          <code class="inline-code">key</code> when the character is what matters. Both break somewhere: <code class="inline-code">({code: 'KeyA'})</code>
           hits the key labelled Q on an AZERTY keyboard, and <code class="inline-code">key</code> breaks on layouts that produce different
           characters entirely, such as Russian. <code class="inline-code">Keyboard.getLayoutMap()</code> is the usual workaround and is
           deliberately not used here: it is Chromium-only and does not cover keys absent from a layout. Modifier and navigation keys —
@@ -510,16 +517,16 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
           A trigger is live one microtask after insertion, or at <code class="inline-code">DOMContentLoaded</code> for the
           initial document. Detach runs the cleanup list. The <code class="inline-code">on-*</code> <strong>value</strong> is
           read at event time, so editing <code class="inline-code">on-click="() => { #a.show() }"</code> to
-          <code class="inline-code">"#b.show()"</code> takes effect on the next click. An element that gains
+          <code class="inline-code">"() => { #b.show() }"</code> takes effect on the next click. An element that gains
           an implementation attribute or an <code class="inline-code">on-*</code> attribute after insertion is
           not a participant yet &mdash; re-insert it.
         </p>
         <p>
-          <strong>Receiver side.</strong> Read the element&rsquo;s attributes; each one that names a registered implementation is
-          present. For each present implementation, check its
-          <code class="inline-code">tags</code> admits <code class="inline-code">this.localName</code>, instantiate the factory with
-          <code class="inline-code">(this, attrs)</code>, wire the implementation&rsquo;s <code class="inline-code">on*</code> methods as listeners on itself,
-          forward lifecycle callbacks, and route <code class="inline-code">onInteraction(e)</code> to the <strong>first present implementation in
+          <strong>Receiver side.</strong> Every attribute on the element whose name is a registered implementation is
+          present, and each present implementation attaches. Its <code class="inline-code">tags</code> must admit
+          <code class="inline-code">this.localName</code>, the factory is instantiated with
+          <code class="inline-code">(this, attrs)</code>, the implementation&rsquo;s <code class="inline-code">on*</code> methods are wired as listeners on the element,
+          lifecycle callbacks are forwarded, and <code class="inline-code">onInteraction(e)</code> routes to the <strong>first present implementation in
           attribute order</strong> that declares <code class="inline-code">e.verb</code> &mdash; after validating <code class="inline-code">e.arg</code> against the verb&rsquo;s signature.
         </p>
         <p>
@@ -552,7 +559,7 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
         <h3 id="reporting">Reporting <a class="anchor" href="#reporting">#</a></h3>
         <p>The host and executor report through <code class="inline-code">console.error</code> / <code class="inline-code">console.warn</code>; they do not throw (host methods run on the browser&rsquo;s stack, which owns their exceptions). <code class="inline-code">throw</code> is reserved for <code class="inline-code">defineImplementation</code> and the registry, where the exception reaches the developer who wrote the call.</p>
         <ul>
-          <li><code class="inline-code">console.error</code> when there is no legitimate reading: the removed <code class="inline-code">implements</code> attribute, tag outside the implementation&rsquo;s <code class="inline-code">tags</code>, an <code class="inline-code">on-&lt;event&gt;</code> whose owning implementation attribute is absent, receiver <code class="inline-code">#id</code> not in the document, verb no implementation owns, verb that threw, implementation that failed to attach, a parenthesised trigger whose phrase names a value the event does not declare, or whose declaration names a field the event does not expose or a literal that cannot read as the field&rsquo;s type.</li>
+          <li><code class="inline-code">console.error</code> when there is no legitimate reading: the removed implementation-list attribute, tag outside the implementation&rsquo;s <code class="inline-code">tags</code>, an <code class="inline-code">on-&lt;event&gt;</code> whose owning implementation attribute is absent, receiver <code class="inline-code">#id</code> not in the document, verb no implementation owns, verb that threw, implementation that failed to attach, a handler whose parameter names a field the event does not expose, or whose literal cannot read as the field&rsquo;s type.</li>
           <li><code class="inline-code">console.warn</code> when the code may well be right but the author should look: <code class="inline-code">on-&lt;type&gt;</code> the element has no event for, <code class="inline-code">&lt;form on-submit&gt;</code> without <code class="inline-code">prevent-default</code>, a verb that returned a promise, <code class="inline-code">prevent-default</code> with nothing derived.</li>
         </ul>
 
@@ -630,10 +637,10 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
           With <code class="inline-code">prevent-default-events</code> omitted, <code class="inline-code">prevent-default</code> derives
           <em>which</em> events to cancel from the element&rsquo;s own <code class="inline-code">on-*</code> attributes, restricted to
           <code class="inline-code">submit</code>, <code class="inline-code">click</code> and <code class="inline-code">keydown</code>. An
-          <code class="inline-code">on-keydown</code> declaration with a <code class="inline-code">key:`&hellip;`</code> literal contributes
-          <code class="inline-code">keydown:&lt;key&gt;</code>; a <code class="inline-code">code:`&hellip;`</code> literal contributes
-          <code class="inline-code">keydown:code:&lt;code&gt;</code>, so the claim keeps the field it matched. A declaration that binds a
-          type, or no declaration at all, contributes nothing (a bare <code class="inline-code">keydown</code> cancels typing and Tab).
+          <code class="inline-code">on-keydown</code> handler whose parameter filters <code class="inline-code">({key: '&hellip;'})</code> contributes
+          <code class="inline-code">keydown:&lt;key&gt;</code>; one that filters <code class="inline-code">({code: '&hellip;'})</code> contributes
+          <code class="inline-code">keydown:code:&lt;code&gt;</code>, so the claim keeps the field it matched. A handler that binds a
+          type, or no handler at all, contributes nothing (a bare <code class="inline-code">keydown</code> cancels typing and Tab).
           Only when the element claims none of the three does the tag decide: <code class="inline-code">&lt;form&gt;</code> cancels <code class="inline-code">submit</code>,
           <code class="inline-code">&lt;a href&gt;</code> and <code class="inline-code">&lt;button&gt;</code> cancel <code class="inline-code">click</code>; anything else derives nothing and warns.
         </p>
@@ -690,14 +697,11 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
 
 &lt;ul id="results" role="listbox" renderable&gt;
   &lt;li role="option"&gt;&lt;button id="results-1" focusable prevent-default
-      on-keydown="({code: 'ArrowDown'}) => { #results-2.focus() }"
-      on-keydown="({code: 'ArrowUp'}) => { #search.focus() }"&gt;first&lt;/button&gt;&lt;/li&gt;
+      on-keydown="[({code: 'ArrowDown'}) => { #results-2.focus() }, ({code: 'ArrowUp'}) => { #search.focus() }]"&gt;first&lt;/button&gt;&lt;/li&gt;
   &lt;li role="option"&gt;&lt;button id="results-2" focusable prevent-default
-      on-keydown="({code: 'ArrowDown'}) => { #results-3.focus() }"
-      on-keydown="({code: 'ArrowUp'}) => { #results-1.focus() }"&gt;second&lt;/button&gt;&lt;/li&gt;
+      on-keydown="[({code: 'ArrowDown'}) => { #results-3.focus() }, ({code: 'ArrowUp'}) => { #results-1.focus() }]"&gt;second&lt;/button&gt;&lt;/li&gt;
   &lt;li role="option"&gt;&lt;button id="results-3" focusable prevent-default
-      on-keydown="({code: 'ArrowDown'}) => { #results-1.focus() }"
-      on-keydown="({code: 'ArrowUp'}) => { #results-2.focus() }"&gt;third&lt;/button&gt;&lt;/li&gt;
+      on-keydown="[({code: 'ArrowDown'}) => { #results-1.focus() }, ({code: 'ArrowUp'}) => { #results-2.focus() }]"&gt;third&lt;/button&gt;&lt;/li&gt;
 &lt;/ul&gt;</code></pre>
         </div>
         <p><code class="inline-code">aria-activedescendant</code> is not set and must not be — real focus is on the option, so the screen reader announces it as the current item. The library never walks siblings or picks a &ldquo;first focusable&rdquo; descendant; every hop is a phrase the server wrote when it generated the list. Wrap-around is whatever the last option&rsquo;s phrase points at, a choice visible in the markup, not a mode. Every literal-matched <code class="inline-code">on-keydown</code> here carries <code class="inline-code">prevent-default</code> so the derived <code class="inline-code">keydown:code:arrowdown</code> / <code class="inline-code">keydown:code:arrowup</code> cancel page scroll and caret movement (<a href="#prevent-default">§ prevent-default and no-propagate</a>). <code class="inline-code">blur()</code> is legal on any receiver, logs nothing, and is a native no-op when the element is not the one focused.</p>
@@ -1183,11 +1187,9 @@ export const attributable = defineImplementation("attributable", {
 
 &lt;!-- each section lights its own link while it is on screen --&gt;
 &lt;section id="sec-intro"
-         on-intersect="({state: 'enter', block-start: '-#topnav.height'}) => { #toc-intro.setAttr({name: 'data-visible', value: ''}) }"
-         on-intersect="({state: 'leave', block-start: '-#topnav.height'}) => { #toc-intro.removeAttr('data-visible') }"&gt;&hellip;&lt;/section&gt;
+         on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-intro.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-intro.removeAttr('data-visible') }]"&gt;&hellip;&lt;/section&gt;
 &lt;section id="sec-guide"
-         on-intersect="({state: 'enter', block-start: '-#topnav.height'}) => { #toc-guide.setAttr({name: 'data-visible', value: ''}) }"
-         on-intersect="({state: 'leave', block-start: '-#topnav.height'}) => { #toc-guide.removeAttr('data-visible') }"&gt;&hellip;&lt;/section&gt;</code></pre>
+         on-intersect="[({state: 'enter', block-start: '-#topnav.height'}) => { #toc-guide.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#topnav.height'}) => { #toc-guide.removeAttr('data-visible') }]"&gt;&hellip;&lt;/section&gt;</code></pre>
         </div>
         <p><code class="inline-code">on-intersect="({state: 'enter'}) =&gt; { &hellip; }"</code> fires when a section becomes intersecting and <code class="inline-code">({state: 'leave'}) =&gt; { &hellip; }</code> when it stops, so each section sets and clears its own link&rsquo;s <code class="inline-code">data-visible</code>; several links may be lit at once when several sections are visible &mdash; a true report, not a single current item. There is no hash: scrolling is not navigation, nobody chose the position, and the browser already restores scroll on reload. A margin slot narrows the window: <code class="inline-code">on-intersect="({state: 'enter', block-start: '-50%'}) => { #a.mark() }"</code> fires when the section&rsquo;s leading edge reaches the viewport&rsquo;s vertical centre, and every handler on one element must agree on its margin set, which builds that element's single observer. A typed margin field such as <code class="inline-code">({block-start: number})</code> binds the resolved margin instead of configuring the observer. The live sidebar of this page is exactly this shape, and <code class="inline-code">block-start</code> reads the sticky header&rsquo;s height instead of restating it: the header carries <code class="inline-code">id="topnav"</code> and every section names the same slot <code class="inline-code">block-start: '-#topnav.height'</code>, so the box is shrunk by whatever the header actually measures, and a style change to the header rebuilds the observers on resize.</p>
 
@@ -1203,7 +1205,7 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant through one observer &mdash; for a Document root, the <code class="inline-code">document.body</code> element and everything it contains, never the head; returns a dispose function that tears the attachment down (<a href="#attachment">§ Attachment</a>)</td></tr>
               <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition (used by <code class="inline-code">defineImplementation</code>)</td></tr>
               <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
-              <tr><td><code class="inline-code">runEventValue(el, value, ev)</code></td><td>Parse an attribute value's handler list, match each parameter and run every matching handler</td></tr>
+              <tr><td><code class="inline-code">runEventValue(el, value, ev)</code></td><td>Parse an attribute value&rsquo;s handler list, match each handler&rsquo;s parameter against the event and run every matching handler</td></tr>
               <tr><td><code class="inline-code">parse(value, eventName?)</code></td><td>Parse an attribute string into phrases (cached by event name and value)</td></tr>
               <tr><td><code class="inline-code">parseEventValue(value)</code> / <code class="inline-code">parseEventValueWithErrors(value)</code></td><td>Parse one handler or a bracketed handler list into handlers with spans; the errors variant returns value-relative parse errors</td></tr>
               <tr><td><code class="inline-code">dispatchInteraction(el, verb, arg?, opts?)</code></td><td>Imperatively send a verb; throws on unhandled/error, returns <code class="inline-code">result</code></td></tr>
@@ -1211,8 +1213,8 @@ export const attributable = defineImplementation("attributable", {
               <tr><td><code class="inline-code">ImplementationEvent</code></td><td>The event an implementation dispatches for a declared event (<code class="inline-code">copy</code>, <code class="inline-code">response</code>, <code class="inline-code">request-error</code>, <code class="inline-code">request-timeout</code>, <code class="inline-code">request-offline</code>, <code class="inline-code">restore</code>, <code class="inline-code">valid</code>, <code class="inline-code">invalid</code>, <code class="inline-code">user-valid</code>, <code class="inline-code">user-invalid</code>); an event may carry declared values as <code class="inline-code">values</code> (<code class="inline-code">response</code> &rarr; <code class="inline-code">html</code> and <code class="inline-code">status</code>, <code class="inline-code">request-error</code> &rarr; <code class="inline-code">status</code>, <code class="inline-code">pasted</code> &rarr; <code class="inline-code">text</code>, <code class="inline-code">restore</code> &rarr; <code class="inline-code">value</code>)</td></tr>
               <tr><td><code class="inline-code">isImplementationEvent(el, type)</code></td><td>True when <code class="inline-code">type</code> is the intersect event or an event some implementation on <code class="inline-code">el</code> declares</td></tr>
               <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
-              <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s <code class="inline-code">IntersectionObserver</code>s, one per resolved <code class="inline-code">rootMargin</code></td></tr>
-              <tr><td><code class="inline-code">normaliseRootMargin(margin?)</code></td><td>Normalise and validate a CSS root-margin string: <code class="inline-code">px</code>/<code class="inline-code">%</code> lengths or <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code> references, 1&ndash;4 tokens (<code class="inline-code">undefined</code>/empty &rarr; <code class="inline-code">"0px"</code>; throws otherwise)</td></tr>
+              <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s single <code class="inline-code">IntersectionObserver</code>, built from the margin fields its handlers agree on</td></tr>
+              <tr><td><code class="inline-code">normaliseRootMargin(token?)</code></td><td>Validate one root-margin token: a <code class="inline-code">px</code>/<code class="inline-code">%</code> length or a <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code> reference (<code class="inline-code">undefined</code>/empty &rarr; <code class="inline-code">"0px"</code>; throws otherwise)</td></tr>
               <tr><td><code class="inline-code">readMeasured(el, dim)</code></td><td>The element&rsquo;s border-box <code class="inline-code">height</code>/<code class="inline-code">width</code> in CSS pixels as of the last layout the browser reported &mdash; the cache behind <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code></td></tr>
               <tr><td><code class="inline-code">INTERSECT_EVENT_NAMES</code></td><td>The synthetic intersect event name (<code class="inline-code">intersect</code>)</td></tr>
               <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
@@ -1279,20 +1281,23 @@ export const attributable = defineImplementation("attributable", {
               <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
             </button>
           </div>
-          <pre class="code" id="code-docs-reference-grammar" copyable on-copy="() => { #copy-code-docs-reference-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text"><code>attribute := 'on-' event-type
-value     := phrase (';' phrase)*
-phrase    := unit (('&amp;&amp;' | '||') unit)*
-unit      := ref ('.' (call | modifier))+
-ref       := '#' id | 'this'
-call      := verb '(' [arg | object] ')'
-arg       := number | "'" string "'" | 'true' | 'false' | ref | read | expr
-read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
-expr      := <expression>  (see §Expressions)
-object    := '{' field (',' field)* '}'
-field     := name ':' arg
-modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'</code></pre>
+          <pre class="code" id="code-docs-reference-grammar" copyable on-copy="() => { #copy-code-docs-reference-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text"><code>attribute   := 'on-' event-type
+value       := handler | '[' handler (',' handler)* ']'
+handler     := parameter '=&gt;' '{' phrase (';' phrase)* '}'
+parameter   := '()' | '({' param-field (',' param-field)* '})'
+param-field := name ':' (literal | tsyntax-scalar)
+literal     := number | "'" string "'" | 'true' | 'false'
+phrase      := unit (('&amp;&amp;' | '||') unit)*
+unit        := ref ('.' (call | modifier))+
+ref         := '#' id | 'this'
+call        := verb '(' [arg | object] ')'
+arg         := number | "'" string "'" | 'true' | 'false' | ref | read | name | expr
+read        := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
+expr        := &lt;expression&gt;  (see §Expressions)
+object      := '{' name ':' arg (',' name ':' arg)* '}'
+modifier    := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'</code></pre>
         </div>
-        <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">this</code> is a keyword; an element with <code class="inline-code">id="this"</code> is addressed as <code class="inline-code">#this</code>. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
+        <p>Whitespace is insignificant outside string literals. <code class="inline-code">id</code> excludes whitespace, <code class="inline-code">,</code>, <code class="inline-code">;</code>, <code class="inline-code">.</code>, <code class="inline-code">(</code>, <code class="inline-code">)</code>. <code class="inline-code">name</code> is an identifier. <code class="inline-code">this</code> is a keyword; an element with <code class="inline-code">id="this"</code> is addressed as <code class="inline-code">#this</code>. A handler&rsquo;s body must be braced and holds phrases, never another handler or a bare statement. A bracketed list holds several handlers and is the only way to write two. Every <code class="inline-code">param-field</code> right-hand side is a literal or a flat tsyntax scalar; a literal filters and a type binds. <code class="inline-code">&amp;&amp;</code> and <code class="inline-code">||</code> are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. Which of <code class="inline-code">arg</code> / <code class="inline-code">object</code> / nothing a call accepts is decided by the verb&rsquo;s signature, not by the grammar.</p>
         <h3>Signature language</h3>
         <p>Values in <code class="inline-code">config</code>, <code class="inline-code">state</code> and <code class="inline-code">verbs</code>: a <strong>slot</strong> is either a tsyntax scalar DSL string (<code class="inline-code">string</code>, <code class="inline-code">number</code>, <code class="inline-code">bigint</code>, <code class="inline-code">boolean</code>, <code class="inline-code">undefined</code>, numeric and quoted literals, template literals, <code class="inline-code">|</code> unions) or an element constructor (<code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, &hellip;). A verb signature is one slot or a flat record of slots; an attribute signature is one string slot. A record key whose slot admits <code class="inline-code">undefined</code> may be omitted from the object literal; any other key is required.</p>
         <h3>Alternatives considered</h3>

@@ -49,33 +49,35 @@ Every click on `+` runs `#qty.set(#qty.value + 1)` and then `#preview.set(#qty.v
 | `interactably-core.js` | parser, executor, event, attachment, registry. No implementations, no bootstrap. |
 | `modifiable.js`, `dirtyable.js`, `renderable.js`, … | one implementation per file, registering into the core's registry on import |
 
-> **The participation rule.** An element is a participant — something `start()` attaches — when it carries at least one implementation attribute such as `revealable`, any `on-*` attribute, or both. The runtime scans and observes the `<body>` element and everything it contains; the head is never scanned, so an element there is never a participant, even one carrying `on-*`. The bootstrap script is not a participant either: it lists implementations in `implementations`, while only a bare implementation attribute on an element marks a receiver. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new implementation or `on-*` attribute to an element after insertion does not attach it; re-insert the element. The old `implements` attribute is a hard error: it logs once per element and grants no implementations.
+> **The participation rule.** An element is a participant — something `start()` attaches — when it carries at least one implementation attribute such as `revealable`, any `on-*` attribute, or both. The runtime scans and observes the `<body>` element and everything it contains; the head is never scanned, so an element there is never a participant, even one carrying `on-*`. The bootstrap script is not a participant either: it lists implementations in `implementations`, while only a bare implementation attribute on an element marks a receiver. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new implementation or `on-*` attribute to an element after insertion does not attach it; re-insert the element. The removed implementation-list attribute is a hard error: it logs once per element and names the implementation attributes to use instead.
 
 ---
 
 ## The grammar in one screen
 
-One attribute per interaction; the value is the phrase language:
+One attribute per event; its value is a handler, and the handler's braced body is the phrase language:
 
 ```
-attribute := 'on-' event-type [ '(' value-decl (',' value-decl)* ')' ]
-value     := phrase (';' phrase)*
-phrase    := unit (('&&' | '||') unit)*
-unit      := ref ('.' (call | modifier))+
-ref       := '#' id | 'this'
-call      := verb '(' [arg | object] ')'
-arg       := number | "'" string "'" | 'true' | 'false' | ref | read | name | expr
-read      := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
-object    := '{' field (',' field)* '}'
-field     := name ':' arg
-value-decl:= name ':' (tsyntax-scalar | '`' literal '`')
-expr      := <expression>  (see § Expressions)
-modifier  := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'
+attribute   := 'on-' event-type
+value       := handler | '[' handler (',' handler)* ']'
+handler     := parameter '=>' '{' phrase (';' phrase)* '}'
+parameter   := '()' | '({' param-field (',' param-field)* '})'
+param-field := name ':' (literal | tsyntax-scalar)
+literal     := number | "'" string "'" | 'true' | 'false'
+phrase      := unit (('&&' | '||') unit)*
+unit        := ref ('.' (call | modifier))+
+ref         := '#' id | 'this'
+call        := verb '(' [arg | object] ')'
+arg         := number | "'" string "'" | 'true' | 'false' | ref | read | name | expr
+read        := ref '.' ('value' | 'checked' | 'min' | 'max' | 'step')
+expr        := <expression>  (see § Expressions)
+object      := '{' name ':' arg (',' name ':' arg)* '}'
+modifier    := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms ')'
 ```
 
-Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`, `:`, `&`, `|`, `{`, `}`, `'`, `"`, `#`. `this` is the only keyword; an element with `id="this"` is addressed as `#this`. A `unit` must contain at least one call; `debounce`/`throttle` are legal only before the first call, at most one per unit, while `once`/`delay` may sit anywhere. `&&` and `||` are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. `debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb; `value`, `checked`, `min`, `max`, `step` are property reads, not verbs (a verb called `value()` is still legal, distinguished by its parens).
+Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`, `:`, `&`, `|`, `{`, `}`, `'`, `"`, `#`. `this` is the only keyword; an element with `id="this"` is addressed as `#this`. A `unit` must contain at least one call; `debounce`/`throttle` are legal only before the first call, at most one per unit, while `once`/`delay` may sit anywhere. `&&` and `||` are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. A handler's body must be braced and holds phrases only, never another handler or a bare statement. `debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb; `value`, `checked`, `min`, `max`, `step` are property reads, not verbs (a verb called `value()` is still legal, distinguished by its parens).
 
-**An event's data lives in its handler parameter.** `on-<type>="({html: string}) => { … }"` binds the event's `html` field inside that handler; a literal (`({key: 'Enter'}) => { … }`) filters instead, with single-quoted strings, numbers and `true`/`false`; `()` matches every firing. A bracketed list `[{state: 'enter'}, {state: 'leave'}]` holds several handlers. A name not bound by its own handler is an error when the element is wired, not when the event fires; bound names never resolve inside formula expressions (`replace(html, …)` stays an error). Every matching handler fires, in source order. (See [the docs](https://acecodept.github.io/interactably/docs.html#trigger-grammar) for the field allowlist, the key-versus-code trade, and how literals compare.)
+**An event's data lives in its handler parameter.** `on-<type>="({html: string}) => { … }"` binds the event's `html` field inside that handler; a literal (`({key: 'Enter'}) => { … }`) filters instead, with single-quoted strings, numbers and `true`/`false`; `()` matches every firing. A bracketed list `[({state: 'enter'}) => { … }, ({state: 'leave'}) => { … }]` holds several handlers. A name not bound by its own handler is an error when the element is wired, not when the event fires; bound names never resolve inside formula expressions (`replace(html, …)` stays an error). Every matching handler fires, in source order. (See [the docs](https://acecodept.github.io/interactably/docs.html#trigger-grammar) for the field allowlist, the key-versus-code trade, and how literals compare.)
 
 | Construct | Example | Meaning |
 | --- | --- | --- |
