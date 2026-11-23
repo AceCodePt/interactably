@@ -535,6 +535,13 @@ function parseHandlerField(source: string, base: number): LocatedHandlerField {
       valuePiece.start,
     );
   }
+  if (value.includes("`")) {
+    throw new ParseError(
+      `backticked literals are not supported; write the literal with single quotes, e.g. ({ name: 'value' })`,
+      valuePiece.start,
+      valuePiece.start + value.length,
+    );
+  }
   const stringLiteral = STRING.exec(value);
   if (stringLiteral !== null) {
     return located<HandlerField>(

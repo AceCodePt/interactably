@@ -441,6 +441,14 @@ test("parseEventValue: concise bodies are a grammar error naming the braced form
   assert.match(errors[0]!.message, /\{ #f\.send\(\) \}/);
 });
 
+test("parseEventValue: a backticked literal is a grammar error naming single quotes", () => {
+  const { handlers, errors } = parseEventValueWithErrors("({key: `Enter`}) => { #f.send() }");
+  assert.deepEqual(handlers, []);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0]!.message, /backticked literals are not supported/);
+  assert.match(errors[0]!.message, /single quotes/);
+});
+
 test("parseEventValue: parameters must be () or a parenthesised object", () => {
   assert.match(
     parseEventValueWithErrors("({html: string) => { #a.go() }").errors[0]!.message,
