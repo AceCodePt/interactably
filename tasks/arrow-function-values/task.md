@@ -43,9 +43,9 @@ Settled decisions from the design discussion:
 - [ ] `events.ts`: declare the `intersect` field set; implementation event fields keep their declared types; `pastable.text`, `requestable.response.{html,status}`, `requestable.request-error.status`, `storable.save-error.reason` and `storable.restore-error.reason` filter through handler params.
 - [ ] `storable.ts`: `readShapes` reads type fields from each `on-restore` handler parameter instead of the attribute name. `prevent-default.ts`: `derivedDefaults` reads `key`/`code` literals from `on-keydown` handler parameters.
 - [ ] Expose `runEventValue` and the new parser types from `src/core.ts`; remove the removed parser exports and update every consumer.
-- [ ] Migrate every `on-*` value in `registry/`, `tests/`, `site/` and `README.md` to the handler form. Merge same-event attributes into one attribute with a handler list (HTML forbids duplicate names): roving-focus, cities, suggest-as-you-type, live-preview, remembered-tab, synced-sections, scroll-spy and every docs section with two `on-intersect` attributes. Update site-smoke assertions that match old attribute names.
+- [ ] Migrate every `on-*` value in `registry/`, `tests/`, `site/`, `README.md` and `packages/language-server` to the handler form. Merge same-event attributes into one attribute with a handler list (HTML forbids duplicate names): roving-focus, cities, suggest-as-you-type, live-preview, remembered-tab, synced-sections, scroll-spy and every docs section with two `on-intersect` attributes. Update site-smoke assertions that match old attribute names.
+- [ ] Keep the root `pnpm check` and `pnpm test` green, including `packages/language-server`: mechanically update its parser consumers and fixtures to the handler form so its existing tests pass. The feature-complete language-server diagnostics/completions are a later task.
 - [ ] Old `on-x(...)` attribute names log an error naming the new form and do not bind. No compatibility path.
-- [ ] `pnpm build && pnpm check && pnpm test` pass on the committed tree.
 
 ## Verification
 
