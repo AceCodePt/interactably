@@ -94,7 +94,7 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | Property read | `#preview.set(this.value)` | `value`/`checked`/`min`/`max`/`step`, typed by the element |
 | Key filter | ``on-keydown="({key: 'Enter'}) => { #f.send() }"`` | Match an event field to a literal; the phrase runs only when it matches |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
-| Event value | `on-response="({html: string}) => { #receipt.set(html) }"` | The event's own value, declared on the attribute and resolved by name inside that phrase |
+| Event value | `on-response="({html: string}) => { #receipt.set(html) }"` | The event's own value, declared in the handler parameter and resolved by name inside that handler |
 | Debounce | `#echo.debounce(300).set(this.value)` | Defers this receiver's chain; a re-fire restarts the timer |
 | Throttle | `#viewport.throttle(16).zoom(this)` | Leading-edge throttle of this receiver's chain |
 | Once | `#tour.once().show()` | Gates the rest of the chain; spent when the walk passes it |
@@ -196,14 +196,14 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `getImplementationDef(name)` | Look up a registered definition |
 | `runEventValue(el, value, ev)` | Parse an attribute value's handler list, match each parameter and run every matching handler |
 | `runPhrases(el, value, ev)` | Run a raw phrase list against an element and a DOM event |
-| `parse(value, eventName?)` | Parse an attribute string into phrases (cached by event name and value) |
-| `parseEventValue(value)` | Parse one handler or a bracketed handler list into handlers with spans |
+| `parse(value)` | Parse an attribute string into phrases (cached by value) |
+| `parseEventValue(value)` / `parseEventValueWithErrors(value)` | Parse one handler or a bracketed handler list into handlers with spans; the errors variant returns value-relative parse errors |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](https://acecodept.github.io/interactably/docs.html#interaction-event)) |
-| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`, `valid`, `invalid`, `user-valid`, `user-invalid`), and the event `intersect` carries `state` (`enter`/`leave`) and/or `full` (`true`/`false`) as declared values `values` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy-error`, `dirty`, `clean`, `pasted`, `rendered`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`, `save-error`, `restore-error`, `valid`, `invalid`, `user-valid`, `user-invalid`), and the event `intersect` carries `state` (`enter`/`leave`) and/or `full` (`true`/`false`) as declared values `values` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
 | `isImplementationEvent(el, type)` | True when `type` is the intersect event or an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
-| `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per resolved `rootMargin` |
+| `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`, rebuilt when the resolved `rootMargin` changes |
 | `normaliseRootMargin(token?)` | Validate one root-margin token: a `px`/`%` length or a `#id.height`/`#id.width` reference (`undefined`/empty → `"0px"`; throws otherwise) |
 | `readMeasured(el, dim)` | The element's border-box `height`/`width` in CSS pixels as of the last layout the browser reported — the cache behind `#id.height`/`#id.width` |
 | `INTERSECT_EVENT_NAMES` | The synthetic intersect event name (`intersect`) |
@@ -219,18 +219,19 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 
 ## Editor support: the language server
 
-The package ships `interactably-lsp`, a Language Server Protocol server for the phrase
-language, in the `interactably-language-server` workspace package
+The package ships `interactably-lsp`, a Language Server Protocol server for the trigger
+grammar, in the `interactably-language-server` workspace package
 ([its README](packages/language-server/README.md)). It speaks LSP over stdio and reads no
 config file.
 
 It diagnoses every parse error at its range, an unknown verb, an unknown receiver
 (`#id` with no element), an unknown event, an element implementation attribute the bootstrap
 script's `implementations` does not list, a non-built-in in the bootstrap script's
-`implementations`, and a page that uses phrases with no bootstrap tag. It completes ids
-after `#`, an element's verbs after `#id.` or `this.`, implementation names inside the
-bootstrap script's `implementations="…"`, and
-`on-<event>` at an attribute name.
+`implementations`, and a page that uses handlers or implementation attributes with no
+bootstrap tag. It completes ids after `#`, an element's verbs after `#id.` or `this.`,
+implementation names inside the bootstrap script's `implementations="…"`, `on-<event>` at
+an attribute name, an event's fields inside a handler's `({ … })`, and the names bound by
+a handler inside its body.
 
 ```sh
 pnpm --filter interactably-language-server exec interactably-lsp --stdio

@@ -56,12 +56,3 @@ export function getEventSpec(el: Element, type: string): EventSpec | undefined {
   if (type === "intersect") return { fields: INTERSECT_EVENT_FIELDS };
   return implementationEventSpec(el, type);
 }
-
-export function getEventFieldTypes(
-  el: Element,
-  type: string,
-): Readonly<Record<string, string>> | undefined {
-  const spec = getEventSpec(el, type);
-  if (spec === undefined || spec.open === true) return undefined;
-  return spec.fields;
-}

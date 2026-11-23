@@ -33,10 +33,6 @@ type ArgBase =
 
 export type Arg = ArgBase & Span;
 
-export type RefOrRead =
-  | { kind: "ref"; ref: Ref }
-  | { kind: "read"; ref: Ref; property: ReadProperty };
-
 type CallBase = { verb: string; arg?: Arg };
 
 export type Call = CallBase & Span;
@@ -128,14 +124,14 @@ function trimPiece(piece: Piece): Piece {
 
 const cache = new Map<string, ParseResult>();
 
-function cacheKeyOf(value: string, eventName?: string, base = 0): string {
-  return `${eventName ?? ""}\u0000${base}\u0000${value}`;
+function cacheKeyOf(value: string, base = 0): string {
+  return `${base}\u0000${value}`;
 }
 
-export function parse(value: string, eventName?: string): Phrase[] {
-  const cacheKey = cacheKeyOf(value, eventName);
+export function parse(value: string): Phrase[] {
+  const cacheKey = cacheKeyOf(value);
   const cached = cache.has(cacheKey);
-  const { phrases, errors } = parseWithErrors(value, eventName);
+  const { phrases, errors } = parseWithErrors(value);
   if (!cached) {
     for (const error of errors) {
       console.error(`[Interactable] invalid phrase "${error.phrase}": ${error.message}`);
@@ -144,8 +140,8 @@ export function parse(value: string, eventName?: string): Phrase[] {
   return phrases;
 }
 
-export function parseWithErrors(value: string, eventName?: string, base = 0): ParseResult {
-  const cacheKey = cacheKeyOf(value, eventName, base);
+export function parseWithErrors(value: string, base = 0): ParseResult {
+  const cacheKey = cacheKeyOf(value, base);
   const hit = cache.get(cacheKey);
   if (hit !== undefined) return hit;
 
@@ -297,27 +293,6 @@ function validateId(id: string, base: number): void {
   }
 }
 
-export function parseRefOrRead(text: string): RefOrRead | undefined {
-  if (text === "this") {
-    return { kind: "ref", ref: located<RefBase>({ kind: "this" }, 0, text.length) };
-  }
-  const read = READ.exec(text);
-  if (read !== null) {
-    const ref = parseRef(read[1]!, 0);
-    const property = read[2]!;
-    if ((READABLE_PROPERTIES as readonly string[]).includes(property)) {
-      return { kind: "read", ref, property: property as ReadProperty };
-    }
-    return undefined;
-  }
-  if (text.startsWith("#") && !text.includes(".")) {
-    const id = text.slice(1);
-    validateId(id, 1);
-    return { kind: "ref", ref: located<RefBase>({ kind: "id", id }, 0, text.length) };
-  }
-  return undefined;
-}
-
 const FIELD_NAME = /^[A-Za-z_$][A-Za-z0-9_$-]*$/;
 
 const eventValueCache = new Map<string, EventValueResult>();
@@ -449,7 +424,7 @@ function parseHandler(source: string, base: number, errors: ParseError[]): Event
   const parsedParameter = parseHandlerParameter(parameter.text, parameter.start);
   const innerStart = body.start + 1;
   const inner = body.text.slice(1, -1);
-  const parsedBody = parseWithErrors(inner, undefined, innerStart);
+  const parsedBody = parseWithErrors(inner, innerStart);
   errors.push(...parsedBody.errors);
   return located<{
     parameter: HandlerParameter;
@@ -569,11 +544,6 @@ function parseHandlerField(source: string, base: number): LocatedHandlerField {
 
 export function isNumberLiteral(text: string): boolean {
   return NUMBER.test(text);
-}
-
-export function isNumericUnion(type: string): boolean {
-  const parts = type.split("|").map((part) => part.trim());
-  return parts.length > 0 && parts.every(isNumberLiteral);
 }
 
 export function isBareNumber(type: string): boolean {

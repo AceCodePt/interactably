@@ -1,7 +1,7 @@
 {
   "name": "interactably-language-server",
   "version": "0.1.0",
-  "description": "Language Server Protocol server for Interactably on-* phrases.",
+  "description": "Language Server Protocol server for Interactably on-* handlers.",
   "type": "module",
   "bin": {
     "interactably-lsp": "./dist/bin.js"

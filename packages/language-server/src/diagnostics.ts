@@ -96,7 +96,7 @@ function reportMissingBootstrap(analysis: DocumentAnalysis, add: Adder): void {
       add(
         candidate.nameStart,
         candidate.nameEnd,
-        "This page uses Interactably phrases but has no bootstrap script, so nothing will attach. " +
+        "This page uses Interactably attributes but has no bootstrap script, so nothing will attach. " +
           'Add a <script type="module" implementations="..."> that loads the Interactably bootstrap.',
         "missing-bootstrap",
         DiagnosticSeverity.Information,

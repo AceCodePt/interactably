@@ -10,7 +10,6 @@ export {
   parse,
   parseEventValue,
   parseEventValueWithErrors,
-  parseRefOrRead,
   parseWithErrors,
   ParseError,
 } from "@interactable/parser.ts";
@@ -27,7 +26,6 @@ export type {
   ParseResult,
   Phrase,
   Ref,
-  RefOrRead,
   Span,
   Unit,
 } from "@interactable/parser.ts";
@@ -52,4 +50,4 @@ export {
   isImplementationEvent,
 } from "@interactable/events.ts";
 export { compileSignature, exclusive, optionalCtor, scalarOr } from "@interactable/signature.ts";
-export type { CompiledSignature, Ctor, ExclusiveSlot, OptionalCtor, ScalarOrSlot, Sig as SignatureSlot } from "@interactable/signature.ts";
+export type { CompiledSignature, Ctor, ExclusiveSlot, OptionalCtor, ScalarOrSlot } from "@interactable/signature.ts";

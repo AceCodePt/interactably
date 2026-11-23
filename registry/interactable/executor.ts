@@ -49,7 +49,7 @@ export function clearPhraseState(el: Element): void {
 export function runPhrases(source: Element, value: string, ev: Event): void {
   let phrases: Phrase[];
   try {
-    phrases = parse(value, ev.type);
+    phrases = parse(value);
   } catch (err) {
     console.error("[Interactable]", err);
     return;

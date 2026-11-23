@@ -363,23 +363,16 @@ test("parse results are cached by attribute string", () => {
 
 test("intersect parses a plain body and rejects a key prefix", (t) => {
   const spy = errorsOf(t);
-  const [phrase] = parse("#nav.bump()", "intersect");
+  const [phrase] = parse("#nav.bump()");
   assert.ok(phrase);
   assert.equal(first(phrase).calls[0]!.verb, "bump");
 
-  assert.deepEqual(parse(`${"enter"}: #a.show()`, "intersect"), []);
+  assert.deepEqual(parse(`${"enter"}: #a.show()`), []);
   assert.ok(
     String(spy.mock.calls[0]!.arguments[0]).includes(
       `phrase keys are not supported; filter with a handler parameter, e.g. "({ name: type }) => { … }"`,
     ),
   );
-});
-
-test("the parse cache key includes the event name", () => {
-  const enter = parse("#a.show()", "intersect");
-  const full = parse("#a.show()", "click");
-  assert.notStrictEqual(enter, full, "different event names parse separately");
-  assert.strictEqual(parse("#a.show()", "intersect"), enter);
 });
 
 test("parseEventValue: one unbracketed handler with an empty parameter", () => {

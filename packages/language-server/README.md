@@ -1,6 +1,6 @@
 # interactably-language-server
 
-A Language Server Protocol server for Interactably `on-*` phrases, shipped in this
+A Language Server Protocol server for Interactably `on-*` handlers, shipped in this
 repository as the `interactably-language-server` workspace package. Its bin,
 `interactably-lsp`, speaks LSP over stdio — no socket, no HTTP, no config file.
 
@@ -17,8 +17,9 @@ makes it known to the server with no other change.
 Diagnostics (push on open/change, pull via `textDocument/diagnostic`):
 
 - `parse-error` — every `ParseError` from `parseEventValueWithErrors`, at the parser's
-  range: malformed handlers, an unbracketed list of two or more handlers, and a concise
-  body where a braced body is required.
+  range: malformed handlers, an unbracketed list of two or more handlers, a body that is
+  not braced, and an attribute name that still carries an old value declaration (reported
+  with the handler-parameter form as the fix).
 - `unknown-verb` — a `.verb(...)` whose receiver's implementations expose no such verb.
 - `unknown-receiver` — a `#id` with no element carrying that id (inside a `<template>`
   counts, so a receiver rendered later is not a false positive).
