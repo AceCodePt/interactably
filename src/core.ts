@@ -31,6 +31,7 @@ export type {
   Span,
   Unit,
 } from "@interactable/parser.ts";
+export { REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE } from "@interactable/attachment.ts";
 export {
   INTERSECT_EVENT_NAMES,
   normaliseRootMargin,
@@ -45,6 +46,10 @@ export { InteractionEvent } from "@interactable/interaction-event.ts";
 export type { InteractionEventInit } from "@interactable/interaction-event.ts";
 export { ImplementationEvent } from "@interactable/implementation-event.ts";
 export type { ImplementationEventInit } from "@interactable/implementation-event.ts";
-export { isImplementationEvent } from "@interactable/events.ts";
+export {
+  INTERSECT_EVENT_FIELDS,
+  KEYBOARD_EVENT_FIELDS,
+  isImplementationEvent,
+} from "@interactable/events.ts";
 export { compileSignature, exclusive, optionalCtor, scalarOr } from "@interactable/signature.ts";
 export type { CompiledSignature, Ctor, ExclusiveSlot, OptionalCtor, ScalarOrSlot, Sig as SignatureSlot } from "@interactable/signature.ts";

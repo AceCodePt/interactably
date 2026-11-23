@@ -8,7 +8,7 @@ repository as the `interactably-language-server` workspace package. Its bin,
 pnpm --filter interactably-language-server exec interactably-lsp --stdio
 ```
 
-The package imports the parser (`parseWithErrors`) and the built-in implementations
+The package imports the parser (`parseEventValueWithErrors`) and the built-in implementations
 from `interactably`; it copies neither. Adding an implementation to `src/index.ts`
 makes it known to the server with no other change.
 
@@ -16,30 +16,41 @@ makes it known to the server with no other change.
 
 Diagnostics (push on open/change, pull via `textDocument/diagnostic`):
 
-- `parse-error` — every `ParseError` from `parseWithErrors`, at the parser's range.
+- `parse-error` — every `ParseError` from `parseEventValueWithErrors`, at the parser's
+  range: malformed handlers, an unbracketed list of two or more handlers, and a concise
+  body where a braced body is required.
 - `unknown-verb` — a `.verb(...)` whose receiver's implementations expose no such verb.
 - `unknown-receiver` — a `#id` with no element carrying that id (inside a `<template>`
   counts, so a receiver rendered later is not a false positive).
 - `unknown-event` — an `on-<event>` that is neither a native DOM event nor declared by
-  an implementation on the page.
-- `undeclared-implementation` — an element's `implements` name the bootstrap script's
-  `implementations` does not list. A script's `implementations` is a declaration; an
-  element's `implements` is a usage.
+  any implementation.
+- `undeclared-implementation` — a presence attribute such as `revealable` that the
+  bootstrap script's `implementations` does not list.
 - `unknown-implementation` — a name in a `script[implementations]` that is not a
   built-in.
-- `missing-bootstrap` — the page has `on-*` or a usage `implements` but no
+- `missing-bootstrap` — the page has a presence attribute or `on-*` but no
   `script[implementations]`. One informational diagnostic on the first such attribute.
+- `legacy-implementation-list` — the removed implementation-list attribute, reported at
+  its name with the presence-attribute form as the fix.
+- `missing-event-owner` — an implementation event such as `on-rendered` on an element
+  that does not carry the owning implementation's presence attribute.
+- `unknown-event-field` — a parameter field that a closed event does not expose.
+- `event-field-mismatch` — a literal that cannot read as the field's declared type, a
+  type that is not valid tsyntax, or a declared type with no overlap with the field.
+- `unbound-name` — a body name not bound by its own handler's parameter.
+- `duplicate-id`, `duplicate-named-id` — native ids and `-id` config values that repeat
+  in one document.
 
 Completion positions:
 
 - after `#` — ids in the document;
 - after `#id.` or `this.` — the verbs of the receiver's implementations, each with its
   argument signature as detail;
-- inside an element's `implements="…"` — built-in names, with names the bootstrap script's
-  `implementations` does not list ranked lower and labelled;
+- at an attribute-name position — built-in implementation names, then, once one is
+  present, its config and state attribute names and the `on-*` events it declares;
 - inside a script's `implementations="…"` — built-ins not yet listed;
-- at an attribute-name position — `on-<event>` for every native event and every event
-  the page's implementations declare.
+- inside an `on-*` parameter object `({ … })` — the event's field names;
+- inside a handler body — the names bound by that handler's parameter.
 
 ## Attach it in an editor
 
@@ -99,13 +110,14 @@ hover provider.
   (which are into the decoded attribute value) map back to document offsets.
 - **Vocabulary:** derived at startup by importing `interactably` (the built-in
   implementation definitions, including their declared names such as `no-propagate` and
-  `prevent-default`) and reading each `defineImplementation` result's verbs, events and
-  tags. No table is hand-maintained.
+  `prevent-default`) and reading each `defineImplementation` result's verbs, config and
+  state attribute keys, events with their fields and open flag, and tags. The server also
+  builds an event-to-owner map from those definitions. No table is hand-maintained.
 - **One DOM stand-in:** the implementations are evaluated outside a browser, and
   `renderable`'s signature names `HTMLTemplateElement` at module scope. The server
   defines an inert stand-in for it; nothing validates against it.
 - **Predicted gaps, reported:** entity offset arithmetic is mapped, not left as a gap.
   Unknown-receiver false positives for later-rendered receivers are suppressed by
-  counting ids anywhere in the document. `this` on an element with no `implements` has
-  no host verbs, so a verb there is reported unknown. Incremental parsing is not done in
+  counting ids anywhere in the document. `this` on an element with no presence attribute
+  has no host verbs, so a verb there is reported unknown. Incremental parsing is not done in
   v1: each change re-analyses the whole document, which is fast for the example pages.

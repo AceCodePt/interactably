@@ -1,7 +1,10 @@
+import "./dom-standins.ts";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { INTERSECT_EVENT_FIELDS, INTERSECT_EVENT_NAMES, KEYBOARD_EVENT_FIELDS } from "interactably";
 import { attribute, isScriptElement, parseHtml } from "./html.ts";
 import type { HtmlDocumentModel, HtmlElement } from "./html.ts";
-import type { Vocabulary } from "./vocabulary.ts";
+import { NATIVE_DOM_EVENTS } from "./native-events.ts";
+import type { ImplementationInfo, Vocabulary } from "./vocabulary.ts";
 
 export interface DocumentAnalysis {
   readonly document: TextDocument;
@@ -15,15 +18,14 @@ export interface DocumentAnalysis {
   readonly eventNames: ReadonlySet<string>;
 }
 
-export function isBootstrapTag(element: HtmlElement): boolean {
-  return isScriptElement(element) && attribute(element, "implementations") !== undefined;
+export interface EventSpecInfo {
+  readonly fields: ReadonlyMap<string, string>;
+  readonly open: boolean;
+  readonly owner: string | undefined;
 }
 
-export function implementationNamesOf(element: HtmlElement): string[] {
-  const name = isScriptElement(element) ? "implementations" : "implements";
-  const value = attribute(element, name);
-  if (value === undefined || value.value === null) return [];
-  return value.value.split(/\s+/).filter((piece) => piece !== "");
+export function isBootstrapTag(element: HtmlElement): boolean {
+  return isScriptElement(element) && attribute(element, "implementations") !== undefined;
 }
 
 export function presenceAttributeNames(
@@ -37,6 +39,57 @@ export function presenceAttributeNames(
   return names;
 }
 
+export function presentImplementations(
+  element: HtmlElement,
+  vocabulary: Vocabulary,
+): ImplementationInfo[] {
+  const infos: ImplementationInfo[] = [];
+  for (const name of presenceAttributeNames(element, vocabulary)) {
+    const info = vocabulary.byName.get(name);
+    if (info !== undefined) infos.push(info);
+  }
+  return infos;
+}
+
+export function eventTypeOf(attributeName: string): string {
+  return attributeName.slice(3);
+}
+
+export function eventSpecFor(
+  element: HtmlElement,
+  eventType: string,
+  vocabulary: Vocabulary,
+): EventSpecInfo | undefined {
+  const keyboard = KEYBOARD_EVENT_FIELDS[eventType];
+  if (keyboard !== undefined) {
+    return { fields: new Map(Object.entries(keyboard)), open: false, owner: undefined };
+  }
+  if (INTERSECT_EVENT_NAMES.has(eventType)) {
+    return { fields: new Map(Object.entries(INTERSECT_EVENT_FIELDS)), open: false, owner: undefined };
+  }
+
+  const owner = vocabulary.eventOwners.get(eventType);
+  const present = owner !== undefined && presenceAttributeNames(element, vocabulary).includes(owner);
+  if (owner !== undefined && present) {
+    const spec = vocabulary.byName.get(owner)?.eventInfo.get(eventType);
+    if (spec !== undefined) return { ...spec, owner };
+  }
+  if (NATIVE_DOM_EVENTS.has(eventType)) {
+    return { fields: new Map(), open: false, owner: undefined };
+  }
+  if (owner !== undefined) {
+    const spec = vocabulary.byName.get(owner)?.eventInfo.get(eventType);
+    if (spec !== undefined) return { ...spec, owner };
+  }
+  return undefined;
+}
+
+function declaredNames(element: HtmlElement): string[] {
+  const value = attribute(element, "implementations");
+  if (value === undefined || value.value === null) return [];
+  return value.value.split(/\s+/).filter((piece) => piece !== "");
+}
+
 export function analyze(text: string, vocabulary: Vocabulary): DocumentAnalysis {
   const model = parseHtml(text);
   const document = TextDocument.create("file:///interactably.html", "html", 0, text);
@@ -45,7 +98,7 @@ export function analyze(text: string, vocabulary: Vocabulary): DocumentAnalysis 
   const declarations = new Set<string>();
   for (const element of model.elements) {
     if (!isScriptElement(element)) continue;
-    for (const name of implementationNamesOf(element)) declarations.add(name);
+    for (const name of declaredNames(element)) declarations.add(name);
   }
 
   const referencedBuiltins = new Set<string>();
@@ -53,9 +106,6 @@ export function analyze(text: string, vocabulary: Vocabulary): DocumentAnalysis 
   for (const element of model.elements) {
     if (isScriptElement(element)) continue;
     for (const name of presenceAttributeNames(element, vocabulary)) referencedBuiltins.add(name);
-    for (const name of implementationNamesOf(element)) {
-      if (vocabulary.byName.has(name)) referencedBuiltins.add(name);
-    }
   }
 
   const eventNames = new Set<string>();

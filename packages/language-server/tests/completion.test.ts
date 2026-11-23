@@ -39,23 +39,75 @@ test("completion: after #id. lists that element's verbs with signatures", () => 
 });
 
 test("completion: after this. lists the source element's verbs", () => {
-  const text = `<script type="module" implementations="modifiable" src="x"></script>\n<button implements="modifiable" on-click="() => { this.set('x') }">x</button>`;
+  const text = `<script type="module" implementations="modifiable" src="x"></script>\n<button modifiable on-click="() => { this.set('x') }">x</button>`;
   const analysis = analysisOf(text);
   const offset = text.indexOf("this.set") + "this.".length;
   assert.deepEqual(labels(analysis, offset), ["clear", "reset", "set"]);
 });
 
-test("completion: an element's implements lists built-ins and ranks undeclared lower", () => {
-  const text = fixture("completion-element-implements.html");
+test("completion: an attribute-name position lists implementation attributes", () => {
+  const text = fixture("completion-element-attribute.html");
   const analysis = analysisOf(text);
-  const offset = text.lastIndexOf('implements="') + 'implements="'.length;
-  const items = completionsAt(analysis, offset);
-  assert.equal(items.length, vocabulary.names.length);
-  const declared = items.find((item) => item.label === "modifiable");
-  const undeclared = items.find((item) => item.label === "revealable");
-  assert.equal(declared?.sortText, "0modifiable");
-  assert.equal(undeclared?.sortText, "1revealable");
-  assert.match(undeclared?.detail ?? "", /not declared/);
+  const offset = text.indexOf("<div id=\"d\" ") + "<div id=\"d\" ".length;
+  const result = labels(analysis, offset);
+  assert.ok(result.includes("requestable"));
+  assert.ok(result.includes("modifiable"));
+  assert.ok(result.includes("on-click"));
+});
+
+test("completion: after a presence attribute, its config, state and events are offered", () => {
+  const text = fixture("completion-presence.html");
+  const analysis = analysisOf(text);
+  const offset = text.indexOf("requestable >") + "requestable ".length;
+  const result = labels(analysis, offset);
+  assert.ok(result.includes("requestable-url"));
+  assert.ok(result.includes("requestable-method"));
+  assert.ok(result.includes("requestable-status"));
+  assert.ok(result.includes("on-response"));
+  assert.ok(result.includes("on-request-error"));
+  assert.ok(result.includes("on-click"), "native events stay available");
+  assert.ok(!result.includes("requestable"), "the presence attribute is already there");
+});
+
+test("completion: a partial attribute name filters to its prefix", () => {
+  const text = fixture("completion-on-prefix.html");
+  const analysis = analysisOf(text);
+  const offset = text.indexOf("on-c") + "on-c".length;
+  const result = labels(analysis, offset);
+  assert.ok(result.includes("on-click"));
+  assert.ok(result.includes("on-copy"));
+  assert.ok(!result.includes("on-input"));
+  assert.ok(result.every((label) => label.startsWith("on-c")));
+});
+
+test("completion: inside a parameter object lists the event's fields", () => {
+  const text = fixture("completion-fields.html");
+  const analysis = analysisOf(text);
+  const offset = text.indexOf("({  })") + "({ ".length;
+  assert.deepEqual(labels(analysis, offset), ["html", "status"]);
+});
+
+test("completion: inside a body lists the names bound by that handler", () => {
+  const text = fixture("completion-bound.html");
+  const analysis = analysisOf(text);
+  const offset = text.indexOf("#out.set(  )") + "#out.set(  ".length;
+  assert.deepEqual(labels(analysis, offset), ["html"]);
+});
+
+test("completion: a name bound by another handler is not offered", () => {
+  const text = fixture("completion-bound-other-handler.html");
+  const analysis = analysisOf(text);
+  const offset = text.indexOf("#out.set(  )") + "#out.set(  ".length;
+  const result = labels(analysis, offset);
+  assert.deepEqual(result, ["status"]);
+  assert.ok(!result.includes("html"));
+});
+
+test("completion: the removed implementation-list attribute offers no value completions", () => {
+  const text = fixture("legacy-implementation-list.html");
+  const analysis = analysisOf(text);
+  const offset = text.indexOf('implements="') + 'implements="'.length;
+  assert.equal(computeCompletions(analysis, analysis.document.positionAt(offset)), null);
 });
 
 test("completion: the bootstrap tag's implementations lists names not yet listed", () => {
@@ -66,27 +118,6 @@ test("completion: the bootstrap tag's implementations lists names not yet listed
   assert.ok(!result.includes("modifiable"));
   assert.ok(result.includes("attributable"));
   assert.equal(result.length, vocabulary.names.length - 1);
-});
-
-test("completion: an attribute-name position lists on-<event>", () => {
-  const text = fixture("completion-attribute-name.html");
-  const analysis = analysisOf(text);
-  const offset = text.indexOf("<div ") + "<div ".length;
-  const result = labels(analysis, offset);
-  assert.ok(result.includes("on-click"));
-  assert.ok(result.includes("on-rendered"));
-  assert.ok(result.every((label) => label.startsWith("on-")));
-});
-
-test("completion: a partial attribute name filters to its event prefix", () => {
-  const text = fixture("completion-on-prefix.html");
-  const analysis = analysisOf(text);
-  const offset = text.indexOf("on-c") + "on-c".length;
-  const result = labels(analysis, offset);
-  assert.ok(result.includes("on-click"));
-  assert.ok(result.includes("on-copy"));
-  assert.ok(!result.includes("on-input"));
-  assert.ok(result.every((label) => label.startsWith("on-c")));
 });
 
 test("completion: todo-list.html lists ids and verbs", () => {

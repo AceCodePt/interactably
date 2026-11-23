@@ -59,23 +59,23 @@ test("diagnostics: a non-built-in on the bootstrap tag is reported at the name",
   assert.equal(substringOf(text, diagnostic), "bogus");
 });
 
-test("diagnostics: a page with only element implements reports missing-bootstrap once", () => {
+test("diagnostics: a page with presence attributes but no bootstrap reports missing-bootstrap once", () => {
   const text = fixture("missing-bootstrap.html");
   const diagnostics = diagnose(text);
   assert.equal(diagnostics.length, 1);
   const diagnostic = diagnostics[0]!;
   assert.equal(diagnostic.code, "missing-bootstrap");
   assert.equal(diagnostic.severity, 3);
-  assert.equal(substringOf(text, diagnostic), "implements");
+  assert.equal(substringOf(text, diagnostic), "modifiable");
 });
 
-test("diagnostics: element implements are usages, not declarations", () => {
+test("diagnostics: presence attributes are usages, not declarations", () => {
   const text = fixture("missing-bootstrap.html");
   assert.equal(findByCode(diagnose(text), "undeclared-implementation"), undefined);
 });
 
 test("diagnostics: the bootstrap tag itself produces no diagnostics", () => {
-  const text = fixture("completion-element-implements.html");
+  const text = fixture("completion-presence.html");
   const diagnostics = diagnose(text);
   const document = documentFor(text);
   const scriptStart = text.indexOf("<script");
@@ -133,6 +133,104 @@ test("diagnostics: dropping an implementation from the bootstrap reports each us
       `the bootstrap script is never blamed: ${diagnostic.message}`,
     );
   }
+});
+
+test("diagnostics: the removed implementation-list attribute names the presence form", () => {
+  const text = fixture("legacy-implementation-list.html");
+  const diagnostics = diagnose(text);
+  const diagnostic = findByCode(diagnostics, "legacy-implementation-list");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /implementation-list attribute is no longer supported/);
+  assert.match(diagnostic.message, /own attribute/);
+  assert.equal(substringOf(text, diagnostic), "implements");
+  assert.ok(findByCode(diagnostics, "unknown-verb"), "the removed form grants no implementations");
+});
+
+test("diagnostics: an old on-x(...) attribute name is reported at the name", () => {
+  const text = fixture("legacy-event-name.html");
+  const diagnostic = findByCode(diagnose(text), "parse-error");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /handler parameter/);
+  assert.match(diagnostic.message, /click="\(\{/);
+  assert.equal(substringOf(text, diagnostic), "on-click(key:string)");
+});
+
+test("diagnostics: two handlers need brackets, as the parser says", () => {
+  const text = fixture("handler-list-unbracketed.html");
+  const diagnostic = findByCode(diagnose(text), "parse-error");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /brackets/);
+});
+
+test("diagnostics: a concise body is reported with the braced form as the fix", () => {
+  const text = fixture("handler-concise-body.html");
+  const diagnostic = findByCode(diagnose(text), "parse-error");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /braced/);
+  assert.match(diagnostic.message, /braced/);
+  assert.match(diagnostic.message, /=> \{ #b\.clear\(\) \}/);
+});
+
+test("diagnostics: an unknown parameter field on a closed event is reported at the field", () => {
+  const text = fixture("event-field-unknown.html");
+  const diagnostic = findByCode(diagnose(text), "unknown-event-field");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /not a field of event "click"/);
+  assert.equal(substringOf(text, diagnostic), "key: 'Enter'");
+});
+
+test("diagnostics: a literal that cannot read as the event field's type is reported", () => {
+  const text = fixture("event-field-literal.html");
+  const diagnostic = findByCode(diagnose(text), "event-field-mismatch");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /does not match "key", declared string/);
+  assert.equal(substringOf(text, diagnostic), "key: 5");
+});
+
+test("diagnostics: a declared type with no overlap with the event field is reported", () => {
+  const text = fixture("event-field-type.html");
+  const diagnostic = findByCode(diagnose(text), "event-field-mismatch");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /does not overlap "key", declared string/);
+  assert.equal(substringOf(text, diagnostic), "key: number");
+});
+
+test("diagnostics: a bound name used outside its handler is reported at the name", () => {
+  const text = fixture("unbound-name.html");
+  const diagnostic = findByCode(diagnose(text), "unbound-name");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /"text" is not bound by this handler/);
+  assert.equal(substringOf(text, diagnostic), "text");
+});
+
+test("diagnostics: an event whose owning implementation is absent is illegal", () => {
+  const text = fixture("missing-event-owner.html");
+  const diagnostic = findByCode(diagnose(text), "missing-event-owner");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /on-rendered needs "renderable"/);
+  assert.equal(substringOf(text, diagnostic), "on-rendered");
+});
+
+test("diagnostics: the owning presence attribute makes the event legal", () => {
+  const text = fixture("owned-event.html");
+  assert.deepEqual(
+    diagnose(text).map((diagnostic) => diagnostic.code),
+    [],
+  );
+});
+
+test("diagnostics: offsets stay exact inside a bracketed list after a decoded entity", () => {
+  const text =
+    '<script type="module" implementations="modifiable"></script>\n' +
+    '<button id="b" modifiable on-keydown="[({ key: \'Enter&amp;x\' }) => { #b.clear() }, ({ key: 5 }) => { #b.clear() }]">x</button>';
+  const diagnostics = diagnose(text);
+  const mismatches = diagnostics.filter((diagnostic) => diagnostic.code === "event-field-mismatch");
+  assert.equal(mismatches.length, 1);
+  assert.equal(substringOf(text, mismatches[0]!), "key: 5");
+  assert.deepEqual(
+    diagnostics.map((diagnostic) => diagnostic.code),
+    ["event-field-mismatch"],
+  );
 });
 
 test("diagnostics: a duplicate native id is reported on each occurrence", () => {

@@ -170,10 +170,12 @@ function removeImplementation(attachment: Attachment, name: string): void {
   attachment.implementations.delete(name);
 }
 
+export const REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE = "implements";
+
 export function reportLegacyImplements(el: Element): void {
-  if (!el.hasAttribute("implements") || reportedLegacy.has(el)) return;
+  if (!el.hasAttribute(REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE) || reportedLegacy.has(el)) return;
   reportedLegacy.add(el);
-  const value = (el.getAttribute("implements") ?? "").split(/\s+/).filter((name) => name !== "");
+  const value = (el.getAttribute(REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE) ?? "").split(/\s+/).filter((name) => name !== "");
   const replacement = value.length === 0 ? "no implementation attributes" : value.join(" ");
   console.error(
     `[Interactable] on ${describeElement(el)}: the implements attribute is no longer supported; ` +
@@ -461,7 +463,7 @@ function wireAttributeObserver(el: Element, attachment: Attachment): void {
       if (name === ANCHOR) continue;
       const oldValue = mutation.oldValue;
       const newValue = el.getAttribute(name);
-      if (name === "implements") {
+      if (name === REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE) {
         reportLegacyImplements(el);
       } else if (getImplementationDef(name) !== undefined) {
         ensureImplementations(el, attachment);

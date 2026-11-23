@@ -1,14 +1,19 @@
 import "./dom-standins.ts";
 import { DiagnosticSeverity } from "vscode-languageserver";
 import type { Diagnostic } from "vscode-languageserver";
-import { INTERSECT_EVENT_NAMES, parseEventValueWithErrors } from "interactably";
-import type { Arg, Ref, Unit } from "interactably";
-import { attribute, attributeValue, decodeAttributeValue, isScriptElement, splitNames } from "./html.ts";
+import {
+  INTERSECT_EVENT_NAMES,
+  REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE,
+  compileSignature,
+  parseEventValueWithErrors,
+} from "interactably";
+import type { Arg, EventHandler, HandlerField, Ref, Unit } from "interactably";
+import { attribute, isScriptElement, splitNames } from "./html.ts";
 import type { HtmlAttribute, HtmlElement } from "./html.ts";
 import { decodeHtml } from "./offsets.ts";
 import { NATIVE_DOM_EVENTS } from "./native-events.ts";
-import type { DocumentAnalysis } from "./analysis.ts";
-import { presenceAttributeNames } from "./analysis.ts";
+import type { DocumentAnalysis, EventSpecInfo } from "./analysis.ts";
+import { eventSpecFor, eventTypeOf, presenceAttributeNames } from "./analysis.ts";
 
 export type DiagnosticCode =
   | "parse-error"
@@ -19,7 +24,12 @@ export type DiagnosticCode =
   | "unknown-implementation"
   | "missing-bootstrap"
   | "duplicate-id"
-  | "duplicate-named-id";
+  | "duplicate-named-id"
+  | "legacy-implementation-list"
+  | "missing-event-owner"
+  | "unknown-event-field"
+  | "event-field-mismatch"
+  | "unbound-name";
 
 interface PendingDiagnostic {
   readonly start: number;
@@ -81,8 +91,7 @@ function reportMissingBootstrap(analysis: DocumentAnalysis, add: Adder): void {
     for (const candidate of element.attributes) {
       const isTrigger = candidate.name.startsWith("on-") && candidate.name.length > 3;
       const isUsage =
-        !isScriptElement(element) &&
-        (candidate.name === "implements" || analysis.vocabulary.byName.has(candidate.name));
+        !isScriptElement(element) && analysis.vocabulary.byName.has(candidate.name);
       if (!isTrigger && !isUsage) continue;
       add(
         candidate.nameStart,
@@ -99,12 +108,26 @@ function reportMissingBootstrap(analysis: DocumentAnalysis, add: Adder): void {
 
 function reportImplementations(analysis: DocumentAnalysis, add: Adder): void {
   for (const element of analysis.model.elements) {
+    reportLegacyImplementationList(element, add);
     if (isScriptElement(element)) {
       reportUnknownDeclarations(analysis, element, add);
       continue;
     }
     reportUndeclaredUsages(analysis, element, add);
   }
+}
+
+function reportLegacyImplementationList(element: HtmlElement, add: Adder): void {
+  const legacy = attribute(element, REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE);
+  if (legacy === undefined) return;
+  add(
+    legacy.nameStart,
+    legacy.nameEnd,
+    "the implementation-list attribute is no longer supported; name each implementation as its own " +
+      'attribute, for example "revealable"',
+    "legacy-implementation-list",
+    DiagnosticSeverity.Error,
+  );
 }
 
 function reportUnknownDeclarations(
@@ -140,19 +163,6 @@ function reportUndeclaredUsages(
       candidate.nameStart,
       candidate.nameEnd,
       `"${candidate.name}" is used here but not declared by the bootstrap script's implementations attribute`,
-      "undeclared-implementation",
-      DiagnosticSeverity.Error,
-    );
-  }
-  const implementsAttribute = attribute(element, "implements");
-  if (implementsAttribute === undefined || implementsAttribute.value === null) return;
-  const decoded = decodeHtml(implementsAttribute.value);
-  for (const span of splitNames(decoded.text)) {
-    if (analysis.declarations.has(span.name)) continue;
-    add(
-      offsetIn(implementsAttribute, decoded.toRaw(span.start)),
-      offsetIn(implementsAttribute, decoded.toRaw(span.end)),
-      `"${span.name}" is used here but not declared by the bootstrap script's implementations attribute`,
       "undeclared-implementation",
       DiagnosticSeverity.Error,
     );
@@ -223,28 +233,43 @@ function reportTrigger(
   attributeValue: HtmlAttribute,
   add: Adder,
 ): void {
-  const declaredEvent = attributeValue.name.slice(3);
-  const eventType = declaredEvent;
+  const declaredEvent = eventTypeOf(attributeValue.name);
   if (declaredEvent.includes("(")) {
     add(
       attributeValue.nameStart,
       attributeValue.nameEnd,
-      `value declarations no longer belong in the attribute name; write ${declaredEvent.slice(0, declaredEvent.indexOf("("))}="({ name: type }) => { … }"`,
+      `event data now belongs in a handler parameter; write ${declaredEvent.slice(0, declaredEvent.indexOf("("))}="({ name: type }) => { … }"`,
       "parse-error",
       DiagnosticSeverity.Error,
     );
     return;
   }
 
-  const knownEvent =
-    NATIVE_DOM_EVENTS.has(eventType) ||
-    INTERSECT_EVENT_NAMES.has(eventType) ||
-    analysis.eventNames.has(eventType);
-  if (!knownEvent) {
+  const eventType = declaredEvent;
+  const spec = eventSpecFor(element, eventType, analysis.vocabulary);
+  const owner = analysis.vocabulary.eventOwners.get(eventType);
+  const presentNames = presenceAttributeNames(element, analysis.vocabulary);
+
+  if (
+    !NATIVE_DOM_EVENTS.has(eventType) &&
+    !INTERSECT_EVENT_NAMES.has(eventType) &&
+    owner !== undefined &&
+    !presentNames.includes(owner)
+  ) {
     add(
       attributeValue.nameStart,
       attributeValue.nameEnd,
-      `unknown event "${eventType}": it is not a native DOM event and no implementation on this page declares it`,
+      `on-${eventType} needs "${owner}" on this element; without it nothing owns the event`,
+      "missing-event-owner",
+      DiagnosticSeverity.Error,
+    );
+  }
+
+  if (spec === undefined) {
+    add(
+      attributeValue.nameStart,
+      attributeValue.nameEnd,
+      `unknown event "${eventType}": it is not a native DOM event and no implementation declares it`,
       "unknown-event",
       DiagnosticSeverity.Warning,
     );
@@ -260,11 +285,174 @@ function reportTrigger(
   }
 
   for (const handler of handlers) {
+    reportHandlerFields(eventType, spec, handler, documentOffset, add);
     for (const phrase of handler.phrases) {
       for (const unit of phrase.units) {
         reportUnit(analysis, element, unit, documentOffset, add);
       }
     }
+  }
+}
+
+function reportHandlerFields(
+  eventType: string,
+  spec: EventSpecInfo | undefined,
+  handler: EventHandler,
+  documentOffset: (offset: number) => number,
+  add: Adder,
+): void {
+  const declared = new Set<string>();
+  const bound = new Set<string>();
+
+  for (const field of handler.parameter.fields) {
+    const start = documentOffset(field.start);
+    const end = documentOffset(field.end);
+    if (declared.has(field.name)) {
+      add(
+        start,
+        end,
+        `"${field.name}" is declared twice in this handler`,
+        "event-field-mismatch",
+        DiagnosticSeverity.Error,
+      );
+      continue;
+    }
+    declared.add(field.name);
+
+    const fieldType = spec?.fields.get(field.name);
+    if (spec !== undefined && !spec.open && fieldType === undefined) {
+      add(
+        start,
+        end,
+        `"${field.name}" is not a field of event "${eventType}"; allowed fields: ${describeFields(spec)}`,
+        "unknown-event-field",
+        DiagnosticSeverity.Error,
+      );
+      continue;
+    }
+
+    if (field.kind === "literal") {
+      if (fieldType !== undefined && !literalFits(fieldType, field.value)) {
+        add(
+          start,
+          end,
+          `${describeLiteral(field.value)} does not match "${field.name}", declared ${fieldType}`,
+          "event-field-mismatch",
+          DiagnosticSeverity.Error,
+        );
+      }
+      continue;
+    }
+
+    if (!validType(field)) {
+      add(
+        start,
+        end,
+        `"${field.type}" is not a valid value type for "${field.name}"`,
+        "event-field-mismatch",
+        DiagnosticSeverity.Error,
+      );
+      continue;
+    }
+    if (fieldType !== undefined && !typesOverlap(fieldType, field.type)) {
+      add(
+        start,
+        end,
+        `"${field.type}" does not overlap "${field.name}", declared ${fieldType}`,
+        "event-field-mismatch",
+        DiagnosticSeverity.Error,
+      );
+      continue;
+    }
+    bound.add(field.name);
+  }
+
+  for (const phrase of handler.phrases) {
+    for (const unit of phrase.units) {
+      for (const call of unit.calls) {
+        for (const name of namesInArg(call.arg)) {
+          if (bound.has(name.name)) continue;
+          add(
+            documentOffset(name.start),
+            documentOffset(name.end),
+            `"${name.name}" is not bound by this handler; declare it in the parameter, for example ({ ${name.name}: string })`,
+            "unbound-name",
+            DiagnosticSeverity.Error,
+          );
+        }
+      }
+    }
+  }
+}
+
+function describeFields(spec: EventSpecInfo): string {
+  if (spec.fields.size === 0) return "(none)";
+  return [...spec.fields.keys()].sort().join(", ");
+}
+
+const NUMBER_LITERAL = /^-?\d+(?:\.\d+)?$/;
+const STRING_UNION = /^'[^']*'$/;
+
+function validType(field: HandlerField): boolean {
+  if (field.kind !== "type") return true;
+  try {
+    compileSignature(field.type);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function literalFits(fieldType: string, literal: string | number | boolean): boolean {
+  try {
+    compileSignature(fieldType).validate(literal);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function describeLiteral(literal: string | number | boolean): string {
+  return typeof literal === "string" ? `'${literal}'` : String(literal);
+}
+
+function typeKinds(type: string): ReadonlySet<string> {
+  const kinds = new Set<string>();
+  for (const raw of type.split("|")) {
+    const part = raw.trim();
+    if (part === "string") kinds.add("string");
+    else if (part === "number") kinds.add("number");
+    else if (part === "boolean") kinds.add("boolean");
+    else if (NUMBER_LITERAL.test(part)) kinds.add("number");
+    else if (STRING_UNION.test(part)) kinds.add("string");
+    else if (part === "true" || part === "false") kinds.add("boolean");
+  }
+  return kinds;
+}
+
+function typesOverlap(fieldType: string, declaredType: string): boolean {
+  const fieldKinds = typeKinds(fieldType);
+  const declaredKinds = typeKinds(declaredType);
+  if (fieldKinds.size === 0 || declaredKinds.size === 0) return true;
+  for (const kind of declaredKinds) if (fieldKinds.has(kind)) return true;
+  return false;
+}
+
+interface NamedArg {
+  readonly name: string;
+  readonly start: number;
+  readonly end: number;
+}
+
+function namesInArg(arg: Arg | undefined): NamedArg[] {
+  if (arg === undefined) return [];
+  switch (arg.kind) {
+    case "name":
+      return [{ name: arg.name, start: arg.start, end: arg.end }];
+    case "object":
+      return arg.fields.flatMap((field) => namesInArg(field.value));
+    default:
+      return [];
   }
 }
 
@@ -327,25 +515,13 @@ function reportUnknownReceiver(
 function verbsFor(analysis: DocumentAnalysis, source: HtmlElement, ref: Ref): ReadonlySet<string> | null {
   const receiver = ref.kind === "this" ? source : analysis.model.byId.get(ref.id);
   if (receiver === undefined) return null;
-  const names = elementImplementationNames(analysis, receiver);
   const verbs = new Set<string>();
-  for (const name of names) {
+  for (const name of presenceAttributeNames(receiver, analysis.vocabulary)) {
     const info = analysis.vocabulary.byName.get(name);
     if (info === undefined) return null;
     for (const verb of info.verbs.keys()) verbs.add(verb);
   }
   return verbs;
-}
-
-function elementImplementationNames(analysis: DocumentAnalysis, element: HtmlElement): string[] {
-  const names = new Set<string>(presenceAttributeNames(element, analysis.vocabulary));
-  const value = attributeValue(element, "implements");
-  if (value !== undefined && value !== null) {
-    for (const name of decodeAttributeValue(value).split(/\s+/)) {
-      if (name !== "") names.add(name);
-    }
-  }
-  return [...names];
 }
 
 function describeRef(ref: Ref): string {

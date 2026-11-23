@@ -5,6 +5,7 @@ import {
   fireOnLoad,
   isAttached,
   markStartedRoot,
+  REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE,
   reportLegacyImplements,
   unmarkStartedRoot,
 } from "@interactable/attachment.ts";
@@ -88,9 +89,9 @@ export function start(root: StartRoot = document): () => void {
   };
 
   const noteLegacy = (node: Element): void => {
-    if (node.hasAttribute("implements")) reportLegacyImplements(node);
+    if (node.hasAttribute(REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE)) reportLegacyImplements(node);
     for (const child of node.querySelectorAll("*")) {
-      if (child.hasAttribute("implements")) reportLegacyImplements(child);
+      if (child.hasAttribute(REMOVED_IMPLEMENTATION_LIST_ATTRIBUTE)) reportLegacyImplements(child);
     }
   };
 

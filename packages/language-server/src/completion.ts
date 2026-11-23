@@ -6,8 +6,9 @@ import { attribute, decodeAttributeValue, isScriptElement } from "./html.ts";
 import type { HtmlElement } from "./html.ts";
 import { decodeHtml } from "./offsets.ts";
 import { NATIVE_DOM_EVENTS } from "./native-events.ts";
+import { handlerContextAt } from "./handler-context.ts";
 import type { DocumentAnalysis } from "./analysis.ts";
-import { presenceAttributeNames } from "./analysis.ts";
+import { eventSpecFor, eventTypeOf, presenceAttributeNames, presentImplementations } from "./analysis.ts";
 
 type Offset = number;
 
@@ -25,11 +26,8 @@ export function computeCompletions(
     if (candidate.name === "implementations" && isScriptElement(element)) {
       return declarationCompletions(analysis, element, candidate.valueStart, offset);
     }
-    if (candidate.name === "implements" && !isScriptElement(element)) {
-      return usageCompletions(analysis, candidate.valueStart, offset);
-    }
     if (candidate.name.startsWith("on-") && candidate.name.length > 3) {
-      return phraseCompletions(analysis, element, candidate.valueStart, offset);
+      return handlerCompletions(analysis, element, candidate, offset);
     }
     return null;
   }
@@ -37,8 +35,7 @@ export function computeCompletions(
   const tagNameEnd = element.start + 1 + element.tag.length;
   if (offset <= tagNameEnd) return null;
   const partial = partialAttributeName(analysis, element, offset);
-  if (partial !== "" && !partial.startsWith("on-")) return null;
-  return eventCompletions(analysis, partial);
+  return attributeCompletions(analysis, element, partial);
 }
 
 function elementContaining(analysis: DocumentAnalysis, offset: Offset): HtmlElement | undefined {
@@ -65,23 +62,90 @@ function isAttributeNameCharacter(character: string | undefined): boolean {
   return !/\s/.test(character) && character !== "=" && character !== "/" && character !== ">" && character !== "<";
 }
 
-function eventCompletions(analysis: DocumentAnalysis, partial: string): CompletionItem[] {
+function attributeCompletions(
+  analysis: DocumentAnalysis,
+  element: HtmlElement,
+  partial: string,
+): CompletionItem[] {
+  const present = presentImplementations(element, analysis.vocabulary);
+  const presentNames = new Set(present.map((info) => info.name));
+  const usedAttributes = new Set(element.attributes.map((candidate) => candidate.name));
+  const items = new Map<string, CompletionItem>();
+
+  const add = (item: CompletionItem): void => {
+    if (!item.label.startsWith(partial)) return;
+    if (usedAttributes.has(item.label)) return;
+    if (items.has(item.label)) return;
+    items.set(item.label, item);
+  };
+
+  for (const name of analysis.vocabulary.names) {
+    if (presentNames.has(name)) continue;
+    add({
+      label: name,
+      kind: CompletionItemKind.Property,
+      detail: "built-in implementation",
+      insertText: name,
+      filterText: name,
+      sortText: `1${name}`,
+    });
+  }
+
+  for (const info of present) {
+    for (const [attributeName, signature] of info.configAttributes) {
+      add({
+        label: attributeName,
+        kind: CompletionItemKind.Property,
+        detail: `${signature} (config of ${info.name})`,
+        insertText: attributeName,
+        filterText: attributeName,
+        sortText: `0${attributeName}`,
+      });
+    }
+    for (const [attributeName, signature] of info.stateAttributes) {
+      add({
+        label: attributeName,
+        kind: CompletionItemKind.Property,
+        detail: `${signature} (state of ${info.name})`,
+        insertText: attributeName,
+        filterText: attributeName,
+        sortText: `0${attributeName}`,
+      });
+    }
+  }
+
+  for (const event of completableEvents(analysis, present.map((info) => info.name))) {
+    const label = `on-${event}`;
+    add({
+      label,
+      kind: CompletionItemKind.Event,
+      detail: eventDetail(analysis, event),
+      insertText: label,
+      filterText: label,
+      sortText: `2${label}`,
+    });
+  }
+
+  return [...items.values()].sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function completableEvents(analysis: DocumentAnalysis, presentNames: readonly string[]): string[] {
   const events = new Set<string>();
   for (const event of NATIVE_DOM_EVENTS) events.add(event);
   for (const event of INTERSECT_EVENT_NAMES) events.add(event);
-  for (const event of analysis.eventNames) events.add(event);
-  const prefix = partial.startsWith("on-") ? partial : "";
-  return [...events]
-    .sort()
-    .map((event) => `on-${event}`)
-    .filter((label) => label.startsWith(prefix))
-    .map((label) => ({
-      label,
-      kind: CompletionItemKind.Property,
-      insertText: label,
-      filterText: label,
-      sortText: label,
-    }));
+  for (const name of presentNames) {
+    const info = analysis.vocabulary.byName.get(name);
+    if (info === undefined) continue;
+    for (const event of info.events) events.add(event);
+  }
+  return [...events].sort();
+}
+
+function eventDetail(analysis: DocumentAnalysis, event: string): string {
+  const owner = analysis.vocabulary.eventOwners.get(event);
+  if (owner !== undefined) return `event declared by ${owner}`;
+  if (INTERSECT_EVENT_NAMES.has(event)) return "synthetic trigger";
+  return "native DOM event";
 }
 
 function declarationCompletions(
@@ -112,31 +176,78 @@ function declarationCompletions(
   return items;
 }
 
-function usageCompletions(
+function handlerCompletions(
   analysis: DocumentAnalysis,
-  valueStart: Offset,
+  element: HtmlElement,
+  candidate: { readonly name: string; readonly value: string | null; readonly valueStart: number; readonly valueEnd: number },
   offset: Offset,
-): CompletionItem[] {
-  const typed = decodeHtml(analysis.text.slice(valueStart, offset)).text;
-  const currentWord = /\S+$/.exec(typed)?.[0] ?? "";
+): CompletionItem[] | null {
+  const eventType = eventTypeOf(candidate.name);
+  if (eventType.includes("(")) return null;
 
-  const items: CompletionItem[] = [];
-  for (const name of analysis.vocabulary.names) {
-    if (currentWord !== "" && !name.startsWith(currentWord)) continue;
-    const declared = analysis.declarations.has(name);
-    items.push({
+  const decoded = decodeHtml(candidate.value ?? "");
+  const decodedOffset = decodeHtml(
+    analysis.text.slice(candidate.valueStart, Math.min(offset, candidate.valueEnd)),
+  ).text.length;
+  const context = handlerContextAt(decoded.text, decodedOffset);
+  const prefix = decodeHtml(analysis.text.slice(candidate.valueStart, offset)).text;
+
+  if (context?.kind === "parameter") {
+    return fieldCompletions(analysis, element, eventType, context, decoded.text, decodedOffset);
+  }
+
+  const phrases = phraseCompletions(analysis, element, candidate.valueStart, offset);
+  if (phrases !== null) return phrases;
+
+  if (context?.kind === "body" && !insideString(prefix)) {
+    const partial = identifierTail(decoded.text.slice(context.start, decodedOffset));
+    const items = context.bound
+      .filter((name) => name.startsWith(partial))
+      .filter((name, index, names) => names.indexOf(name) === index)
+      .sort()
+      .map((name) => ({
+        label: name,
+        kind: CompletionItemKind.Variable,
+        detail: "bound by this handler's parameter",
+        insertText: name,
+        filterText: name,
+        sortText: name,
+      }));
+    if (items.length > 0) return items;
+  }
+
+  return null;
+}
+
+function fieldCompletions(
+  analysis: DocumentAnalysis,
+  element: HtmlElement,
+  eventType: string,
+  context: { readonly start: number; readonly declared: readonly string[] },
+  decoded: string,
+  decodedOffset: Offset,
+): CompletionItem[] | null {
+  const spec = eventSpecFor(element, eventType, analysis.vocabulary);
+  if (spec === undefined) return null;
+
+  const partial = identifierTail(decoded.slice(context.start, decodedOffset));
+  const declared = new Set(context.declared);
+  return [...spec.fields]
+    .filter(([name]) => !declared.has(name))
+    .filter(([name]) => name.startsWith(partial))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, type]) => ({
       label: name,
-      kind: CompletionItemKind.Interface,
-      detail: declared
-        ? "declared by the bootstrap script"
-        : "not declared by the bootstrap script; this element will not attach",
+      kind: CompletionItemKind.Field,
+      detail: type,
       insertText: name,
       filterText: name,
-      sortText: `${declared ? "0" : "1"}${name}`,
-    });
-  }
-  items.sort((a, b) => (a.sortText ?? a.label).localeCompare(b.sortText ?? b.label));
-  return items;
+      sortText: name,
+    }));
+}
+
+function identifierTail(text: string): string {
+  return /[A-Za-z0-9_$-]*$/.exec(text)?.[0] ?? "";
 }
 
 function phraseCompletions(
@@ -175,7 +286,7 @@ function phraseCompletions(
 }
 
 function verbCompletions(analysis: DocumentAnalysis, receiver: HtmlElement): CompletionItem[] {
-  const names = implementationNames(analysis, receiver);
+  const names = presenceAttributeNames(receiver, analysis.vocabulary);
   const items = new Map<string, CompletionItem>();
   for (const name of names) {
     const info = analysis.vocabulary.byName.get(name);
@@ -193,17 +304,6 @@ function verbCompletions(analysis: DocumentAnalysis, receiver: HtmlElement): Com
     }
   }
   return [...items.values()].sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function implementationNames(analysis: DocumentAnalysis, element: HtmlElement): string[] {
-  const names = new Set<string>(presenceAttributeNames(element, analysis.vocabulary));
-  const value = attribute(element, "implements")?.value ?? null;
-  if (value !== null) {
-    for (const name of decodeAttributeValue(value).split(/\s+/)) {
-      if (name !== "") names.add(name);
-    }
-  }
-  return [...names];
 }
 
 function insideString(prefix: string): boolean {
