@@ -370,22 +370,6 @@ test("a guard-aborted || fallback leaves once() unspent", () => {
   assert.equal(sendCalls, 0, "the guard still aborts, so send never runs");
 });
 
-test("a keyed phrase on a native event is skipped and logged once", (t) => {
-  const spy = t.mock.method(console, "error");
-  const receiver = el("f");
-  let sendCalls = 0;
-  wireHost(receiver, { send: () => void sendCalls++ });
-
-  const trigger = el();
-  run(trigger, "enter: #f.send()", new Event("click"));
-  run(trigger, "enter: #f.send()", new Event("click"));
-  assert.equal(sendCalls, 0);
-  assert.equal(spy.mock.callCount(), 1, "the phrase is skipped once per value");
-  assert.ok(
-    String(spy.mock.calls[0]!.arguments[0]).includes('key "enter" on event "click" that carries no routing key'),
-  );
-});
-
 test("this resolves to the element the phrase was read from", () => {
   const trigger = el("me");
   const seen: InteractionEvent[] = [];
@@ -1083,7 +1067,7 @@ test("a fallback unit's own once() gates the fallback chain", () => {
   assert.equal(showCalls, 1, "the fallback's own once gates the fallback chain, not the first unit");
 });
 
-test("a keyed phrase works with && and ||", () => {
+test("an implementation-event phrase works with && and ||", () => {
   const form = el("form");
   const alert = el("alert");
   const order: string[] = [];
@@ -1096,54 +1080,37 @@ test("a keyed phrase works with && and ||", () => {
   wireHost(alert, { show: () => void order.push("show") });
 
   const trigger = el();
-  const timeout = (): Event => new ImplementationEventClass("request-error", { key: "timeout" });
-  run(trigger, "timeout: #form.validate() || #alert.show()", timeout());
+  const requestError = (): Event =>
+    new ImplementationEventClass("request-error", { values: { status: "500" } });
+
+  run(trigger, "#form.validate() || #alert.show()", requestError());
   assert.deepEqual(order, ["validate", "show"]);
 
   order.length = 0;
-  run(trigger, "offline: #form.validate() || #alert.show()", timeout());
-  assert.deepEqual(order, [], "a non-matching implementation key never reaches the phrase");
-
-  run(trigger, "timeout: #form.validate() && #alert.show()", timeout());
+  run(trigger, "#form.validate() && #alert.show()", requestError());
   assert.deepEqual(order, ["validate"], "&& stops after the guard abort");
 });
 
-test("an intersect event runs its phrases regardless of the event key", () => {
+test("an intersect event runs its phrases", () => {
   const receiver = el("nav");
   let bumpCalls = 0;
   wireHost(receiver, { bump: () => void bumpCalls++ });
 
   const trigger = el();
-  run(trigger, "#nav.bump()", new ImplementationEventClass("intersect", { key: "0px", values: { state: "enter" } }));
+  run(trigger, "#nav.bump()", new ImplementationEventClass("intersect", { values: { state: "enter" } }));
   assert.equal(bumpCalls, 1);
-  run(trigger, "#nav.bump()", new ImplementationEventClass("intersect", { key: "10px", values: { state: "enter" } }));
-  assert.equal(bumpCalls, 2, "the margin routes at the trigger, not in the executor");
+  run(trigger, "#nav.bump()", new ImplementationEventClass("intersect", { values: { state: "leave" } }));
+  assert.equal(bumpCalls, 2, "every intersect firing runs the phrase");
 });
 
-test("keyless phrases on keyless implementation events keep running", () => {
+test("a phrase on an implementation event runs", () => {
   const receiver = el("copier");
   let copyCalls = 0;
   wireHost(receiver, { flash: () => void copyCalls++ });
 
   const trigger = el();
   run(trigger, "#copier.flash()", new ImplementationEventClass("copy", {}));
-  assert.equal(copyCalls, 1, "a keyless on-copy phrase is not gated by the key guard");
-});
-
-test("a keyed ImplementationEvent on a non-intersect type matches phrase.key exactly", () => {
-  const receiver = el("alert");
-  let showCalls = 0;
-  wireHost(receiver, { show: () => void showCalls++ });
-
-  const trigger = el();
-  run(trigger, "timeout: #alert.show()", new ImplementationEventClass("request-error", { key: "timeout" }));
-  assert.equal(showCalls, 1, "an exact match runs");
-  run(trigger, "timeout: #alert.show()", new ImplementationEventClass("request-error", { key: "offline" }));
-  assert.equal(showCalls, 1, "a different key is skipped quietly");
-  run(trigger, "offline: #alert.show()", new ImplementationEventClass("request-error", { key: "offline" }));
-  assert.equal(showCalls, 2, "its own keyed phrase matches");
-  run(trigger, "timeout: #alert.show()", new ImplementationEventClass("request-error", { key: "Timeout" }));
-  assert.equal(showCalls, 2, "impl-event keys match case-sensitively, unlike keyboard keys");
+  assert.equal(copyCalls, 1);
 });
 
 test("a bound name resolves as a bare argument from the handler parameter", () => {

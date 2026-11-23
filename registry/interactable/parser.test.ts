@@ -64,34 +64,15 @@ test("the id error names the full ref and the excluded characters", (t) => {
   );
 });
 
-test("a key may not contain the phrase punctuation", (t) => {
+test("a top-level key prefix is a grammar error naming the parameter form", (t) => {
   const spy = errorsOf(t);
-  assert.deepEqual(parse("a&b: #f.send()"), []);
-  assert.deepEqual(parse("a|b: #f.send()"), []);
-  assert.deepEqual(parse('a"b: #f.send()'), []);
-  assert.deepEqual(parse("a#b: #f.send()"), []);
-  assert.deepEqual(parse("a'b: #f.send()"), []);
-  assert.deepEqual(parse("a{b: #f.send()"), []);
-  assert.deepEqual(parse("a}b: #f.send()"), []);
-  assert.deepEqual(parse("#a:b.show()"), []);
-  assert.equal(spy.mock.callCount(), 8);
-  assert.ok(String(spy.mock.calls[0]!.arguments[0]).includes('invalid key "a&b"'));
-  assert.ok(String(spy.mock.calls[1]!.arguments[0]).includes('invalid key "a|b"'));
-  assert.ok(String(spy.mock.calls[2]!.arguments[0]).includes('invalid key "a"b"'));
-  assert.ok(String(spy.mock.calls[3]!.arguments[0]).includes('invalid key "a#b"'));
-  assert.ok(String(spy.mock.calls[7]!.arguments[0]).includes('invalid key "#a"'));
-});
-
-test("a key name longer than one character may not contain +; a bare + stays legal", (t) => {
-  const spy = errorsOf(t);
-  assert.deepEqual(parse("ctrl+k: #f.send()"), [], "modifier keys are not supported");
+  assert.deepEqual(parse(`${"enter"}: #f.send()`), []);
+  assert.equal(spy.mock.callCount(), 1);
   assert.ok(
-    String(spy.mock.calls[0]!.arguments[0]).includes('invalid key "ctrl+k": modifier keys are not supported'),
+    String(spy.mock.calls[0]!.arguments[0]).includes(
+      `phrase keys are not supported; filter with a handler parameter, e.g. "({ name: type }) => { … }"`,
+    ),
   );
-
-  const [plus] = parse("+: #f.send()");
-  assert.ok(plus);
-  assert.equal(plus.key, "+");
 });
 
 test("rule 3: one receiver per phrase; groups and broadcasts are errors", () => {
@@ -99,21 +80,6 @@ test("rule 3: one receiver per phrase; groups and broadcasts are errors", () => 
   assert.deepEqual(parse("#a, #b.hide()"), []);
   assert.deepEqual(parse("(#a, #b).hide()"), []);
   assert.deepEqual(parse("(#a, #b).hide()"), []);
-});
-
-test("rule 4: keys are one per phrase; comma lists are errors", () => {
-  const [keyed] = parse("enter: #f.send()");
-  assert.ok(keyed);
-  assert.equal(keyed.key, "enter");
-  assert.deepEqual(first(keyed).ref, { kind: "id", id: "f" });
-
-  const two = parse("enter: #f.send(); numpadenter: #f.send()");
-  assert.equal(two.length, 2);
-  assert.equal(two[0]!.key, "enter");
-  assert.equal(two[1]!.key, "numpadenter");
-
-  assert.deepEqual(parse("enter, escape: #f.send()"), []);
-  assert.deepEqual(parse("enter: escape: #f.send()"), []);
 });
 
 test("rule 5: modifiers sit in the chain with their position recorded", () => {
@@ -395,17 +361,18 @@ test("parse results are cached by attribute string", () => {
   assert.notStrictEqual(other, firstParse);
 });
 
-test("intersect carries no margin key any more: the body is the whole phrase", () => {
+test("intersect parses a plain body and rejects a key prefix", (t) => {
+  const spy = errorsOf(t);
   const [phrase] = parse("#nav.bump()", "intersect");
   assert.ok(phrase);
-  assert.equal(phrase.key, undefined);
-});
+  assert.equal(first(phrase).calls[0]!.verb, "bump");
 
-test("a colon prefix is an ordinary key under intersect, no longer a margin", () => {
-  const [phrase] = parse("enter: #a.show()", "intersect");
-  assert.ok(phrase);
-  assert.equal(phrase.key, "enter");
-  assert.deepEqual(parse("10px 20px: #a.show()", "intersect"), [], "a spaced margin is no longer a legal key");
+  assert.deepEqual(parse(`${"enter"}: #a.show()`, "intersect"), []);
+  assert.ok(
+    String(spy.mock.calls[0]!.arguments[0]).includes(
+      `phrase keys are not supported; filter with a handler parameter, e.g. "({ name: type }) => { … }"`,
+    ),
+  );
 });
 
 test("the parse cache key includes the event name", () => {
@@ -683,15 +650,11 @@ function span(source: string, node: { start: number; end: number }): string {
   return source.slice(node.start, node.end);
 }
 
-test("offsets slice a keyed phrase back to its source", () => {
-  const source = "enter: #f.send()";
+test("offsets slice a phrase back to its source", () => {
+  const source = "#f.send()";
   const [phrase] = parse(source);
   assert.ok(phrase);
   assert.equal(span(source, phrase), source);
-  assert.equal(phrase.key, "enter");
-  assert.equal(phrase.keyStart, 0);
-  assert.equal(phrase.keyEnd, 5);
-  assert.equal(source.slice(phrase.keyStart!, phrase.keyEnd!), "enter");
   const unit = first(phrase);
   assert.equal(span(source, unit), "#f.send()");
   assert.equal(span(source, unit.ref), "#f");

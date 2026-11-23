@@ -60,7 +60,7 @@ One attribute per interaction; the value is the phrase language:
 ```
 attribute := 'on-' event-type [ '(' value-decl (',' value-decl)* ')' ]
 value     := phrase (';' phrase)*
-phrase    := [key ':'] unit (('&&' | '||') unit)*
+phrase    := unit (('&&' | '||') unit)*
 unit      := ref ('.' (call | modifier))+
 ref       := '#' id | 'this'
 call      := verb '(' [arg | object] ')'
@@ -104,7 +104,7 @@ The rules, one line each:
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`, `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#`. Class or attribute selectors are never receivers.
 3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form.
-4. **A phrase key routes implementation events; keyboard keys are filtered through a handler parameter**, one per handler. `({key: 'Enter'}) => { … }` and `({code: 'ArrowDown'}) => { … }` match a literal case-sensitively; two keyboard keys is two handlers in one attribute. A key on any event that carries no routing key is skipped. `intersect` is not keyed: its `state`, `full` and margin slots are handler parameter fields.
+4. **Keyboard keys are filtered through a handler parameter**, one per handler. `({key: 'Enter'}) => { … }` and `({code: 'ArrowDown'}) => { … }` match a literal case-sensitively; two keyboard keys is two handlers in one attribute. `intersect`'s `state`, `full` and margin slots are handler parameter fields.
 5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** It never crosses `&&`. `debounce`/`throttle` are legal only right after the ref; `once` and `delay` may sit anywhere. `once()` must be followed by a call. At most one `debounce`/`throttle` per receiver chain.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops on a `preventDefault()`-ed event, a throw, or an unowned verb. `||` fires only on a guard's abort; errors and unowned verbs stop both.
 7. **`once()` spends on passing through, not on completion.** A spent gate cuts the chain where it sits — links before it still run, links after it never do.
@@ -198,7 +198,7 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `parseEventValue(value)` | Parse one handler or a bracketed handler list into handlers with spans |
 | `dispatchInteraction(el, verb, arg?, opts?)` | Imperatively send a verb; throws on unhandled/error, returns `result` |
 | `InteractionEvent` | The event class ([§ The interaction event](https://acecodept.github.io/interactably/docs.html#interaction-event)) |
-| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`, `valid`, `invalid`, `user-valid`, `user-invalid`), and the event `intersect` carries `state` (`enter`/`leave`) and/or `full` (`true`/`false`) as declared values `values`; an event may also carry a routing `key` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
+| `ImplementationEvent` | The event an implementation dispatches for a declared event (`copy`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`, `valid`, `invalid`, `user-valid`, `user-invalid`), and the event `intersect` carries `state` (`enter`/`leave`) and/or `full` (`true`/`false`) as declared values `values` (`response` → `html` and `status`, `request-error` → `status`, `pasted` → `text`, `restore` → `value`) |
 | `isImplementationEvent(el, type)` | True when `type` is the intersect event or an event some implementation on `el` declares |
 | `clearPhraseState(el)` | Drop timers / `once` / log state for an element |
 | `syncIntersect(el)` / `teardownIntersect(el)` | Create / drop the element's `IntersectionObserver`s, one per resolved `rootMargin` |

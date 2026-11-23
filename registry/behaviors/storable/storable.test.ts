@@ -350,7 +350,7 @@ test("a save that throws a quota error dispatches save-error quota and leaves th
     },
     clear: () => backing.clear(),
     getItem: (key) => backing.getItem(key),
-    key: (index) => backing.key(index),
+    key: (index) => backing["key"](index),
     removeItem: (key) => backing.removeItem(key),
     setItem: () => {
       throw new DOMException("quota", "QuotaExceededError");
@@ -382,7 +382,7 @@ test("a save that throws any other error dispatches save-error denied", async ()
     },
     clear: () => backing.clear(),
     getItem: (key) => backing.getItem(key),
-    key: (index) => backing.key(index),
+    key: (index) => backing["key"](index),
     removeItem: (key) => backing.removeItem(key),
     setItem: () => {
       throw new DOMException("denied", "SecurityError");
@@ -429,7 +429,7 @@ test("save-error and restore-error do not abort the phrase that triggered them",
     },
     clear: () => backing.clear(),
     getItem: (key) => backing.getItem(key),
-    key: (index) => backing.key(index),
+    key: (index) => backing["key"](index),
     removeItem: (key) => backing.removeItem(key),
     setItem: () => {
       throw new DOMException("quota", "QuotaExceededError");

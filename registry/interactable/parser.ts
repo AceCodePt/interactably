@@ -54,11 +54,8 @@ type UnitBase = { ref: Ref; calls: Call[]; modifiers: Modifier[] };
 export type Unit = UnitBase & Span;
 
 interface PhraseBase {
-  key?: string;
   units: Unit[];
   operator?: "&&" | "||";
-  keyStart?: number;
-  keyEnd?: number;
 }
 
 export type Phrase = PhraseBase & Span;
@@ -112,7 +109,6 @@ const STRING = /^'([^']*)'$/;
 const IDENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const HYPHENATED_NAME = /^[A-Za-z_$][A-Za-z0-9_$-]*$/;
 const ID = /^[^\s,;.()&|{}:'"#]+$/;
-const KEY = /^[^\s.,;()&|{}:'"#]+$/;
 const TIMING = /^(debounce|throttle|delay)\(([^)]*)\)$/;
 const READ = /^(this|#[^\s,;.()]+)\.([A-Za-z_$][A-Za-z0-9_$]*)$/;
 const WHITESPACE = /\s/;
@@ -182,59 +178,31 @@ export function parseWithErrors(value: string, eventName?: string, base = 0): Pa
 }
 
 function parsePhrase(source: string, base: number): Phrase {
-  const colon = findKeyColon(source);
-  let key: string | undefined;
-  let keyStart = 0;
-  let keyEnd = 0;
-  let body = source;
-  let bodyBase = base;
+  const colon = findTopLevelColon(source);
   if (colon !== -1) {
-    const keyPiece = trimPiece({ text: source.slice(0, colon), start: base });
-    if (keyPiece.text === "") {
-      throw new ParseError(`empty key before ":"`, keyPiece.start, keyPiece.start);
-    }
-    if (!KEY.test(keyPiece.text)) {
-      throw new ParseError(
-        `invalid key "${keyPiece.text}"`,
-        keyPiece.start,
-        keyPiece.start + keyPiece.text.length,
-      );
-    }
-    if (keyPiece.text.includes("+") && keyPiece.text.length > 1) {
-      throw new ParseError(
-        `invalid key "${keyPiece.text}": modifier keys are not supported`,
-        keyPiece.start,
-        keyPiece.start + keyPiece.text.length,
-      );
-    }
-    key = keyPiece.text;
-    keyStart = keyPiece.start;
-    keyEnd = keyPiece.start + keyPiece.text.length;
-    body = source.slice(colon + 1);
-    bodyBase = base + colon + 1;
+    throw new ParseError(
+      `phrase keys are not supported; filter with a handler parameter, e.g. "({ name: type }) => { … }"`,
+      base + colon,
+      base + colon + 1,
+    );
   }
 
-  const split = splitUnits(body);
+  const split = splitUnits(source);
   const operatorKinds = new Set(split.operators);
   if (operatorKinds.size > 1) {
     throw new ParseError(
       "cannot mix && and || in one phrase",
-      bodyBase,
-      bodyBase + body.length,
+      base,
+      base + source.length,
     );
   }
 
   const units = split.parts.map((part) => {
-    const trimmed = trimPiece({ text: part.text, start: bodyBase + part.start });
+    const trimmed = trimPiece({ text: part.text, start: base + part.start });
     return parseUnit(trimmed.text, trimmed.start);
   });
 
   const phrase = located<PhraseBase>({ units }, base, base + source.length);
-  if (key !== undefined) {
-    phrase.key = key;
-    Object.defineProperty(phrase, "keyStart", { value: keyStart, enumerable: false });
-    Object.defineProperty(phrase, "keyEnd", { value: keyEnd, enumerable: false });
-  }
   if (split.operators.length > 0) {
     phrase.operator = split.operators[0] as "&&" | "||";
   }
@@ -817,7 +785,7 @@ function parseObject(source: string, base: number): Arg {
   return located<ArgBase>({ kind: "object", fields: parsed }, base, base + source.length);
 }
 
-function findKeyColon(raw: string): number {
+function findTopLevelColon(raw: string): number {
   let single = false;
   let paren = 0;
   let brace = 0;

@@ -1,7 +1,7 @@
 import { isAttached } from "@interactable/attachment.ts";
 import { isBareNumber, parse, parseEventValue } from "@interactable/parser.ts";
 import { compileSignature } from "@interactable/signature.ts";
-import { INTERSECT_EVENT_NAMES, MARGIN_SLOTS } from "@interactable/intersect.ts";
+import { MARGIN_SLOTS } from "@interactable/intersect.ts";
 import { ImplementationEvent } from "@interactable/implementation-event.ts";
 import { InteractionEvent } from "@interactable/interaction-event.ts";
 import type { Arg, EventHandler, Modifier, Phrase, Ref, Unit } from "@interactable/parser.ts";
@@ -142,23 +142,14 @@ function runPhrase(
   ev: Event,
   bindings: Bindings,
 ): void {
-  if (ev instanceof ImplementationEvent && ev.key !== undefined) {
-    if (!INTERSECT_EVENT_NAMES.has(ev.type) && phrase.key !== ev.key) {
-      return;
-    }
-  } else if (phrase.key !== undefined) {
-    logOnce(source, `key "${phrase.key}" on event "${ev.type}" that carries no routing key; phrase skipped`);
-    return;
-  }
-
-  const key = `${value}\u0000${index}`;
+  const token = `${value}\u0000${index}`;
 
   const walkState: WalkState = {
     source,
     phrase,
     units: phrase.units,
     ev,
-    key,
+    token,
     unitIndex: 0,
     callIndex: 0,
     modIndex: 0,
@@ -193,7 +184,7 @@ interface WalkState {
   phrase: Phrase;
   units: Unit[];
   ev: Event;
-  key: string;
+  token: string;
   unitIndex: number;
   callIndex: number;
   modIndex: number;
@@ -302,7 +293,7 @@ function walkUnit(state: WalkState, unit: Unit): ChainResult {
 }
 
 function applyModifier(state: WalkState, modifier: Modifier): Outcome | undefined {
-  const chainKey = chainKeyOf(state.key, state.unitIndex);
+  const chainKey = chainKeyOf(state.token, state.unitIndex);
   const elState = stateOf(state.source);
   switch (modifier.kind) {
     case "once": {
