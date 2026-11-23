@@ -46,8 +46,8 @@
                   <button id="auto-demo-btn" type="button" on-click="#auto-demo-panel.toggle()"
                           aria-expanded="false" aria-controls="auto-demo-panel">Toggle panel</button>
                 </div>
-                <section id="auto-demo-panel" implements="revealable" hidden>
-                  <p>This panel is a plain <code class="inline-code">&lt;section implements="revealable"&gt;</code>. The button&rsquo;s
+                <section id="auto-demo-panel" revealable hidden>
+                  <p>This panel is a plain <code class="inline-code">&lt;section revealable&gt;</code>. The button&rsquo;s
                     phrase is <code class="inline-code">on-click="#auto-demo-panel.toggle()"</code>, and
                     <code class="inline-code">revealable</code> keeps the <code class="inline-code">aria-expanded</code> state in sync.</p>
                 </section>
@@ -55,15 +55,15 @@
               <div class="codeblock">
                 <div class="codeblock-bar">
                   <span class="codeblock-lang">HTML</span>
-                  <button class="copy-btn" implements="attributable" id="copy-code-ex-auto" on-click="#code-ex-auto.copy()" type="button">
+                  <button class="copy-btn" attributable id="copy-code-ex-auto" on-click="#code-ex-auto.copy()" type="button">
                     <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                   </button>
                 </div>
-                <pre class="code" id="code-ex-auto" implements="copyable" on-copy="#copy-code-ex-auto.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implementations="revealable"
+                <pre class="code" id="code-ex-auto" copyable on-copy="#copy-code-ex-auto.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;script type="module" implementations="revealable"
           src="interactably/dist/cdn/interactably-bootstrap.js"&gt;&lt;/script&gt;
 
       &lt;button on-click="#panel.toggle()" aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
-      &lt;section id="panel" implements="revealable" hidden&gt;
+      &lt;section id="panel" revealable hidden&gt;
         &lt;p&gt;&hellip;&lt;/p&gt;
       &lt;/section&gt;</code></pre>
               </div>

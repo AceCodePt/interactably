@@ -42,7 +42,7 @@
     <div class="example-body">
 
               <div class="demo">
-                <form id="order" novalidate implements="prevent-default requestable"
+                <form id="order" novalidate prevent-default requestable
                       requestable-url="/api/orders" requestable-method="post"
                       on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false); #order-timeout-alert.show(false); #order-offline-alert.show(false)"
                       on-request-error="#alert.show()"
@@ -55,10 +55,10 @@
                   <button type="submit">Place order</button>
                   <p class="demo-pending" hidden>Sending&hellip;</p>
                 </form>
-                <section id="receipt" implements="renderable revealable" hidden></section>
-                <div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>
-                <div id="order-timeout-alert" class="demo-message" implements="revealable" hidden role="alert">Couldn't place the order &mdash; the server didn't answer in time.</div>
-                <div id="order-offline-alert" class="demo-message" implements="revealable" hidden role="alert">Couldn't place the order &mdash; you're offline.</div>
+                <section id="receipt" renderable revealable hidden></section>
+                <div id="alert" revealable hidden role="alert">Couldn't place the order.</div>
+                <div id="order-timeout-alert" class="demo-message" revealable hidden role="alert">Couldn't place the order &mdash; the server didn't answer in time.</div>
+                <div id="order-offline-alert" class="demo-message" revealable hidden role="alert">Couldn't place the order &mdash; you're offline.</div>
               </div>
     </div>
         <details class="example-code">
@@ -66,12 +66,12 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-order" on-click="#code-ex-order.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-order" on-click="#code-ex-order.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-order" implements="copyable" on-copy="#copy-code-ex-order.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="order" novalidate
-          implements="prevent-default requestable"
+              <pre class="code" id="code-ex-order" copyable on-copy="#copy-code-ex-order.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="order" novalidate
+          prevent-default requestable
           requestable-url="/api/orders" requestable-method="post"
           on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); #alert.show(false); #order-timeout-alert.show(false); #order-offline-alert.show(false)"
           on-request-error="#alert.show()"
@@ -84,10 +84,10 @@
       &lt;button type="submit"&gt;Place order&lt;/button&gt;
       &lt;p class="demo-pending" hidden&gt;Sending&hellip;&lt;/p&gt;
     &lt;/form&gt;
-    &lt;section id="receipt" implements="renderable revealable" hidden&gt;&lt;/section&gt;
-    &lt;div id="alert" implements="revealable" hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
-    &lt;div id="order-timeout-alert" class="demo-message" implements="revealable" hidden role="alert"&gt;Couldn't place the order &mdash; the server didn't answer in time.&lt;/div&gt;
-    &lt;div id="order-offline-alert" class="demo-message" implements="revealable" hidden role="alert"&gt;Couldn't place the order &mdash; you're offline.&lt;/div&gt;</code></pre>
+    &lt;section id="receipt" renderable revealable hidden&gt;&lt;/section&gt;
+    &lt;div id="alert" revealable hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
+    &lt;div id="order-timeout-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order &mdash; the server didn't answer in time.&lt;/div&gt;
+    &lt;div id="order-offline-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order &mdash; you're offline.&lt;/div&gt;</code></pre>
             </div>
           </details>
   </main>

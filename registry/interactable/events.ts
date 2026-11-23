@@ -1,4 +1,4 @@
-import { getImplementationDef } from "@behaviors/implementation-registry.ts";
+import { getImplementationDef, presentImplementationNames } from "@behaviors/implementation-registry.ts";
 import { INTERSECT_EVENT_NAMES } from "@interactable/intersect.ts";
 import type { EventSpec } from "@behaviors/types.ts";
 
@@ -24,8 +24,7 @@ export const KEYBOARD_EVENT_FIELDS: Readonly<Record<string, Readonly<Record<stri
 
 export function isImplementationEvent(el: Element, type: string): boolean {
   if (INTERSECT_EVENT_NAMES.has(type)) return true;
-  for (const name of (el.getAttribute("implements") ?? "").split(/\s+/)) {
-    if (name === "") continue;
+  for (const name of presentImplementationNames(el)) {
     const def = getImplementationDef(name);
     if (def !== undefined && Object.hasOwn(def.events, type)) return true;
   }
@@ -33,8 +32,7 @@ export function isImplementationEvent(el: Element, type: string): boolean {
 }
 
 function implementationEventSpec(el: Element, type: string): EventSpec | undefined {
-  for (const name of (el.getAttribute("implements") ?? "").split(/\s+/)) {
-    if (name === "") continue;
+  for (const name of presentImplementationNames(el)) {
     const def = getImplementationDef(name);
     if (def === undefined) continue;
     const spec = def.events[type];

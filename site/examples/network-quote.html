@@ -44,7 +44,7 @@
                 <div class="row">
                   <button id="load-quote" type="button" on-click="#quote.send()">Load a quote</button>
                 </div>
-                <div id="quote" implements="requestable renderable"
+                <div id="quote" requestable renderable
                      requestable-url="../fragments/quote.html" requestable-method="get"
                      on-response(html:string)="#quote.render({payload: html})">
                   Nothing loaded yet &mdash; click the button above.
@@ -56,12 +56,12 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-quote" on-click="#code-ex-quote.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-quote" on-click="#code-ex-quote.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-quote" implements="copyable" on-copy="#copy-code-ex-quote.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
-    &lt;div id="quote" implements="requestable renderable"
+              <pre class="code" id="code-ex-quote" copyable on-copy="#copy-code-ex-quote.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#quote.send()"&gt;Load a quote&lt;/button&gt;
+    &lt;div id="quote" requestable renderable
          requestable-url="./fragments/quote.html" requestable-method="get"
          on-response(html:string)="#quote.render({payload: html})"&gt;
       Nothing loaded yet &mdash; click the button above.

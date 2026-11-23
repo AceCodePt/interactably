@@ -8,13 +8,6 @@ export interface ImplementationInstance {
   [key: `on${string}`]: (e: Event) => void;
 }
 
-export class NotReadyError extends Error {
-  constructor(implementsValue: string | null, verb: string) {
-    super(`implements "${implementsValue ?? ""}" still loading; ${verb}() dropped`);
-    this.name = "NotReadyError";
-  }
-}
-
 export type ReadableProperty = "value" | "checked" | "min" | "max" | "step";
 
 export function readValue(el: Element, property: ReadableProperty = "value"): number | string | boolean {

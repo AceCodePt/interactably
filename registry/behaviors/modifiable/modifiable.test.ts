@@ -44,7 +44,7 @@ function interact(el: Element, verb: string, arg?: unknown): InteractionEvent {
 }
 
 test("set writes the value property and does not dispatch an input event", async () => {
-  const input = hostElement("input", { implements: "modifiable" }) as HTMLInputElement;
+  const input = hostElement("input", { modifiable: "" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
@@ -57,7 +57,7 @@ test("set writes the value property and does not dispatch an input event", async
 });
 
 test("set never dispatches, even when the value changes", async () => {
-  const input = hostElement("input", { implements: "modifiable", value: "7" }) as HTMLInputElement;
+  const input = hostElement("input", { modifiable: "", value: "7" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
@@ -72,7 +72,7 @@ test("set never dispatches, even when the value changes", async () => {
 });
 
 test("set accepts both a string and a number", async () => {
-  const input = hostElement("input", { implements: "modifiable" }) as HTMLInputElement;
+  const input = hostElement("input", { modifiable: "" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
@@ -84,7 +84,7 @@ test("set accepts both a string and a number", async () => {
 
 test("set writes what it was asked: an out-of-range value reports rangeOverflow", async () => {
   const input = hostElement("input", {
-    implements: "modifiable",
+    modifiable: "",
     type: "number",
     max: "10",
   }) as HTMLInputElement;
@@ -97,7 +97,7 @@ test("set writes what it was asked: an out-of-range value reports rangeOverflow"
 });
 
 test("clear writes an empty string", async () => {
-  const input = hostElement("input", { implements: "modifiable", value: "abc" }) as HTMLInputElement;
+  const input = hostElement("input", { modifiable: "", value: "abc" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
@@ -106,7 +106,7 @@ test("clear writes an empty string", async () => {
 });
 
 test("reset returns to the authored value attribute", async () => {
-  const input = hostElement("input", { implements: "modifiable", value: "9" }) as HTMLInputElement;
+  const input = hostElement("input", { modifiable: "", value: "9" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
@@ -120,7 +120,7 @@ test("reset returns to the authored value attribute", async () => {
 });
 
 test("reset with no value attribute writes an empty string", async () => {
-  const input = hostElement("input", { implements: "modifiable" }) as HTMLInputElement;
+  const input = hostElement("input", { modifiable: "" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
@@ -130,7 +130,7 @@ test("reset with no value attribute writes an empty string", async () => {
 });
 
 test("reset on a textarea returns to its authored text", async () => {
-  const textarea = hostElement("textarea", { implements: "modifiable" }) as HTMLTextAreaElement;
+  const textarea = hostElement("textarea", { modifiable: "" }) as HTMLTextAreaElement;
   textarea.textContent = "hello";
   document.body.appendChild(textarea);
   await flush();
@@ -142,7 +142,7 @@ test("reset on a textarea returns to its authored text", async () => {
 });
 
 test("reset on a select returns to the option carrying the selected attribute", async () => {
-  const select = hostElement("select", { implements: "modifiable" }) as HTMLSelectElement;
+  const select = hostElement("select", { modifiable: "" }) as HTMLSelectElement;
   const a = document.createElement("option");
   a.value = "a";
   const b = document.createElement("option");
@@ -159,7 +159,7 @@ test("reset on a select returns to the option carrying the selected attribute", 
 });
 
 test("reset on a select with no selected attribute returns to the first option", async () => {
-  const select = hostElement("select", { implements: "modifiable" }) as HTMLSelectElement;
+  const select = hostElement("select", { modifiable: "" }) as HTMLSelectElement;
   const a = document.createElement("option");
   a.value = "a";
   const b = document.createElement("option");
@@ -174,7 +174,7 @@ test("reset on a select with no selected attribute returns to the first option",
 });
 
 test("reset on an output returns to its authored text", async () => {
-  const output = hostElement("output", { implements: "modifiable" }) as HTMLOutputElement;
+  const output = hostElement("output", { modifiable: "" }) as HTMLOutputElement;
   output.textContent = "42";
   document.body.appendChild(output);
   await flush();
@@ -186,14 +186,14 @@ test("reset on an output returns to its authored text", async () => {
 });
 
 test("works on textarea, select and output", async () => {
-  const textarea = hostElement("textarea", { implements: "modifiable" }) as HTMLTextAreaElement;
+  const textarea = hostElement("textarea", { modifiable: "" }) as HTMLTextAreaElement;
   textarea.textContent = "hello";
   document.body.appendChild(textarea);
   await flush();
   interact(textarea, "set", "bye");
   assert.equal(textarea.value, "bye");
 
-  const select = hostElement("select", { implements: "modifiable" }) as HTMLSelectElement;
+  const select = hostElement("select", { modifiable: "" }) as HTMLSelectElement;
   const option = document.createElement("option");
   option.value = "b";
   option.textContent = "bee";
@@ -203,7 +203,7 @@ test("works on textarea, select and output", async () => {
   interact(select, "set", "b");
   assert.equal(select.value, "b");
 
-  const output = hostElement("output", { implements: "modifiable" }) as HTMLOutputElement;
+  const output = hostElement("output", { modifiable: "" }) as HTMLOutputElement;
   document.body.appendChild(output);
   await flush();
   interact(output, "set", "6");
@@ -221,7 +221,7 @@ function numDep(id: string, value: string): HTMLInputElement {
 
 test("nothing recomputes on connect: an element with no on-load keeps its authored text", async () => {
   const total = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
   }) as HTMLOutputElement;
   total.textContent = "42";
   document.body.appendChild(total);
@@ -234,7 +234,7 @@ test("set evaluates an expression against #id references at fire time", async ()
   price.setAttribute("on-input", "#total.set(#price.value * #qty.value + 1)");
   const qty = numDep("qty", "3");
   const total = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     id: "total",
     "on-load": "this.set(#price.value * #qty.value + 1)",
   }) as HTMLOutputElement;
@@ -250,7 +250,7 @@ test("set evaluates an expression against #id references at fire time", async ()
 
 test("this.set(this.value * 2) reads the element's own number value", async () => {
   const self = hostElement("input", {
-    implements: "modifiable",
+    modifiable: "",
     type: "number",
     value: "21",
     "on-click": "this.set(this.value * 2)",
@@ -266,7 +266,7 @@ test("this.set(this.value * 2) reads the element's own number value", async () =
 
 test("set(expr) writes the derived value without dispatching a synthetic input event", async () => {
   const total = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-click": "this.set(1 + 1)",
   }) as HTMLOutputElement;
   document.body.appendChild(total);
@@ -284,11 +284,11 @@ test("set(sum('.amount')) adds matched elements and set(count('.amount')) counts
   root.innerHTML =
     '<input class="amount" type="number" value="2.5"><input class="amount" type="number" value="3.25">';
   const total = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(sum('.amount'))",
   }) as HTMLOutputElement;
   const tally = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(count('.amount'))",
   }) as HTMLOutputElement;
   document.body.append(root, total, tally);
@@ -302,7 +302,7 @@ test("expressions support parentheses, unary minus and min/max/floor/ceil/round"
   const a = numDep("a", "1");
   const b = numDep("b", "5");
   const out = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(min(#a.value, #b.value) + round(2.6) * floor(2.7) - (1 + 1))",
   }) as HTMLOutputElement;
   document.body.append(a, b, out);
@@ -311,7 +311,7 @@ test("expressions support parentheses, unary minus and min/max/floor/ceil/round"
   assert.equal(out.textContent, "5");
 
   const neg = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(-#a.value + 10)",
   }) as HTMLOutputElement;
   document.body.appendChild(neg);
@@ -322,7 +322,7 @@ test("expressions support parentheses, unary minus and min/max/floor/ceil/round"
 test("a malformed expression is a trigger parse error reported once, never at fire time", async (t) => {
   const error = t.mock.method(console, "error");
   const out = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(1 +)",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
@@ -346,7 +346,7 @@ test("a malformed expression is a trigger parse error reported once, never at fi
 test("a fire-time expression error fails the unit and leaves the element untouched", async (t) => {
   const error = t.mock.method(console, "error");
   const out = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(#ghost.value * 2)",
   }) as HTMLOutputElement;
   document.body.appendChild(out);
@@ -360,7 +360,7 @@ test("a fire-time expression error fails the unit and leaves the element untouch
 test("a division by zero is a fire-time error, not a fallback", async (t) => {
   const error = t.mock.method(console, "error");
   const out = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(1 / 0)",
   }) as HTMLOutputElement;
   document.body.appendChild(out);

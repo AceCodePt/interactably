@@ -8,6 +8,165 @@ import type { Attrs, El, EventSpec, Implementation, ImplementationDef, KW, Tag, 
 
 export type { Ctor, OptionalCtor, Sig, Tag, El, Slot, KW, ArgOf, Attrs, Implementation, ValidatedSigs, ImplementationDef } from "@behaviors/types.ts";
 
+const IMPLEMENTATION_NAME = /^[a-z][a-z0-9-]*$/;
+
+const RESERVED_IMPLEMENTATION_NAMES: ReadonlySet<string> = new Set([
+  "implements",
+  "implementations",
+  "intersect",
+]);
+
+const RESERVED_NAME_PREFIXES = ["on-", "aria-", "data-"] as const;
+
+export const NATIVE_HTML_ATTRIBUTES: ReadonlySet<string> = new Set([
+  "accept",
+  "accept-charset",
+  "accesskey",
+  "action",
+  "allow",
+  "allowfullscreen",
+  "alt",
+  "async",
+  "autocapitalize",
+  "autocomplete",
+  "autocorrect",
+  "autofocus",
+  "autoplay",
+  "border",
+  "capture",
+  "charset",
+  "checked",
+  "cite",
+  "class",
+  "cols",
+  "colspan",
+  "content",
+  "contenteditable",
+  "controls",
+  "coords",
+  "crossorigin",
+  "datetime",
+  "decoding",
+  "default",
+  "defer",
+  "dir",
+  "dirname",
+  "disabled",
+  "download",
+  "draggable",
+  "enctype",
+  "enterkeyhint",
+  "exportparts",
+  "fetchpriority",
+  "for",
+  "form",
+  "formaction",
+  "formenctype",
+  "formmethod",
+  "formnovalidate",
+  "formtarget",
+  "headers",
+  "height",
+  "hidden",
+  "high",
+  "href",
+  "hreflang",
+  "http-equiv",
+  "id",
+  "inert",
+  "inputmode",
+  "integrity",
+  "is",
+  "ismap",
+  "itemid",
+  "itemprop",
+  "itemref",
+  "itemscope",
+  "itemtype",
+  "kind",
+  "label",
+  "lang",
+  "list",
+  "loading",
+  "loop",
+  "low",
+  "max",
+  "maxlength",
+  "media",
+  "method",
+  "min",
+  "minlength",
+  "multiple",
+  "muted",
+  "name",
+  "nomodule",
+  "nonce",
+  "novalidate",
+  "open",
+  "optimum",
+  "part",
+  "pattern",
+  "placeholder",
+  "playsinline",
+  "popover",
+  "poster",
+  "preload",
+  "readonly",
+  "referrerpolicy",
+  "rel",
+  "required",
+  "reversed",
+  "role",
+  "rows",
+  "rowspan",
+  "sandbox",
+  "scope",
+  "selected",
+  "shape",
+  "size",
+  "sizes",
+  "slot",
+  "span",
+  "spellcheck",
+  "src",
+  "srcdoc",
+  "srclang",
+  "srcset",
+  "start",
+  "step",
+  "style",
+  "tabindex",
+  "target",
+  "title",
+  "translate",
+  "type",
+  "usemap",
+  "value",
+  "width",
+  "wrap",
+  "writingsuggestions",
+]);
+
+function validateImplementationName(name: string): void {
+  if (!IMPLEMENTATION_NAME.test(name)) {
+    throw new Error(
+      `[Interactable] implementation name "${name}" is not a valid attribute name; ` +
+        `expected lowercase [a-z][a-z0-9-]*`,
+    );
+  }
+  if (RESERVED_IMPLEMENTATION_NAMES.has(name)) {
+    throw new Error(`[Interactable] implementation name "${name}" collides with the reserved "${name}" attribute`);
+  }
+  for (const prefix of RESERVED_NAME_PREFIXES) {
+    if (name.startsWith(prefix)) {
+      throw new Error(`[Interactable] implementation name "${name}" collides with the reserved "${prefix}" prefix`);
+    }
+  }
+  if (NATIVE_HTML_ATTRIBUTES.has(name)) {
+    throw new Error(`[Interactable] implementation name "${name}" collides with the native HTML attribute "${name}"`);
+  }
+}
+
 export function defineImplementation<
   const T extends readonly Tag[] | undefined,
   const C extends Record<string, string> = {},
@@ -24,6 +183,7 @@ export function defineImplementation<
   },
   factory: (el: El<T>, attrs: Attrs<C, S>) => Implementation<V>,
 ): ImplementationDef<T, C, S, V> {
+  validateImplementationName(name);
   const events = decl.events ?? {};
   validateEvents(name, events);
   validateSlots(name, decl.config ?? {}, decl.state ?? {}, decl.verbs);

@@ -45,17 +45,17 @@
               <div class="demo">
                 <div class="row">
                   <label>Type
-                    <input id="typer" implements="modifiable dirtyable attributable prevent-default"
+                    <input id="typer" modifiable dirtyable attributable prevent-default
                            on-input="#mirror.debounce(300).set(this.value)"
                            on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                            on-clean="this.removeAttr('data-dirty')"
                            on-keydown(code:`Enter`)="#mirror.set(this.value)"
                            on-keydown(code:`Escape`)="this.clear()">
                   </label>
-                  <output id="mirror" implements="modifiable">&hellip;</output>
+                  <output id="mirror" modifiable>&hellip;</output>
                 </div>
                 <button id="tip-button" type="button" on-click="#tip.once().toggle()">Toggle tip (once)</button>
-                <section id="tip" implements="revealable" hidden>
+                <section id="tip" revealable hidden>
                   This sentence appears the first time the chain runs; the second click is a no-op.
                 </section>
               </div>
@@ -65,20 +65,20 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-grammar" on-click="#code-ex-grammar.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-grammar" on-click="#code-ex-grammar.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-grammar" implements="copyable" on-copy="#copy-code-ex-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="typer" implements="modifiable dirtyable attributable prevent-default"
+              <pre class="code" id="code-ex-grammar" copyable on-copy="#copy-code-ex-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="typer" modifiable dirtyable attributable prevent-default
            on-input="#mirror.debounce(300).set(this.value)"
            on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
            on-clean="this.removeAttr('data-dirty')"
            on-keydown(code:`Enter`)="#mirror.set(this.value)"
            on-keydown(code:`Escape`)="this.clear()"&gt;
-    &lt;output id="mirror" implements="modifiable"&gt;&hellip;&lt;/output&gt;
+    &lt;output id="mirror" modifiable&gt;&hellip;&lt;/output&gt;
 
     &lt;button on-click="#tip.once().toggle()"&gt;Toggle tip (once)&lt;/button&gt;
-    &lt;section id="tip" implements="revealable" hidden&gt;
+    &lt;section id="tip" revealable hidden&gt;
       This sentence appears the first time the chain runs; the second click is a no-op.
     &lt;/section&gt;</code></pre>
             </div>

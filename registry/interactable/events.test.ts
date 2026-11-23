@@ -37,11 +37,11 @@ test("common IDL-backed events are not in the legacy set", () => {
   assert.equal(LEGACY_EVENTS_WITHOUT_IDL.has("submit"), false);
 });
 
-test("isImplementationEvent reads the element's implements at call time", () => {
+test("isImplementationEvent reads the element's implementation attributes at call time", () => {
   const el = document.createElement("div");
   assert.equal(isImplementationEvent(el, "settled"), false);
 
-  el.setAttribute("implements", "eventful");
+  el.setAttribute("eventful", "");
   assert.equal(isImplementationEvent(el, "settled"), true);
   assert.equal(isImplementationEvent(el, "boom"), true);
   assert.equal(isImplementationEvent(el, "click"), false);
@@ -49,7 +49,8 @@ test("isImplementationEvent reads the element's implements at call time", () => 
 
 test("isImplementationEvent ignores unknown names and undeclared events", () => {
   const el = document.createElement("div");
-  el.setAttribute("implements", "ghost eventful");
+  el.setAttribute("ghost", "");
+el.setAttribute("eventful", "");
   assert.equal(isImplementationEvent(el, "settled"), true);
   assert.equal(isImplementationEvent(el, "nope"), false);
 });

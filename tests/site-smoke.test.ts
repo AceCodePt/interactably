@@ -14,6 +14,7 @@ import {
   installFakeResizeObserver,
   resetFakeResizeObserver,
 } from "@tests/resize-observer.ts";
+import { IMPLEMENTATION_NAME_SET, IMPLEMENTATION_NAMES } from "@tests/implementation-names.ts";
 
 const siteDir = new URL("../site/", import.meta.url);
 const examplesUrl = new URL("examples.html", siteDir);
@@ -85,26 +86,6 @@ function slugifyHeading(text: string): string {
     .trim()
     .replace(/\s+/g, "-");
 }
-
-const IMPLEMENTATION_NAMES = [
-  "attributable",
-  "auto-grow",
-  "classable",
-  "copyable",
-  "dirtyable",
-  "focusable",
-  "formattable",
-  "logger",
-  "modifiable",
-  "no-propagate",
-  "pastable",
-  "prevent-default",
-  "renderable",
-  "requestable",
-  "revealable",
-  "storable",
-  "validatable",
-];
 
 function exampleHtml(name: string): string {
   return readFileSync(fileURLToPath(new URL(`${name}.html`, examplesDir)), "utf8");
@@ -526,13 +507,13 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(fetchCalls.length, 3, "after the quiet period the fragment is fetched");
   assert.equal(cityList.hidden, true, "the listbox stays hidden until the response lands");
   const options = [
-    `<li role="option"><button id="sug-1" implements="focusable prevent-default" on-click="#city.set('Lisbon'); #city-list.show(false)" on-keydown(code:\`ArrowDown\`)="#sug-2.focus()" on-keydown(code:\`ArrowUp\`)="#city.focus()">Lisbon</button></li>`,
-    `<li role="option"><button id="sug-2" implements="focusable prevent-default" on-click="#city.set('London'); #city-list.show(false)" on-keydown(code:\`ArrowDown\`)="#city.focus()" on-keydown(code:\`ArrowUp\`)="#sug-1.focus()">London</button></li>`,
+    `<li role="option"><button id="sug-1" focusable prevent-default on-click="#city.set('Lisbon'); #city-list.show(false)" on-keydown(code:\`ArrowDown\`)="#sug-2.focus()" on-keydown(code:\`ArrowUp\`)="#city.focus()">Lisbon</button></li>`,
+    `<li role="option"><button id="sug-2" focusable prevent-default on-click="#city.set('London'); #city-list.show(false)" on-keydown(code:\`ArrowDown\`)="#city.focus()" on-keydown(code:\`ArrowUp\`)="#sug-1.focus()">London</button></li>`,
   ];
   fetchCalls[2]!.resolve(fakeResponse(true, 200, options.join("")));
   await flush();
   assert.equal(cityList.hidden, false, "on-response reveals the populated listbox");
-  assert.equal(byId("sug-1").hasAttribute("implements"), true, "the swapped-in option attaches its implementations");
+  assert.equal(byId("sug-1").hasAttribute("focusable"), true, "the swapped-in option attaches its implementations");
   city.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", code: "ArrowDown", cancelable: true }));
   await flush();
   assert.equal(document.activeElement, byId("sug-1"), "arrowdown roves focus to the first option");
@@ -1004,8 +985,8 @@ test("site: the multi-step form gates, explains and closes every later step", as
   };
 
   assert.equal(document.querySelectorAll("input[type=radio][name=step]").length, 3, "the stepper is a three-radio group");
-  assert.equal(document.querySelectorAll('form[implements~="validatable"]').length, 3, "each step is a validatable form");
-  assert.equal(document.querySelector("fieldset[implements~=validatable]"), null, "the stepper fieldset is not a validity gate");
+  assert.equal(document.querySelectorAll("form[validatable]").length, 3, "each step is a validatable form");
+  assert.equal(document.querySelector("fieldset[validatable]"), null, "the stepper fieldset is not a validity gate");
   assert.equal(document.querySelectorAll("[on-valid], [on-invalid]").length, 1, "the aggressive pair is used on one live indicator");
   assert.equal(step2Choice.disabled, true, "step 2 starts natively disabled");
   assert.equal(step3Choice.disabled, true, "step 3 starts natively disabled");
@@ -1140,7 +1121,7 @@ test("site: docs.html sidebar lights each section's own link", async (t) => {
 
   const toc = byId("toc");
   assert.equal(toc.tagName.toLowerCase(), "nav", "the sidebar nav has id toc");
-  assert.equal(toc.hasAttribute("implements"), false, "the nav itself is not an implementation");
+  assert.equal(IMPLEMENTATION_NAMES.every((name) => !toc.hasAttribute(name)), true, "the nav itself is not an implementation");
 
   const section = byId("sec-quick-start");
   const link = byId("toc-quick-start");
@@ -1374,9 +1355,9 @@ test("site: examples.html lists every example page, and each page is standalone"
 
 test("site: every example declares exactly the implementations its markup uses", () => {
   const collect = (root: ParentNode, names: Set<string>): void => {
-    for (const el of root.querySelectorAll("[implements]")) {
-      for (const name of (el.getAttribute("implements") ?? "").split(/\s+/)) {
-        if (name !== "") names.add(name);
+    for (const el of root.querySelectorAll("*")) {
+      for (const attribute of el.getAttributeNames()) {
+        if (IMPLEMENTATION_NAME_SET.has(attribute)) names.add(attribute);
       }
     }
     for (const template of root.querySelectorAll("template")) collect(template.content, names);

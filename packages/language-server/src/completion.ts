@@ -7,6 +7,7 @@ import type { HtmlElement } from "./html.ts";
 import { decodeHtml } from "./offsets.ts";
 import { NATIVE_DOM_EVENTS } from "./native-events.ts";
 import type { DocumentAnalysis } from "./analysis.ts";
+import { presenceAttributeNames } from "./analysis.ts";
 
 type Offset = number;
 
@@ -174,7 +175,7 @@ function phraseCompletions(
 }
 
 function verbCompletions(analysis: DocumentAnalysis, receiver: HtmlElement): CompletionItem[] {
-  const names = implementationNames(receiver);
+  const names = implementationNames(analysis, receiver);
   const items = new Map<string, CompletionItem>();
   for (const name of names) {
     const info = analysis.vocabulary.byName.get(name);
@@ -194,10 +195,15 @@ function verbCompletions(analysis: DocumentAnalysis, receiver: HtmlElement): Com
   return [...items.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function implementationNames(element: HtmlElement): string[] {
+function implementationNames(analysis: DocumentAnalysis, element: HtmlElement): string[] {
+  const names = new Set<string>(presenceAttributeNames(element, analysis.vocabulary));
   const value = attribute(element, "implements")?.value ?? null;
-  if (value === null) return [];
-  return decodeAttributeValue(value).split(/\s+/).filter((name) => name !== "");
+  if (value !== null) {
+    for (const name of decodeAttributeValue(value).split(/\s+/)) {
+      if (name !== "") names.add(name);
+    }
+  }
+  return [...names];
 }
 
 function insideString(prefix: string): boolean {

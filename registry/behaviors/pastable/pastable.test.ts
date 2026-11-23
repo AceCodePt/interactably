@@ -41,7 +41,7 @@ beforeEach(() => {
 
 function pastableElement(tag: "input" | "textarea"): HTMLInputElement | HTMLTextAreaElement {
   const el = document.createElement(tag);
-  el.setAttribute("implements", "pastable");
+  el.setAttribute("pastable", "");
   return el as HTMLInputElement | HTMLTextAreaElement;
 }
 
@@ -101,7 +101,7 @@ test("for one paste the sequence is on-input phrase, then implementation onInput
   const dispose = start();
   const recv = document.createElement("div");
   recv.id = "recv";
-  recv.setAttribute("implements", "spy");
+  recv.setAttribute("spy", "");
   const el = pastableElement("input");
   el.setAttribute("on-input", "#recv.mark('input')");
   el.setAttribute("on-pasted", "#recv.mark('pasted')");
@@ -116,7 +116,7 @@ test("for one paste the sequence is on-input phrase, then implementation onInput
 test("on-pasted cleaning leaves digits only after a paste", async () => {
   const dispose = start();
   const el = pastableElement("input");
-  el.setAttribute("implements", "pastable modifiable");
+  el.setAttribute("pastable", ""); el.setAttribute("modifiable", "");
   el.setAttribute("on-pasted", "this.set(replace(this.value, '\\D', ''))");
   document.body.appendChild(el);
   await flush();
@@ -130,7 +130,7 @@ test("on-pasted cleaning leaves digits only after a paste", async () => {
 test("on-input masking and on-pasted cleaning coexist, each for its own reason", async () => {
   const dispose = start();
   const el = pastableElement("input");
-  el.setAttribute("implements", "pastable modifiable");
+  el.setAttribute("pastable", ""); el.setAttribute("modifiable", "");
   el.setAttribute("on-input", "this.set(replace(this.value, '[a-z]', ''))");
   el.setAttribute("on-pasted", "this.set(replace(this.value, '[^0-9]', ''))");
   document.body.appendChild(el);
@@ -149,7 +149,7 @@ test("on-input masking and on-pasted cleaning coexist, each for its own reason",
 test("on-pasted runs after on-input for the same paste; if both write the value, on-pasted wins", async () => {
   const dispose = start();
   const el = pastableElement("input");
-  el.setAttribute("implements", "pastable modifiable");
+  el.setAttribute("pastable", ""); el.setAttribute("modifiable", "");
   const order: string[] = [];
   el.addEventListener("pasted", () => order.push("pasted-event"));
   el.setAttribute("on-input", "this.set(replace(this.value, '[a-z]', ''))");

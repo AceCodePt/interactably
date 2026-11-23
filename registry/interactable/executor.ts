@@ -219,7 +219,7 @@ function walkUnit(state: WalkState, unit: Unit): ChainResult {
   if (!isAttached(receiver)) {
     logOnce(
       source,
-      `${describeRef(unit.ref)} is not attached: it has no implements or on-* attribute, or start() has not run`,
+      `${describeRef(unit.ref)} is not attached: it has no implementation or on-* attribute, or start() has not run`,
     );
     return { outcome: "failed" };
   }

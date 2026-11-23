@@ -174,7 +174,7 @@ function dispatchInteraction(
 test("a trigger binds one passive listener per on-* attribute and routes to the receiver", async (t) => {
   const dispose = start();
   const trigger = hostElement("button", { "on-click": "#recv.go()" });
-  const receiver = hostElement("div", { id: "recv", implements: "alpha" });
+  const receiver = hostElement("div", { id: "recv", alpha: "" });
   document.body.append(trigger, receiver);
   await flush();
 
@@ -187,7 +187,7 @@ test("a trigger binds one passive listener per on-* attribute and routes to the 
 test("the on-* value is read at fire time, so edits take effect without an observer", async () => {
   const dispose = start();
   const trigger = hostElement("button", { "on-click": "#recv2.go()" });
-  const receiver = hostElement("div", { id: "recv2", implements: "alpha" });
+  const receiver = hostElement("div", { id: "recv2", alpha: "" });
   document.body.append(trigger, receiver);
   await flush();
 
@@ -201,7 +201,7 @@ test("the on-* value is read at fire time, so edits take effect without an obser
 test("listeners are cleaned up on disconnect and re-bound on reconnect", async () => {
   const dispose = start();
   const trigger = hostElement("button", { "on-click": "#recv3.go()" });
-  const receiver = hostElement("div", { id: "recv3", implements: "alpha" });
+  const receiver = hostElement("div", { id: "recv3", alpha: "" });
   document.body.append(trigger, receiver);
   await flush();
   calls.length = 0;
@@ -241,7 +241,7 @@ test("an on-<type> the element has no event for warns once, including custom eve
 test("an unknown on-* attribute warns naming the element and attribute but the element still works", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const receiver = hostElement("div", { id: "recv-d2", implements: "alpha" });
+  const receiver = hostElement("div", { id: "recv-d2", alpha: "" });
   const div = hostElement("div", {
     id: "half",
     "on-intersect-half": "#recv-d2.go()",
@@ -282,7 +282,7 @@ test("prevent-default silences the native-action warning", async (t) => {
   const warn = t.mock.method(console, "warn");
   const form = hostElement("form", {
     "on-submit": "#recv.go()",
-    implements: "prevent-default",
+    "prevent-default": "",
   });
   document.body.appendChild(form);
   await flush();
@@ -312,9 +312,9 @@ test("a keyed button on-keydown/on-keyup does not warn; an unkeyed one does", as
   dispose();
 });
 
-test("implements routing picks the first implementation in order that declares the verb", async () => {
+test("presence routing picks the first implementation in order that declares the verb", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "route", implements: "alpha beta" });
+  const receiver = hostElement("div", { id: "route", alpha: "", beta: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -327,9 +327,9 @@ test("implements routing picks the first implementation in order that declares t
   dispose();
 });
 
-test("implements order decides shared verbs", async () => {
+test("attribute order decides shared verbs", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "route2", implements: "beta alpha" });
+  const receiver = hostElement("div", { id: "route2", beta: "", alpha: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -338,9 +338,9 @@ test("implements order decides shared verbs", async () => {
   dispose();
 });
 
-test("implements order decides shared verbs when an earlier name registers after attach", async () => {
+test("attribute order decides shared verbs when an earlier name registers after attach", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "route3", implements: "late-shared beta" });
+  const receiver = hostElement("div", { id: "route3", "late-shared": "", beta: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -364,7 +364,7 @@ test("a verb no implementation owns leaves handled false for the executor to rep
   const dispose = start();
   const error = t.mock.method(console, "error");
   const trigger = hostElement("button", { "on-click": "#recv4.nope()" });
-  const receiver = hostElement("div", { id: "recv4", implements: "alpha" });
+  const receiver = hostElement("div", { id: "recv4", alpha: "" });
   document.body.append(trigger, receiver);
   await flush();
 
@@ -373,16 +373,16 @@ test("a verb no implementation owns leaves handled false for the executor to rep
   dispose();
 });
 
-test("a tag mismatch is reported and that implements name is skipped", async (t) => {
+test("a tag mismatch is reported and that implementation attribute is skipped", async (t) => {
   const dispose = start();
   const error = t.mock.method(console, "error");
-  const receiver = hostElement("div", { id: "mismatch", implements: "inputonly" });
+  const receiver = hostElement("div", { id: "mismatch", inputonly: "" });
   document.body.appendChild(receiver);
   await flush();
 
   assert.ok(
     error.mock.calls.some((call) =>
-      String(call.arguments[0]).includes('inputonly attaches to <input>; skipped on <div#mismatch implements="inputonly">'),
+      String(call.arguments[0]).includes('inputonly attaches to <input>; skipped on <div#mismatch inputonly>'),
     ),
   );
   const event = dispatchInteraction(receiver, "focusIt");
@@ -392,7 +392,7 @@ test("a tag mismatch is reported and that implements name is skipped", async (t)
 
 test("an interaction is handled once the element is attached", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "late", implements: "alpha" });
+  const receiver = hostElement("div", { id: "late", alpha: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -410,7 +410,7 @@ test("an interaction is handled once the element is attached", async () => {
 
 test("handled, result and error channels", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "chan", implements: "alpha" });
+  const receiver = hostElement("div", { id: "chan", alpha: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -436,7 +436,7 @@ test("handled, result and error channels", async () => {
 test("a verb that returns a promise warns that chains are synchronous", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const receiver = hostElement("div", { id: "promise", implements: "alpha" });
+  const receiver = hostElement("div", { id: "promise", alpha: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -448,7 +448,7 @@ test("a verb that returns a promise warns that chains are synchronous", async (t
 
 test("config attributes reach the implementation through attrs, typed", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "lvl", implements: "alpha", "alpha-level": "2" });
+  const receiver = hostElement("div", { id: "lvl", alpha: "", "alpha-level": "2" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -459,7 +459,7 @@ test("config attributes reach the implementation through attrs, typed", async ()
 
 test("implementation on* methods are wired as listeners on the element", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "onstar", implements: "alpha" });
+  const receiver = hostElement("div", { id: "onstar", alpha: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -470,7 +470,7 @@ test("implementation on* methods are wired as listeners on the element", async (
 
 test("lifecycle callbacks are forwarded and state writes render through attributeChangedCallback", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "stateful", implements: "stateful" });
+  const receiver = hostElement("div", { id: "stateful", stateful: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -498,7 +498,7 @@ test("lifecycle callbacks are forwarded and state writes render through attribut
 
 test("a DOM move is a no-op: instances survive and on* handlers stay wired", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "moved", implements: "stateful alpha" });
+  const receiver = hostElement("div", { id: "moved", stateful: "", alpha: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -530,7 +530,7 @@ test("a config attribute registered after the host was defined still reaches att
       lateCalls.push(name);
     },
   }));
-  const host = hostElement("div", { implements: "late-config", "late-config-events": "a" });
+  const host = hostElement("div", { "late-config": "", "late-config-events": "a" });
   document.body.appendChild(host);
   await flush();
 
@@ -547,7 +547,7 @@ test("an implementation that throws at attach is logged and the element still ro
   defineImplementation("boom-attach", { verbs: { go: "undefined" } }, () => {
     throw new Error("boom");
   });
-  const receiver = hostElement("div", { id: "boom", implements: "boom-attach alpha" });
+  const receiver = hostElement("div", { id: "boom", "boom-attach": "", alpha: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -562,14 +562,12 @@ test("an implementation that throws at attach is logged and the element still ro
 test("an implementation registered after the element attached attaches without a reconnect", async () => {
   const dispose = start();
   const gammaCalls: string[] = [];
-  const host = hostElement("div", { id: "live", implements: "gamma alpha" });
+  const host = hostElement("div", { id: "live", gamma: "", alpha: "" });
   document.body.appendChild(host);
   await flush();
 
   const missing = dispatchInteraction(host, "ping");
-  assert.equal(missing.handled, true);
-  assert.ok(missing.error instanceof Error, "a dispatch while the implementation is pending reports an error");
-  assert.ok(String(missing.error!.message).includes("gamma"), "the error names the missing implementation");
+  assert.equal(missing.handled, false, "no implementation owns ping until gamma registers");
 
   defineImplementation("gamma", { verbs: { ping: "undefined" } }, () => ({
     ping: () => {
@@ -589,7 +587,7 @@ test("an implementation registered after the element attached attaches without a
   dispose();
 });
 
-test("a name that registers before the turn settles is not reported as missing", async () => {
+test("an element carrying an attribute whose implementation registers later attaches then", async () => {
   const dispose = start();
   const errors: string[] = [];
   const original = console.error;
@@ -597,9 +595,11 @@ test("a name that registers before the turn settles is not reported as missing",
     errors.push(args.map(String).join(" "));
     original(...args);
   };
+  const host = hostElement("div", { id: "quiet", "quiet-late": "" });
+  document.body.appendChild(host);
+  await flush();
+  assert.equal(isAttached(host), false, "an unknown bare attribute is ignored and is not participation");
   try {
-    const host = hostElement("div", { id: "quiet", implements: "quiet-late" });
-    document.body.appendChild(host);
     defineImplementation("quiet-late", { verbs: { ping: "undefined" } }, () => ({
       ping: () => undefined,
     }));
@@ -607,15 +607,17 @@ test("a name that registers before the turn settles is not reported as missing",
     console.error = original;
   }
   await flush();
+  assert.equal(isAttached(host), true, "the late registration attaches the element");
+  assert.ok(getAttachment(host)?.implementations.has("quiet-late"), "the implementation is attached");
   assert.deepEqual(
     errors.filter((message) => message.includes("quiet-late")),
     [],
-    "no missing-name report for an implementation that registered before the turn settles",
+    "no missing-name report for an unknown bare attribute",
   );
   dispose();
 });
 
-test("a name still missing when the turn settles is reported once", async () => {
+test("an unknown bare attribute is ignored: nothing attaches and nothing is reported", async () => {
   const dispose = start();
   const errors: string[] = [];
   const original = console.error;
@@ -623,20 +625,24 @@ test("a name still missing when the turn settles is reported once", async () => 
     errors.push(args.map(String).join(" "));
     original(...args);
   };
+  let first: Element;
+  let second: Element;
   try {
-    document.body.appendChild(hostElement("div", { id: "loud", implements: "never-registers" }));
-    document.body.appendChild(hostElement("div", { id: "loud2", implements: "never-registers" }));
+    first = document.body.appendChild(hostElement("div", { id: "loud", "never-registers": "" }));
+    second = document.body.appendChild(hostElement("div", { id: "loud2", "never-registers": "" }));
     await flush();
     await flush();
   } finally {
     console.error = original;
   }
   const reports = errors.filter((message) => message.includes("never-registers"));
-  assert.equal(reports.length, 2, "one report per element with the missing name");
+  assert.deepEqual(reports, [], "unknown bare attributes are never reported");
+  assert.equal(isAttached(first!), false, "the first element is not a participant");
+  assert.equal(isAttached(second!), false, "the second element is not a participant");
   dispose();
 });
 
-test("on-intersect needs no implements and never warns about a missing event", (t) => {
+test("on-intersect needs no implementation attribute and never warns about a missing event", (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
   const trigger = hostElement("section", { "on-intersect(state:`enter`)": "#recv.go()" });
@@ -648,7 +654,7 @@ test("on-intersect needs no implements and never warns about a missing event", (
 
 test("an intersect crossing runs only the phrases whose margin matches", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "spy", implements: "alpha" });
+  const receiver = hostElement("div", { id: "spy", alpha: "" });
   const trigger = hostElement("section", {
     "on-intersect(state:`enter`, block-start:`0px`)": "#spy.go()",
     "on-intersect(state:`enter`, block-start:`50px`)": "#spy.go()",
@@ -670,7 +676,7 @@ test("an intersect crossing runs only the phrases whose margin matches", async (
 
 test("enter fires on entering and leave on leaving from one observer", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "both", implements: "alpha" });
+  const receiver = hostElement("div", { id: "both", alpha: "" });
   const trigger = hostElement("section", {
     "on-intersect(state:`enter`)": "#both.go()",
     "on-intersect(state:`leave`)": "#both.go()",
@@ -691,7 +697,7 @@ test("enter fires on entering and leave on leaving from one observer", async () 
 
 test("once() is the only filter for intersect crossings", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "once", implements: "alpha" });
+  const receiver = hostElement("div", { id: "once", alpha: "" });
   const trigger = hostElement("section", { "on-intersect(state:`enter`)": "#once.once().go()" });
   document.body.append(trigger, receiver);
   await flush();
@@ -732,7 +738,7 @@ test("one registration refreshes each attached element once and skips detached o
   const refreshed: string[] = [];
   const hosts: Element[] = [];
   for (let i = 0; i < 50; i++) {
-    const host = hostElement("div", { implements: "perf-impl", id: `perf-${i}` });
+    const host = hostElement("div", { "perf-impl": "", alpha: "", id: `perf-${i}` });
     document.body.appendChild(host);
     hosts.push(host);
   }
@@ -766,7 +772,7 @@ test("a modifiable attached with its #id dependency resolves the expression", as
   const dispose = start();
   const output = hostElement("output", {
     id: "sum",
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(#a.value + 1)",
   });
   document.body.appendChild(output);
@@ -784,7 +790,7 @@ test("a modifiable attached with its #id dependency resolves the expression", as
 
 test("an element removed before its attach runs nothing", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "pending", implements: "stateful" });
+  const receiver = hostElement("div", { id: "pending", stateful: "" });
   document.body.appendChild(receiver);
   receiver.remove();
   await flush();
@@ -794,7 +800,7 @@ test("an element removed before its attach runs nothing", async () => {
 
 test("connect-disconnect-reconnect in one task runs connectedCallback exactly once", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "reconnect", implements: "stateful" });
+  const receiver = hostElement("div", { id: "reconnect", stateful: "" });
   document.body.appendChild(receiver);
   receiver.remove();
   document.body.appendChild(receiver);
@@ -805,7 +811,7 @@ test("connect-disconnect-reconnect in one task runs connectedCallback exactly on
 
 test("an element connected when the document is ready runs connectedCallback after attach", async () => {
   const dispose = start();
-  const receiver = hostElement("div", { id: "sync", implements: "stateful" });
+  const receiver = hostElement("div", { id: "sync", stateful: "" });
   document.body.appendChild(receiver);
   assert.ok(!calls.includes("stateful.connected"), "not attached synchronously after insertion");
   await flush();

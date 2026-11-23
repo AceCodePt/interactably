@@ -39,16 +39,25 @@ test("registration, lookup, and observed attributes", () => {
   assert.ok(allObservedAttributes().includes("registry-demo-open"));
 });
 
-test("registration re-runs the ensure pass on the attached set and defines no custom element", async () => {
+test("registration attaches elements that already carry the new attribute and defines no custom element", async () => {
   const { start } = await import("@interactable/start.ts");
-  const { isAttached } = await import("@interactable/attachment.ts");
+  const { isAttached, getAttachment } = await import("@interactable/attachment.ts");
   const dispose = start();
   const el = document.createElement("div");
-  el.setAttribute("implements", "registry-live");
+  el.setAttribute("registry-live", "");
   document.body.appendChild(el);
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.equal(isAttached(el), true, "a participant attaches even before its implementation is registered");
+  assert.equal(isAttached(el), false, "an unregistered bare attribute is not participation");
   assert.equal(getImplementationDef("registry-live"), undefined, "the name is genuinely unregistered");
+
+  defineImplementation(
+    "registry-live",
+    { tags: ["div"], verbs: { ping: "undefined" } },
+    () => ({ ping: () => undefined }),
+  );
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(isAttached(el), true, "registration attaches an element that already carries its attribute");
+  assert.ok(getAttachment(el)?.implementations.has("registry-live"), "the implementation attached");
 
   defineImplementation(
     "registry-late",
@@ -56,10 +65,9 @@ test("registration re-runs the ensure pass on the attached set and defines no cu
     () => ({ ping: () => undefined }),
   );
   const late = document.createElement("div");
-  late.setAttribute("implements", "registry-late");
+  late.setAttribute("registry-late", "");
   document.body.appendChild(late);
   await new Promise((resolve) => setTimeout(resolve, 0));
-  const { getAttachment } = await import("@interactable/attachment.ts");
   assert.ok(getAttachment(late)?.implementations.has("registry-late"), "a later registration attaches to an element that was pending");
   assert.equal(customElements.get("interactable-div"), undefined, "registration defines no custom element");
   dispose();
@@ -97,7 +105,7 @@ test("a definition cannot declare the same key as both config and state", () => 
   );
 });
 
-test("throws when two same-tag definitions declare the same event", () => {
+test("throws when two definitions declare the same event", () => {
   defineImplementation(
     "registry-event-a",
     { tags: ["div"], events: { settled: {} }, verbs: {} },
@@ -107,34 +115,36 @@ test("throws when two same-tag definitions declare the same event", () => {
     () =>
       defineImplementation(
         "registry-event-b",
-{ tags: ["div"], events: { settled: {} }, verbs: {} },
+        { tags: ["div"], events: { settled: {} }, verbs: {} },
         () => ({}),
       ),
     /event "settled" is registered by both "registry-event-a" and "registry-event-b"/,
   );
 });
 
-test("a tag-less definition collides with any same-event definition; disjoint tags do not", () => {
+test("event names are unique across all implementations, even with disjoint tags", () => {
   defineImplementation(
     "registry-event-c",
-    { tags: ["section"], events: { settled: {} }, verbs: {} },
+    { tags: ["section"], events: { merged: {} }, verbs: {} },
     () => ({}),
   );
   assert.throws(
     () =>
       defineImplementation(
         "registry-event-d",
-        { events: { settled: {} }, verbs: {} },
+        { events: { merged: {} }, verbs: {} },
         () => ({}),
       ),
-    /event "settled" is registered by both/,
+    /event "merged" is registered by both/,
   );
-  assert.doesNotThrow(() =>
-    defineImplementation(
-      "registry-event-e",
-      { tags: ["input"], events: { settled: {} }, verbs: {} },
-      () => ({}),
-    ),
+  assert.throws(
+    () =>
+      defineImplementation(
+        "registry-event-e",
+        { tags: ["input"], events: { merged: {} }, verbs: {} },
+        () => ({}),
+      ),
+    /event "merged" is registered by both/,
   );
   assert.doesNotThrow(() =>
     defineImplementation(

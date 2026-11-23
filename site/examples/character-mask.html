@@ -44,7 +44,7 @@
 
               <div class="demo">
                 <label>Phone
-                  <input id="phone" implements="modifiable pastable attributable dirtyable"
+                  <input id="phone" modifiable pastable attributable dirtyable
                          type="text" inputmode="numeric" placeholder="Digits only &mdash; letters get stripped"
                          on-input="this.set(replace(this.value, '[^0-9]', ''))"
                          on-pasted="this.set(replace(this.value, '[^0-9]', ''))"
@@ -59,12 +59,12 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-mask" on-click="#code-ex-mask.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-mask" on-click="#code-ex-mask.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-mask" implements="copyable" on-copy="#copy-code-ex-mask.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;label&gt;Phone
-      &lt;input id="phone" implements="modifiable pastable attributable dirtyable"
+              <pre class="code" id="code-ex-mask" copyable on-copy="#copy-code-ex-mask.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;label&gt;Phone
+      &lt;input id="phone" modifiable pastable attributable dirtyable
              type="text" inputmode="numeric" placeholder="Digits only"
              on-input="this.set(replace(this.value, '[^0-9]', ''))"
              on-pasted="this.set(replace(this.value, '[^0-9]', ''))"

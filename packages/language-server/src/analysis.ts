@@ -26,6 +26,17 @@ export function implementationNamesOf(element: HtmlElement): string[] {
   return value.value.split(/\s+/).filter((piece) => piece !== "");
 }
 
+export function presenceAttributeNames(
+  element: HtmlElement,
+  vocabulary: Vocabulary,
+): string[] {
+  const names: string[] = [];
+  for (const candidate of element.attributes) {
+    if (vocabulary.byName.has(candidate.name)) names.push(candidate.name);
+  }
+  return names;
+}
+
 export function analyze(text: string, vocabulary: Vocabulary): DocumentAnalysis {
   const model = parseHtml(text);
   const document = TextDocument.create("file:///interactably.html", "html", 0, text);
@@ -41,6 +52,7 @@ export function analyze(text: string, vocabulary: Vocabulary): DocumentAnalysis 
   for (const name of declarations) if (vocabulary.byName.has(name)) referencedBuiltins.add(name);
   for (const element of model.elements) {
     if (isScriptElement(element)) continue;
+    for (const name of presenceAttributeNames(element, vocabulary)) referencedBuiltins.add(name);
     for (const name of implementationNamesOf(element)) {
       if (vocabulary.byName.has(name)) referencedBuiltins.add(name);
     }

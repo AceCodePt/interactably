@@ -90,7 +90,7 @@ function interact(
 }
 
 test("<details>: show()/show(true)/show(false)/toggle() write and read el.open", async () => {
-  const details = hostElement("details", { implements: "revealable" }) as HTMLDetailsElement;
+  const details = hostElement("details", { revealable: "" }) as HTMLDetailsElement;
   document.body.appendChild(details);
   await flush();
 
@@ -114,7 +114,7 @@ test("<details>: show()/show(true)/show(false)/toggle() write and read el.open",
 });
 
 test("<dialog>: show()/show(false)/toggle() via showModal, and show() when revealable-modal=false", async () => {
-  const dialog = hostElement("dialog", { implements: "revealable" }) as HTMLDialogElement;
+  const dialog = hostElement("dialog", { revealable: "" }) as HTMLDialogElement;
   document.body.appendChild(dialog);
   await flush();
 
@@ -134,7 +134,7 @@ test("<dialog>: show()/show(false)/toggle() via showModal, and show() when revea
   assert.equal(dialog.open, false);
 
   dialogCalls.length = 0;
-  const modal = hostElement("dialog", { implements: "revealable", "revealable-modal": "false" }) as HTMLDialogElement;
+  const modal = hostElement("dialog", { revealable: "", "revealable-modal": "false" }) as HTMLDialogElement;
   document.body.appendChild(modal);
   await flush();
   interact(modal, "show");
@@ -143,7 +143,7 @@ test("<dialog>: show()/show(false)/toggle() via showModal, and show() when revea
 });
 
 test("a dialog that is already open is not re-shown", async () => {
-  const dialog = hostElement("dialog", { implements: "revealable" }) as HTMLDialogElement;
+  const dialog = hostElement("dialog", { revealable: "" }) as HTMLDialogElement;
   document.body.appendChild(dialog);
   await flush();
 
@@ -155,7 +155,7 @@ test("a dialog that is already open is not re-shown", async () => {
 });
 
 test("[popover]: show/show(false)/toggle use showPopover and read :popover-open", async () => {
-  const el = hostElement("div", { implements: "revealable", popover: "" });
+  const el = hostElement("div", { revealable: "", popover: "" });
   document.body.appendChild(el);
   await flush();
 
@@ -174,7 +174,7 @@ test("[popover]: show/show(false)/toggle use showPopover and read :popover-open"
 });
 
 test("a plain element falls back to revealable-open and renders hidden from it", async () => {
-  const panel = hostElement("div", { implements: "revealable", hidden: "" });
+  const panel = hostElement("div", { revealable: "", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -199,20 +199,20 @@ test("a plain element falls back to revealable-open and renders hidden from it",
 });
 
 test("authored revealable-open renders at connect", async () => {
-  const open = hostElement("div", { implements: "revealable", "revealable-open": "true" });
+  const open = hostElement("div", { revealable: "", "revealable-open": "true" });
   document.body.appendChild(open);
   await flush();
   assert.equal(open.hidden, false);
   assert.equal(open.getAttribute("revealable-open"), "true", "connect reads revealable-open; it does not rewrite or remove it");
 
-  const closed = hostElement("div", { implements: "revealable" });
+  const closed = hostElement("div", { revealable: "" });
   document.body.appendChild(closed);
   await flush();
   assert.equal(closed.hidden, true);
 });
 
 test("ARIA sync wires up a bare trigger and sets aria-expanded on every controller", async () => {
-  const panel = hostElement("section", { implements: "revealable", id: "panel", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "panel", hidden: "" });
   const bare = document.createElement("button");
   const declared = document.createElement("button");
   declared.setAttribute("aria-controls", "panel");
@@ -230,8 +230,8 @@ test("ARIA sync wires up a bare trigger and sets aria-expanded on every controll
 });
 
 test("a trigger of one panel is not rewritten when it triggers another panel", async () => {
-  const auto = hostElement("section", { implements: "revealable", id: "tab-auto", hidden: "" });
-  const is = hostElement("section", { implements: "revealable", id: "tab-is", hidden: "" });
+  const auto = hostElement("section", { revealable: "", id: "tab-auto", hidden: "" });
+  const is = hostElement("section", { revealable: "", id: "tab-is", hidden: "" });
   const tabA = document.createElement("button");
   tabA.setAttribute("aria-controls", "tab-auto");
   const tabB = document.createElement("button");
@@ -265,7 +265,7 @@ test("a trigger of one panel is not rewritten when it triggers another panel", a
 });
 
 test("no ARIA sync when the element triggers itself", async () => {
-  const panel = hostElement("div", { implements: "revealable", id: "self", hidden: "" });
+  const panel = hostElement("div", { revealable: "", id: "self", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -277,7 +277,7 @@ test("no ARIA sync when the element triggers itself", async () => {
 test("wiring: a button controlling #p gets aria-controls and aria-expanded when #p connects", async () => {
   const button = hostElement("button", { "on-click": "#p.show()" });
   document.body.appendChild(button);
-  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -288,7 +288,7 @@ test("wiring: a button controlling #p gets aria-controls and aria-expanded when 
 test("wiring: a radio gets aria-controls but no aria-expanded", async () => {
   const input = hostElement("input", { type: "radio", name: "g", "on-change": "#p.show()" });
   document.body.appendChild(input);
-  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -300,7 +300,7 @@ test("wiring: hosts whose role cannot be expanded get aria-controls but no aria-
   const age = hostElement("input", { type: "number", "on-change": "#p.show()" });
   const signup = hostElement("form", { "on-submit": "#p.show()" });
   document.body.append(age, signup);
-  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -313,7 +313,7 @@ test("wiring: hosts whose role cannot be expanded get aria-controls but no aria-
 test("wiring: a host controlling another panel is not wired", async () => {
   const button = hostElement("button", { "on-click": "#px.show()" });
   document.body.appendChild(button);
-  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -324,7 +324,7 @@ test("wiring: a host controlling another panel is not wired", async () => {
 test("wiring: existing aria-controls tokens are preserved", async () => {
   const button = hostElement("button", { "aria-controls": "other", "on-click": "#p.show()" });
   document.body.appendChild(button);
-  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -334,7 +334,7 @@ test("wiring: existing aria-controls tokens are preserved", async () => {
 test("wiring: a #p.show(false)-only host is not wired", async () => {
   const button = hostElement("button", { "on-click": "#p.show(false)" });
   document.body.appendChild(button);
-  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -345,8 +345,8 @@ test("wiring: a #p.show(false)-only host is not wired", async () => {
 test("wiring: a mixed #a.show(); #b.show(false) host wires only a", async () => {
   const button = hostElement("button", { "on-click": "#a.show(); #b.show(false)" });
   document.body.appendChild(button);
-  const a = hostElement("section", { implements: "revealable", id: "a", hidden: "" });
-  const b = hostElement("section", { implements: "revealable", id: "b", hidden: "" });
+  const a = hostElement("section", { revealable: "", id: "a", hidden: "" });
+  const b = hostElement("section", { revealable: "", id: "b", hidden: "" });
   document.body.append(a, b);
   await flush();
 
@@ -355,7 +355,7 @@ test("wiring: a mixed #a.show(); #b.show(false) host wires only a", async () => 
 });
 
 test("syncAria does not write aria-controls onto a show(false) source", async () => {
-  const panel = hostElement("section", { implements: "revealable", id: "panel", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "panel", hidden: "" });
   const bare = document.createElement("button");
   document.body.append(panel, bare);
   await flush();
@@ -373,7 +373,7 @@ test("wiring: a #p.show(this.checked) host is not wired, but claims at fire time
     "on-change": "#p.show(this.checked)",
   });
   document.body.appendChild(input);
-  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -387,7 +387,7 @@ test("wiring: a #p.show(this.checked) host is not wired, but claims at fire time
 test("wiring: a #p.show(true) host is wired", async () => {
   const button = hostElement("button", { "on-click": "#p.show(true)" });
   document.body.appendChild(button);
-  const panel = hostElement("section", { implements: "revealable", id: "p", hidden: "" });
+  const panel = hostElement("section", { revealable: "", id: "p", hidden: "" });
   document.body.appendChild(panel);
   await flush();
 
@@ -398,8 +398,8 @@ test("wiring: a #p.show(true) host is wired", async () => {
 test("a show() from a checked radio leaves a same-name sibling's open panel open", async () => {
   const rA = hostElement("input", { type: "radio", name: "g", id: "r-a", checked: "checked", "on-change": "#a.show()" }) as HTMLInputElement;
   const rB = hostElement("input", { type: "radio", name: "g", id: "r-b", "on-change": "#b.show()" }) as HTMLInputElement;
-  const a = hostElement("div", { implements: "revealable", id: "a", hidden: "" });
-  const b = hostElement("div", { implements: "revealable", id: "b", "revealable-open": "true" });
+  const a = hostElement("div", { revealable: "", id: "a", hidden: "" });
+  const b = hostElement("div", { revealable: "", id: "b", "revealable-open": "true" });
   document.body.append(rA, rB, a, b);
   await flush();
 
@@ -415,7 +415,7 @@ test("on-load fires at attach: this.show() reveals the panel once implementation
   const originalWarn = console.warn;
   console.warn = (...args: unknown[]) => warnings.push(args.map(String).join(" "));
   try {
-    const p = hostElement("div", { implements: "revealable", id: "p", "on-load": "this.show()" });
+    const p = hostElement("div", { revealable: "", id: "p", "on-load": "this.show()" });
     document.body.appendChild(p);
     await flush();
     assert.equal(p.hidden, false, "on-load ran this.show() after revealable attached");

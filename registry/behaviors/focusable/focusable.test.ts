@@ -29,7 +29,7 @@ beforeEach(() => {
 
 function hostElement<T extends HTMLElement>(tag: string, attributes: Record<string, string>): T {
   const el = document.createElement(tag) as T;
-  el.setAttribute("implements", "focusable");
+  el.setAttribute("focusable", "");
   for (const [name, value] of Object.entries(attributes)) el.setAttribute(name, value);
   return el;
 }
@@ -79,7 +79,7 @@ function rovingOptions(ids: string[], searchId: string): HTMLUListElement {
     const next = ids[(index + 1) % ids.length]!;
     const prev = index === 0 ? searchId : ids[index - 1]!;
     const li = fromMarkup<HTMLLIElement>(
-      `<li id="${id}" tabindex="-1" implements="focusable prevent-default" ` +
+      `<li id="${id}" tabindex="-1" focusable prevent-default ` +
         `on-keydown(code:\`ArrowDown\`)="#${next}.focus()" ` +
         `on-keydown(code:\`ArrowUp\`)="#${prev}.focus()">${id}</li>`,
     );
@@ -90,7 +90,7 @@ function rovingOptions(ids: string[], searchId: string): HTMLUListElement {
 
 function combobox(optionIds: string[]): HTMLInputElement {
   const search = fromMarkup<HTMLInputElement>(
-    `<input id="search" implements="focusable prevent-default" on-keydown(code:\`ArrowDown\`)="#results-1.focus()">`,
+    `<input id="search" focusable prevent-default on-keydown(code:\`ArrowDown\`)="#results-1.focus()">`,
   );
   document.body.append(search, rovingOptions(optionIds, "search"));
   return search;

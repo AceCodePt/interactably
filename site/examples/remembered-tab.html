@@ -45,25 +45,25 @@
 
               <div class="demo">
                 <div class="tabbar">
-                  <button id="mp-tab-overview" type="button" implements="focusable"
+                  <button id="mp-tab-overview" type="button" focusable
                           on-click="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-store.save({overview: true})">Overview</button>
-                  <button id="mp-tab-specs" type="button" implements="focusable"
+                  <button id="mp-tab-specs" type="button" focusable
                           on-click="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-store.save({specs: true})">Specs</button>
-                  <button id="mp-tab-notes" type="button" implements="focusable"
+                  <button id="mp-tab-notes" type="button" focusable
                           on-click="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-store.save({notes: true})">Notes</button>
-                  <button id="mp-store" type="button" implements="storable" storable-id="maintab" hidden
+                  <button id="mp-store" type="button" storable storable-id="maintab" hidden
                           on-load="this.restore()"
                           on-restore(overview:boolean)="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-tab-overview.focus()"
                           on-restore(specs:boolean)="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus()"
                           on-restore(notes:boolean)="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus()"></button>
                 </div>
-                <section id="mp-overview" class="tabpanel" implements="revealable" revealable-open="true">
+                <section id="mp-overview" class="tabpanel" revealable revealable-open="true">
                   <p>Overview &mdash; open because it is the authored default, or because the stored choice said so.</p>
                 </section>
-                <section id="mp-specs" class="tabpanel" implements="revealable" hidden>
+                <section id="mp-specs" class="tabpanel" revealable hidden>
                   <p>Specs &mdash; a stored choice flips it open and returns focus to its tab.</p>
                 </section>
-                <section id="mp-notes" class="tabpanel" implements="revealable" hidden>
+                <section id="mp-notes" class="tabpanel" revealable hidden>
                   <p>Notes &mdash; pick me, reload, and the same three verbs replay.</p>
                 </section>
               </div>
@@ -73,27 +73,27 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-maintab" on-click="#code-ex-maintab.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-maintab" on-click="#code-ex-maintab.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-maintab" implements="copyable" on-copy="#copy-code-ex-maintab.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="tabbar"&gt;
+              <pre class="code" id="code-ex-maintab" copyable on-copy="#copy-code-ex-maintab.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="tabbar"&gt;
       &lt;!-- one element owns the storage; each tab saves its own flag and only the matching handler replays --&gt;
-      &lt;button id="mp-tab-overview" type="button" implements="focusable"
+      &lt;button id="mp-tab-overview" type="button" focusable
               on-click="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-store.save({overview: true})"&gt;Overview&lt;/button&gt;
-      &lt;button id="mp-tab-specs" type="button" implements="focusable"
+      &lt;button id="mp-tab-specs" type="button" focusable
               on-click="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-store.save({specs: true})"&gt;Specs&lt;/button&gt;
-      &lt;button id="mp-tab-notes" type="button" implements="focusable"
+      &lt;button id="mp-tab-notes" type="button" focusable
               on-click="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-store.save({notes: true})"&gt;Notes&lt;/button&gt;
-      &lt;button id="mp-store" type="button" implements="storable" storable-id="maintab" hidden
+      &lt;button id="mp-store" type="button" storable storable-id="maintab" hidden
               on-load="this.restore()"
               on-restore(overview:boolean)="#mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-tab-overview.focus()"
               on-restore(specs:boolean)="#mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus()"
               on-restore(notes:boolean)="#mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus()"&gt;&lt;/button&gt;
     &lt;/div&gt;
-    &lt;section id="mp-overview" class="tabpanel" implements="revealable" revealable-open="true"&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
-    &lt;section id="mp-specs" class="tabpanel" implements="revealable" hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
-    &lt;section id="mp-notes" class="tabpanel" implements="revealable" hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;</code></pre>
+    &lt;section id="mp-overview" class="tabpanel" revealable revealable-open="true"&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
+    &lt;section id="mp-specs" class="tabpanel" revealable hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
+    &lt;section id="mp-notes" class="tabpanel" revealable hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;</code></pre>
             </div>
           </details>
   </main>

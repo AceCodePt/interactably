@@ -257,7 +257,6 @@
           <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
           <tr><td><code class="inline-code">readValue(el, property = "value")</code></td><td>The element&rsquo;s value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read <code class="inline-code">.value</code> (a string), display elements read <code class="inline-code">formattable-value</code> as a number under a numeric format, else <code class="inline-code">textContent</code> (a string); <code class="inline-code">readValue(el, "checked")</code> is the checked boolean; <code class="inline-code">readValue(el, "min" | "max" | "step")</code> is the platform bound — a number on number/range inputs (absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code>, absent <code class="inline-code">step</code> is <code class="inline-code">1</code>), the string as written elsewhere</td></tr>
           <tr><td><code class="inline-code">writeValue(el, v)</code></td><td>Write helper: sets <code class="inline-code">.value</code> where the element has one, else <code class="inline-code">textContent</code></td></tr>
-          <tr><td><code class="inline-code">NotReadyError</code></td><td>Set on <code class="inline-code">e.error</code> when a dispatch reaches an attached element whose <code class="inline-code">implements</code> names an implementation still pending registration</td></tr>
         </tbody>
       </table>
     </div>
@@ -271,6 +270,7 @@
           <tr><td><code class="inline-code">this</code></td><td>The only keyword</td></tr>
           <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">min</code>, <code class="inline-code">max</code>, <code class="inline-code">step</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
           <tr><td><code class="inline-code">enter</code>, <code class="inline-code">escape</code>, <code class="inline-code">space</code>, &hellip;</td><td>Key names matched case-insensitively by an <code class="inline-code">on-keydown(key:`&hellip;`)</code> / <code class="inline-code">on-keydown(code:`&hellip;`)</code> literal, and by a keyed implementation event&rsquo;s routing key</td></tr>
+          <tr><td>implementation names</td><td>Lowercase <code class="inline-code">[a-z][a-z0-9-]*</code> attribute names; a name must not collide with a native HTML attribute, an <code class="inline-code">on-</code> / <code class="inline-code">aria-</code> / <code class="inline-code">data-</code> prefix, or the reserved <code class="inline-code">implements</code>, <code class="inline-code">implementations</code> and <code class="inline-code">intersect</code>. Event names are unique across all implementations.</td></tr>
         </tbody>
       </table>
     </div>
@@ -279,11 +279,11 @@
     <div class="codeblock">
       <div class="codeblock-bar">
         <span class="codeblock-lang">Text</span>
-        <button class="copy-btn" implements="attributable" id="copy-code-reference-grammar" on-click="#code-reference-grammar.copy()" type="button">
+        <button class="copy-btn" attributable id="copy-code-reference-grammar" on-click="#code-reference-grammar.copy()" type="button">
           <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
         </button>
       </div>
-      <pre class="code" id="code-reference-grammar" implements="copyable" on-copy="#copy-code-reference-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>attribute := 'on-' event-type [ '(' value-decl (',' value-decl)* ')' ]
+      <pre class="code" id="code-reference-grammar" copyable on-copy="#copy-code-reference-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text"><code>attribute := 'on-' event-type [ '(' value-decl (',' value-decl)* ')' ]
 value     := phrase (';' phrase)*
 phrase    := [key ':'] unit (('&amp;&amp;' | '||') unit)*
 unit      := ref ('.' (call | modifier))+

@@ -46,7 +46,7 @@ function interact(el: Element, verb: string, arg?: unknown, source?: Element): I
 
 test("log accepts string, number, boolean and undefined and names the receiver and source", async (t) => {
   const spy = t.mock.method(console, "log");
-  const receiver = hostElement("div", { implements: "logger", id: "log" });
+  const receiver = hostElement("div", { logger: "", id: "log" });
   const trigger = hostElement("button", { id: "save" });
   document.body.append(receiver, trigger);
   await flush();
@@ -66,7 +66,7 @@ test("log accepts string, number, boolean and undefined and names the receiver a
 
 test("log handles the other argument kinds", async (t) => {
   const spy = t.mock.method(console, "log");
-  const receiver = hostElement("div", { implements: "logger" });
+  const receiver = hostElement("div", { logger: "" });
   document.body.appendChild(receiver);
   await flush();
 
@@ -81,7 +81,7 @@ test("log handles the other argument kinds", async (t) => {
 
 test("has no trigger config: the source is context on the event", async (t) => {
   const spy = t.mock.method(console, "log");
-  const receiver = hostElement("div", { implements: "logger" });
+  const receiver = hostElement("div", { logger: "" });
   const trigger = hostElement("button", { on: "nope" });
   document.body.append(receiver, trigger);
   await flush();

@@ -26,7 +26,7 @@ beforeEach(() => {
 
 function textarea(): HTMLTextAreaElement {
   const el = document.createElement("textarea") as HTMLTextAreaElement;
-  el.setAttribute("implements", "auto-grow");
+  el.setAttribute("auto-grow", "");
   return el;
 }
 

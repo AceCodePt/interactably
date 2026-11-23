@@ -213,7 +213,7 @@ test("record slot keys that do not admit undefined stay required", () => {
 test("the signature validates the resolved value, not the Arg node", () => {
   const receiver = document.createElement("div");
   receiver.id = "m";
-  receiver.setAttribute("implements", "signature-fake");
+  receiver.setAttribute("signature-fake", "");
   document.body.appendChild(receiver);
   attach(receiver);
 

@@ -44,11 +44,11 @@
                   <aside class="sidebar spy-sidebar">
                     <h2>On this page</h2>
                     <nav id="spy-toc" aria-label="Scroll-spy sections">
-                      <a id="spy-toc-observe" implements="attributable" href="#spy-section-observe">Observe</a>
-                      <a id="spy-toc-enter" implements="attributable" href="#spy-section-enter">Enter and leave</a>
-                      <a id="spy-toc-header" implements="attributable" href="#spy-section-header">Below the header</a>
-                      <a id="spy-toc-read" implements="attributable" href="#spy-section-read">Read</a>
-                      <a id="spy-toc-summary" implements="attributable" href="#spy-section-summary">The whole pattern</a>
+                      <a id="spy-toc-observe" attributable href="#spy-section-observe">Observe</a>
+                      <a id="spy-toc-enter" attributable href="#spy-section-enter">Enter and leave</a>
+                      <a id="spy-toc-header" attributable href="#spy-section-header">Below the header</a>
+                      <a id="spy-toc-read" attributable href="#spy-section-read">Read</a>
+                      <a id="spy-toc-summary" attributable href="#spy-section-summary">The whole pattern</a>
                     </nav>
                   </aside>
 
@@ -122,20 +122,20 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="spy-copy-code-scroll-spy" on-click="#spy-code-scroll-spy.copy()" type="button">
+                <button class="copy-btn" attributable id="spy-copy-code-scroll-spy" on-click="#spy-code-scroll-spy.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="spy-code-scroll-spy" implements="copyable" on-copy="#spy-copy-code-scroll-spy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;header id="spy-header" class="topnav"&gt;&hellip;&lt;/header&gt;
+              <pre class="code" id="spy-code-scroll-spy" copyable on-copy="#spy-copy-code-scroll-spy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;header id="spy-header" class="topnav"&gt;&hellip;&lt;/header&gt;
 
 &lt;div class="layout"&gt;
   &lt;aside class="sidebar"&gt;
     &lt;nav id="toc" aria-label="Scroll-spy sections"&gt;
-      &lt;a id="toc-observe" implements="attributable" href="#section-observe"&gt;Observe&lt;/a&gt;
-      &lt;a id="toc-enter" implements="attributable" href="#section-enter"&gt;Enter and leave&lt;/a&gt;
-      &lt;a id="toc-header" implements="attributable" href="#section-header"&gt;Below the header&lt;/a&gt;
-      &lt;a id="toc-read" implements="attributable" href="#section-read"&gt;Read&lt;/a&gt;
-      &lt;a id="toc-summary" implements="attributable" href="#section-summary"&gt;The whole pattern&lt;/a&gt;
+      &lt;a id="toc-observe" attributable href="#section-observe"&gt;Observe&lt;/a&gt;
+      &lt;a id="toc-enter" attributable href="#section-enter"&gt;Enter and leave&lt;/a&gt;
+      &lt;a id="toc-header" attributable href="#section-header"&gt;Below the header&lt;/a&gt;
+      &lt;a id="toc-read" attributable href="#section-read"&gt;Read&lt;/a&gt;
+      &lt;a id="toc-summary" attributable href="#section-summary"&gt;The whole pattern&lt;/a&gt;
     &lt;/nav&gt;
   &lt;/aside&gt;
 

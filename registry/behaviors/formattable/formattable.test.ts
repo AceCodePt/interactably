@@ -45,7 +45,7 @@ function interact(el: Element, verb: string, arg?: unknown): InteractionEvent {
 }
 
 function formatted(attributes: Record<string, string>, text: string): HTMLOutputElement {
-  const el = hostElement("output", { implements: "modifiable formattable", ...attributes }) as HTMLOutputElement;
+  const el = hostElement("output", { modifiable: "", formattable: "", ...attributes }) as HTMLOutputElement;
   el.textContent = text;
   document.body.appendChild(el);
   return el;
@@ -55,13 +55,13 @@ const CURRENCY = "{ style: 'currency', currency: 'USD' }";
 
 test("formattable refuses an editable tag through the registry's tag check", async (t) => {
   const error = t.mock.method(console, "error");
-  const input = hostElement("input", { implements: "formattable", "formattable-format": CURRENCY });
+  const input = hostElement("input", { formattable: "", "formattable-format": CURRENCY });
   document.body.appendChild(input);
   await flush();
 
   const logged = error.mock.calls.map((call) => String(call.arguments[0]));
   assert.ok(
-    logged.some((message) => message.includes("formattable attaches to") && message.includes('skipped on <input implements="formattable">')),
+    logged.some((message) => message.includes("formattable attaches to") && message.includes('skipped on <input formattable>')),
     `expected a tag-rejection log, got: ${logged.join(" | ")}`,
   );
 });
@@ -90,11 +90,11 @@ test("a library write through modifiable formats and stores the raw text without
 test("sum('#total') and a bare #total.value reference both read the raw value", async () => {
   const total = formatted({ id: "total", "formattable-format": CURRENCY }, "7");
   const sumOut = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(sum('#total'))",
   }) as HTMLOutputElement;
   const refOut = hostElement("output", {
-    implements: "modifiable",
+    modifiable: "",
     "on-load": "this.set(#total.value)",
   }) as HTMLOutputElement;
   document.body.append(sumOut, refOut);
@@ -158,7 +158,7 @@ test("formattable creates no MutationObserver of its own", async () => {
   dom.window.MutationObserver = Spy;
   try {
     const el = hostElement("output", {
-      implements: "formattable",
+      formattable: "",
       "formattable-format": CURRENCY,
     }) as HTMLOutputElement;
     el.textContent = "42";

@@ -45,7 +45,7 @@ function interact(el: Element, verb: string, arg?: unknown): InteractionEvent {
 }
 
 test("setAttr writes an attribute with its value", async () => {
-  const el = hostElement("div", { implements: "attributable" });
+  const el = hostElement("div", { attributable: "" });
   document.body.appendChild(el);
   await flush();
 
@@ -57,7 +57,7 @@ test("setAttr writes an attribute with its value", async () => {
 });
 
 test("toggleAttr adds and removes a boolean attribute", async () => {
-  const el = hostElement("div", { implements: "attributable" });
+  const el = hostElement("div", { attributable: "" });
   document.body.appendChild(el);
   await flush();
 
@@ -69,7 +69,7 @@ test("toggleAttr adds and removes a boolean attribute", async () => {
 });
 
 test("removeAttr removes an attribute", async () => {
-  const el = hostElement("div", { implements: "attributable", title: "x", "aria-busy": "true" });
+  const el = hostElement("div", { attributable: "", title: "x", "aria-busy": "true" });
   document.body.appendChild(el);
   await flush();
 
@@ -84,7 +84,7 @@ test("removeAttr removes an attribute", async () => {
 });
 
 test("attaches to any tag", async () => {
-  const el = hostElement("section", { implements: "attributable" });
+  const el = hostElement("section", { attributable: "" });
   document.body.appendChild(el);
   await flush();
 

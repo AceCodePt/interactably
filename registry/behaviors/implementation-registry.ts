@@ -1,4 +1,4 @@
-import { ensureAttachment } from "@interactable/attachment.ts";
+import { attachCarrying, ensureAttachment } from "@interactable/attachment.ts";
 import { bindAttributes } from "@interactable/attributes.ts";
 import type { CompiledSignature } from "@interactable/signature.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
@@ -21,6 +21,7 @@ export interface NormalizedImplementationDef {
 }
 
 const definitions = new Map<string, NormalizedImplementationDef>();
+const eventOwners = new Map<string, string>();
 const instancesByElement = new WeakMap<Element, Map<string, ImplementationInstance>>();
 const attached = new Set<Element>();
 
@@ -40,17 +41,19 @@ export function registerImplementation(def: NormalizedImplementationDef): Normal
   }
   for (const [otherName, other] of definitions) {
     for (const event of Object.keys(def.events)) {
-      if (Object.hasOwn(other.events, event) && tagsOverlap(def.tags, other.tags)) {
+      if (Object.hasOwn(other.events, event)) {
         throw new Error(
           `[Interactable] event "${event}" is registered by both "${otherName}" and "${def.name}"; ` +
-            `two implementations on the same tag cannot claim the same event`,
+            `event names are unique across all implementations`,
         );
       }
     }
   }
   definitions.set(def.name, def);
+  for (const event of Object.keys(def.events)) eventOwners.set(event, def.name);
   for (const el of attached) ensureAttachment(el);
   if (typeof document !== "undefined") {
+    attachCarrying(def.name);
     document.dispatchEvent(new Event(REGISTRY_CHANGED_EVENT));
   }
   return def;
@@ -60,9 +63,17 @@ export function getImplementationDef(name: string): NormalizedImplementationDef 
   return definitions.get(name);
 }
 
-function tagsOverlap(a: readonly Tag[] | undefined, b: readonly Tag[] | undefined): boolean {
-  if (a === undefined || b === undefined) return true;
-  return a.some((tag) => b.includes(tag));
+export function implementationOwningEvent(event: string): NormalizedImplementationDef | undefined {
+  const name = eventOwners.get(event);
+  return name === undefined ? undefined : definitions.get(name);
+}
+
+export function presentImplementationNames(el: Element): string[] {
+  const names: string[] = [];
+  for (const attribute of el.getAttributeNames()) {
+    if (definitions.has(attribute)) names.push(attribute);
+  }
+  return names;
 }
 
 export function getObservedAttributes(def: NormalizedImplementationDef): string[] {

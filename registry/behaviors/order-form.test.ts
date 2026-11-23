@@ -24,7 +24,7 @@ let start: typeof import("@interactable/start.ts").start;
 const fetchCalls: FetchCall[] = [];
 
 const FORM_OPEN = `<form id="order" novalidate
-      implements="prevent-default validatable requestable"
+      prevent-default validatable requestable
       requestable-url="/api/orders" requestable-method="post"`;
 
 const HAPPY = `${FORM_OPEN}
@@ -34,8 +34,8 @@ const HAPPY = `${FORM_OPEN}
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
-<section id="receipt" implements="renderable revealable" hidden></section>
-<div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
+<section id="receipt" renderable revealable hidden></section>
+<div id="alert" revealable hidden role="alert">Couldn't place the order.</div>`;
 
 const UNOWNED = `${FORM_OPEN}
       on-response(html:string)="#receipt.render({payload: html}); #receipt.show(); this.reset()"
@@ -44,8 +44,8 @@ const UNOWNED = `${FORM_OPEN}
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
-<section id="receipt" implements="renderable revealable" hidden></section>
-<div id="alert" implements="revealable" hidden role="alert">Couldn't place the order.</div>`;
+<section id="receipt" renderable revealable hidden></section>
+<div id="alert" revealable hidden role="alert">Couldn't place the order.</div>`;
 
 before(async () => {
   dom = setupJsdom();

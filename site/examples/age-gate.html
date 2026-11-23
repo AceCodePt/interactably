@@ -44,11 +44,11 @@
               <div class="demo">
                 <div class="row">
                   <label>Age
-                    <input id="age" type="number" value="17" min="18" implements="validatable"
+                    <input id="age" type="number" value="17" min="18" validatable
                            on-change="this.validate() &amp;&amp; #consent.show()">
                   </label>
                 </div>
-                <section id="consent" implements="revealable" hidden>
+                <section id="consent" revealable hidden>
                   Thanks &mdash; you&rsquo;re old enough to continue.
                 </section>
               </div>
@@ -58,13 +58,13 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-age" on-click="#code-ex-age.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-age" on-click="#code-ex-age.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-age" implements="copyable" on-copy="#copy-code-ex-age.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="age" type="number" value="17" min="18" implements="validatable"
+              <pre class="code" id="code-ex-age" copyable on-copy="#copy-code-ex-age.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="age" type="number" value="17" min="18" validatable
            on-change="this.validate() &amp;&amp; #consent.show()"&gt;
-    &lt;section id="consent" implements="revealable" hidden&gt;
+    &lt;section id="consent" revealable hidden&gt;
       Thanks &mdash; you&rsquo;re old enough to continue.
     &lt;/section&gt;</code></pre>
             </div>

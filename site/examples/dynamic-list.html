@@ -44,13 +44,13 @@
               <div class="demo">
                 <button id="dl-add" type="button" on-click="#dl-list.render({template: #dl-tpl, swap: 'beforeend', id: now()})">Add a row</button>
                 <button id="dl-undo" type="button" on-click="#dl-list.undo(); #dl-count.set(count('#dl-list li'))">Undo last</button>
-                <ul id="dl-list" implements="renderable" on-rendered="#dl-count.set(count('#dl-list li'))">
+                <ul id="dl-list" renderable on-rendered="#dl-count.set(count('#dl-list li'))">
                   <li id="dl-row-1">
                     <input class="dl-item" placeholder="Type in this row">
                     <button type="button" on-click="#dl-list.render({swap: 'delete', target: '#dl-row-1'})">&times;</button>
                   </li>
                 </ul>
-                <p class="demo-note">Rows: <output id="dl-count" implements="modifiable">1</output></p>
+                <p class="demo-note">Rows: <output id="dl-count" modifiable>1</output></p>
                 <template id="dl-tpl">
                   <li id="dl-row-{id}">
                     <input class="dl-item" placeholder="Type in the new row">
@@ -64,19 +64,19 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-dl" on-click="#code-ex-dl.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-dl" on-click="#code-ex-dl.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-dl" implements="copyable" on-copy="#copy-code-ex-dl.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()})"&gt;Add a row&lt;/button&gt;
+              <pre class="code" id="code-ex-dl" copyable on-copy="#copy-code-ex-dl.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#list.render({template: #row-tpl, swap: 'beforeend', id: now()})"&gt;Add a row&lt;/button&gt;
 &lt;button on-click="#list.undo(); #count.set(count('#list li'))"&gt;Undo last&lt;/button&gt;
-&lt;ul id="list" implements="renderable" on-rendered="#count.set(count('#list li'))"&gt;
+&lt;ul id="list" renderable on-rendered="#count.set(count('#list li'))"&gt;
   &lt;li id="row-1"&gt;
     &lt;input class="item" placeholder="Type in this row"&gt;
     &lt;button on-click="#list.render({swap: 'delete', target: '#row-1'})"&gt;&times;&lt;/button&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Rows: &lt;output id="count" implements="modifiable"&gt;1&lt;/output&gt;&lt;/p&gt;
+&lt;p&gt;Rows: &lt;output id="count" modifiable&gt;1&lt;/output&gt;&lt;/p&gt;
 &lt;template id="row-tpl"&gt;
   &lt;li id="row-{id}"&gt;
     &lt;input class="item" placeholder="Type in the new row"&gt;

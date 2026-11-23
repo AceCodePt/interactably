@@ -49,15 +49,15 @@
                   <button id="theme-dark" type="button" on-click="#theme-store.save({name: 'dark'}); #stage.setAttr({name: 'data-theme', value: 'dark'})">Dark</button>
                   <button id="theme-sepia" type="button" on-click="#theme-store.save({name: 'sepia'}); #stage.setAttr({name: 'data-theme', value: 'sepia'})">Sepia</button>
                   <button id="theme-forget" type="button" on-click="#theme-store.clear(); #stage.setAttr({name: 'data-theme', value: 'light'})">Forget</button>
-                  <button id="theme-store" type="button" implements="storable" storable-id="theme" hidden
+                  <button id="theme-store" type="button" storable storable-id="theme" hidden
                           on-load="this.restore()"
                           on-restore(name:string)="#stage.setAttr({name: 'data-theme', value: name}); #theme-toast.show()"></button>
                 </div>
-                <div id="stage" class="stage" implements="attributable" data-theme="light">
+                <div id="stage" class="stage" attributable data-theme="light">
                   <p><code class="inline-code">storable</code> keeps the choice, <code class="inline-code">attributable</code> paints
                     <code class="inline-code">data-theme</code> on this card, and <code class="inline-code">revealable</code> flashes
                     the toast &mdash; the three-way intersection the card is built around.</p>
-                  <span id="theme-toast" class="toast" implements="revealable" hidden>Restored from storage.</span>
+                  <span id="theme-toast" class="toast" revealable hidden>Restored from storage.</span>
                 </div>
               </div>
     </div>
@@ -66,22 +66,22 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-theme" on-click="#code-ex-theme.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-theme" on-click="#code-ex-theme.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-theme" implements="copyable" on-copy="#copy-code-ex-theme.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button id="theme-light" type="button" on-click="#theme-store.save({name: 'light'}); #stage.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
+              <pre class="code" id="code-ex-theme" copyable on-copy="#copy-code-ex-theme.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button id="theme-light" type="button" on-click="#theme-store.save({name: 'light'}); #stage.setAttr({name: 'data-theme', value: 'light'})"&gt;Light&lt;/button&gt;
     &lt;!-- Dark and Sepia target the same owner with their own value --&gt;
     &lt;button id="theme-dark" type="button" on-click="#theme-store.save({name: 'dark'}); #stage.setAttr({name: 'data-theme', value: 'dark'})"&gt;Dark&lt;/button&gt;
     &lt;button id="theme-sepia" type="button" on-click="#theme-store.save({name: 'sepia'}); #stage.setAttr({name: 'data-theme', value: 'sepia'})"&gt;Sepia&lt;/button&gt;
     &lt;!-- one element owns the storage: it restores, and its handler paints whatever name it is handed --&gt;
-    &lt;button id="theme-store" type="button" implements="storable" storable-id="theme" hidden
+    &lt;button id="theme-store" type="button" storable storable-id="theme" hidden
             on-load="this.restore()"
             on-restore(name:string)="#stage.setAttr({name: 'data-theme', value: name}); #theme-toast.show()"&gt;&lt;/button&gt;
 
-    &lt;div id="stage" class="stage" implements="attributable" data-theme="light"&gt;
+    &lt;div id="stage" class="stage" attributable data-theme="light"&gt;
       &lt;p&gt;&hellip;&lt;/p&gt;
-      &lt;span id="theme-toast" class="toast" implements="revealable" hidden&gt;Restored from storage.&lt;/span&gt;
+      &lt;span id="theme-toast" class="toast" revealable hidden&gt;Restored from storage.&lt;/span&gt;
     &lt;/div&gt;
     &lt;button id="theme-forget" on-click="#theme-store.clear()"&gt;Forget&lt;/button&gt;</code></pre>
             </div>

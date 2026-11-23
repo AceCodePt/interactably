@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { JSDOM } from "jsdom";
+import { IMPLEMENTATION_NAME_SET } from "@tests/implementation-names.ts";
 
 const examplesDir = new URL("../site/examples/", import.meta.url);
 
@@ -80,16 +81,13 @@ function extractSnippet(html: string): string {
 
 function isAttributed(el: Element): boolean {
   if (el.localName.toLowerCase() === "script") return false;
-  return (
-    el.hasAttribute("implements") ||
-    el.getAttributeNames().some((name) => name.startsWith("on-"))
-  );
+  return el.getAttributeNames().some((name) => IMPLEMENTATION_NAME_SET.has(name) || name.startsWith("on-"));
 }
 
 function interactionNames(el: Element): string[] {
   return el
     .getAttributeNames()
-    .filter((name) => name === "implements" || name.startsWith("on-"))
+    .filter((name) => IMPLEMENTATION_NAME_SET.has(name) || name.startsWith("on-"))
     .sort();
 }
 

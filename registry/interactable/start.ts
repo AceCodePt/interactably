@@ -1,4 +1,13 @@
-import { attach, detach, fireOnLoad, isAttached } from "@interactable/attachment.ts";
+import { getImplementationDef } from "@behaviors/implementation-registry.ts";
+import {
+  attach,
+  detach,
+  fireOnLoad,
+  isAttached,
+  markStartedRoot,
+  reportLegacyImplements,
+  unmarkStartedRoot,
+} from "@interactable/attachment.ts";
 
 export type StartRoot = Document | Element;
 
@@ -64,23 +73,34 @@ export function start(root: StartRoot = document): () => void {
     if (documentRoot) {
       const body = (root as Document).body;
       if (body === null) return out;
+      noteLegacy(body);
       if (isParticipant(body)) out.push(body);
       for (const el of body.querySelectorAll("*")) {
         if (isParticipant(el)) out.push(el);
       }
     } else {
-      for (const el of root.querySelectorAll("*")) {
+      noteLegacy(root as Element);
+      for (const el of (root as Element).querySelectorAll("*")) {
         if (isParticipant(el)) out.push(el);
       }
     }
     return out;
   };
 
+  const noteLegacy = (node: Element): void => {
+    if (node.hasAttribute("implements")) reportLegacyImplements(node);
+    for (const child of node.querySelectorAll("*")) {
+      if (child.hasAttribute("implements")) reportLegacyImplements(child);
+    }
+  };
+
   const observer = new MutationObserver((mutations) => {
     if (!documentReady) {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
-          if (node.nodeType === 1) collectParticipants(node as Element, pending);
+          if (node.nodeType !== 1) continue;
+          noteLegacy(node as Element);
+          collectParticipants(node as Element, pending);
         }
       }
       ensureDCL();
@@ -89,7 +109,9 @@ export function start(root: StartRoot = document): () => void {
     const added: Element[] = [];
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
-        if (node.nodeType === 1) collectParticipants(node as Element, added);
+        if (node.nodeType !== 1) continue;
+        noteLegacy(node as Element);
+        collectParticipants(node as Element, added);
       }
     }
     attachBatch(added);
@@ -116,6 +138,7 @@ export function start(root: StartRoot = document): () => void {
 
   const dispose = (): void => {
     observer.disconnect();
+    unmarkStartedRoot(root);
     disposers.delete(root);
   };
 
@@ -129,14 +152,15 @@ export function start(root: StartRoot = document): () => void {
     ensureDCL();
   }
 
+  markStartedRoot(root);
   disposers.set(root, dispose);
   return dispose;
 }
 
 function isParticipant(el: Element): boolean {
-  if (el.hasAttribute("implements")) return true;
   for (const name of el.getAttributeNames()) {
     if (name.startsWith("on-")) return true;
+    if (getImplementationDef(name) !== undefined) return true;
   }
   return false;
 }

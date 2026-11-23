@@ -8,12 +8,13 @@ import { isBareNumber, isNumberLiteral, isNumericUnion, parse, parseEventAttribu
 import type { Arg, EventAttribute, EventValueDeclaration } from "@interactable/parser.ts";
 import { compileSignature } from "@interactable/signature.ts";
 import type { InteractionEvent } from "@interactable/interaction-event.ts";
-import { NotReadyError } from "@behaviors/implementation-utils.ts";
 import type { ImplementationInstance } from "@behaviors/implementation-utils.ts";
 import type { Tag } from "@behaviors/_implementation-definition.ts";
 import {
   ensureImplementation,
   getImplementationDef,
+  implementationOwningEvent,
+  presentImplementationNames,
   track,
   untrack,
 } from "@behaviors/implementation-registry.ts";
@@ -23,11 +24,11 @@ export interface Attachment {
   implCleanup: Map<string, Array<() => void>>;
   triggers: Map<string, () => void>;
   attributeObserver: MutationObserver | null;
-  pendingMissing: Set<string>;
-  reportedMissing: Set<string>;
 }
 
 const attachmentByElement = new WeakMap<Element, Attachment>();
+const startedRoots = new Set<Element | Document>();
+const reportedLegacy = new WeakSet<Element>();
 
 export function getAttachment(el: Element): Attachment | undefined {
   return attachmentByElement.get(el);
@@ -37,6 +38,14 @@ export function isAttached(el: Element): boolean {
   return attachmentByElement.has(el);
 }
 
+export function markStartedRoot(root: Element | Document): void {
+  startedRoots.add(root);
+}
+
+export function unmarkStartedRoot(root: Element | Document): void {
+  startedRoots.delete(root);
+}
+
 export function attach(el: Element): void {
   if (attachmentByElement.has(el)) return;
   const attachment: Attachment = {
@@ -44,10 +53,9 @@ export function attach(el: Element): void {
     implCleanup: new Map(),
     triggers: new Map(),
     attributeObserver: null,
-    pendingMissing: new Set(),
-    reportedMissing: new Set(),
   };
   attachmentByElement.set(el, attachment);
+  reportLegacyImplements(el);
   wireTriggers(el, attachment);
   syncIntersect(el);
   el.addEventListener("interaction", onInteraction as EventListener);
@@ -76,6 +84,43 @@ export function detach(el: Element): void {
   attachmentByElement.delete(el);
 }
 
+export function attachCarrying(attribute: string): void {
+  const batch: Element[] = [];
+  const seen = new Set<Element>();
+  for (const root of startedRoots) {
+    if (root.nodeType === 9) {
+      const body = (root as Document).body;
+      if (body === null) continue;
+      if (body.hasAttribute(attribute) && !seen.has(body)) {
+        seen.add(body);
+        batch.push(body);
+      }
+      for (const el of body.querySelectorAll(`[${attribute}]`)) {
+        if (seen.has(el)) continue;
+        seen.add(el);
+        batch.push(el);
+      }
+    } else {
+      for (const el of (root as Element).querySelectorAll(`[${attribute}]`)) {
+        if (seen.has(el)) continue;
+        seen.add(el);
+        batch.push(el);
+      }
+    }
+  }
+  batch.sort(byDocumentOrder);
+  for (const el of batch) {
+    if (!el.isConnected || isAttached(el)) continue;
+    attach(el);
+    fireOnLoad(el);
+  }
+}
+
+function byDocumentOrder(a: Element, b: Element): number {
+  if (a === b) return 0;
+  return (a.compareDocumentPosition(b) & 4) !== 0 ? -1 : 1;
+}
+
 export function ensureAttachment(el: Element): void {
   const attachment = attachmentByElement.get(el);
   if (attachment === undefined) return;
@@ -89,17 +134,14 @@ export function fireOnLoad(el: Element): void {
 }
 
 function ensureImplementations(el: Element, attachment: Attachment): void {
-  const names = (el.getAttribute("implements") ?? "").split(/\s+/).filter((name) => name !== "");
+  const present = presentImplementationNames(el);
   for (const name of [...attachment.implementations.keys()]) {
-    if (!names.includes(name)) removeImplementation(attachment, name);
+    if (!present.includes(name)) removeImplementation(attachment, name);
   }
-  for (const name of names) {
+  for (const name of present) {
     if (attachment.implementations.has(name)) continue;
     const def = getImplementationDef(name);
-    if (def === undefined) {
-      deferMissingReport(el, attachment, name);
-      continue;
-    }
+    if (def === undefined) continue;
     if (def.tags !== undefined && !def.tags.includes(el.localName as Tag)) {
       const tags = def.tags.map((t) => `<${t}>`).join(", ");
       console.error(`[Interactable] ${name} attaches to ${tags}; skipped on ${describeElement(el)}`);
@@ -128,18 +170,15 @@ function removeImplementation(attachment: Attachment, name: string): void {
   attachment.implementations.delete(name);
 }
 
-function deferMissingReport(el: Element, attachment: Attachment, name: string): void {
-  if (attachment.reportedMissing.has(name) || attachment.pendingMissing.has(name)) return;
-  attachment.pendingMissing.add(name);
-  setTimeout(() => {
-    attachment.pendingMissing.delete(name);
-    if (!el.isConnected) return;
-    if (getImplementationDef(name) !== undefined) return;
-    const names = (el.getAttribute("implements") ?? "").split(/\s+/);
-    if (!names.includes(name)) return;
-    attachment.reportedMissing.add(name);
-    console.error(`[Interactable] implements "${name}": no such implementation is registered`);
-  }, 0);
+export function reportLegacyImplements(el: Element): void {
+  if (!el.hasAttribute("implements") || reportedLegacy.has(el)) return;
+  reportedLegacy.add(el);
+  const value = (el.getAttribute("implements") ?? "").split(/\s+/).filter((name) => name !== "");
+  const replacement = value.length === 0 ? "no implementation attributes" : value.join(" ");
+  console.error(
+    `[Interactable] on ${describeElement(el)}: the implements attribute is no longer supported; ` +
+      `name each implementation as its own attribute (here: ${replacement})`,
+  );
 }
 
 function onInteraction(raw: Event): void {
@@ -148,18 +187,9 @@ function onInteraction(raw: Event): void {
   const attachment = attachmentByElement.get(el);
   if (attachment === undefined) return;
   const event = raw as InteractionEvent;
-  const implementsValue = el.getAttribute("implements") ?? "";
-  for (const name of implementsValue.split(/\s+/)) {
-    if (name === "") continue;
+  for (const name of presentImplementationNames(el)) {
     const implementation = attachment.implementations.get(name);
-    if (implementation === undefined) {
-      if (attachment.pendingMissing.has(name)) {
-        event.handled = true;
-        event.error = new NotReadyError(implementsValue, event.verb);
-        return;
-      }
-      continue;
-    }
+    if (implementation === undefined) continue;
     const def = getImplementationDef(name);
     const signature = def?.verbs[event.verb];
     if (signature === undefined) continue;
@@ -188,6 +218,7 @@ function onInteraction(raw: Event): void {
   }
 }
 
+
 function wireTriggers(el: Element, attachment: Attachment): void {
   for (const attribute of el.getAttributeNames()) {
     if (!attribute.startsWith("on-")) continue;
@@ -209,6 +240,14 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
     return;
   }
   if (declaration !== undefined) validateTriggerDeclaration(el, attribute, type, declaration);
+  const owner = implementationOwningEvent(type);
+  if (owner !== undefined && !el.hasAttribute(owner.name) && !isNativeEventType(el, type)) {
+    console.error(
+      `[Interactable] on ${describeElement(el)}, "${attribute}": "${type}" is an event of "${owner.name}"; ` +
+        `add the ${owner.name} attribute to receive it`,
+    );
+    return;
+  }
   let intersectMargin: string | undefined;
   let fireDeclaration: readonly EventValueDeclaration[] | undefined = declaration;
   if (isIntersectAttribute(attribute)) {
@@ -232,7 +271,7 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
   };
   el.addEventListener(type, handler, { passive: true });
   if (!isImplementationEvent(el, type)) {
-    if (!(("on" + type) in el) && !LEGACY_EVENTS_WITHOUT_IDL.has(type)) {
+    if (!isNativeEventType(el, type)) {
       console.warn(
         `[Interactable] on-${type} on ${describeElement(el)}: has no "${type}" ` +
           `event; custom events are fine, but check the spelling and case`,
@@ -241,6 +280,10 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
     warnIfNativeActionLikelyUnwanted(el as HTMLElement, type, attribute);
   }
   attachment.triggers.set(attribute, () => el.removeEventListener(type, handler));
+}
+
+function isNativeEventType(el: Element, type: string): boolean {
+  return ("on" + type) in el || LEGACY_EVENTS_WITHOUT_IDL.has(type);
 }
 
 function parseFireTimeAttribute(attribute: string): EventAttribute | undefined {
@@ -378,6 +421,8 @@ function wireAttributeObserver(el: Element, attachment: Attachment): void {
       const oldValue = mutation.oldValue;
       const newValue = el.getAttribute(name);
       if (name === "implements") {
+        reportLegacyImplements(el);
+      } else if (getImplementationDef(name) !== undefined) {
         ensureImplementations(el, attachment);
       } else if (isIntersectAttribute(name)) {
         syncIntersect(el);
@@ -408,15 +453,14 @@ function handleTriggerAttribute(
 }
 
 function warnIfNativeActionLikelyUnwanted(el: HTMLElement, type: string, attribute: string): void {
-  const implementsValue = el.getAttribute("implements") ?? "";
-  if (implementsValue.split(/\s+/).includes("prevent-default")) return;
+  if (el.hasAttribute("prevent-default")) return;
   if (el instanceof HTMLFormElement && type === "submit") {
-    console.warn(`[Interactable] on-submit on ${describeElement(el)}: also submits natively; add implements="prevent-default" to cancel it`);
+    console.warn(`[Interactable] on-submit on ${describeElement(el)}: also submits natively; add the prevent-default attribute to cancel it`);
   } else if (el instanceof HTMLAnchorElement && el.href && type === "click") {
-    console.warn(`[Interactable] on-click on ${describeElement(el)}: also navigates; add implements="prevent-default" to cancel it`);
+    console.warn(`[Interactable] on-click on ${describeElement(el)}: also navigates; add the prevent-default attribute to cancel it`);
   } else if (el instanceof HTMLButtonElement && (type === "keydown" || type === "keyup")) {
     if (!hasKeyLiteral(attribute)) {
-      console.warn(`[Interactable] on-${type} on ${describeElement(el)}: also activates on Enter/Space; add implements="prevent-default" to cancel it`);
+      console.warn(`[Interactable] on-${type} on ${describeElement(el)}: also activates on Enter/Space; add the prevent-default attribute to cancel it`);
     }
   }
 }

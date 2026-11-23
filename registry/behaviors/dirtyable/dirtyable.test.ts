@@ -51,7 +51,7 @@ function track(el: Element): string[] {
 
 test("a text input fires exactly one dirty, one clean and one dirty across char/delete/two-chars", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
-  const input = hostElement("input", { implements: "dirtyable", value: "a" }) as HTMLInputElement;
+  const input = hostElement("input", { dirtyable: "", value: "a" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
@@ -78,7 +78,7 @@ test("a text input fires exactly one dirty, one clean and one dirty across char/
 test("dirty-on=\"change\" evaluates on change, not input", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
-    implements: "dirtyable",
+    dirtyable: "",
     value: "a",
     "dirtyable-dirty-on": "change",
   }) as HTMLInputElement;
@@ -99,7 +99,7 @@ test("dirty-on=\"change\" evaluates on change, not input", async () => {
 test("a checkbox toggles against its defaultChecked", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
   const box = hostElement("input", {
-    implements: "dirtyable",
+    dirtyable: "",
     type: "checkbox",
     checked: "",
   }) as HTMLInputElement;
@@ -121,13 +121,13 @@ test("a checkbox toggles against its defaultChecked", async () => {
 test("radio: only the radio whose checked diverges from its default fires", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
   const a = hostElement("input", {
-    implements: "dirtyable",
+    dirtyable: "",
     type: "radio",
     name: "group",
     checked: "",
   }) as HTMLInputElement;
   const b = hostElement("input", {
-    implements: "dirtyable",
+    dirtyable: "",
     type: "radio",
     name: "group",
   }) as HTMLInputElement;
@@ -146,7 +146,7 @@ test("radio: only the radio whose checked diverges from its default fires", asyn
 
 test("a single select is dirty when its selection diverges from defaultSelected", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
-  const select = hostElement("select", { implements: "dirtyable" }) as HTMLSelectElement;
+  const select = hostElement("select", { dirtyable: "" }) as HTMLSelectElement;
   select.innerHTML = "<option value='a' selected>A</option><option value='b'>B</option>";
   document.body.appendChild(select);
   await flush();
@@ -165,7 +165,7 @@ test("a single select is dirty when its selection diverges from defaultSelected"
 
 test("a multi select is dirty when only the second option differs from its default", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
-  const select = hostElement("select", { implements: "dirtyable", multiple: "" }) as HTMLSelectElement;
+  const select = hostElement("select", { dirtyable: "", multiple: "" }) as HTMLSelectElement;
   select.innerHTML = "<option value='a' selected>A</option><option value='b'>B</option>";
   document.body.appendChild(select);
   await flush();
@@ -184,7 +184,7 @@ test("a multi select is dirty when only the second option differs from its defau
 
 test("a script moving the value attribute re-evaluates via the attribute observer", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
-  const input = hostElement("input", { implements: "dirtyable", value: "a" }) as HTMLInputElement;
+  const input = hostElement("input", { dirtyable: "", value: "a" }) as HTMLInputElement;
   document.body.appendChild(input);
   await flush();
 
@@ -203,7 +203,7 @@ test("a script moving the value attribute re-evaluates via the attribute observe
 test("moving the baseline via setAttr commits the current state and fires clean", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
-    implements: "dirtyable attributable",
+    dirtyable: "", attributable: "",
     value: "a",
     "on-dirty": "this.setAttr({name: 'value', value: this.value})",
   }) as HTMLInputElement;
@@ -237,7 +237,7 @@ test("an on-restore baseline move after a restore counts as pristine", async () 
   const dispose = (await import("@interactable/start.ts")).start();
   const holder = document.createElement("div");
   holder.innerHTML =
-    `<input implements="dirtyable storable modifiable attributable" storable-id="draft" ` +
+    `<input dirtyable storable modifiable attributable storable-id="draft" ` +
     `on-restore(value:string)="this.set(value).setAttr({name: 'value', value: value})">`;
   const input = holder.firstElementChild as HTMLInputElement;
   document.body.appendChild(input);
@@ -258,7 +258,7 @@ test("an on-restore baseline move after a restore counts as pristine", async () 
 test("no class or attribute is ever written to the element", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
-    implements: "dirtyable attributable",
+    dirtyable: "", attributable: "",
     value: "a",
     "on-dirty": "this.setAttr({name: 'data-dirty', value: ''})",
     "on-clean": "this.removeAttr('data-dirty')",
@@ -287,7 +287,7 @@ test("no class or attribute is ever written to the element", async () => {
 test("an authored-dirty connect fires nothing; the first flip fires clean", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
-    implements: "dirtyable attributable",
+    dirtyable: "", attributable: "",
     value: "a",
     "on-dirty": "this.setAttr({name: 'data-dirty', value: ''})",
     "on-clean": "this.removeAttr('data-dirty')",
@@ -309,7 +309,7 @@ test("an authored-dirty connect fires nothing; the first flip fires clean", asyn
 
 test("a file input with a value reads as dirty", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
-  const file = hostElement("input", { implements: "dirtyable", type: "file" }) as HTMLInputElement;
+  const file = hostElement("input", { dirtyable: "", type: "file" }) as HTMLInputElement;
   document.body.appendChild(file);
   await flush();
 
@@ -327,7 +327,7 @@ test("a file input with a value reads as dirty", async () => {
 test("a library write through modifiable dirties via the interaction event; reset clears it", async () => {
   const dispose = (await import("@interactable/start.ts")).start();
   const input = hostElement("input", {
-    implements: "modifiable dirtyable",
+    modifiable: "", dirtyable: "",
     value: "1",
   }) as HTMLInputElement;
   document.body.appendChild(input);

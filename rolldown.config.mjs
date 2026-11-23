@@ -30,6 +30,7 @@ const implementations = [
 const coreFiles = [
   "registry/interactable/attachment.ts",
   "registry/interactable/attributes.ts",
+  "registry/interactable/describe-element.ts",
   "registry/interactable/dispatch.ts",
   "registry/interactable/events.ts",
   "registry/interactable/executor.ts",

@@ -18,6 +18,7 @@ before(async () => {
   ({ ImplementationEvent: ImplementationEventClass } = await import("@interactable/implementation-event.ts"));
   const { defineImplementation } = await import("@behaviors/_implementation-definition.ts");
   defineImplementation("executor-fake", { verbs: {} }, () => ({}));
+  await import("@behaviors/modifiable/modifiable.ts");
 });
 
 after(() => {
@@ -190,21 +191,21 @@ test("a non-attached receiver is reported with the one not-attached message", (t
   assert.equal(spy.mock.callCount(), 1);
   assert.ok(
     String(spy.mock.calls[0]!.arguments[0]).includes(
-      "#plain is not attached: it has no implements or on-* attribute, or start() has not run",
+      "#plain is not attached: it has no implementation or on-* attribute, or start() has not run",
     ),
   );
 });
 
-test("a host no implementation handles reports the implements list", (t) => {
+test("a host no implementation handles reports the implementation list", (t) => {
   const spy = t.mock.method(console, "error");
   const receiver = el("plain");
-  receiver.setAttribute("implements", "attributable");
+  receiver.setAttribute("executor-fake", "");
 
   run(el(), "#plain.show()", new Event("click"));
   assert.equal(spy.mock.callCount(), 1);
   assert.ok(
     String(spy.mock.calls[0]!.arguments[0]).includes(
-      'no implementation on <div#plain implements="attributable"> handles show()',
+      'no implementation on <div#plain executor-fake> handles show()',
     ),
   );
 });
@@ -539,12 +540,12 @@ test("the executor prefixes a fire-time FormulaError with on-<event>, the source
   wireHost(total, { set: () => undefined });
 
   const trigger = el("qty");
-  trigger.setAttribute("implements", "modifiable");
+  trigger.setAttribute("modifiable", "");
   run(trigger, "#total.set(#empty.value + 1)", new Event("input"));
 
   const message = String(spy.mock.calls[0]!.arguments[0]);
   assert.ok(
-    message.includes('on-input on <div#qty implements="modifiable">, argument 1 of set()'),
+    message.includes('on-input on <div#qty modifiable>, argument 1 of set()'),
     message,
   );
   assert.ok(message.includes("(empty)"), message);

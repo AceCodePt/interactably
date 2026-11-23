@@ -179,3 +179,38 @@ test("an event field signature is validated at definition time", () => {
   assert.equal(getImplementationDef("good-event-field")?.events["ping"]?.open, true);
   assert.deepEqual(getImplementationDef("good-event-field")?.events["pong"], {});
 });
+
+test("an implementation name is a lowercase attribute name", () => {
+  for (const name of ["Upper", "1thing", "with_underscore", "with space", "-leading"]) {
+    assert.throws(
+      () => defineImplementation(name, { verbs: {} }, () => ({})),
+      /is not a valid attribute name; expected lowercase \[a-z\]\[a-z0-9-\]\*/,
+      name,
+    );
+  }
+  assert.doesNotThrow(() => defineImplementation("valid-name-2", { verbs: {} }, () => ({})));
+});
+
+test("an implementation name cannot collide with a reserved name or prefix", () => {
+  for (const name of ["implements", "implementations", "intersect"]) {
+    assert.throws(
+      () => defineImplementation(name, { verbs: {} }, () => ({})),
+      new RegExp(`"${name}" collides with the reserved "${name}" attribute`),
+    );
+  }
+  for (const name of ["on-ready", "aria-live", "data-open"]) {
+    assert.throws(
+      () => defineImplementation(name, { verbs: {} }, () => ({})),
+      /collides with the reserved "(on-|aria-|data-)" prefix/,
+    );
+  }
+});
+
+test("an implementation name cannot collide with a native HTML attribute", () => {
+  for (const name of ["value", "name", "type", "href", "checked", "selected", "disabled", "multiple", "class", "id", "hidden", "open"]) {
+    assert.throws(
+      () => defineImplementation(name, { verbs: {} }, () => ({})),
+      new RegExp(`"${name}" collides with the native HTML attribute "${name}"`),
+    );
+  }
+});

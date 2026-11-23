@@ -46,7 +46,7 @@ function interact(el: Element, verb: string): InteractionEvent {
 
 function mountForm(): HTMLFormElement {
   const form = document.createElement("form") as HTMLFormElement;
-  form.setAttribute("implements", "validatable");
+  form.setAttribute("validatable", "");
   const qty = document.createElement("input");
   qty.name = "qty";
   qty.type = "number";
@@ -85,7 +85,7 @@ test("validate() calls preventDefault when reportValidity() is false", async () 
 
 test("validate() on an input uses the platform's own reportValidity", async () => {
   const input = document.createElement("input") as HTMLInputElement;
-  input.setAttribute("implements", "validatable");
+  input.setAttribute("validatable", "");
   input.required = true;
   document.body.appendChild(input);
   await flush();
@@ -95,7 +95,7 @@ test("validate() on an input uses the platform's own reportValidity", async () =
 
 test("valid and invalid report every evaluation, including an unchanged state", async () => {
   const input = document.createElement("input") as HTMLInputElement;
-  input.setAttribute("implements", "validatable");
+  input.setAttribute("validatable", "");
   input.type = "number";
   input.min = "2";
   document.body.appendChild(input);
@@ -114,7 +114,7 @@ test("valid and invalid report every evaluation, including an unchanged state", 
 
 test("user validity events require both touch and a transition", async () => {
   const input = document.createElement("input") as HTMLInputElement;
-  input.setAttribute("implements", "validatable");
+  input.setAttribute("validatable", "");
   input.type = "number";
   input.min = "2";
   input.required = true;
@@ -141,7 +141,7 @@ test("a storable restore can install invalid data without firing user-invalid", 
   localStorage.setItem("draft", JSON.stringify({ value: "17" }));
   const holder = document.createElement("div");
   holder.innerHTML =
-    '<input type="number" min="18" required implements="validatable storable modifiable" ' +
+    '<input type="number" min="18" required validatable storable modifiable ' +
     'storable-id="draft" on-restore(value:string)="this.set(value)">';
   const input = holder.firstElementChild as HTMLInputElement;
   document.body.appendChild(input);
@@ -157,7 +157,7 @@ test("a storable restore can install invalid data without firing user-invalid", 
 
 test("a form reports the aggregate validity of all its controls", async () => {
   const form = document.createElement("form") as HTMLFormElement;
-  form.setAttribute("implements", "validatable");
+  form.setAttribute("validatable", "");
   const first = document.createElement("input") as HTMLInputElement;
   first.required = true;
   const second = document.createElement("input") as HTMLInputElement;
@@ -182,7 +182,7 @@ test("a form reports the aggregate validity of all its controls", async () => {
 
 test("validatable-on=change defers evaluation while the default listens to input", async () => {
   const onChange = document.createElement("input") as HTMLInputElement;
-  onChange.setAttribute("implements", "validatable");
+  onChange.setAttribute("validatable", "");
   onChange.setAttribute("validatable-on", "change");
   onChange.type = "number";
   onChange.required = true;
@@ -197,7 +197,7 @@ test("validatable-on=change defers evaluation while the default listens to input
   assert.deepEqual(changeEvents, ["valid", "user-valid"]);
 
   const onInput = document.createElement("input") as HTMLInputElement;
-  onInput.setAttribute("implements", "validatable");
+  onInput.setAttribute("validatable", "");
   onInput.type = "number";
   onInput.required = true;
   document.body.appendChild(onInput);
@@ -210,7 +210,7 @@ test("validatable-on=change defers evaluation while the default listens to input
 
 test("changing a constraint attribute re-evaluates validity", async () => {
   const input = document.createElement("input") as HTMLInputElement;
-  input.setAttribute("implements", "validatable");
+  input.setAttribute("validatable", "");
   document.body.appendChild(input);
   await flush();
   const events = track(input);

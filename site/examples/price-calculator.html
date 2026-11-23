@@ -42,7 +42,7 @@
               <div class="demo">
                 <div class="row">
                   <label>Qty
-                    <input id="qty" implements="modifiable dirtyable attributable prevent-default"
+                    <input id="qty" modifiable dirtyable attributable prevent-default
                            type="number" value="1" min="1" max="10"
                            on-input="#preview.set(this.value)"
                            on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
@@ -53,10 +53,10 @@
                   <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)" type="button">+</button>
                   <button id="inc5" on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)" type="button">+5</button>
                   <button id="reset" on-click="#qty.reset(); #preview.set(#qty.value)" type="button">Reset</button>
-                  <output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
+                  <output id="preview" modifiable on-load="this.set(#qty.value)">1</output>
                 </div>
 
-                <ul id="list" implements="renderable">
+                <ul id="list" renderable>
                   <li id="row-1">
                     <input class="amount" aria-label="Amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))">
                     <button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid'))" type="button">&times;</button>
@@ -71,7 +71,7 @@
                 </template>
                 <p class="total">
                   Total:
-                  <output id="total" implements="modifiable formattable"
+                  <output id="total" modifiable formattable
                           on-load="this.set(sum('#list .amount:valid'))"
                           formattable-format="{ style: 'currency', currency: 'USD' }">0</output>
                 </p>
@@ -82,14 +82,14 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-calc" on-click="#code-ex-calc.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-calc" on-click="#code-ex-calc.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-calc" implements="copyable" on-copy="#copy-code-ex-calc.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="demo"&gt;
+              <pre class="code" id="code-ex-calc" copyable on-copy="#copy-code-ex-calc.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="demo"&gt;
       &lt;div class="row"&gt;
         &lt;label&gt;Qty
-          &lt;input id="qty" implements="modifiable dirtyable attributable prevent-default"
+          &lt;input id="qty" modifiable dirtyable attributable prevent-default
                  type="number" value="1" min="1" max="10"
                  on-input="#preview.set(this.value)"
                  on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
@@ -100,10 +100,10 @@
         &lt;button on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)"&gt;+&lt;/button&gt;
         &lt;button on-click="#qty.set(#qty.value + 5); #preview.set(#qty.value)"&gt;+5&lt;/button&gt;
         &lt;button on-click="#qty.reset(); #preview.set(#qty.value)"&gt;Reset&lt;/button&gt;
-        &lt;output id="preview" implements="modifiable" on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;
+        &lt;output id="preview" modifiable on-load="this.set(#qty.value)"&gt;1&lt;/output&gt;
       &lt;/div&gt;
 
-      &lt;ul id="list" implements="renderable"&gt;
+      &lt;ul id="list" renderable&gt;
         &lt;li id="row-1"&gt;
           &lt;input class="amount" type="number" value="2.5" step="any" required on-input="#total.set(sum('#list .amount:valid'))"&gt;
           &lt;button on-click="#list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid'))"&gt;&times;&lt;/button&gt;
@@ -117,7 +117,7 @@
         &lt;/li&gt;
       &lt;/template&gt;
       &lt;p class="total"&gt;Total:
-        &lt;output id="total" implements="modifiable formattable"
+        &lt;output id="total" modifiable formattable
                 on-load="this.set(sum('#list .amount:valid'))"
                 formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;
       &lt;/p&gt;

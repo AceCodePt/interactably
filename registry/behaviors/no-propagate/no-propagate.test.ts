@@ -35,7 +35,7 @@ test("no-propagate stops a click from reaching the parent by default", async () 
   parent.addEventListener("click", () => {
     parentClicks++;
   });
-  const child = hostElement("button", { implements: "no-propagate" });
+  const child = hostElement("button", { "no-propagate": "" });
   parent.appendChild(child);
   document.body.append(parent);
   await flush();
@@ -63,7 +63,7 @@ test("no-propagate-events configures the list, including event:key entries", asy
     else otherKeys++;
   });
   const child = hostElement("button", {
-    implements: "no-propagate",
+    "no-propagate": "",
     "no-propagate-events": "click, keydown:enter",
   });
   parent.appendChild(child);
@@ -82,7 +82,7 @@ test("the event list is re-read when no-propagate-events changes", async () => {
   parent.addEventListener("click", () => {
     clicks++;
   });
-  const child = hostElement("button", { implements: "no-propagate" });
+  const child = hostElement("button", { "no-propagate": "" });
   parent.appendChild(child);
   document.body.append(parent);
   await flush();
@@ -107,7 +107,7 @@ test("no-propagate also stops events bubbling up from a descendant", async () =>
   parent.addEventListener("click", () => {
     clicks++;
   });
-  const child = hostElement("div", { implements: "no-propagate" });
+  const child = hostElement("div", { "no-propagate": "" });
   const descendant = document.createElement("button");
   child.appendChild(descendant);
   parent.appendChild(child);

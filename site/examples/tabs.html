@@ -48,14 +48,14 @@
                   <button type="button"
                           on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()">Notes</button>
                 </div>
-                <section id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true">
+                <section id="tab-overview" revealable class="tabpanel" revealable-open="true">
                   <p><strong>Overview.</strong> A plain <code class="inline-code">&lt;section&gt;</code> whose visibility is driven by
                   <code class="inline-code">revealable</code>. The other two panels stay <code class="inline-code">hidden</code> until you pick them.</p>
                 </section>
-                <section id="tab-specs" implements="revealable" class="tabpanel" hidden>
+                <section id="tab-specs" revealable class="tabpanel" hidden>
                   <p><strong>Specs.</strong> One phrase, three verbs: <code class="inline-code">#tab-specs.show(); #tab-overview.show(false); #tab-notes.show(false)</code>.</p>
                 </section>
-                <section id="tab-notes" implements="revealable" class="tabpanel" hidden>
+                <section id="tab-notes" revealable class="tabpanel" hidden>
                   <p><strong>Notes.</strong> The verbs can be anything — <code class="inline-code">set()</code>, <code class="inline-code">setAttr()</code>,
                   even a <code class="inline-code">send()</code> to fetch a tab&rsquo;s content over the network.</p>
                 </section>
@@ -66,11 +66,11 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-tabs" on-click="#code-ex-tabs.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-tabs" on-click="#code-ex-tabs.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-tabs" implements="copyable" on-copy="#copy-code-ex-tabs.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="tabbar"&gt;
+              <pre class="code" id="code-ex-tabs" copyable on-copy="#copy-code-ex-tabs.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;div class="tabbar"&gt;
       &lt;button
               on-click="#tab-overview.show(); #tab-specs.show(false); #tab-notes.show(false)"&gt;Overview&lt;/button&gt;
       &lt;button
@@ -79,13 +79,13 @@
               on-click="#tab-overview.show(false); #tab-specs.show(false); #tab-notes.show()"&gt;Notes&lt;/button&gt;
     &lt;/div&gt;
 
-    &lt;section id="tab-overview" implements="revealable" class="tabpanel" revealable-open="true"&gt;
+    &lt;section id="tab-overview" revealable class="tabpanel" revealable-open="true"&gt;
       &lt;p&gt;&hellip;&lt;/p&gt;
     &lt;/section&gt;
-    &lt;section id="tab-specs" implements="revealable" class="tabpanel" hidden&gt;
+    &lt;section id="tab-specs" revealable class="tabpanel" hidden&gt;
       &lt;p&gt;&hellip;&lt;/p&gt;
     &lt;/section&gt;
-    &lt;section id="tab-notes" implements="revealable" class="tabpanel" hidden&gt;
+    &lt;section id="tab-notes" revealable class="tabpanel" hidden&gt;
       &lt;p&gt;&hellip;&lt;/p&gt;
     &lt;/section&gt;</code></pre>
             </div>

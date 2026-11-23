@@ -60,7 +60,7 @@ test("bootstrap: an empty declaration evaluates no implementation and still star
 
   useHead('<script type="module" implementations=""></script>');
   const holder = document.createElement("div");
-  holder.innerHTML = '<div id="probe-target" implements="probe"></div>';
+  holder.innerHTML = '<div id="probe-target" probe></div>';
   document.body.appendChild(holder);
 
   await loadBootstrap();
@@ -78,7 +78,7 @@ test("bootstrap: every built-in resolves by its declared name", async (t) => {
 
   const core = await import(coreUrl.href);
   useHead(`<script type="module" implementations="${IMPLEMENTATION_NAMES.join(" ")}"></script>`);
-  document.body.innerHTML = '<div id="r" implements="revealable" hidden></div>';
+  document.body.innerHTML = '<div id="r" revealable hidden></div>';
 
   await loadBootstrap();
   await flush();
@@ -98,7 +98,7 @@ test("bootstrap: an unknown name rejects observably and still attaches the recog
   // letting the auto-run kill the runner.
   useHead('<script type="module" implementations="revealable"></script>');
   document.body.innerHTML =
-    '<button id="b" on-click="#r.show()">x</button><div id="r" implements="revealable" hidden></div>';
+    '<button id="b" on-click="#r.show()">x</button><div id="r" revealable hidden></div>';
 
   const mod = await loadBootstrap();
   await flush();
@@ -126,7 +126,7 @@ test("bootstrap: two declaring tags union their lists and start is idempotent pe
       '<script type="module" implementations="attributable"></script>',
   );
   document.body.innerHTML =
-    '<div id="r" implements="revealable" hidden></div><div id="a" implements="attributable"></div>';
+    '<div id="r" revealable hidden></div><div id="a" attributable></div>';
 
   await loadBootstrap();
   await flush();
@@ -145,7 +145,7 @@ test("bootstrap: a declaration at the end of the body is read", async (t) => {
   await flush();
 
   document.body.innerHTML =
-    '<div id="r" implements="revealable" hidden></div>' +
+    '<div id="r" revealable hidden></div>' +
     '<script type="module" implementations="revealable body-only-unknown"></script>';
 
   await assert.rejects(

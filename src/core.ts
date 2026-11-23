@@ -3,7 +3,7 @@ export type { Attrs, ArgOf, El, Implementation, ImplementationDef, Sig, Slot, Ta
 export { start } from "@interactable/start.ts";
 export { getImplementationDef, registerImplementation } from "@behaviors/implementation-registry.ts";
 export type { NormalizedImplementationDef } from "@behaviors/implementation-registry.ts";
-export { NotReadyError, bindEvents, formatWrite, readValue, registerFormatter, writeValue } from "@behaviors/implementation-utils.ts";
+export { bindEvents, formatWrite, readValue, registerFormatter, writeValue } from "@behaviors/implementation-utils.ts";
 export type { BindEventsOptions, BoundEvents, ImplementationInstance } from "@behaviors/implementation-utils.ts";
 export { clearPhraseState, runPhrases } from "@interactable/executor.ts";
 export { parse, parseEventAttribute, parseRefOrRead, parseWithErrors, ParseError } from "@interactable/parser.ts";
@@ -28,6 +28,7 @@ export {
 } from "@interactable/intersect.ts";
 export { readMeasured } from "@interactable/measure.ts";
 export { dispatchInteraction } from "@interactable/dispatch.ts";
+export { describeElement } from "@interactable/describe-element.ts";
 export type { DispatchInteractionOptions } from "@interactable/dispatch.ts";
 export { InteractionEvent } from "@interactable/interaction-event.ts";
 export type { InteractionEventInit } from "@interactable/interaction-event.ts";

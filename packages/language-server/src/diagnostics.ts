@@ -8,6 +8,7 @@ import type { HtmlAttribute, HtmlElement } from "./html.ts";
 import { decodeHtml } from "./offsets.ts";
 import { NATIVE_DOM_EVENTS } from "./native-events.ts";
 import type { DocumentAnalysis } from "./analysis.ts";
+import { presenceAttributeNames } from "./analysis.ts";
 
 export type DiagnosticCode =
   | "parse-error"
@@ -79,7 +80,9 @@ function reportMissingBootstrap(analysis: DocumentAnalysis, add: Adder): void {
   for (const element of analysis.model.elements) {
     for (const candidate of element.attributes) {
       const isTrigger = candidate.name.startsWith("on-") && candidate.name.length > 3;
-      const isUsage = candidate.name === "implements" && !isScriptElement(element);
+      const isUsage =
+        !isScriptElement(element) &&
+        (candidate.name === "implements" || analysis.vocabulary.byName.has(candidate.name));
       if (!isTrigger && !isUsage) continue;
       add(
         candidate.nameStart,
@@ -130,6 +133,17 @@ function reportUndeclaredUsages(
   add: Adder,
 ): void {
   if (!analysis.hasBootstrap) return;
+  for (const candidate of element.attributes) {
+    if (!analysis.vocabulary.byName.has(candidate.name)) continue;
+    if (analysis.declarations.has(candidate.name)) continue;
+    add(
+      candidate.nameStart,
+      candidate.nameEnd,
+      `"${candidate.name}" is used here but not declared by the bootstrap script's implementations attribute`,
+      "undeclared-implementation",
+      DiagnosticSeverity.Error,
+    );
+  }
   const implementsAttribute = attribute(element, "implements");
   if (implementsAttribute === undefined || implementsAttribute.value === null) return;
   const decoded = decodeHtml(implementsAttribute.value);
@@ -313,7 +327,7 @@ function reportUnknownReceiver(
 function verbsFor(analysis: DocumentAnalysis, source: HtmlElement, ref: Ref): ReadonlySet<string> | null {
   const receiver = ref.kind === "this" ? source : analysis.model.byId.get(ref.id);
   if (receiver === undefined) return null;
-  const names = elementImplementationNames(receiver);
+  const names = elementImplementationNames(analysis, receiver);
   const verbs = new Set<string>();
   for (const name of names) {
     const info = analysis.vocabulary.byName.get(name);
@@ -323,10 +337,15 @@ function verbsFor(analysis: DocumentAnalysis, source: HtmlElement, ref: Ref): Re
   return verbs;
 }
 
-function elementImplementationNames(element: HtmlElement): string[] {
+function elementImplementationNames(analysis: DocumentAnalysis, element: HtmlElement): string[] {
+  const names = new Set<string>(presenceAttributeNames(element, analysis.vocabulary));
   const value = attributeValue(element, "implements");
-  if (value === undefined || value === null) return [];
-  return decodeAttributeValue(value).split(/\s+/).filter((name) => name !== "");
+  if (value !== undefined && value !== null) {
+    for (const name of decodeAttributeValue(value).split(/\s+/)) {
+      if (name !== "") names.add(name);
+    }
+  }
+  return [...names];
 }
 
 function describeRef(ref: Ref): string {

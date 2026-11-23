@@ -2,7 +2,7 @@ import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type { JSDOM } from "jsdom";
 import { setupJsdom, teardownJsdom } from "@tests/jsdom.ts";
-import { bindEvents, NotReadyError, readValue } from "@behaviors/implementation-utils.ts";
+import { bindEvents, readValue } from "@behaviors/implementation-utils.ts";
 
 let dom: JSDOM;
 
@@ -142,12 +142,4 @@ test("bindEvents dispose removes the listeners", () => {
   bound.dispose();
   el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   assert.equal(fired, 1);
-});
-
-test("NotReadyError describes the loading gap distinctly from a missing implementation", () => {
-  const error = new NotReadyError("requestable", "send");
-  assert.equal(error.name, "NotReadyError");
-  assert.ok(error instanceof Error);
-  assert.match(error.message, /implements "requestable" still loading/);
-  assert.match(error.message, /send\(\) dropped/);
 });

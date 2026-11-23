@@ -42,11 +42,11 @@
 
               <div class="demo">
                 <label>Bio
-                  <textarea id="cnt-bio" rows="3" maxlength="200" implements="attributable"
+                  <textarea id="cnt-bio" rows="3" maxlength="200" attributable
                             on-input="#cnt-out.set(length(this.value) + ' of 200'); this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))})"
                             placeholder="Up to 200 characters&hellip;"></textarea>
                 </label>
-                <output id="cnt-out" implements="modifiable">0 of 200</output>
+                <output id="cnt-out" modifiable>0 of 200</output>
               </div>
     </div>
         <details class="example-code">
@@ -54,14 +54,14 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-counter" on-click="#code-ex-counter.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-counter" on-click="#code-ex-counter.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-counter" implements="copyable" on-copy="#copy-code-ex-counter.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;textarea id="bio" maxlength="200" implements="attributable"
+              <pre class="code" id="code-ex-counter" copyable on-copy="#copy-code-ex-counter.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;textarea id="bio" maxlength="200" attributable
               on-input="#count.set(length(this.value) + ' of 200');
                         this.setAttr({name: 'data-remaining', value: '' + (200 - length(this.value))})"&gt;&lt;/textarea&gt;
-    &lt;output id="count" implements="modifiable"&gt;0 of 200&lt;/output&gt;
+    &lt;output id="count" modifiable&gt;0 of 200&lt;/output&gt;
 
     &lt;!-- the edge style is an exact match, not a prefix match --&gt;
     &lt;!-- #bio[data-remaining="0"] { border-color: #b91c1c } fires only at 200 --&gt;</code></pre>

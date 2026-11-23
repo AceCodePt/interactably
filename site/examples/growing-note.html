@@ -42,7 +42,7 @@
 
               <div class="demo">
                 <textarea id="note" aria-label="Note"
-                          implements="auto-grow dirtyable attributable pastable modifiable"
+                          auto-grow dirtyable attributable pastable modifiable
                           rows="2"
                           on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
                           on-clean="this.removeAttr('data-dirty')"
@@ -55,12 +55,12 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-note" on-click="#code-ex-note.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-note" on-click="#code-ex-note.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-note" implements="copyable" on-copy="#copy-code-ex-note.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;textarea id="note"
-              implements="auto-grow dirtyable attributable pastable modifiable"
+              <pre class="code" id="code-ex-note" copyable on-copy="#copy-code-ex-note.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;textarea id="note"
+              auto-grow dirtyable attributable pastable modifiable
               rows="2"
               on-dirty="this.setAttr({name: 'data-dirty', value: ''})"
               on-clean="this.removeAttr('data-dirty')"

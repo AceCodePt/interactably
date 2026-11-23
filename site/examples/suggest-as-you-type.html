@@ -46,21 +46,21 @@
               <div class="demo">
                 <div class="row">
                   <input id="city" type="search" placeholder="Type a city, press &darr;"
-                         implements="requestable modifiable focusable prevent-default"
+                         requestable modifiable focusable prevent-default
                          requestable-url="../fragments/cities.html"
                          on-input="#city.debounce(250).send()"
                          on-response(html:string)="#city-list.render({payload: html}); #city-list.show()"
                          on-keydown(code:`ArrowDown`)="#sug-1.focus()"
                          on-keydown(code:`Escape`)="#city-list.show(false)">
                 </div>
-                <ul id="city-list" implements="renderable revealable" hidden></ul>
+                <ul id="city-list" renderable revealable hidden></ul>
                 <!-- the fetched fragment supplies these positional ids; declaring them keeps static tooling aware of them -->
                 <template id="city-option-ids">
-                  <button id="sug-1" implements="focusable"></button>
-                  <button id="sug-2" implements="focusable"></button>
-                  <button id="sug-3" implements="focusable"></button>
-                  <button id="sug-4" implements="focusable"></button>
-                  <button id="sug-5" implements="focusable"></button>
+                  <button id="sug-1" focusable></button>
+                  <button id="sug-2" focusable></button>
+                  <button id="sug-3" focusable></button>
+                  <button id="sug-4" focusable></button>
+                  <button id="sug-5" focusable></button>
                 </template>
               </div>
     </div>
@@ -69,37 +69,37 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-suggest" on-click="#code-ex-suggest.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-suggest" on-click="#code-ex-suggest.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-suggest" implements="copyable" on-copy="#copy-code-ex-suggest.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="city" type="search" placeholder="Type a city, press &darr;"
-           implements="requestable modifiable focusable prevent-default"
+              <pre class="code" id="code-ex-suggest" copyable on-copy="#copy-code-ex-suggest.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;input id="city" type="search" placeholder="Type a city, press &darr;"
+           requestable modifiable focusable prevent-default
            requestable-url="./fragments/cities.html"
            on-input="#city.debounce(250).send()"
            on-response(html:string)="#city-list.render({payload: html}); #city-list.show()"
            on-keydown(code:`ArrowDown`)="#sug-1.focus()"
            on-keydown(code:`Escape`)="#city-list.show(false)"&gt;
-    &lt;ul id="city-list" implements="renderable revealable" hidden&gt;&lt;/ul&gt;
+    &lt;ul id="city-list" renderable revealable hidden&gt;&lt;/ul&gt;
 
     &lt;!-- the fragment the response renders in: each option is wired when it lands --&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-1" implements="focusable prevent-default"
+    &lt;li role="option"&gt;&lt;button id="sug-1" focusable prevent-default
         on-click="#city.set('Lisbon'); #city-list.show(false)"
         on-keydown(code:`ArrowDown`)="#sug-2.focus()"
         on-keydown(code:`ArrowUp`)="#city.focus()"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-2" implements="focusable prevent-default"
+    &lt;li role="option"&gt;&lt;button id="sug-2" focusable prevent-default
         on-click="#city.set('London'); #city-list.show(false)"
         on-keydown(code:`ArrowDown`)="#sug-3.focus()"
         on-keydown(code:`ArrowUp`)="#sug-1.focus()"&gt;London&lt;/button&gt;&lt;/li&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-3" implements="focusable prevent-default"
+    &lt;li role="option"&gt;&lt;button id="sug-3" focusable prevent-default
         on-click="#city.set('Paris'); #city-list.show(false)"
         on-keydown(code:`ArrowDown`)="#sug-4.focus()"
         on-keydown(code:`ArrowUp`)="#sug-2.focus()"&gt;Paris&lt;/button&gt;&lt;/li&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-4" implements="focusable prevent-default"
+    &lt;li role="option"&gt;&lt;button id="sug-4" focusable prevent-default
         on-click="#city.set('Tokyo'); #city-list.show(false)"
         on-keydown(code:`ArrowDown`)="#sug-5.focus()"
         on-keydown(code:`ArrowUp`)="#sug-3.focus()"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-5" implements="focusable prevent-default"
+    &lt;li role="option"&gt;&lt;button id="sug-5" focusable prevent-default
         on-click="#city.set('Berlin'); #city-list.show(false)"
         on-keydown(code:`ArrowDown`)="#city.focus()"
         on-keydown(code:`ArrowUp`)="#sug-4.focus()"&gt;Berlin&lt;/button&gt;&lt;/li&gt;</code></pre>

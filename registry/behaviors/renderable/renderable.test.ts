@@ -27,7 +27,7 @@ beforeEach(() => {
 function mount(): HTMLElement {
   const el = document.createElement("ul");
   el.id = "list";
-  el.setAttribute("implements", "renderable");
+  el.setAttribute("renderable", "");
   document.body.appendChild(el);
   return el;
 }

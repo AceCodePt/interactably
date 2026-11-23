@@ -42,7 +42,7 @@
     <div class="example-body">
 
               <div class="demo">
-                <form id="signup" novalidate implements="prevent-default validatable attributable"
+                <form id="signup" novalidate prevent-default validatable attributable
                       on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()">
                   <div class="row">
                     <label>Email
@@ -51,7 +51,7 @@
                     <button type="submit">Sign up</button>
                   </div>
                   <p class="success" hidden>Thanks &mdash; that address looks valid.</p>
-                  <div id="signup-alert" implements="revealable" hidden role="alert">Enter a valid email address.</div>
+                  <div id="signup-alert" revealable hidden role="alert">Enter a valid email address.</div>
                 </form>
               </div>
     </div>
@@ -60,19 +60,19 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-valid" on-click="#code-ex-valid.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-valid" on-click="#code-ex-valid.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-valid" implements="copyable" on-copy="#copy-code-ex-valid.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="signup" novalidate
-          implements="prevent-default validatable attributable"
+              <pre class="code" id="code-ex-valid" copyable on-copy="#copy-code-ex-valid.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;form id="signup" novalidate
+          prevent-default validatable attributable
           on-submit="#signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show()"&gt;
       &lt;label&gt;Email
         &lt;input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com"&gt;
       &lt;/label&gt;
       &lt;button type="submit"&gt;Sign up&lt;/button&gt;
       &lt;p class="success" hidden&gt;Thanks &mdash; that address looks valid.&lt;/p&gt;
-      &lt;div id="signup-alert" implements="revealable" hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
+      &lt;div id="signup-alert" revealable hidden role="alert"&gt;Enter a valid email address.&lt;/div&gt;
     &lt;/form&gt;</code></pre>
             </div>
           </details>

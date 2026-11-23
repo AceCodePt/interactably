@@ -77,7 +77,7 @@ test("derivedDefaults reads claimed on-* attributes and falls back to the tag", 
 });
 
 test("prevent-default cancels the derived submit on a form", async () => {
-  const form = hostElement("form", { implements: "prevent-default" });
+  const form = hostElement("form", { "prevent-default": "" });
   document.body.appendChild(form);
   await flush();
 
@@ -86,7 +86,7 @@ test("prevent-default cancels the derived submit on a form", async () => {
 
 test("prevent-default derives submit from a claimed on-submit", async (t) => {
   t.mock.method(console, "error");
-  const form = hostElement("form", { implements: "prevent-default", "on-submit": "#x.go()" });
+  const form = hostElement("form", { "prevent-default": "", "on-submit": "#x.go()" });
   document.body.appendChild(form);
   await flush();
 
@@ -95,7 +95,7 @@ test("prevent-default derives submit from a claimed on-submit", async (t) => {
 
 test("prevent-default derives keydown:enter from a key literal and leaves other keys alone", async (t) => {
   t.mock.method(console, "error");
-  const input = fromMarkup('<input implements="prevent-default" on-keydown(key:`Enter`)="#x.go()">');
+  const input = fromMarkup('<input prevent-default on-keydown(key:`Enter`)="#x.go()">');
   document.body.appendChild(input);
   await flush();
 
@@ -110,7 +110,7 @@ test("prevent-default derives keydown:enter from a key literal and leaves other 
 
 test("prevent-default derives a code claim that matches code, not key", async (t) => {
   t.mock.method(console, "error");
-  const input = fromMarkup('<input implements="prevent-default" on-keydown(code:`KeyA`)="#x.go()">');
+  const input = fromMarkup('<input prevent-default on-keydown(code:`KeyA`)="#x.go()">');
   document.body.appendChild(input);
   await flush();
 
@@ -126,7 +126,7 @@ test("prevent-default derives a code claim that matches code, not key", async (t
 test("an unkeyed on-keydown contributes nothing and prevent-default warns that it has no effect", async (t) => {
   const warn = t.mock.method(console, "warn");
   t.mock.method(console, "error");
-  const div = hostElement("div", { implements: "prevent-default", "on-keydown": "#x.go()" });
+  const div = hostElement("div", { "prevent-default": "", "on-keydown": "#x.go()" });
   document.body.appendChild(div);
   await flush();
 
@@ -140,7 +140,7 @@ test("an unkeyed on-keydown contributes nothing and prevent-default warns that i
 test("events outside submit/click/keydown are not derived and prevent-default warns", async (t) => {
   const warn = t.mock.method(console, "warn");
   t.mock.method(console, "error");
-  const div = hostElement("div", { implements: "prevent-default", "on-input": "#x.go()" });
+  const div = hostElement("div", { "prevent-default": "", "on-input": "#x.go()" });
   document.body.appendChild(div);
   await flush();
 
@@ -149,24 +149,24 @@ test("events outside submit/click/keydown are not derived and prevent-default wa
 });
 
 test("prevent-default falls back to the tag: form→submit, <a href>→click, button→click", async () => {
-  const form = hostElement("form", { implements: "prevent-default" });
+  const form = hostElement("form", { "prevent-default": "" });
   document.body.appendChild(form);
   await flush();
   assert.equal(cancelableEvent(form, "submit").defaultPrevented, true);
 
-  const link = hostElement("a", { implements: "prevent-default", href: "/docs" });
+  const link = hostElement("a", { "prevent-default": "", href: "/docs" });
   document.body.appendChild(link);
   await flush();
   assert.equal(cancelableEvent(link, "click").defaultPrevented, true);
 
-  const button = hostElement("button", { implements: "prevent-default" });
+  const button = hostElement("button", { "prevent-default": "" });
   document.body.appendChild(button);
   await flush();
   assert.equal(cancelableEvent(button, "click").defaultPrevented, true);
 });
 
 test("a DOM move re-binds the cancel listeners", async () => {
-  const form = hostElement("form", { implements: "prevent-default" });
+  const form = hostElement("form", { "prevent-default": "" });
   document.body.appendChild(form);
   await flush();
 
@@ -182,7 +182,7 @@ test("a DOM move re-binds the cancel listeners", async () => {
 });
 
 test("prevent-default-events overrides the derivation", async () => {
-  const form = hostElement("form", { implements: "prevent-default", "prevent-default-events": "click" });
+  const form = hostElement("form", { "prevent-default": "", "prevent-default-events": "click" });
   document.body.appendChild(form);
   await flush();
 

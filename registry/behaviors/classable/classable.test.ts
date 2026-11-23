@@ -45,7 +45,7 @@ function interact(el: Element, verb: string, arg?: unknown): InteractionEvent {
 }
 
 test("add adds a class once, natively", async () => {
-  const el = hostElement("div", { implements: "classable" });
+  const el = hostElement("div", { classable: "" });
   document.body.appendChild(el);
   await flush();
 
@@ -57,7 +57,7 @@ test("add adds a class once, natively", async () => {
 });
 
 test("add leaves existing class names untouched", async () => {
-  const el = hostElement("div", { implements: "classable", class: "a b" });
+  const el = hostElement("div", { classable: "", class: "a b" });
   document.body.appendChild(el);
   await flush();
 
@@ -66,7 +66,7 @@ test("add leaves existing class names untouched", async () => {
 });
 
 test("remove drops one class; a missing class is a no-op", async () => {
-  const el = hostElement("div", { implements: "classable", class: "a b c" });
+  const el = hostElement("div", { classable: "", class: "a b c" });
   document.body.appendChild(el);
   await flush();
 
@@ -79,7 +79,7 @@ test("remove drops one class; a missing class is a no-op", async () => {
 });
 
 test("toggle flips the class on and back off", async () => {
-  const el = hostElement("div", { implements: "classable" });
+  const el = hostElement("div", { classable: "" });
   document.body.appendChild(el);
   await flush();
 
@@ -91,7 +91,7 @@ test("toggle flips the class on and back off", async () => {
 });
 
 test("a whitespace token is not split: the browser throws InvalidCharacterError", async () => {
-  const el = hostElement("div", { implements: "classable" });
+  const el = hostElement("div", { classable: "" });
   document.body.appendChild(el);
   await flush();
 
@@ -105,7 +105,7 @@ test("a whitespace token is not split: the browser throws InvalidCharacterError"
 });
 
 test("the empty string throws SyntaxError", async () => {
-  const el = hostElement("div", { implements: "classable" });
+  const el = hostElement("div", { classable: "" });
   document.body.appendChild(el);
   await flush();
 
@@ -115,7 +115,7 @@ test("the empty string throws SyntaxError", async () => {
 });
 
 test("a non-string argument is a signature error", async () => {
-  const el = hostElement("div", { implements: "classable" });
+  const el = hostElement("div", { classable: "" });
   document.body.appendChild(el);
   await flush();
 
@@ -127,10 +127,10 @@ test("a non-string argument is a signature error", async () => {
 test("executor path through attach(): #menu.toggle('open') from a button, then add/remove", async () => {
   const button = hostElement("button", {
     id: "menu-btn",
-    implements: "classable",
+    classable: "",
     "on-click": "#menu.toggle('open')",
   });
-  const menu = hostElement("nav", { id: "menu", implements: "classable" });
+  const menu = hostElement("nav", { id: "menu", classable: "" });
   document.body.append(button, menu);
   await flush();
 
@@ -148,8 +148,8 @@ test("executor path through attach(): #menu.toggle('open') from a button, then a
   assert.equal(menu.className, "open");
 });
 
-test("first-match in implements order decides toggle, not the argument shape", async () => {
-  const revealableFirst = hostElement("div", { implements: "revealable classable" });
+test("first-match in attribute order decides toggle, not the argument shape", async () => {
+  const revealableFirst = hostElement("div", { revealable: "", classable: "" });
   document.body.appendChild(revealableFirst);
   await flush();
 
@@ -161,7 +161,7 @@ test("first-match in implements order decides toggle, not the argument shape", a
     "revealable handled toggle(), not classable",
   );
 
-  const classableFirst = hostElement("div", { implements: "classable revealable" });
+  const classableFirst = hostElement("div", { classable: "", revealable: "" });
   document.body.appendChild(classableFirst);
   await flush();
 

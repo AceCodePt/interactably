@@ -17,7 +17,7 @@ export function dispatchInteraction(
     const id = (el as { id?: unknown }).id;
     const subject = typeof id === "string" && id !== "" ? `#${id}` : el.localName;
     throw new Error(
-      `${subject} is not attached: it has no implements or on-* attribute, or start() has not run`,
+      `${subject} is not attached: it has no implementation or on-* attribute, or start() has not run`,
     );
   }
   const event = new InteractionEvent({

@@ -2,17 +2,17 @@
 
 A declarative interaction language for plain HTML elements.
 
-You write plain HTML. An `on-*` attribute makes a **trigger**; `implements="…"` makes a **receiver**; a `script` tag lists the implementations the page loads in its `implementations="…"` attribute ([§ Quick start](#quick-start)).
+You write plain HTML. An `on-*` attribute makes a **trigger**; a bare implementation attribute such as `revealable` makes a **receiver**; a `script` tag lists the implementations the page loads in its `implementations="…"` attribute ([§ Quick start](#quick-start)).
 
 ```html
 <script type="module" implementations="revealable"
         src="interactably/dist/cdn/interactably-bootstrap.js"></script>
 
 <button on-click="#modal.show()">Open</button>
-<dialog id="modal" implements="revealable">…</dialog>
+<dialog id="modal" revealable>…</dialog>
 ```
 
-Clicking the button sends the verb `show()` to `#modal`, which implements `revealable`. No page JavaScript.
+Clicking the button sends the verb `show()` to `#modal`, which carries `revealable`. No page JavaScript.
 
 > **Full documentation:** the [extensive guide](https://acecodept.github.io/interactably/docs.html), the [live examples](https://acecodept.github.io/interactably/examples.html), and the [API reference](https://acecodept.github.io/interactably/reference.html).
 
@@ -33,12 +33,12 @@ Load the shipped bootstrap and list the implementations you use in the `implemen
 <button id="inc" on-click="#qty.set(#qty.value + 1); #preview.set(#qty.value)">+</button>
 
 <label>Qty
-  <input id="qty" implements="modifiable"
+  <input id="qty" modifiable
          type="number" value="1" min="0" max="10"
          on-input="#preview.set(this.value)">
 </label>
 
-<output id="preview" implements="modifiable" on-load="this.set(#qty.value)">1</output>
+<output id="preview" modifiable on-load="this.set(#qty.value)">1</output>
 ```
 
 Every click on `+` runs `#qty.set(#qty.value + 1)` and then `#preview.set(#qty.value)`; typing in the field still pushes through `on-input`. `#preview`'s own `on-load="this.set(#qty.value)"` computes it once at attach.
@@ -49,7 +49,7 @@ Every click on `+` runs `#qty.set(#qty.value + 1)` and then `#preview.set(#qty.v
 | `interactably-core.js` | parser, executor, event, attachment, registry. No implementations, no bootstrap. |
 | `modifiable.js`, `dirtyable.js`, `renderable.js`, … | one implementation per file, registering into the core's registry on import |
 
-> **The participation rule.** An element is a participant — something `start()` attaches — when it has `implements`, any `on-*` attribute, or both. The runtime scans and observes the `<body>` element and everything it contains; the head is never scanned, so an element there is never a participant, even one carrying `on-*`. The bootstrap script is not a participant either: it lists implementations in `implementations`, while only an element's `implements` marks a receiver. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new `implements` or `on-*` attribute to an element after insertion does not attach it; re-insert the element.
+> **The participation rule.** An element is a participant — something `start()` attaches — when it carries at least one implementation attribute such as `revealable`, any `on-*` attribute, or both. The runtime scans and observes the `<body>` element and everything it contains; the head is never scanned, so an element there is never a participant, even one carrying `on-*`. The bootstrap script is not a participant either: it lists implementations in `implementations`, while only a bare implementation attribute on an element marks a receiver. Implementations and interactions are independent: an element may have either, both, or neither. If nothing else addresses an element, it does not need an `id`. Adding a brand-new implementation or `on-*` attribute to an element after insertion does not attach it; re-insert the element. The old `implements` attribute is a hard error: it logs once per element and grants no implementations.
 
 ---
 
@@ -176,7 +176,7 @@ Input masks and format-as-you-type belong in a component library built on the sa
 
 ## Not supported
 
-Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `min` / `max` / `step` (and `height` / `width` in expressions) · attaching an element that gains `implements` or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · renderable slots are flat scalars only — `{name}` placeholders in text nodes and attribute values, substituted as strings, no nested objects or arrays as slot values · the native paste event (`on-paste` is not a trigger; `on-pasted` fires after the insertion) · a template-literal type over a whole `on-*` value (possible, not needed for v1).
+Shadow DOM (events are non-composed; receivers are document ids) · modifier keys (`.ctrl`), `.self`, `.outside` (reserved as future postfix modifiers) · class receivers · property access beyond `value` / `checked` / `min` / `max` / `step` (and `height` / `width` in expressions) · attaching an element that gains an implementation attribute or an `on-*` attribute after insertion (re-insert it) · a per-trigger `preventDefault` opt-out · nested objects or arrays as arguments · variadic verbs · renderable slots are flat scalars only — `{name}` placeholders in text nodes and attribute values, substituted as strings, no nested objects or arrays as slot values · the native paste event (`on-paste` is not a trigger; `on-pasted` fires after the insertion) · a template-literal type over a whole `on-*` value (possible, not needed for v1).
 
 `on-load` always means attach, including on `<img>`, `<iframe>`, `<body>`, `<link>`, `<script>`; it is never the native `load` event — bytes-arrived is `addEventListener('load', …)`.
 
@@ -210,7 +210,6 @@ All from `interactably` (or `interactably/dist/cdn/interactably-core.js` for the
 | `bindEvents(el, events, handler, opts?)` | Shared listener binder for `prevent-default` / `no-propagate` style implementations |
 | `readValue(el, property = "value")` | The element's value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read `.value` (a string), display elements read `formattable-value` as a number under a numeric format, else `textContent` (a string); `readValue(el, "checked")` is the checked boolean; `readValue(el, "min" | "max" | "step")` is the platform bound — a number on number/range inputs (absent `min`/`max` is `""`, absent `step` is `1`), the string as written elsewhere |
 | `writeValue(el, v)` | Write helper: sets `.value` where the element has one, else `textContent` |
-| `NotReadyError` | Error set on `e.error` when a dispatch reaches an attached element whose `implements` names an implementation that has not registered yet |
 | Implementations | `modifiable`, `dirtyable`, `renderable`, `requestable`, `attributable`, `classable`, `logger`, `validatable`, `noPropagate`, `preventDefault`, `revealable`, `autoGrow`, `storable`, `pastable`, `copyable`, `formattable`, `focusable` |
 
 ---
@@ -223,11 +222,11 @@ language, in the `interactably-language-server` workspace package
 config file.
 
 It diagnoses every parse error at its range, an unknown verb, an unknown receiver
-(`#id` with no element), an unknown event, an element `implements` name the bootstrap
+(`#id` with no element), an unknown event, an element implementation attribute the bootstrap
 script's `implementations` does not list, a non-built-in in the bootstrap script's
 `implementations`, and a page that uses phrases with no bootstrap tag. It completes ids
-after `#`, an element's verbs after `#id.` or `this.`, implementation names inside an
-element's `implements="…"` and the bootstrap script's `implementations="…"`, and
+after `#`, an element's verbs after `#id.` or `this.`, implementation names inside the
+bootstrap script's `implementations="…"`, and
 `on-<event>` at an attribute name.
 
 ```sh

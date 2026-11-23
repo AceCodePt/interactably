@@ -46,9 +46,9 @@
                   <button id="panel-toggle" on-click="#panel.toggle()"
                           aria-expanded="false" aria-controls="panel" type="button">Toggle panel</button>
                 </div>
-                <section id="panel" implements="revealable" hidden>
+                <section id="panel" revealable hidden>
                   <p>
-                    This panel is a <code class="inline-code">&lt;section implements="revealable"&gt;</code>.
+                    This panel is a <code class="inline-code">&lt;section revealable&gt;</code>.
                     <code class="inline-code">revealable</code> reads the element: <code class="inline-code">revealable-open</code> here,
                     <code class="inline-code">open</code> on a <code class="inline-code">&lt;details&gt;</code> or <code class="inline-code">&lt;dialog&gt;</code>,
                     popover state on a <code class="inline-code">[popover]</code>. The trigger is
@@ -63,13 +63,13 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-reveal" on-click="#code-ex-reveal.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-reveal" on-click="#code-ex-reveal.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-reveal" implements="copyable" on-copy="#copy-code-ex-reveal.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#panel.toggle()"
+              <pre class="code" id="code-ex-reveal" copyable on-copy="#copy-code-ex-reveal.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#panel.toggle()"
             aria-expanded="false" aria-controls="panel"&gt;Toggle panel&lt;/button&gt;
-    &lt;section id="panel" implements="revealable" hidden&gt;
+    &lt;section id="panel" revealable hidden&gt;
       &lt;p&gt;&hellip;&lt;/p&gt;
     &lt;/section&gt;</code></pre>
             </div>

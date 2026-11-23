@@ -44,11 +44,11 @@
                 <div class="codeblock">
                   <div class="codeblock-bar">
                     <span class="codeblock-lang">text</span>
-                    <button class="copy-btn" implements="attributable" id="copy-demo-snippet" on-click="#demo-snippet.copy()" type="button">
+                    <button class="copy-btn" attributable id="copy-demo-snippet" on-click="#demo-snippet.copy()" type="button">
                       <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                     </button>
                   </div>
-                  <pre class="code" id="demo-snippet" implements="copyable" on-copy="#copy-demo-snippet.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text">Copy this line and watch the label &mdash; it reverts to Copy after 1.5&nbsp;s.</pre>
+                  <pre class="code" id="demo-snippet" copyable on-copy="#copy-demo-snippet.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="text">Copy this line and watch the label &mdash; it reverts to Copy after 1.5&nbsp;s.</pre>
                 </div>
               </div>
     </div>
@@ -57,14 +57,14 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-copy" on-click="#code-ex-copy.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-copy" on-click="#code-ex-copy.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-copy" implements="copyable" on-copy="#copy-code-ex-copy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;pre id="snippet" implements="copyable"
+              <pre class="code" id="code-ex-copy" copyable on-copy="#copy-code-ex-copy.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;pre id="snippet" copyable
             on-copy="#copy-btn.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')"&gt;Copy this line and watch the label &amp;mdash; it reverts to Copy after 1.5&amp;nbsp;s.&lt;/pre&gt;
 
-    &lt;button id="copy-btn" class="copy-btn" implements="attributable"
+    &lt;button id="copy-btn" class="copy-btn" attributable
             on-click="#snippet.copy()" type="button"&gt;
       &lt;span class="copy-label"&gt;Copy&lt;/span&gt;&lt;span class="copied-label"&gt;Copied&lt;/span&gt;
     &lt;/button&gt;</code></pre>

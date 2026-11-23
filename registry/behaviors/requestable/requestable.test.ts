@@ -90,13 +90,13 @@ function hostElement(attributes: Record<string, string>): HTMLElement {
 function revealable(tag: string, id: string): HTMLElement {
   const el = document.createElement(tag) as HTMLElement;
   el.id = id;
-  el.setAttribute("implements", "revealable");
+  el.setAttribute("revealable", "");
   el.hidden = true;
   return el;
 }
 
 async function mount(attributes: Record<string, string>): Promise<HTMLElement> {
-  const el = hostElement({ implements: "requestable", ...attributes });
+  const el = hostElement({ requestable: "", ...attributes });
   document.body.appendChild(el);
   await flush();
   return el;
@@ -460,7 +460,7 @@ test("a timeout fires on-request-timeout, exactly once, carrying no values, and 
 test("on-request-error(status:`401`) fires only when the non-ok status is 401, and request-error carries status", async () => {
   const holder = document.createElement("div");
   holder.innerHTML =
-    '<div id="req-401" implements="requestable" requestable-url="/api" on-request-error(status:`401`)="#alert.show()"></div>';
+    '<div id="req-401" requestable requestable-url="/api" on-request-error(status:`401`)="#alert.show()"></div>';
   const el = holder.querySelector("#req-401") as HTMLElement;
   document.body.appendChild(el);
   const alert = revealable("div", "alert");

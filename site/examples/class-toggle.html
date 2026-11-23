@@ -48,7 +48,7 @@
                   <button id="cls-remove" type="button" on-click="#cls-menu.remove('compact')">Spacious</button>
                   <button id="cls-both" type="button" on-click="#cls-menu.toggle('open').toggle('compact')">Toggle both</button>
                 </div>
-                <nav id="cls-menu" class="menu" implements="classable">
+                <nav id="cls-menu" class="menu" classable>
                   <a href="#docs">Docs</a>
                   <a href="#examples">Examples</a>
                   <a href="#reference">Reference</a>
@@ -60,16 +60,16 @@
             <div class="codeblock">
               <div class="codeblock-bar">
                 <span class="codeblock-lang">HTML</span>
-                <button class="copy-btn" implements="attributable" id="copy-code-ex-class" on-click="#code-ex-class.copy()" type="button">
+                <button class="copy-btn" attributable id="copy-code-ex-class" on-click="#code-ex-class.copy()" type="button">
                   <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                 </button>
               </div>
-              <pre class="code" id="code-ex-class" implements="copyable" on-copy="#copy-code-ex-class.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#menu.toggle('open')"&gt;Toggle open&lt;/button&gt;
+              <pre class="code" id="code-ex-class" copyable on-copy="#copy-code-ex-class.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied')" data-lang="html"><code>&lt;button on-click="#menu.toggle('open')"&gt;Toggle open&lt;/button&gt;
     &lt;button on-click="#menu.add('compact')"&gt;Compact&lt;/button&gt;
     &lt;button on-click="#menu.remove('compact')"&gt;Spacious&lt;/button&gt;
     &lt;button on-click="#menu.toggle('open').toggle('compact')"&gt;Toggle both&lt;/button&gt;
 
-    &lt;nav id="menu" class="menu" implements="classable"&gt;
+    &lt;nav id="menu" class="menu" classable&gt;
       &lt;a href="#docs"&gt;Docs&lt;/a&gt;&lt;a href="#examples"&gt;Examples&lt;/a&gt;&lt;a href="#reference"&gt;Reference&lt;/a&gt;
     &lt;/nav&gt;</code></pre>
             </div>
