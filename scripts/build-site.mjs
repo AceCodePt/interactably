@@ -99,15 +99,16 @@ function rebuildPre(shikiHtml, id, dataLang) {
         .filter((part) => part && !part.startsWith("background-color") && !part.startsWith("--shiki-dark-bg"));
       return kept.length > 0 ? ` style="${kept.join(";")}"` : "";
     });
-  return `<pre class="code shiki" id="${id}" data-lang="${dataLang}"${tag.slice("<pre".length)}>${rest}`;
+  const idAttribute = id === undefined ? "" : ` id="${id}"`;
+  return `<pre class="code shiki"${idAttribute} data-lang="${dataLang}"${tag.slice("<pre".length)}>${rest}`;
 }
 
 function highlightHtml(html) {
   let count = 0;
-  const out = html.replace(/<pre class="code"([^>]*)>([\s\S]*?)<\/pre>/g, (whole, attrs, inner) => {
+  const out = html.replace(/<pre class="code"((?:"[^"]*"|[^>"])*)>([\s\S]*?)<\/pre>/g, (whole, attrs, inner) => {
     const id = attrValue(attrs, "id");
     const dataLang = attrValue(attrs, "data-lang");
-    if (id === undefined || dataLang === undefined || dataLang === "text") return whole;
+    if (dataLang === undefined || dataLang === "text") return whole;
     const lang = LANG_ALIASES[dataLang] ?? dataLang;
     const code = decodeEntities(codeInner(inner));
     const highlighted = highlighter.codeToHtml(code, {
@@ -170,10 +171,20 @@ function collectHtml(dir) {
   }
 }
 collectHtml(out);
+let expected = 0;
 for (const file of htmlFiles) {
-  const result = highlightHtml(await readFile(file, "utf8"));
+  const source = await readFile(file, "utf8");
+  expected += (source.match(/data-lang="(?!text")/g) ?? []).length;
+  const result = highlightHtml(source);
   if (result.count > 0) await writeFile(file, result.html);
   highlighted += result.count;
+}
+
+if (highlighted !== expected) {
+  console.error(
+    `[build-site] highlighted ${highlighted} of ${expected} code block(s); a block was skipped or its tag was not matched`,
+  );
+  process.exit(1);
 }
 
 console.log(
