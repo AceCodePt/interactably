@@ -85,28 +85,29 @@ function codeInner(inner) {
   return match ? match[1] : inner;
 }
 
-function rebuildPre(shikiHtml, id, dataLang) {
+function rebuildPre(shikiHtml, attrs, dataLang) {
   const openEnd = shikiHtml.indexOf(">");
   const rest = shikiHtml.slice(openEnd + 1);
-  const tag = shikiHtml
-    .slice(0, openEnd)
-    .replace(/class="[^"]*"/, "")
-    .replace(/\s+tabindex="0"/, "")
-    .replace(/style="([^"]*)"/, (_, style) => {
-      const kept = style
-        .split(";")
-        .map((part) => part.trim())
-        .filter((part) => part && !part.startsWith("background-color") && !part.startsWith("--shiki-dark-bg"));
-      return kept.length > 0 ? ` style="${kept.join(";")}"` : "";
-    });
-  const idAttribute = id === undefined ? "" : ` id="${id}"`;
-  return `<pre class="code shiki"${idAttribute} data-lang="${dataLang}"${tag.slice("<pre".length)}>${rest}`;
+  const style = /style="([^"]*)"/.exec(shikiHtml.slice(0, openEnd))?.[1];
+  const keptStyle =
+    style === undefined
+      ? ""
+      : style
+          .split(";")
+          .map((part) => part.trim())
+          .filter((part) => part && !part.startsWith("background-color") && !part.startsWith("--shiki-dark-bg"))
+          .join(";");
+  const kept = attrs
+    .replace(/\s+class="[^"]*"/, "")
+    .replace(/\s+data-lang="[^"]*"/, "")
+    .replace(/\s+style="[^"]*"/, "");
+  const styleAttribute = keptStyle === "" ? "" : ` style="${keptStyle}"`;
+  return `<pre class="code shiki"${kept} data-lang="${dataLang}"${styleAttribute}>${rest}`;
 }
 
 function highlightHtml(html) {
   let count = 0;
   const out = html.replace(/<pre class="code"((?:"[^"]*"|[^>"])*)>([\s\S]*?)<\/pre>/g, (whole, attrs, inner) => {
-    const id = attrValue(attrs, "id");
     const dataLang = attrValue(attrs, "data-lang");
     if (dataLang === undefined || dataLang === "text") return whole;
     const lang = LANG_ALIASES[dataLang] ?? dataLang;
@@ -116,7 +117,7 @@ function highlightHtml(html) {
       themes: { light, dark },
     });
     count += 1;
-    return rebuildPre(highlighted, id, dataLang);
+    return rebuildPre(highlighted, attrs, dataLang);
   });
   return { html: out, count };
 }

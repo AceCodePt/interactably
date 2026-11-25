@@ -1,5 +1,6 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { JSDOM } from "jsdom";
@@ -1382,4 +1383,19 @@ test("site: every example declares exactly the implementations its markup uses",
       `${name} declares exactly the implementations it uses`,
     );
   }
+});
+
+test("site: the built code block keeps its implementation and handler attributes", () => {
+  execFileSync(process.execPath, [fileURLToPath(new URL("../scripts/build-site.mjs", import.meta.url))], {
+    stdio: "pipe",
+  });
+  const built = readFileSync(
+    fileURLToPath(new URL("../site-dist/examples/copy-snippet.html", import.meta.url)),
+    "utf8",
+  );
+  assert.match(
+    built,
+    /<pre class="code shiki" id="code-ex-copy" copyable on-copy="\(\) =>/,
+    "highlighting must not drop the block's own attributes",
+  );
 });
