@@ -363,6 +363,14 @@ code, pre, kbd {
   scroll-margin-top: 5rem;
 }
 
+.content h4 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--faint);
+  margin: 1.4rem 0 0.5rem;
+}
+
 .content p {
   margin: 0.6rem 0;
 }

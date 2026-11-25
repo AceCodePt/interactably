@@ -236,30 +236,49 @@ modifier    := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms 
         </section>
         <section id="sec-constructs" on-intersect="[(state: 'enter', block-start: '-#topnav.height') => { #toc-constructs.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#topnav.height') => { #toc-constructs.removeAttr('data-visible') }]">
         <h3 id="constructs">Constructs <a class="anchor" href="#constructs">#</a></h3>
+        <h4>Triggers</h4>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
             <tbody>
               <tr><td>Trigger</td><td><code class="inline-code">on-click="() => { #pop.show() }"</code></td><td>On <code class="inline-code">click</code>, run the handler&rsquo;s phrases</td></tr>
-              <tr><td>Implementation event</td><td><code class="inline-code">on-copy="() => { #flash.show() }"</code></td><td>On a copyable element <code class="inline-code">on-copy</code> catches both the native clipboard event and copyable&rsquo;s success (one attribute, one fact), differing underneath only in cancelability and <code class="inline-code">clipboardData</code>; if the sharing ever bites, the fix is a rename to <code class="inline-code">copied</code>, not a redesign.</td></tr>
-              <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect="(state: 'enter', block-start: '-#topnav.height') => { #link.setAttr({name: 'data-visible', value: ''}) }"</code></td><td><code class="inline-code">IntersectionObserver</code> against the viewport. <code class="inline-code">state</code> matches <code class="inline-code">enter</code> or <code class="inline-code">leave</code>; <code class="inline-code">full</code> matches <code class="inline-code">true</code> on becoming entirely inside the box and <code class="inline-code">false</code> on leaving that state; the four margin slots (<code class="inline-code">block-start</code>, <code class="inline-code">block-end</code>, <code class="inline-code">inline-start</code>, <code class="inline-code">inline-end</code>) configure the observer&rsquo;s <code class="inline-code">rootMargin</code>, mapped to physical sides by writing mode</td></tr>
+              <tr><td>Implementation event</td><td><code class="inline-code">on-copy="() => { #flash.show() }"</code></td><td>An event an implementation declares; <code class="inline-code">on-copy</code> also sees the native clipboard copy</td></tr>
+              <tr><td>Synthetic trigger</td><td><code class="inline-code">on-intersect="(state: 'enter') => { #link.mark() }"</code></td><td><code class="inline-code">IntersectionObserver</code> against the viewport; <code class="inline-code">state</code> / <code class="inline-code">full</code> match, margin slots set <code class="inline-code">rootMargin</code></td></tr>
+              <tr><td>Key filter</td><td><code class="inline-code">on-keydown="(key: 'Enter') => { #f.send() }"</code></td><td>Match an event field to a literal; the phrase runs only when it matches</td></tr>
+              <tr><td>Event value</td><td><code class="inline-code">on-response="(html: string) => { #receipt.set(html) }"</code></td><td>Binds the event&rsquo;s value to that name inside this handler, nowhere else</td></tr>
+              <tr><td>Literal filter</td><td><code class="inline-code">on-request-error="(status: 401) => { #login.show() }"</code></td><td>Runs only when the field equals the literal; a type field binds instead</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Phrases and arguments</h4>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
+            <tbody>
               <tr><td>Receiver</td><td><code class="inline-code">#pop.show()</code></td><td>Send verb <code class="inline-code">show()</code> to the element with <code class="inline-code">id="pop"</code></td></tr>
               <tr><td>Self</td><td><code class="inline-code">this.reset()</code></td><td>The element the phrase was read from (the trigger for <code class="inline-code">on-*</code>)</td></tr>
               <tr><td>Chain</td><td><code class="inline-code">#pop.show().focus()</code></td><td><code class="inline-code">.show()</code> then <code class="inline-code">.focus()</code> on the same receiver, in order</td></tr>
               <tr><td>Independent</td><td><code class="inline-code">#pb.show(false); #pa.show()</code></td><td>Two phrases that run regardless of each other</td></tr>
-              <tr><td>And</td><td><code class="inline-code">#form.reportValidity() &amp;&amp; #hint.show()</code></td><td><code class="inline-code">.reportValidity()</code> then, only if it completed, <code class="inline-code">#hint.show()</code>, possibly on another receiver</td></tr>
+              <tr><td>And</td><td><code class="inline-code">#form.reportValidity() &amp;&amp; #hint.show()</code></td><td>The next unit, only if the previous one completed</td></tr>
               <tr><td>Or</td><td><code class="inline-code">#form.reportValidity().send() || #alert.show()</code></td><td><code class="inline-code">#alert.show()</code> only if a guard aborted the first unit</td></tr>
               <tr><td>Scalar arg</td><td><code class="inline-code">#qty.set(#qty.value + 5)</code></td><td>Numbers, <code class="inline-code">'strings'</code>, <code class="inline-code">true</code> / <code class="inline-code">false</code></td></tr>
-              <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code>, the type the element declares; absent <code class="inline-code">min</code>/<code class="inline-code">max</code> reads empty, absent <code class="inline-code">step</code> on a number/range input reads <code class="inline-code">1</code></td></tr>
-              <tr><td>Key filter</td><td><code class="inline-code">on-keydown="(key: 'Enter') => { #f.send() }"</code></td><td>Match an event field to a literal; the phrase runs only when it matches</td></tr>
+              <tr><td>Property read</td><td><code class="inline-code">#preview.set(this.value)</code></td><td><code class="inline-code">value</code> / <code class="inline-code">checked</code> / <code class="inline-code">min</code> / <code class="inline-code">max</code> / <code class="inline-code">step</code>, the type the element declares</td></tr>
               <tr><td>Object literal</td><td><code class="inline-code">#note.transform({mode: 'upper', shift: 2})</code></td><td>One named-argument object</td></tr>
-              <tr><td>Event value</td><td><code class="inline-code">on-response="(html: string) => { #receipt.set(html) }"</code></td><td>A type field binds the event&rsquo;s value to that name inside the handler, and nowhere else</td></tr>
-              <tr><td>Literal filter</td><td><code class="inline-code">on-request-error="(status: 401) => { #login.show() }"</code></td><td>A literal field matches the event&rsquo;s value: the handler runs only when it equals the literal, while a type field binds instead</td></tr>
-              <tr><td>Debounce</td><td><code class="inline-code">#echo.debounce(300).set(this.value)</code></td><td>Defers this receiver&rsquo;s chain by 300ms; a re-fire restarts the timer; one chain in flight; must sit right after the ref</td></tr>
+              <tr><td>Expression</td><td><code class="inline-code">#total.set(sum('#list .amount'))</code></td><td>Evaluated at fire time; selectors appear only inside string arguments</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Modifiers</h4>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Construct</th><th>Example</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td>Debounce</td><td><code class="inline-code">#echo.debounce(300).set(this.value)</code></td><td>Defers the chain 300ms; a re-fire restarts the timer; one chain in flight</td></tr>
               <tr><td>Throttle</td><td><code class="inline-code">#viewport.throttle(16).zoom(this)</code></td><td>Leading-edge throttle of this receiver&rsquo;s chain; per element</td></tr>
               <tr><td>Once</td><td><code class="inline-code">#tour.once().show()</code></td><td>Gates the rest of the chain; spent when the walk passes it</td></tr>
-              <tr><td>Delay</td><td><code class="inline-code">#note.delay(500).reset()</code></td><td>Pauses the chain where it sits for a fixed ms; re-fires stack, they do not reset it</td></tr>
-              <tr><td>Expression</td><td><code class="inline-code">#total.set(sum('#list .amount'))</code></td><td>An argument that is not a literal, ref or read is evaluated as an expression at fire time; selectors appear only inside string arguments</td></tr>
+              <tr><td>Delay</td><td><code class="inline-code">#note.delay(500).reset()</code></td><td>Pauses the chain where it sits; re-fires stack, they do not reset it</td></tr>
             </tbody>
           </table>
         </div>
