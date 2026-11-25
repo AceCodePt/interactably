@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably example — Copy a snippet — the flash is delayable.">
-  <title>Copy a snippet — the flash is delayable — Examples — Interactably</title>
+  <meta name="description" content="Interactably example: Copy a snippet with a delayable flash.">
+  <title>Copy a snippet: the flash is delayable | Examples | Interactably</title>
   <link rel="stylesheet" href="../styles.css">
   <script type="module" implementations="attributable copyable" src="../cdn/interactably-bootstrap.js"></script>
 </head>
@@ -31,7 +31,7 @@
 
   <main class="wrap">
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
-    <h1 class="doc-title">Copy a snippet — the flash is delayable</h1>
+    <h1 class="doc-title">Copy a snippet: the flash is delayable</h1>
     <p class="doc-lede">
           <code class="inline-code">copyable</code> sits on the element being copied: the button just calls
           <code class="inline-code">#snippet.copy()</code> and the snippet copies its own text. It never touches attributes; the flash is the author's:
@@ -48,7 +48,7 @@
                       <span class="copy-label">Copy</span><span class="copied-label">Copied</span>
                     </button>
                   </div>
-                  <pre class="code" id="demo-snippet" copyable on-copy="() => { #copy-demo-snippet.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text">Copy this line and watch the label &mdash; it reverts to Copy after 1.5&nbsp;s.</pre>
+                  <pre class="code" id="demo-snippet" copyable on-copy="() => { #copy-demo-snippet.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="text">Copy this line and watch the label; it reverts to Copy after 1.5&nbsp;s.</pre>
                 </div>
               </div>
     </div>

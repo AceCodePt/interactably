@@ -14,7 +14,7 @@ dependencies: []
 
 ## Context
 
-Every attribute whose value is a phrase must be named `on-*`. Today copyable and requestable hold continuation phrases in config keys (`copyable-after`/`copyable-error`, `requestable-after`/`requestable-error`), violating that. The fix: implementations declare the events they emit, the way they declare verbs; the host treats a declared event name as non-native — its `on-<type>` handler runs only for `ImplementationEvent` instances, and the "has no such event" warning and `warnIfNativeActionLikelyUnwanted` are skipped. This is also the seam Task C (`on-intersect-*`) reuses as a second source for the non-native lookup.
+Every attribute whose value is a phrase must be named `on-*`. Today copyable and requestable hold continuation phrases in config keys (`copyable-after`/`copyable-error`, `requestable-after`/`requestable-error`), violating that. The fix: implementations declare the events they emit, the way they declare verbs; the host treats a declared event name as non-native: its `on-<type>` handler runs only for `ImplementationEvent` instances, and the "has no such event" warning and `warnIfNativeActionLikelyUnwanted` are skipped. This is also the seam Task C (`on-intersect-*`) reuses as a second source for the non-native lookup.
 
 ## Requirements
 

@@ -20,7 +20,7 @@ The DSL needs scroll-spy-style triggers with no implementation and no `implement
 
 - [ ] `registry/interactable/intersect.ts`: table `intersect-enter -> 0`, `intersect-half -> 0.5`, `intersect-full -> 1`; `normaliseRootMargin(key?)` where undefined/empty -> "0px" and otherwise the string must be CSS lengths or percentages only (1-4 space-separated tokens), else it throws; `syncIntersect(el)` / `teardownIntersect(el)` managing one `IntersectionObserver` per `(threshold, rootMargin)` triple with a viewport root; the callback dispatches `new ImplementationEvent(type, { key: rootMargin })` on every threshold crossing, both directions.
 - [ ] Host wiring in `interactable-host.ts`: the three intersect names are added to the host's static observed attributes; `syncIntersect` runs in `connectedCallback` and on intersect-attribute change; `teardownIntersect` runs on disconnect.
-- [ ] Parser: `parse(value, eventName?)` — under the three intersect names the phrase key is validated as a CSS margin (lengths and percentages only; otherwise a parse error that drops and logs the phrase); the `KEY` regex gains this margin-shaped alternative under these three names only; the cache key includes the event name.
+- [ ] Parser: `parse(value, eventName?)`: under the three intersect names the phrase key is validated as a CSS margin (lengths and percentages only; otherwise a parse error that drops and logs the phrase); the `KEY` regex gains this margin-shaped alternative under these three names only; the cache key includes the event name.
 - [ ] Executor key guard at `executor.ts:51` becomes three-way: keyboard events -> `matchesKey`; `ImplementationEvent` with `ev.key` defined -> run only phrases whose `normaliseRootMargin(phrase.key)` equals `ev.key` (a keyless phrase matches "0px"); else -> the existing skip-and-log.
 - [ ] The non-native lookup from Task A consults the synthetic intersect table as a second source, so `on-intersect-*` needs no `implements` and never warns about a missing event.
 - [ ] `src/core.ts` exports the intersect module pieces as appropriate; `rolldown.config.mjs` coreFiles gains `registry/interactable/intersect.ts`.
@@ -35,5 +35,5 @@ The DSL needs scroll-spy-style triggers with no implementation and no `implement
 
 - No direction guard (no entering/leaving distinction), no bare `on-intersect`, no `root` option, no `implements="intersectable"`.
 - Don't change the executor's otherwise-existing key semantics; the third branch is additive.
-- Don't gate keyless non-synthetic implementation events (e.g. `on-copy`, `on-response`) — keyless phrases there keep running.
+- Don't gate keyless non-synthetic implementation events (e.g. `on-copy`, `on-response`); keyless phrases there keep running.
 - No IntersectionObserver usage without a `typeof IntersectionObserver === "undefined"` guard.

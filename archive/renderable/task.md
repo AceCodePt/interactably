@@ -4,7 +4,7 @@ wait_human_merge: false
 dependencies: [requestable-errors]
 ---
 
-# Task: renderable — client-side template rendering
+# Task: renderable, client-side template rendering
 
 ## Metadata
 
@@ -46,7 +46,7 @@ The "*" rest-key signature design is reused from the killed listable-stamp task 
 - [ ] registry/behaviors/listable/ is deleted entirely (listable.ts and listable.test.ts), and every trace is gone: src/index.ts export, rolldown.config.mjs implementations array, site/demo.src.js import, and tests/site-smoke.test.ts KNOWN_BUNDLES (listable out, renderable in).
 - [ ] price-calculator and dynamic-list examples are converted to renderable: rows stamped via render with an author-supplied id slot, the row template authors <li id="row-{id}"> with a × button calling render({swap: 'delete', target: '#row-{id}'}), and the site-smoke test's listable block is rewritten to drive render/delete/undo.
 - [ ] A new site/examples/offline-fallback.html example demonstrates the optimistic/offline flow (on-click="#list.render({…}); #form.send()" plus on-request-error="offline: #list.undo()" keyed on the requestable-errors channel), is listed in EXAMPLE_PAGES and examples.html, and is exercised in site-smoke.
-- [ ] Site parity across all four homes and the API rows: docs.html (implementation table row, signatures code block, API Implementations row), reference.html card, index.html chip and inline demo, README.md table row and API row, examples.html blurb/tags — renderable in, listable out; the README Not-supported line about template rendering is rewritten to reflect that renderable now renders through templates; the docs Dynamic-triggers row is rewritten to the id-targeting model.
+- [ ] Site parity across all four homes and the API rows: docs.html (implementation table row, signatures code block, API Implementations row), reference.html card, index.html chip and inline demo, README.md table row and API row, examples.html blurb/tags; renderable in, listable out; the README Not-supported line about template rendering is rewritten to reflect that renderable now renders through templates; the docs Dynamic-triggers row is rewritten to the id-targeting model.
 - [ ] registry/behaviors/price-calculator.test.ts is updated to renderable (no min-rows floor; × deletes the targeted row).
 
 ## Verification

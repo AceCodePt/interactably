@@ -36,19 +36,19 @@ are fine, and so is a missing `session-idle`: it means the project's tasks are
 accepted without verification.
 
 Like the verification hook, the task-lifecycle hooks run the version **committed on the base
-branch** — a working-tree edit, or a hook committed only on a task branch, never
+branch**: a working-tree edit, or a hook committed only on a task branch, never
 runs. Edit a hook and commit it on the base branch before dispatching.
 
 `config.json` holds project policy: `baseBranch`, the `verify` block
-(`retryCap`), and — if you want the daemon
-to dispatch `todo` tasks itself — a `scheduler` block (`enabled` + `maxConcurrent`,
+(`retryCap`), and (if you want the daemon
+to dispatch `todo` tasks itself) a `scheduler` block (`enabled` + `maxConcurrent`,
 the per-project cap). Like the verification hook, the **committed copy on the base branch** is the
 authority: `orch project scheduler <n>` writes the working-tree copy for you to
 review and commit. A machine-wide cap across all projects lives outside the repo in
 `~/.config/orch/daemon.json` (`orch daemon budget`).
 
 Reference templates for every hook live outside the repo in
-`~/.config/orch/hooks/*.example` (installed by `orch init`) — one per lifecycle
+`~/.config/orch/hooks/*.example` (installed by `orch init`), one per lifecycle
 hook, the `session-idle` verification hook, and one per opencode server event
 (the vocabulary in `src/orch/opencode_events.py`). On init, the project-relevant
 set of those `.example` references (session-idle, the five task-lifecycle hooks,

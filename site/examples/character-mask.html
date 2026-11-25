@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably example — Only the characters you allow.">
-  <title>Only the characters you allow — Examples — Interactably</title>
+  <meta name="description" content="Interactably example: Only the characters you allow.">
+  <title>Only the characters you allow | Examples | Interactably</title>
   <link rel="stylesheet" href="../styles.css">
   <script type="module" implementations="attributable copyable dirtyable modifiable pastable" src="../cdn/interactably-bootstrap.js"></script>
 </head>
@@ -37,7 +37,7 @@
           <code class="inline-code">dirtyable</code>. This is the declarative share of an input mask:
           <code class="inline-code">on-input="() => { this.set(replace(this.value, '[^0-9]', '')) }"</code> rewrites the value to keep
           only digits, <code class="inline-code">on-pasted</code> does the same for a paste, and <code class="inline-code">dirtyable</code>
-          flags the field until it returns to its authored default. Caret-preserving mask-as-you-type is not declarative &mdash;
+          flags the field until it returns to its authored default. Caret-preserving mask-as-you-type is not declarative:
           the rewrite lands the caret at the end of the value, which is why that formatting belongs in a component library.
         </p>
     <div class="example-body">
@@ -45,7 +45,7 @@
               <div class="demo">
                 <label>Phone
                   <input id="phone" modifiable pastable attributable dirtyable
-                         type="text" inputmode="numeric" placeholder="Digits only &mdash; letters get stripped"
+                         type="text" inputmode="numeric" placeholder="Digits only: letters get stripped"
                          on-input="() => { this.set(replace(this.value, '[^0-9]', '')) }"
                          on-pasted="() => { this.set(replace(this.value, '[^0-9]', '')) }"
                          on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"

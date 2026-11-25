@@ -43,4 +43,4 @@ Review 2, item G. `registry/behaviors/modifiable/modifiable.ts:69` runs `compute
 - Do not add a microtask or frame defer for the `readyState === "complete"` case (an element inserted after the document is ready must connect synchronously).
 - Do not add code comments beyond the two the brief requests (AGENTS.md: no comments unless requested).
 - Do not touch the unrelated uncommitted working-tree changes in `registry/interactable/intersect.ts` and `tests/intersection-observer.ts`.
-- Do not change `modifiable.ts` — its `connectedCallback: () => compute()` becomes correct purely because the host defers it.
+- Do not change `modifiable.ts`; its `connectedCallback: () => compute()` becomes correct purely because the host defers it.

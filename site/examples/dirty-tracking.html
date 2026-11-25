@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably example — Unsaved changes.">
-  <title>Unsaved changes — Examples — Interactably</title>
+  <meta name="description" content="Interactably example: Unsaved changes.">
+  <title>Unsaved changes | Examples | Interactably</title>
   <link rel="stylesheet" href="../styles.css">
   <script type="module" implementations="attributable copyable dirtyable modifiable" src="../cdn/interactably-bootstrap.js"></script>
 </head>
@@ -33,9 +33,9 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">Unsaved changes</h1>
     <p class="doc-lede">
-          <code class="inline-code">dirtyable</code> compares each field against its platform default &mdash;
-          <code class="inline-code">defaultValue</code> for an input, <code class="inline-code">defaultChecked</code>
-          for a checkbox &mdash; and fires <code class="inline-code">dirty</code> when you diverge and
+          <code class="inline-code">dirtyable</code> compares each field against its platform default
+          (<code class="inline-code">defaultValue</code> for an input, <code class="inline-code">defaultChecked</code>
+          for a checkbox) and fires <code class="inline-code">dirty</code> when you diverge and
           <code class="inline-code">clean</code> when you return. It writes nothing; the status line is a separate
           element the two events drive.
         </p>
@@ -44,17 +44,17 @@
               <div class="demo">
                 <label>Name
                   <input id="dt-name" dirtyable attributable
-                         on-dirty="() => { #dt-status.set('Unsaved changes — put the fields back to their defaults to clear.').setAttr({name: 'data-state', value: 'dirty'}) }"
-                         on-clean="() => { #dt-status.set('All saved — nothing has diverged from its default.').removeAttr('data-state') }"
+                         on-dirty="() => { #dt-status.set('Unsaved changes: put the fields back to their defaults to clear.').setAttr({name: 'data-state', value: 'dirty'}) }"
+                         on-clean="() => { #dt-status.set('All saved: nothing has diverged from its default.').removeAttr('data-state') }"
                          placeholder="Type something, then erase it">
                 </label>
                 <label>
                   <input id="dt-remember" type="checkbox" dirtyable attributable
-                         on-dirty="() => { #dt-status.set('Unsaved changes — untick the box to clear.').setAttr({name: 'data-state', value: 'dirty'}) }"
-                         on-clean="() => { #dt-status.set('All saved — nothing has diverged from its default.').removeAttr('data-state') }">
+                         on-dirty="() => { #dt-status.set('Unsaved changes: untick the box to clear.').setAttr({name: 'data-state', value: 'dirty'}) }"
+                         on-clean="() => { #dt-status.set('All saved: nothing has diverged from its default.').removeAttr('data-state') }">
                   Remember me
                 </label>
-                <p class="demo-note"><output id="dt-status" modifiable attributable data-state="clean">All saved — nothing has diverged from its default.</output></p>
+                <p class="demo-note"><output id="dt-status" modifiable attributable data-state="clean">All saved: nothing has diverged from its default.</output></p>
               </div>
     </div>
         <details class="example-code">

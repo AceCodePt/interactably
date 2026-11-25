@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably example — An age gate.">
-  <title>An age gate — Examples — Interactably</title>
+  <meta name="description" content="Interactably example: An age gate.">
+  <title>An age gate | Examples | Interactably</title>
   <link rel="stylesheet" href="../styles.css">
   <script type="module" implementations="attributable copyable revealable validatable" src="../cdn/interactably-bootstrap.js"></script>
 </head>
@@ -33,13 +33,13 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">An age gate</h1>
     <p class="doc-lede">
-          Raise the age to 18 and the message appears — no button, no script.
+          Raise the age to 18 and the message appears, with no button and no script.
           The guard verb <code class="inline-code">reportValidity()</code> shows the browser&rsquo;s own message and
           passes when the field&rsquo;s <code class="inline-code">min="18"</code> constraint holds, and
           <code class="inline-code">&amp;&amp;</code> then runs <code class="inline-code">show()</code> on the consent panel.
           Drop it below 18 and the <code class="inline-code">invalid</code> event closes that panel and opens a
           different one instead. The verb is called on <code class="inline-code">on-change</code>, so the check
-          happens when you commit the value — not on every keystroke. Nothing else evaluates the field for you.
+          happens when you commit the value, not on every keystroke. Nothing else evaluates the field for you.
         </p>
     <div class="example-body">
 
@@ -53,10 +53,10 @@
                   </label>
                 </div>
                 <section id="consent" revealable hidden>
-                  Thanks &mdash; you&rsquo;re old enough to continue.
+                  Thanks, you&rsquo;re old enough to continue.
                 </section>
                 <section id="denied" revealable hidden>
-                  Sorry &mdash; you need to be 18 or older to continue.
+                  Sorry, you need to be 18 or older to continue.
                 </section>
               </div>
     </div>
@@ -74,10 +74,10 @@
        on-valid="() => { #denied.show(false) }"
        on-invalid="() => { #consent.show(false); #denied.show() }"&gt;
 &lt;section id="consent" revealable hidden&gt;
-      Thanks &mdash; you&rsquo;re old enough to continue.
+      Thanks, you&rsquo;re old enough to continue.
 &lt;/section&gt;
 &lt;section id="denied" revealable hidden&gt;
-      Sorry &mdash; you need to be 18 or older to continue.
+      Sorry, you need to be 18 or older to continue.
 &lt;/section&gt;</code></pre>
             </div>
           </details>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably — a declarative interaction language for plain HTML elements.">
-  <title>Interactably — declarative interactions in plain HTML</title>
+  <meta name="description" content="Interactably: a declarative interaction language for plain HTML elements.">
+  <title>Interactably: declarative interactions in plain HTML</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" implementations="attributable copyable dirtyable formattable modifiable prevent-default renderable" src="./cdn/interactably-bootstrap.js"></script>
 </head>
@@ -32,13 +32,13 @@
   <main class="wrap">
     <section class="hero">
       <span class="hero-badge"><span class="dot"></span>v0.1.0 &middot; no engine, no signals, no magic</span>
-      <h1>Make your HTML <span class="hl">interactive</span> &mdash; without writing JavaScript.</h1>
+      <h1>Make your HTML <span class="hl">interactive</span>, without writing JavaScript.</h1>
       <p class="hero-sub">
         You write plain HTML and Interactably wires it up. One declaring <code class="inline-code">script</code> tag
         names the implementations the page uses; the runtime attaches every element that carries an
         <code class="inline-code">on-*</code> attribute or an implementation attribute such as
-        <code class="inline-code">revealable</code> &mdash;
-        no <code class="inline-code">is=</code>, no per-tag setup. No page JavaScript, no framework, no build step.
+        <code class="inline-code">revealable</code>,
+        with no <code class="inline-code">is=</code> and no per-tag setup. No page JavaScript, no framework, no build step.
       </p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="./docs.html">Read the docs</a>
@@ -69,7 +69,7 @@
       </div>
 
       <div class="card">
-        <h2>Try it — a working price calculator</h2>
+        <h2>Try it: a working price calculator</h2>
         <p class="ex-note">The total is the expression <code class="inline-code">sum('#list .amount')</code>, evaluated by
           <code class="inline-code">#total.set(...)</code> after every change. Nothing on this card was written in JavaScript.</p>
         <div class="demo">
@@ -119,7 +119,7 @@
           <span class="why-n">1</span>
           <div>
             <span class="why-q">Why should an interaction hide in a <code class="inline-code">.js</code> file when the trigger is right here in the markup?</span>
-            <span class="why-a">Put the phrase where the action happens: <code class="inline-code">on-click="() => { #pop.show().focus() }"</code>. The button says what it does &mdash; no hunting through handlers.</span>
+            <span class="why-a">Put the phrase where the action happens: <code class="inline-code">on-click="() => { #pop.show().focus() }"</code>. The button says what it does, with no hunting through handlers.</span>
           </div>
         </li>
         <li>
@@ -147,7 +147,7 @@
           <span class="why-n">5</span>
           <div>
             <span class="why-q">Why should every interaction be a listener you wire, manage and clean up?</span>
-            <span class="why-a">The runtime does it for you &mdash; one observer binds each element&rsquo;s <code class="inline-code">on-*</code> at attach and cleans up on detach. Elements declare what they do: implementation attributes, <code class="inline-code">on-*</code>, both, or neither.</span>
+            <span class="why-a">The runtime does it for you: one observer binds each element&rsquo;s <code class="inline-code">on-*</code> at attach and cleans up on detach. Elements declare what they do: implementation attributes, <code class="inline-code">on-*</code>, both, or neither.</span>
           </div>
         </li>
         <li>
@@ -171,12 +171,12 @@
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg></span>
           <h3>Native elements</h3>
-          <p>No shadow DOM, no wrapper elements. Forms submit, dialogs trap focus, details toggle &mdash; the verbs are just added on top.</p>
+          <p>No shadow DOM, no wrapper elements. Forms submit, dialogs trap focus, details toggle; the verbs are just added on top.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg></span>
           <h3>No engine</h3>
-          <p>A pure parser and a pure executor &mdash; two functions the attach pass calls. No store, no signals, nothing to learn.</p>
+          <p>A pure parser and a pure executor: two functions the attach pass calls. No store, no signals, nothing to learn.</p>
         </div>
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 7l-5-5-5 5M17 17l-5 5-5-5"/></svg></span>
@@ -191,7 +191,7 @@
         <div class="feat">
           <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M9 18h11"/></svg></span>
           <h3>Signatures as strings</h3>
-          <p>Every verb signature is a tsyntax string &mdash; the same string type-checks at build time and validates at runtime.</p>
+          <p>Every verb signature is a tsyntax string: the same string type-checks at build time and validates at runtime.</p>
         </div>
       </div>
     </section>
@@ -219,8 +219,7 @@
         <a class="chip" href="./reference.html"><span class="chip-dot"></span>focusable</a>
       </div>
       <p class="callout" style="margin-top:2rem">
-        <strong>Next:</strong> skim the <a href="./docs.html">docs</a> to learn the grammar and the state model &mdash;
-        or jump straight to the <a href="./examples.html">examples</a> and click things. Everything here is live.
+        <strong>Next:</strong> skim the <a href="./docs.html">docs</a> to learn the grammar and the state model, or jump straight to the <a href="./examples.html">examples</a> and click things. Everything here is live.
       </p>
     </section>
   </main>

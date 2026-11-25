@@ -33,7 +33,7 @@ Vertical slice for the dirtyable rework specced in dirtyable-events-baseline: re
 
 ## Prohibited Patterns
 
-- Do not touch the host or executor — restore is subscribed through the existing on* binding in the factory.
+- Do not touch the host or executor; restore is subscribed through the existing on* binding in the factory.
 - Do not introduce a connect-time closure baseline of el.value, and do not write any class/attribute from the implementation.
 - Do not dispatch dirty/clean when the reported state is unchanged, and do not fire anything at connect.
-- Do not use `this.removeAttr({name: ...})` anywhere — attributable's removeAttr takes a bare string (`this.removeAttr('data-dirty')`).
+- Do not use `this.removeAttr({name: ...})` anywhere; attributable's removeAttr takes a bare string (`this.removeAttr('data-dirty')`).

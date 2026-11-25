@@ -4,7 +4,7 @@ wait_human_merge: false
 dependencies: []
 ---
 
-# Task: requestable — timeout and error filtering
+# Task: requestable timeout and error filtering
 
 ## Metadata
 
@@ -14,14 +14,14 @@ dependencies: []
 
 ## Context
 
-requestable dispatches a single request-error for every failure (offline, timeout, 404, 401, 500) so they all must get the same response — rendering an optimistic local row after a 401 is actively wrong, and there is no timeout so an offline fallback can fire thirty seconds late. Partition each failure by what happened: a fetch rejection with a TypeError means the browser never got a response (offline); the composed timeout signal firing means slow (timeout); a non-ok response resolves its status through an author-declared map. The two reserved names are precisely "we never heard back". Abort stays the one silent case. Filtering reuses the existing colon-prefix phrase syntax, which the executor already matches against ImplementationEvent.key — the only gap is that the comparison runs through normaliseRootMargin (intersect is the sole keyed user so far), so it must become an exact match with root-margin normalisation applied only for intersect event names.
+requestable dispatches a single request-error for every failure (offline, timeout, 404, 401, 500) so they all must get the same response; rendering an optimistic local row after a 401 is actively wrong, and there is no timeout so an offline fallback can fire thirty seconds late. Partition each failure by what happened: a fetch rejection with a TypeError means the browser never got a response (offline); the composed timeout signal firing means slow (timeout); a non-ok response resolves its status through an author-declared map. The two reserved names are precisely "we never heard back". Abort stays the one silent case. Filtering reuses the existing colon-prefix phrase syntax, which the executor already matches against ImplementationEvent.key; the only gap is that the comparison runs through normaliseRootMargin (intersect is the sole keyed user so far), so it must become an exact match with root-margin normalisation applied only for intersect event names.
 
 ## Requirements
 
 - [ ] requestable-timeout config, milliseconds, signature 'number | undefined'; undefined means no timeout. Composed into the existing AbortController signal so a timeout aborts with a TimeoutError reason, distinct from the AbortError of a user or concurrency abort.
 - [ ] requestable-errors config: a JSON object map of status number to author-chosen failure name, e.g. requestable-errors='{"401": "unauthorized", "404": "missing"}'. tsyntax is scalars-only, so the signature is the open-ended 'string | undefined' and the behavior JSON.parses and shape-checks it as number -> string.
 - [ ] request-error carries the failure kind as ImplementationEvent.key (the field already exists) so the colon-prefix phrase syntax matches it: on-request-error="timeout: ..." fires only for a timeout, on-request-error="unauthorized: ..." only for a 401.
-- [ ] Reserved, library-owned kinds: timeout (the timeout signal fired, error name TimeoutError) and offline (fetch rejected with a TypeError — no response, fast). navigator.onLine is never consulted.
+- [ ] Reserved, library-owned kinds: timeout (the timeout signal fired, error name TimeoutError) and offline (fetch rejected with a TypeError: no response, fast). navigator.onLine is never consulted.
 - [ ] A non-ok response resolves its status through the author's map. A failure whose status has no mapping dispatches request-error with no key: an unfiltered on-request-error phrase still catches it, and no keyed phrase matches.
 - [ ] abort() stays silent as today (AbortError, no request-error). A timeout is not an abort.
 - [ ] Executor: a keyed ImplementationEvent matches phrase.key by exact string; root-margin normalisation applies only to INTERSECT_EVENT_NAMES events. Files executor.ts and executor.test.ts are in scope with regression tests.

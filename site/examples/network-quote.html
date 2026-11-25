@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably example — Load a quote over the network.">
-  <title>Load a quote over the network — Examples — Interactably</title>
+  <meta name="description" content="Interactably example: Load a quote over the network.">
+  <title>Load a quote over the network | Examples | Interactably</title>
   <link rel="stylesheet" href="../styles.css">
   <script type="module" implementations="attributable copyable renderable requestable" src="../cdn/interactably-bootstrap.js"></script>
 </head>
@@ -36,7 +36,7 @@
           The asynchronous seam, working end to end on this static site: <code class="inline-code">send()</code> GETs a
           fragment and <code class="inline-code">on-response="(html: string) => { this.render({payload: html}) }"</code> renders it
           in place. The fragment even carries its own <code class="inline-code">on-click="() => { #quote.send() }"</code>
-          button, so the trigger arrives with the response — no extra wiring.
+          button, so the trigger arrives with the response and needs no extra wiring.
         </p>
     <div class="example-body">
 
@@ -47,7 +47,7 @@
                 <div id="quote" requestable renderable
                      requestable-url="../fragments/quote.html" requestable-method="get"
                      on-response="(html: string) => { this.render({payload: html}) }">
-                  Nothing loaded yet &mdash; click the button above.
+                  Nothing loaded yet. Click the button above.
                 </div>
               </div>
     </div>
@@ -64,7 +64,7 @@
 &lt;div id="quote" requestable renderable
      requestable-url="./fragments/quote.html" requestable-method="get"
      on-response="(html: string) => { this.render({payload: html}) }"&gt;
-      Nothing loaded yet &mdash; click the button above.
+      Nothing loaded yet. Click the button above.
 &lt;/div&gt;
 
     &lt;!-- the response renders ./fragments/quote.html, which loads again --&gt;

@@ -4,7 +4,7 @@ wait_human_merge: false
 dependencies: []
 ---
 
-# Task: Interactably 00 — project conventions and verification harness
+# Task: Interactably 00, project conventions and verification harness
 
 ## Metadata
 

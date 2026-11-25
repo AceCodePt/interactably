@@ -4,7 +4,7 @@ wait_human_merge: false
 dependencies: [declarative-bootstrap]
 ---
 
-# Task: HTML language server — diagnostics and completion for on-* phrases
+# Task: HTML language server, diagnostics and completion for on-* phrases
 
 ## Metadata
 

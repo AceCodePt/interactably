@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably example — Order form — the asynchronous seam.">
-  <title>Order form — the asynchronous seam — Examples — Interactably</title>
+  <meta name="description" content="Interactably example: Order form, the asynchronous seam.">
+  <title>Order form: the asynchronous seam | Examples | Interactably</title>
   <link rel="stylesheet" href="../styles.css">
   <script type="module" implementations="attributable copyable prevent-default renderable requestable revealable" src="../cdn/interactably-bootstrap.js"></script>
 </head>
@@ -31,11 +31,11 @@
 
   <main class="wrap">
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
-    <h1 class="doc-title">Order form — the asynchronous seam</h1>
+    <h1 class="doc-title">Order form: the asynchronous seam</h1>
     <p class="doc-lede">
           <code class="inline-code">on-submit="() => { this.send() }"</code> POSTs the form; <code class="inline-code">(html: string) =&gt; { &hellip; }</code> renders
-          the response body into the receipt and reveals it. This site has no backend, so you&rsquo;ll see the failure path —
-          the alert — which is the honest behavior. Point <code class="inline-code">requestable-url</code> at a real endpoint and the same
+          the response body into the receipt and reveals it. This site has no backend, so you&rsquo;ll see the failure path,
+          the alert, which is the honest behavior. Point <code class="inline-code">requestable-url</code> at a real endpoint and the same
           markup works; the button disables itself via
           <code class="inline-code">form[aria-busy="true"] button { pointer-events: none }</code>.
         </p>
@@ -57,8 +57,8 @@
                 </form>
                 <section id="receipt" renderable revealable hidden></section>
                 <div id="alert" revealable hidden role="alert">Couldn't place the order.</div>
-                <div id="order-timeout-alert" class="demo-message" revealable hidden role="alert">Couldn't place the order &mdash; the server didn't answer in time.</div>
-                <div id="order-offline-alert" class="demo-message" revealable hidden role="alert">Couldn't place the order &mdash; you're offline.</div>
+                <div id="order-timeout-alert" class="demo-message" revealable hidden role="alert">Couldn't place the order: the server didn't answer in time.</div>
+                <div id="order-offline-alert" class="demo-message" revealable hidden role="alert">Couldn't place the order: you're offline.</div>
               </div>
     </div>
         <details class="example-code">
@@ -86,8 +86,8 @@
 &lt;/form&gt;
 &lt;section id="receipt" renderable revealable hidden&gt;&lt;/section&gt;
 &lt;div id="alert" revealable hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
-&lt;div id="order-timeout-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order &mdash; the server didn't answer in time.&lt;/div&gt;
-&lt;div id="order-offline-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order &mdash; you're offline.&lt;/div&gt;</code></pre>
+&lt;div id="order-timeout-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order: the server didn't answer in time.&lt;/div&gt;
+&lt;div id="order-offline-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order: you're offline.&lt;/div&gt;</code></pre>
             </div>
           </details>
   </main>

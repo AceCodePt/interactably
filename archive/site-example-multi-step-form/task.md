@@ -4,7 +4,7 @@ wait_human_merge: false
 dependencies: [validatable-validity-events]
 ---
 
-# Task: Site example — a multi-step form gated on validity
+# Task: Site example: a multi-step form gated on validity
 
 ## Metadata
 
@@ -18,22 +18,22 @@ The third application-shaped example, after the to-do list and the shop cart, an
 
 Its subject is a flow: a form in three steps where a later step is unreachable until the current one is valid, and becomes unreachable again if an earlier step is broken. Nothing on the site shows this. tabs.html and one-panel.html switch between panels that are all equally available; age-gate.html gates on a single input with `on-change="this.validate() && #consent.show()"` and never has to reopen or close the gate.
 
-The stepper is a radio group, not a row of Next buttons. Each radio reveals its step; the later radios begin disabled. The flow is enforced by the control itself, not by hiding a branch — a disabled radio cannot be selected or reached by keyboard, and it stays in the accessibility tree where a hidden step is simply absent. That is the reason this is not a CSS solution: :valid/:invalid and :user-valid/:user-invalid can style, but they cannot set disabled, aria-disabled, or an aria-describedby that tells an assistive-technology user *why* the step is unavailable. The gate is markup state, set by phrases.
+The stepper is a radio group, not a row of Next buttons. Each radio reveals its step; the later radios begin disabled. The flow is enforced by the control itself, not by hiding a branch: a disabled radio cannot be selected or reached by keyboard, and it stays in the accessibility tree where a hidden step is simply absent. That is the reason this is not a CSS solution: :valid/:invalid and :user-valid/:user-invalid can style, but they cannot set disabled, aria-disabled, or an aria-describedby that tells an assistive-technology user *why* the step is unavailable. The gate is markup state, set by phrases.
 
 Two levels of validity are in play and both must be exercised:
-- Form-level, for the gate: each step is a <form implements="validatable">. Its on-user-valid enables the next step's radio and removes the explanation; its on-user-invalid disables the later radios and restores the explanation. Whether fieldset is usable instead of form is settled by the validatable brief — follow what it recorded. Nested forms are illegal in HTML, so three sibling forms plus a confirmation is the expected shape.
-- Field-level, for messages: at least one field per step has a message underneath it, revealed by on-user-invalid and hidden by on-user-valid via revealable. This is the case the platform cannot express — there is no native valid event, so without the library's event the message would appear and never leave.
+- Form-level, for the gate: each step is a <form implements="validatable">. Its on-user-valid enables the next step's radio and removes the explanation; its on-user-invalid disables the later radios and restores the explanation. Whether fieldset is usable instead of form is settled by the validatable brief: follow what it recorded. Nested forms are illegal in HTML, so three sibling forms plus a confirmation is the expected shape.
+- Field-level, for messages: at least one field per step has a message underneath it, revealed by on-user-invalid and hidden by on-user-valid via revealable. This is the case the platform cannot express: there is no native valid event, so without the library's event the message would appear and never leave.
 
-Aggressive versus quiet: use the user- pair for the gate and the messages. Show the aggressive pair (on-valid/on-invalid) in exactly one place where continuous state is the point — a live "step 1 of 3 complete" indicator is the natural candidate — so the page teaches when each pair is the right one. The lede names the distinction.
+Aggressive versus quiet: use the user- pair for the gate and the messages. Show the aggressive pair (on-valid/on-invalid) in exactly one place where continuous state is the point: a live "step 1 of 3 complete" indicator is the natural candidate, so the page teaches when each pair is the right one. The lede names the distinction.
 
 `validatable-on`: pick `change` for the gate forms (a committed value is when a step should open or close) and consider `input` for the field messages (immediate feedback). Either way say why in the prose; the choice is the author's and the page should model making it.
 
-Closing the gate must be transitive: breaking step one re-disables steps two *and* three, and re-selects step one's radio if the reader was further along, so the visible step is never one they are no longer entitled to. Record how repetitive the markup gets — each step knowing about every later step is a plausible wall.
+Closing the gate must be transitive: breaking step one re-disables steps two *and* three, and re-selects step one's radio if the reader was further along, so the visible step is never one they are no longer entitled to. Record how repetitive the markup gets: each step knowing about every later step is a plausible wall.
 
 The final step submits. The site is static: no backend, no request mock, no simulated failure. The submit shows a local confirmation panel and the lede says so, as network-quote and the to-do list name their own constraints.
 
 Findings this page is expected to surface (record each in the handoff with how it was handled or why it could not be):
-- Whether the user- semantics — touched and flipped — are right in practice: does a required empty field on step two stay quiet until engaged, and does a restore-installed value behave as the validatable brief promised.
+- Whether the user- semantics (touched and flipped) are right in practice: does a required empty field on step two stay quiet until engaged, and does a restore-installed value behave as the validatable brief promised.
 - Whether closing the gate transitively is expressible without each step enumerating all later steps.
 - Whether aria-disabled alone is enough or the native disabled is also needed for keyboard behaviour, and what the describedby text should be.
 - Whether the aggressive pair firing on every evaluation is noticeable anywhere it is used.
@@ -59,7 +59,7 @@ On the committed tree: pnpm run build then pnpm test and pnpm run check all pass
 ## Prohibited Patterns
 
 - No new grammar, verbs, events or config; a gap is a finding.
-- No changes to validatable — if the events are the wrong shape, that is the most valuable finding this page can produce, and it goes in the handoff, not the code.
+- No changes to validatable; if the events are the wrong shape, that is the most valuable finding this page can produce, and it goes in the handoff, not the code.
 - No backend, request mock, or simulated failure; no requestable on this page.
 - No hiding steps as the gating mechanism; the gate is the disabled radio, with revealable only showing the selected step's body.
 - No CSS-only gating (:invalid, :user-invalid, :has()); the accessibility state must be set in markup.

@@ -52,7 +52,7 @@ export class FormulaError extends Error {
     } else if (opts.reason === "not-a-string") {
       message = `${channel} needs a string as its first argument; ${opts.origin} read as ${
         typeof opts.operand === "boolean" ? "a boolean" : "a number"
-      } — see the .value rule`;
+      }; see the .value rule`;
     } else if (opts.reason === "invalid-pattern") {
       message = `${channel} got an invalid pattern ${JSON.stringify(opts.operand)}`;
     } else {

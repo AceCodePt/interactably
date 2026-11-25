@@ -863,7 +863,7 @@ test("length(#tick.checked) is not-a-string reading a boolean", () => {
   });
 });
 
-test("length(5) — a number literal — is not-a-string", () => {
+test("length(5), a number literal, is not-a-string", () => {
   assert.throws(() => evaluateFormula("length(5)"), (err: unknown) => {
     assert.ok(err instanceof FormulaError);
     assert.equal(err.reason, "not-a-string");

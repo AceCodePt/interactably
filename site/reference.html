@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interactably reference — the shipped implementations, their verbs and config, the public API, reserved names and the reference grammar.">
-  <title>Reference — Interactably</title>
+  <meta name="description" content="Interactably reference: the shipped implementations, their verbs and config, the public API, reserved names and the reference grammar.">
+  <title>Reference | Interactably</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" implementations="attributable copyable" src="./cdn/interactably-bootstrap.js"></script>
 </head>
@@ -49,11 +49,11 @@
       <article class="ref-card">
         <h3><code class="inline-code">modifiable</code></h3>
         <p class="ref-tags">input &middot; textarea &middot; output &middot; select</p>
-        <p class="ref-desc">Typed writes; <code class="inline-code">set(...)</code> takes an expression inline, so derived values are computed on the trigger that wants them. <code class="inline-code">set()</code> does not clamp — say the bound: <code class="inline-code">min(#q.max, &hellip;)</code>.</p>
+        <p class="ref-desc">Typed writes; <code class="inline-code">set(...)</code> takes an expression inline, so derived values are computed on the trigger that wants them. <code class="inline-code">set()</code> does not clamp, so say the bound: <code class="inline-code">min(#q.max, &hellip;)</code>.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">set</span><span class="verb-tag">clear</span><span class="verb-tag">reset</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
       </article>
 
       <article class="ref-card">
@@ -61,7 +61,7 @@
         <p class="ref-tags">input &middot; textarea &middot; select &middot; output</p>
         <p class="ref-desc">Fires <code class="inline-code">dirty</code> / <code class="inline-code">clean</code> as the element diverges from / returns to the platform default (<code class="inline-code">defaultValue</code>, <code class="inline-code">defaultChecked</code>, <code class="inline-code">defaultSelected</code>); writes nothing. Move the baseline with <code class="inline-code">setAttr({name: 'value', value: this.value})</code> on an input.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Config / state</p>
         <div><span class="verb-tag">dirty-on</span><span class="verb-tag">events: dirty, clean</span></div>
       </article>
@@ -71,7 +71,7 @@
         <p class="ref-tags">output &middot; span &middot; div &middot; td &middot; p &middot; li &middot; dd &middot; b &middot; strong &middot; em &middot; small</p>
         <p class="ref-desc">Renders a number/date through <code class="inline-code">Intl</code> on display elements; keeps the raw text in <code class="inline-code">formattable-value</code>; formats on connect and on every library write.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Config / state</p>
         <div><span class="verb-tag">format</span></div>
       </article>
@@ -79,7 +79,7 @@
       <article class="ref-card">
         <h3><code class="inline-code">renderable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">Stamps a template with flat scalar slots into text nodes and attribute values, or inserts a <code class="inline-code">payload</code> markup string as-is (the two are mutually exclusive — supplying both is a signature error). <code class="inline-code">undo()</code> reverses the one last render (removes appended rows, restores displaced markup). Every successful swap animates as a same-document view transition and fires <code class="inline-code">rendered</code> when it settles; <code class="inline-code">renderable-disable-view-transition</code> opts out.</p>
+        <p class="ref-desc">Stamps a template with flat scalar slots into text nodes and attribute values, or inserts a <code class="inline-code">payload</code> markup string as-is (the two are mutually exclusive; supplying both is a signature error). <code class="inline-code">undo()</code> reverses the one last render (removes appended rows, restores displaced markup). Every successful swap animates as a same-document view transition and fires <code class="inline-code">rendered</code> when it settles; <code class="inline-code">renderable-disable-view-transition</code> opts out.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">render</span><span class="verb-tag">undo</span></div>
         <p class="ref-labels">Config / state</p>
@@ -107,7 +107,7 @@
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">setAttr</span><span class="verb-tag">toggleAttr</span><span class="verb-tag">removeAttr</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
       </article>
 
       <article class="ref-card">
@@ -117,7 +117,7 @@
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">add</span><span class="verb-tag">remove</span><span class="verb-tag">toggle</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
       </article>
 
       <article class="ref-card">
@@ -127,17 +127,17 @@
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">log</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
       </article>
 
       <article class="ref-card">
         <h3><code class="inline-code">validatable</code></h3>
         <p class="ref-tags">form &middot; input &middot; select &middot; textarea</p>
-        <p class="ref-desc"><code class="inline-code">reportValidity()</code> is the loud check: it calls the platform&rsquo;s <code class="inline-code">reportValidity()</code>, announces <code class="inline-code">valid</code> / <code class="inline-code">invalid</code>, and <code class="inline-code">preventDefault()</code>s a failed chain. <code class="inline-code">checkValidity()</code> is the quiet counterpart: the same answer, announced, with no focus, no browser bubble and no abort. Nothing evaluates on its own &mdash; no input, change, restore or attribute write triggers a check; the verbs do. Both events carry no values. The platform has no native <code class="inline-code">valid</code> event (<a href="https://github.com/w3c/html/issues/1696">w3c/html#1696</a>). Both verbs read the platform&rsquo;s <code class="inline-code">checkValidity()</code> (the loud one through <code class="inline-code">reportValidity()</code>), so a failing control still receives the native <code class="inline-code">invalid</code>; on a field, our <code class="inline-code">invalid</code> deliberately shares that name, and declarative <code class="inline-code">on-invalid</code> receives the library event. Aggregate validity belongs on a form, not a fieldset.</p>
+        <p class="ref-desc"><code class="inline-code">reportValidity()</code> is the loud check: it calls the platform&rsquo;s <code class="inline-code">reportValidity()</code>, announces <code class="inline-code">valid</code> / <code class="inline-code">invalid</code>, and <code class="inline-code">preventDefault()</code>s a failed chain. <code class="inline-code">checkValidity()</code> is the quiet counterpart: the same answer, announced, with no focus, no browser bubble and no abort. Nothing evaluates on its own: no input, change, restore or attribute write triggers a check; the verbs do. Both events carry no values. The platform has no native <code class="inline-code">valid</code> event (<a href="https://github.com/w3c/html/issues/1696">w3c/html#1696</a>). Both verbs read the platform&rsquo;s <code class="inline-code">checkValidity()</code> (the loud one through <code class="inline-code">reportValidity()</code>), so a failing control still receives the native <code class="inline-code">invalid</code>; on a field, our <code class="inline-code">invalid</code> deliberately shares that name, and declarative <code class="inline-code">on-invalid</code> receives the library event. Aggregate validity belongs on a form, not a fieldset.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">reportValidity</span><span class="verb-tag">checkValidity</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Events</p>
         <div><span class="verb-tag">valid</span><span class="verb-tag">invalid</span></div>
       </article>
@@ -147,7 +147,7 @@
         <p class="ref-tags">any element</p>
         <p class="ref-desc"><code class="inline-code">stopPropagation</code> on listed events.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Config / state</p>
         <div><span class="verb-tag">events</span><span class="verb-tag">(default "click")</span></div>
       </article>
@@ -157,7 +157,7 @@
         <p class="ref-tags">any element</p>
         <p class="ref-desc"><code class="inline-code">preventDefault</code> on listed events; the <em>which</em> is derived from <code class="inline-code">on-*</code> or the tag.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Config / state</p>
         <div><span class="verb-tag">events</span><span class="verb-tag">(derived)</span></div>
       </article>
@@ -177,15 +177,15 @@
         <p class="ref-tags">textarea</p>
         <p class="ref-desc">Auto-height textarea; sizes on connect and on <code class="inline-code">input</code>/<code class="inline-code">change</code>.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
       </article>
 
       <article class="ref-card">
         <h3><code class="inline-code">storable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc">The element owns its storage. <code class="inline-code">storable-id</code> names it (page-unique by the <code class="inline-code">-id</code> convention); nothing is stored unless a phrase calls <code class="inline-code">save()</code>. <code class="inline-code">save({name: &rsquo;dark&rsquo;, size: 12})</code> writes the named fields as one JSON object &mdash; a field is a scalar or a bare ref (<code class="inline-code">#cart</code>), stored as that element&rsquo;s <code class="inline-code">innerHTML</code>; <code class="inline-code">save()</code> writes <code class="inline-code">{}</code>. <code class="inline-code">restore()</code> reads the id, parses the JSON object, and matches it by field names and JSON types against the shapes the element&rsquo;s own <code class="inline-code">on-restore</code> handlers declare; the matching handler runs, a non-match is silent, and invalid JSON or a non-object fires <code class="inline-code">restore-error</code> (<code class="inline-code">reason: parse</code>). A failed write fires <code class="inline-code">save-error</code> with <code class="inline-code">reason</code> <code class="inline-code">quota</code>, <code class="inline-code">denied</code> or <code class="inline-code">serialize</code>. Nothing restores without <code class="inline-code">on-load="() => { this.restore() }"</code>; <code class="inline-code">clear()</code> removes the object.</p>
+        <p class="ref-desc">The element owns its storage. <code class="inline-code">storable-id</code> names it (page-unique by the <code class="inline-code">-id</code> convention); nothing is stored unless a phrase calls <code class="inline-code">save()</code>. <code class="inline-code">save({name: &rsquo;dark&rsquo;, size: 12})</code> writes the named fields as one JSON object: a field is a scalar or a bare ref (<code class="inline-code">#cart</code>), stored as that element&rsquo;s <code class="inline-code">innerHTML</code>; <code class="inline-code">save()</code> writes <code class="inline-code">{}</code>. <code class="inline-code">restore()</code> reads the id, parses the JSON object, and matches it by field names and JSON types against the shapes the element&rsquo;s own <code class="inline-code">on-restore</code> handlers declare; the matching handler runs, a non-match is silent, and invalid JSON or a non-object fires <code class="inline-code">restore-error</code> (<code class="inline-code">reason: parse</code>). A failed write fires <code class="inline-code">save-error</code> with <code class="inline-code">reason</code> <code class="inline-code">quota</code>, <code class="inline-code">denied</code> or <code class="inline-code">serialize</code>. Nothing restores without <code class="inline-code">on-load="() => { this.restore() }"</code>; <code class="inline-code">clear()</code> removes the object.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">save</span><span class="verb-tag">restore</span><span class="verb-tag">clear</span></div>
         <p class="ref-labels">Config / state</p>
@@ -199,19 +199,19 @@
         <p class="ref-tags">input &middot; textarea</p>
         <p class="ref-desc">Fires <code class="inline-code">pasted</code> after a paste has landed, carrying the post-paste value as <code class="inline-code">text</code> (<code class="inline-code">(text: string) =&gt; { &hellip; }</code>), so <code class="inline-code">this.value</code> is the new value.</p>
         <p class="ref-labels">Verbs</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
       </article>
 
       <article class="ref-card">
         <h3><code class="inline-code">copyable</code></h3>
         <p class="ref-tags">pre &middot; code &middot; p &middot; div</p>
-        <p class="ref-desc">Copies the element&rsquo;s own text to the clipboard; a button calls it as a plain receiver (<code class="inline-code">on-click="() => { #snippet.copy() }"</code>). On success it dispatches <code class="inline-code">copy</code> &mdash; which shares the attribute with the native clipboard copy &mdash; and <code class="inline-code">copy-error</code> on total failure; empty text is a no-op; it never touches attributes, so the flash is the author&rsquo;s (<code class="inline-code">on-copy</code>).</p>
+        <p class="ref-desc">Copies the element&rsquo;s own text to the clipboard; a button calls it as a plain receiver (<code class="inline-code">on-click="() => { #snippet.copy() }"</code>). On success it dispatches <code class="inline-code">copy</code> (which shares the attribute with the native clipboard copy) and <code class="inline-code">copy-error</code> on total failure; empty text is a no-op; it never touches attributes, so the flash is the author&rsquo;s (<code class="inline-code">on-copy</code>).</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">copy</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Events</p>
         <div><span class="verb-tag">copy</span><span class="verb-tag">copy-error</span></div>
       </article>
@@ -219,13 +219,13 @@
       <article class="ref-card">
         <h3><code class="inline-code">focusable</code></h3>
         <p class="ref-tags">any element</p>
-        <p class="ref-desc"><code class="inline-code">HTMLElement.focus()</code> / <code class="inline-code">blur()</code> as verbs &mdash; <code class="inline-code">on-keydown="(code: 'ArrowDown') => { #results-1.focus() }"</code> roves real focus through a list. Reports once if <code class="inline-code">focus()</code> did not take.</p>
+        <p class="ref-desc"><code class="inline-code">HTMLElement.focus()</code> / <code class="inline-code">blur()</code> as verbs: <code class="inline-code">on-keydown="(code: 'ArrowDown') => { #results-1.focus() }"</code> roves real focus through a list. Reports once if <code class="inline-code">focus()</code> did not take.</p>
         <p class="ref-labels">Verbs</p>
         <div><span class="verb-tag">focus</span><span class="verb-tag">blur</span></div>
         <p class="ref-labels">Config / state</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
         <p class="ref-labels">Events</p>
-        <div><span class="verb-tag">&mdash;</span></div>
+        <div><span class="verb-tag">none</span></div>
       </article>
 
     </div>
@@ -237,7 +237,7 @@
         <thead><tr><th>Export</th><th>What it is</th></tr></thead>
         <tbody>
           <tr><td><code class="inline-code">defineImplementation(name, decl, factory)</code></td><td>Declare an implementation</td></tr>
-          <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant through one observer &mdash; for a Document root, the <code class="inline-code">document.body</code> element and everything it contains, never the head; returns a dispose function</td></tr>
+          <tr><td><code class="inline-code">start(root = document)</code></td><td>Attach every participant through one observer: for a Document root, the <code class="inline-code">document.body</code> element and everything it contains, never the head; returns a dispose function</td></tr>
           <tr><td><code class="inline-code">registerImplementation(def)</code></td><td>Register a normalized definition</td></tr>
           <tr><td><code class="inline-code">getImplementationDef(name)</code></td><td>Look up a registered definition</td></tr>
           <tr><td><code class="inline-code">runEventValue(el, value, ev)</code></td><td>Parse an attribute value's handler list, match each handler parameter, and run every matching handler against an element and a DOM event</td></tr>
@@ -251,13 +251,13 @@
           <tr><td><code class="inline-code">clearPhraseState(el)</code></td><td>Drop timers / <code class="inline-code">once</code> / log state for an element</td></tr>
           <tr><td><code class="inline-code">syncIntersect(el)</code> / <code class="inline-code">teardownIntersect(el)</code></td><td>Create / drop the element&rsquo;s single <code class="inline-code">IntersectionObserver</code></td></tr>
           <tr><td><code class="inline-code">normaliseRootMargin(token?)</code></td><td>Validate one root-margin token: a <code class="inline-code">px</code>/<code class="inline-code">%</code> length or a <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code> reference (<code class="inline-code">undefined</code>/empty &rarr; <code class="inline-code">"0px"</code>; throws otherwise)</td></tr>
-          <tr><td><code class="inline-code">readMeasured(el, dim)</code></td><td>The element&rsquo;s border-box <code class="inline-code">height</code>/<code class="inline-code">width</code> in CSS pixels as of the last layout the browser reported &mdash; the cache behind <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code></td></tr>
+          <tr><td><code class="inline-code">readMeasured(el, dim)</code></td><td>The element&rsquo;s border-box <code class="inline-code">height</code>/<code class="inline-code">width</code> in CSS pixels as of the last layout the browser reported; the cache behind <code class="inline-code">#id.height</code>/<code class="inline-code">#id.width</code></td></tr>
           <tr><td><code class="inline-code">INTERSECT_EVENT_NAMES</code></td><td>The synthetic intersect event name (<code class="inline-code">intersect</code>)</td></tr>
           <tr><td><code class="inline-code">compileSignature(sig)</code></td><td>Compile a slot/record signature to a validator</td></tr>
           <tr><td><code class="inline-code">optionalCtor(Ctor)</code></td><td>Mark an element-constructor signature slot optional</td></tr>
           <tr><td><code class="inline-code">exclusive(other, slot)</code></td><td>Mark a record-signature field as mutually exclusive with another named field: supplying both is a signature error before anything runs; the partner name is checked when the signature compiles</td></tr>
           <tr><td><code class="inline-code">bindEvents(el, events, handler, opts?)</code></td><td>Shared listener binder for <code class="inline-code">prevent-default</code> / <code class="inline-code">no-propagate</code> style implementations</td></tr>
-          <tr><td><code class="inline-code">readValue(el, property = "value")</code></td><td>The element&rsquo;s value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read <code class="inline-code">.value</code> (a string), display elements read <code class="inline-code">formattable-value</code> as a number under a numeric format, else <code class="inline-code">textContent</code> (a string); <code class="inline-code">readValue(el, "checked")</code> is the checked boolean; <code class="inline-code">readValue(el, "min" | "max" | "step")</code> is the platform bound — a number on number/range inputs (absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code>, absent <code class="inline-code">step</code> is <code class="inline-code">1</code>), the string as written elsewhere</td></tr>
+          <tr><td><code class="inline-code">readValue(el, property = "value")</code></td><td>The element&rsquo;s value with the type its declaration decides: number/range read a number, checkbox/radio read their checked boolean, other inputs/textarea/select read <code class="inline-code">.value</code> (a string), display elements read <code class="inline-code">formattable-value</code> as a number under a numeric format, else <code class="inline-code">textContent</code> (a string); <code class="inline-code">readValue(el, "checked")</code> is the checked boolean; <code class="inline-code">readValue(el, "min" | "max" | "step")</code> is the platform bound: a number on number/range inputs (absent <code class="inline-code">min</code>/<code class="inline-code">max</code> is <code class="inline-code">""</code>, absent <code class="inline-code">step</code> is <code class="inline-code">1</code>), the string as written elsewhere</td></tr>
           <tr><td><code class="inline-code">writeValue(el, v)</code></td><td>Write helper: sets <code class="inline-code">.value</code> where the element has one, else <code class="inline-code">textContent</code></td></tr>
         </tbody>
       </table>
@@ -268,7 +268,7 @@
       <table class="tbl">
         <thead><tr><th>Name</th><th>Role</th></tr></thead>
         <tbody>
-          <tr><td><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code></td><td>Modifiers — an implementation may not name a verb that way</td></tr>
+          <tr><td><code class="inline-code">debounce</code>, <code class="inline-code">throttle</code>, <code class="inline-code">once</code>, <code class="inline-code">delay</code></td><td>Modifiers: an implementation may not name a verb that way</td></tr>
           <tr><td><code class="inline-code">this</code></td><td>The only keyword</td></tr>
           <tr><td><code class="inline-code">value</code>, <code class="inline-code">checked</code>, <code class="inline-code">min</code>, <code class="inline-code">max</code>, <code class="inline-code">step</code></td><td>Property reads, not verbs (a verb called <code class="inline-code">value()</code> is still legal)</td></tr>
           <tr><td><code class="inline-code">enter</code>, <code class="inline-code">escape</code>, <code class="inline-code">space</code>, &hellip;</td><td>Key values matched exactly and case-sensitively by an <code class="inline-code">(key: '&hellip;')</code> / <code class="inline-code">(code: '&hellip;')</code> literal; there are no aliases, so <code class="inline-code">Esc</code> is not <code class="inline-code">escape</code></td></tr>
@@ -310,9 +310,9 @@ modifier    := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms 
         <tbody>
           <tr><td><strong>Scalar</strong></td><td>a tsyntax DSL string</td><td><code class="inline-code">"string"</code>, <code class="inline-code">"number | undefined"</code>, <code class="inline-code">"'upper' | 'lower'"</code>, <code class="inline-code">"`${number}px`"</code></td></tr>
           <tr><td><strong>Element</strong></td><td>an element constructor</td><td><code class="inline-code">HTMLElement</code>, <code class="inline-code">HTMLTemplateElement</code>, <code class="inline-code">HTMLButtonElement</code></td></tr>
-          <tr><td><strong>Optional element</strong></td><td><code class="inline-code">optionalCtor(Ctor)</code></td><td><code class="inline-code">optionalCtor(HTMLTemplateElement)</code> — key may be omitted, present value is instance-checked</td></tr>
+          <tr><td><strong>Optional element</strong></td><td><code class="inline-code">optionalCtor(Ctor)</code></td><td><code class="inline-code">optionalCtor(HTMLTemplateElement)</code>: key may be omitted, present value is instance-checked</td></tr>
           <tr><td><strong>Record</strong></td><td>one flat object literal of slots</td><td><code class="inline-code">{ name: "string", value: "string" }</code></td></tr>
-          <tr><td><strong>Rest key</strong></td><td>a <code class="inline-code">"*"</code> slot in a record</td><td><code class="inline-code">{ template: &hellip;, "*": "string | number | boolean" }</code> — validates every undeclared key</td></tr>
+          <tr><td><strong>Rest key</strong></td><td>a <code class="inline-code">"*"</code> slot in a record</td><td><code class="inline-code">{ template: &hellip;, "*": "string | number | boolean" }</code>: validates every undeclared key</td></tr>
         </tbody>
       </table>
     </div>

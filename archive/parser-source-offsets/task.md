@@ -28,15 +28,15 @@ LSP does not use flat character offsets. A `Position` is a zero-based line plus 
 
 None of that belongs in this parser. The seam is:
 
-- The parser emits flat offsets relative to the attribute value it was given — integers, zero-based, `start` inclusive and `end` exclusive, in the coordinates of the string passed to `parse`. This is the natural output of a `slice`-based parser and stays true regardless of where the attribute sits in a document.
+- The parser emits flat offsets relative to the attribute value it was given: integers, zero-based, `start` inclusive and `end` exclusive, in the coordinates of the string passed to `parse`. This is the natural output of a `slice`-based parser and stays true regardless of where the attribute sits in a document.
 - The language server, later and elsewhere, does the conversion to line and UTF-16 character using the attribute's own document position. That code does not exist yet and is not part of this task.
 
 Keeping the conversion out means the parser never learns about documents, encodings or line endings, and the runtime pays nothing for a tooling feature.
 
-Expected gaps — predictions, not requirements; the handoff reports which materialised:
+Expected gaps (predictions, not requirements); the handoff reports which materialised:
 
 - Trimming is the main source of drift: an offset must point at the first non-whitespace character of a segment, not at the whitespace before it.
-- Nested constructs — an object literal argument inside a verb call inside a unit — need a base offset threaded through more than one level.
+- Nested constructs (an object literal argument inside a verb call inside a unit) need a base offset threaded through more than one level.
 - The `expr` arm already carries `source`; its new offsets must be relative to the same attribute value as everything else, not to the expression substring.
 - Some errors are thrown from helpers that currently receive only a fragment and would need the base offset passed in.
 
@@ -44,8 +44,8 @@ Expected gaps — predictions, not requirements; the handoff reports which mater
 
 - [ ] Thread a base offset through the splitting helpers so every construct can report where it began. `splitTopLevel` and `splitUnits` should return, or otherwise make available, the offset of each piece in the original string. Trimming must adjust the offset rather than lose it.
 - [ ] Add `start` and `end` to the parsed structures: `Phrase`, `Unit`, `Call`, `Arg` and `Ref` at minimum, plus the phrase `key` when present. Offsets are relative to the string passed to `parse`, `start` inclusive, `end` exclusive. Name them `start` and `end`; do not reuse or redefine the existing ordinal `position` fields on `Modifier` and on the `expr` arm of `Arg`.
-- [ ] Give every `throw new Error(...)` in the file a start and end describing the offending span, as narrowly as the parser can honestly say — the bad segment rather than the whole phrase wherever the information exists. When the offending segment is zero-length (for example the empty link between two dots in `a..b`), report the empty position with `start === end` rather than inventing a width. Introduce a dedicated error type carrying `message`, `start` and `end`; keep the existing message text unchanged so current output and tests are undisturbed.
-- [ ] Expose failures as data. Add a parse entry point named `parseWithErrors` that returns both the phrases and a list of structured errors, so a caller can see what failed and where. The existing `parse` keeps its exact current behaviour — same signature, same return type, same `console.error` logging, same cache — and delegates to `parseWithErrors` so the cache is single-sourced. Nothing at runtime changes.
+- [ ] Give every `throw new Error(...)` in the file a start and end describing the offending span, as narrowly as the parser can honestly say, the bad segment rather than the whole phrase wherever the information exists. When the offending segment is zero-length (for example the empty link between two dots in `a..b`), report the empty position with `start === end` rather than inventing a width. Introduce a dedicated error type carrying `message`, `start` and `end`; keep the existing message text unchanged so current output and tests are undisturbed.
+- [ ] Expose failures as data. Add a parse entry point named `parseWithErrors` that returns both the phrases and a list of structured errors, so a caller can see what failed and where. The existing `parse` keeps its exact current behaviour (same signature, same return type, same `console.error` logging, same cache) and delegates to `parseWithErrors` so the cache is single-sourced. Nothing at runtime changes.
 - [ ] The cache must stay correct. Whatever is cached must carry the offsets, and the cache key must not change meaning.
 - [ ] Tests: for a representative phrase of each shape, assert that the reported `start` and `end` slice the original string back to exactly the expected text. That is the assertion that catches drift; a test that only checks a number is worth much less. Cover at least a keyed phrase, a multi-unit phrase with `&&`, a chained call, an object-literal argument, a `this` receiver, a read property and an `expr`. For errors, assert the span covers the offending segment for a missing receiver, an empty link between dots, a bad id and a malformed object field.
 
