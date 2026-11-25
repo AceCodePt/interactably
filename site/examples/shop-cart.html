@@ -70,7 +70,7 @@
                     <button id="cart-empty" type="button" on-click="() => { #cart.render({payload: ''}) }">Empty cart</button>
                   </div>
                   <ul id="cart" renderable
-                      on-rendered="() => { #cart-store.save({html: #cart}); #cart-total.set(sum('#cart .cart-price')) }"></ul>
+                      on-rendered="() => { #cart-store.save({html: this}); #cart-total.set(sum('#cart .cart-price')) }"></ul>
                   <p class="total">Total:
                     <output id="cart-total" modifiable formattable
                             formattable-format="{ style: 'currency', currency: 'USD' }">$0.00</output>
@@ -128,7 +128,7 @@
     &lt;button id="empty" type="button" on-click="() => { #cart.render({payload: ''}) }"&gt;Empty cart&lt;/button&gt;
   &lt;/div&gt;
   &lt;ul id="cart" renderable
-      on-rendered="() => { #store.save({html: #cart}); #total.set(sum('#cart .cart-price')) }"&gt;&lt;/ul&gt;
+      on-rendered="() => { #store.save({html: this}); #total.set(sum('#cart .cart-price')) }"&gt;&lt;/ul&gt;
   &lt;p class="total"&gt;Total:
     &lt;output id="total" modifiable formattable
             formattable-format="{ style: 'currency', currency: 'USD' }"&gt;$0.00&lt;/output&gt;

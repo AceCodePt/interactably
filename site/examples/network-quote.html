@@ -34,7 +34,7 @@
     <h1 class="doc-title">Load a quote over the network</h1>
     <p class="doc-lede">
           The asynchronous seam, working end to end on this static site: <code class="inline-code">send()</code> GETs a
-          fragment and <code class="inline-code">on-response="({html: string}) => { #quote.render({payload: html}) }"</code> renders it
+          fragment and <code class="inline-code">on-response="({html: string}) => { this.render({payload: html}) }"</code> renders it
           in place. The fragment even carries its own <code class="inline-code">on-click="() => { #quote.send() }"</code>
           button, so the trigger arrives with the response — no extra wiring.
         </p>
@@ -46,7 +46,7 @@
                 </div>
                 <div id="quote" requestable renderable
                      requestable-url="../fragments/quote.html" requestable-method="get"
-                     on-response="({html: string}) => { #quote.render({payload: html}) }">
+                     on-response="({html: string}) => { this.render({payload: html}) }">
                   Nothing loaded yet &mdash; click the button above.
                 </div>
               </div>
@@ -63,7 +63,7 @@
               <pre class="code" id="code-ex-quote" copyable on-copy="() => { #copy-code-ex-quote.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button on-click="() => { #quote.send() }"&gt;Load a quote&lt;/button&gt;
 &lt;div id="quote" requestable renderable
      requestable-url="./fragments/quote.html" requestable-method="get"
-     on-response="({html: string}) => { #quote.render({payload: html}) }"&gt;
+     on-response="({html: string}) => { this.render({payload: html}) }"&gt;
       Nothing loaded yet &mdash; click the button above.
 &lt;/div&gt;
 

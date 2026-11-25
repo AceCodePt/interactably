@@ -48,7 +48,7 @@
                   <input id="city" type="search" placeholder="Type a city, press &darr;"
                          requestable modifiable focusable prevent-default
                          requestable-url="../fragments/cities.html"
-                         on-input="() => { #city.debounce(250).send() }"
+                         on-input="() => { this.debounce(250).send() }"
                          on-response="({html: string}) => { #city-list.render({payload: html}); #city-list.show() }"
                          on-keydown="[({code: 'ArrowDown'}) => { #sug-1.focus() }, ({code: 'Escape'}) => { #city-list.show(false) }]"
                         >
@@ -76,7 +76,7 @@
               <pre class="code" id="code-ex-suggest" copyable on-copy="() => { #copy-code-ex-suggest.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;input id="city" type="search" placeholder="Type a city, press &darr;"
        requestable modifiable focusable prevent-default
        requestable-url="./fragments/cities.html"
-       on-input="() => { #city.debounce(250).send() }"
+       on-input="() => { this.debounce(250).send() }"
        on-response="({html: string}) => { #city-list.render({payload: html}); #city-list.show() }"
        on-keydown="[({code: 'ArrowDown'}) => { #sug-1.focus() }, ({code: 'Escape'}) => { #city-list.show(false) }]"&gt;
 &lt;ul id="city-list" renderable revealable hidden&gt;&lt;/ul&gt;
