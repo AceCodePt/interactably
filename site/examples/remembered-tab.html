@@ -36,8 +36,8 @@
           The three-way intersection in one small widget: <code class="inline-code">storable</code> remembers which tab,
           <code class="inline-code">revealable</code> flips the panels, and <code class="inline-code">focusable</code> returns
           focus to the remembered tab on load. One element owns the storage: <code class="inline-code">#mp-store</code> carries
-          <code class="inline-code">storable-id="maintab"</code> and one <code class="inline-code">({overview: boolean}) =&gt; { &hellip; }</code> /
-          <code class="inline-code">({specs: boolean}) =&gt; { &hellip; }</code> / <code class="inline-code">({notes: boolean}) =&gt; { &hellip; }</code> handler per choice, so the tab
+          <code class="inline-code">storable-id="maintab"</code> and one <code class="inline-code">(overview: boolean) =&gt; { &hellip; }</code> /
+          <code class="inline-code">(specs: boolean) =&gt; { &hellip; }</code> / <code class="inline-code">(notes: boolean) =&gt; { &hellip; }</code> handler per choice, so the tab
           the user picked matches exactly one handler. Each tab button calls <code class="inline-code">#mp-store.save({overview: true})</code>
           and the rest; pick one, reload, and the matching phrase replays.
         </p>
@@ -53,7 +53,7 @@
                           on-click="() => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-store.save({notes: true}) }">Notes</button>
                   <button id="mp-store" type="button" storable storable-id="maintab" hidden
                           on-load="() => { this.restore() }"
-                          on-restore="[({overview: boolean}) => { #mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-tab-overview.focus() }, ({specs: boolean}) => { #mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus() }, ({notes: boolean}) => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus() }]"
+                          on-restore="[(overview: boolean) => { #mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-tab-overview.focus() }, (specs: boolean) => { #mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus() }, (notes: boolean) => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus() }]"
                          
                          ></button>
                 </div>
@@ -87,7 +87,7 @@
           on-click="() => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-store.save({notes: true}) }"&gt;Notes&lt;/button&gt;
   &lt;button id="mp-store" type="button" storable storable-id="maintab" hidden
           on-load="() => { this.restore() }"
-          on-restore="[({overview: boolean}) => { #mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-tab-overview.focus() }, ({specs: boolean}) => { #mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus() }, ({notes: boolean}) => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus() }]"&gt;&lt;/button&gt;
+          on-restore="[(overview: boolean) => { #mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-tab-overview.focus() }, (specs: boolean) => { #mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus() }, (notes: boolean) => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus() }]"&gt;&lt;/button&gt;
 &lt;/div&gt;
 &lt;section id="mp-overview" class="tabpanel" revealable revealable-open="true"&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
 &lt;section id="mp-specs" class="tabpanel" revealable hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;

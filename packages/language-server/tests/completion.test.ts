@@ -80,11 +80,29 @@ test("completion: a partial attribute name filters to its prefix", () => {
   assert.ok(result.every((label) => label.startsWith("on-c")));
 });
 
-test("completion: inside a parameter object lists the event's fields", () => {
+test("completion: inside a parameter list lists the event's fields", () => {
   const text = fixture("completion-fields.html");
   const analysis = analysisOf(text);
-  const offset = text.indexOf("({  })") + "({ ".length;
+  const offset = text.indexOf("(  )") + "( ".length;
   assert.deepEqual(labels(analysis, offset), ["html", "status"]);
+});
+
+test("completion: an open parameter list still lists fields before the arrow is typed", () => {
+  const text =
+    '<script type="module" implementations="requestable" src="x"></script>\n' +
+    '<div id="d" requestable on-response="(  )">x</div>';
+  const analysis = analysisOf(text);
+  const offset = text.indexOf("(  )") + "( ".length;
+  assert.deepEqual(labels(analysis, offset), ["html", "status"]);
+});
+
+test("completion: a parameter field already used is not offered again", () => {
+  const text =
+    '<script type="module" implementations="requestable" src="x"></script>\n' +
+    '<div id="d" requestable on-response="(status: 200,   ) => {  }">x</div>';
+  const analysis = analysisOf(text);
+  const offset = text.indexOf("(status: 200,   )") + "(status: 200, ".length;
+  assert.deepEqual(labels(analysis, offset), ["html"]);
 });
 
 test("completion: inside a body lists the names bound by that handler", () => {

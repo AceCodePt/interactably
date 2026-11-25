@@ -521,8 +521,8 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(fetchCalls.length, 3, "after the quiet period the fragment is fetched");
   assert.equal(cityList.hidden, true, "the listbox stays hidden until the response lands");
   const options = [
-    `<li role="option"><button id="sug-1" focusable prevent-default on-click="() => { #city.set('Lisbon'); #city-list.show(false) }" on-keydown="[({code: 'ArrowDown'}) => { #sug-2.focus() }, ({code: 'ArrowUp'}) => { #city.focus() }]">Lisbon</button></li>`,
-    `<li role="option"><button id="sug-2" focusable prevent-default on-click="() => { #city.set('London'); #city-list.show(false) }" on-keydown="[({code: 'ArrowDown'}) => { #city.focus() }, ({code: 'ArrowUp'}) => { #sug-1.focus() }]">London</button></li>`,
+    `<li role="option"><button id="sug-1" focusable prevent-default on-click="() => { #city.set('Lisbon'); #city-list.show(false) }" on-keydown="[(code: 'ArrowDown') => { #sug-2.focus() }, (code: 'ArrowUp') => { #city.focus() }]">Lisbon</button></li>`,
+    `<li role="option"><button id="sug-2" focusable prevent-default on-click="() => { #city.set('London'); #city-list.show(false) }" on-keydown="[(code: 'ArrowDown') => { #city.focus() }, (code: 'ArrowUp') => { #sug-1.focus() }]">London</button></li>`,
   ];
   fetchCalls[2]!.resolve(fakeResponse(true, 200, options.join("")));
   await flush();

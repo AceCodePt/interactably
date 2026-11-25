@@ -460,7 +460,7 @@ test("a timeout fires on-request-timeout, exactly once, carrying no values, and 
 test("on-request-error filters on the status handler field, and request-error carries status", async () => {
   const holder = document.createElement("div");
   holder.innerHTML =
-    `<div id="req-401" requestable requestable-url="/api" on-request-error="({status: '401'}) => { #alert.show() }"></div>`;
+    `<div id="req-401" requestable requestable-url="/api" on-request-error="(status: '401') => { #alert.show() }"></div>`;
   const el = holder.querySelector("#req-401") as HTMLElement;
   document.body.appendChild(el);
   const alert = revealable("div", "alert");

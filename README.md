@@ -61,8 +61,8 @@ One attribute per event; its value is a handler, and the handler's braced body i
 attribute   := 'on-' event-type
 value       := handler | '[' handler (',' handler)* ']'
 handler     := parameter '=>' '{' phrase (';' phrase)* '}'
-parameter   := '()' | '({' param-field (',' param-field)* '})'
-param-field := name ':' (literal | tsyntax-scalar)
+parameter   := '(' [ param (',' param)* ] ')'
+param       := name ':' (literal | tsyntax-scalar)
 literal     := number | "'" string "'" | 'true' | 'false'
 phrase      := unit (('&&' | '||') unit)*
 unit        := ref ('.' (call | modifier))+
@@ -77,13 +77,13 @@ modifier    := 'debounce(' ms ')' | 'throttle(' ms ')' | 'once()' | 'delay(' ms 
 
 Whitespace is insignificant outside string literals. `id` excludes whitespace, `,`, `;`, `.`, `(`, `)`, `:`, `&`, `|`, `{`, `}`, `'`, `"`, `#`. `this` is the only keyword; an element with `id="this"` is addressed as `#this`. A `unit` must contain at least one call; `debounce`/`throttle` are legal only before the first call, at most one per unit, while `once`/`delay` may sit anywhere. `&&` and `||` are top-level unit separators, recognized only outside string literals and argument parens/braces; a phrase may use one of them, never both. A handler's body must be braced and holds phrases only, never another handler or a bare statement. `debounce`, `throttle`, `once`, `delay` are modifiers — `defineImplementation` throws if any of them is declared as a verb; `value`, `checked`, `min`, `max`, `step` are property reads, not verbs (a verb called `value()` is still legal, distinguished by its parens).
 
-**An event's data lives in its handler parameter.** `on-<type>="({html: string}) => { … }"` binds the event's `html` field inside that handler; a literal (`({key: 'Enter'}) => { … }`) filters instead, with single-quoted strings, numbers and `true`/`false`; `()` matches every firing. A bracketed list `[({state: 'enter'}) => { … }, ({state: 'leave'}) => { … }]` holds several handlers. A name not bound by its own handler is an error when the element is wired, not when the event fires; bound names never resolve inside formula expressions (`replace(html, …)` stays an error). Every matching handler fires, in source order. (See [the docs](https://acecodept.github.io/interactably/docs.html#trigger-grammar) for the field allowlist, the key-versus-code trade, and how literals compare.)
+**An event's data lives in its handler parameter.** `on-<type>="(html: string) => { … }"` binds the event's `html` field inside that handler; a literal (`(key: 'Enter') => { … }`) filters instead, with single-quoted strings, numbers and `true`/`false`; `()` matches every firing. A bracketed list `[(state: 'enter') => { … }, (state: 'leave') => { … }]` holds several handlers. A name not bound by its own handler is an error when the element is wired, not when the event fires; bound names never resolve inside formula expressions (`replace(html, …)` stays an error). Every matching handler fires, in source order. (See [the docs](https://acecodept.github.io/interactably/docs.html#trigger-grammar) for the field allowlist, the key-versus-code trade, and how literals compare.)
 
 | Construct | Example | Meaning |
 | --- | --- | --- |
 | Trigger | `on-click="() => { #pop.show() }"` | On `click`, run the phrase |
 | Implementation event | `on-copy="() => { #flash.show() }"` | An implementation's own event (`copy-error`, `response`, `request-error`, `request-timeout`, `request-offline`, `restore`, `valid`, `invalid`); copyable also re-dispatches the native `copy`, which shares the attribute |
-| Synthetic trigger | ``on-intersect="({state: 'enter'}) => { #link.mark() }"`` | `IntersectionObserver` against the viewport; `state` matches `enter`/`leave`, `full` matches `true`/`false`, and the four logical margin slots configure the observer |
+| Synthetic trigger | ``on-intersect="(state: 'enter') => { #link.mark() }"`` | `IntersectionObserver` against the viewport; `state` matches `enter`/`leave`, `full` matches `true`/`false`, and the four logical margin slots configure the observer |
 | Receiver | `#pop.show()` | Send verb `show()` to the element with `id="pop"` |
 | Self | `this.reset()` | The element the phrase was read from |
 | Chain | `#pop.show().focus()` | `.show()` then `.focus()` on the same receiver, in order |
@@ -92,9 +92,9 @@ Whitespace is insignificant outside string literals. `id` excludes whitespace, `
 | Or | `#form.reportValidity().send() \|\| #alert.show()` | Next unit only if a guard aborted this one |
 | Scalar arg | `#qty.set(#qty.value + 5)` | Numbers, `'strings'`, `true` / `false` |
 | Property read | `#preview.set(this.value)` | `value`/`checked`/`min`/`max`/`step`, typed by the element |
-| Key filter | ``on-keydown="({key: 'Enter'}) => { #f.send() }"`` | Match an event field to a literal; the phrase runs only when it matches |
+| Key filter | ``on-keydown="(key: 'Enter') => { #f.send() }"`` | Match an event field to a literal; the phrase runs only when it matches |
 | Object literal | `#note.transform({mode: 'upper', shift: 2})` | One named-argument object |
-| Event value | `on-response="({html: string}) => { #receipt.set(html) }"` | The event's own value, declared in the handler parameter and resolved by name inside that handler |
+| Event value | `on-response="(html: string) => { #receipt.set(html) }"` | The event's own value, declared in the handler parameter and resolved by name inside that handler |
 | Debounce | `#echo.debounce(300).set(this.value)` | Defers this receiver's chain; a re-fire restarts the timer |
 | Throttle | `#viewport.throttle(16).zoom(this)` | Leading-edge throttle of this receiver's chain |
 | Once | `#tour.once().show()` | Gates the rest of the chain; spent when the walk passes it |
@@ -106,7 +106,7 @@ The rules, one line each:
 1. **Parens are mandatory.** `#pop.show` is a CSS selector; `#pop.show()` is a call.
 2. **Receivers are `#id` or `this`.** Ids may not contain `.`, `:`, `&`, `|`, `{`, `}`, `'`, `"` or `#`. Class or attribute selectors are never receivers.
 3. **One receiver per unit.** A `.` chain stays on one receiver; `&&`/`||` units may each name a different one. There is no group form.
-4. **Keyboard keys are filtered through a handler parameter**, one per handler. `({key: 'Enter'}) => { … }` and `({code: 'ArrowDown'}) => { … }` match a literal case-sensitively; two keyboard keys is two handlers in one attribute. `intersect`'s `state`, `full` and margin slots are handler parameter fields.
+4. **Keyboard keys are filtered through a handler parameter**, one per handler. `(key: 'Enter') => { … }` and `(code: 'ArrowDown') => { … }` match a literal case-sensitively; two keyboard keys is two handlers in one attribute. `intersect`'s `state`, `full` and margin slots are handler parameter fields.
 5. **A modifier is a step in a receiver's chain and governs the rest of that chain from where it sits.** It never crosses `&&`. `debounce`/`throttle` are legal only right after the ref; `once` and `delay` may sit anywhere. `once()` must be followed by a call. At most one `debounce`/`throttle` per receiver chain.
 6. **`;` is independent, `.` is sequential and abortable, `&&`/`||` continue across receivers.** A `.` chain stops on a `preventDefault()`-ed event, a throw, or an unowned verb. `||` fires only on a guard's abort; errors and unowned verbs stop both.
 7. **`once()` spends on passing through, not on completion.** A spent gate cuts the chain where it sits — links before it still run, links after it never do.
@@ -128,7 +128,7 @@ The rules, one line each:
 | `dirtyable` | input, textarea, select, output | — | `dirty-on`; events `dirty`, `clean` | compares the element's current value with its platform default (`defaultValue`, `defaultChecked`, `defaultSelected`); fires `dirty` / `clean` on transition; writes nothing |
 | `formattable` | output, span, div, td, p, li, dd, b, strong, em, small | — | `format` | renders a number/date through `Intl` on display elements; keeps the raw text in `formattable-value`; formats on connect and on every library write |
 | `renderable` | any | `render`, `undo` | `disable-view-transition`; event `rendered` | stamps a template with flat scalar slots into text and attributes, or inserts a `payload` markup string as-is (the two are mutually exclusive — a signature error to supply both); every successful swap animates as a same-document view transition and fires `rendered` when it settles; `undo` reverses the one last render |
-| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `include`, `concurrency`, `timeout` + `status` state; events `response`, `request-error`, `request-timeout`, `request-offline` | fetch and announce; never touches the DOM — `response` carries the response body text as `html` and the `status`, and the author places it (`on-response="({html: string}) => { #list.render({payload: html, swap: 'beforeend'}) }"`); failures split three ways — `request-error` (non-ok status, filter by status literal), `request-timeout`, `request-offline` |
+| `requestable` | any | `send({method, url})`, `abort` | `url`, `method`, `include`, `concurrency`, `timeout` + `status` state; events `response`, `request-error`, `request-timeout`, `request-offline` | fetch and announce; never touches the DOM — `response` carries the response body text as `html` and the `status`, and the author places it (`on-response="(html: string) => { #list.render({payload: html, swap: 'beforeend'}) }"`); failures split three ways — `request-error` (non-ok status, filter by status literal), `request-timeout`, `request-offline` |
 | `attributable` | any | `setAttr`, `toggleAttr`, `removeAttr` | — | attribute writes (`setAttr({name, value})`) |
 | `classable` | any | `add`, `remove`, `toggle` | — | `classList` writes, one class name per call; `toggle` has no force argument — `add`/`remove` are the forced forms |
 | `logger` | any | `log` | — | `console.log` from a phrase |
@@ -230,7 +230,7 @@ script's `implementations` does not list, a non-built-in in the bootstrap script
 `implementations`, and a page that uses handlers or implementation attributes with no
 bootstrap tag. It completes ids after `#`, an element's verbs after `#id.` or `this.`,
 implementation names inside the bootstrap script's `implementations="…"`, `on-<event>` at
-an attribute name, an event's fields inside a handler's `({ … })`, and the names bound by
+an attribute name, an event's fields inside a handler's `( … )`, and the names bound by
 a handler inside its body.
 
 ```sh

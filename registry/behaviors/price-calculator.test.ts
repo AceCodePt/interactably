@@ -34,7 +34,7 @@ const MARKUP = `
          on-input="() => { #preview.set(this.value) }"
          on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
          on-clean="() => { this.removeAttr('data-dirty') }"
-         on-keydown="({code: 'Escape'}) => { this.reset(); #preview.set(#qty.value) }">
+         on-keydown="(code: 'Escape') => { this.reset(); #preview.set(#qty.value) }">
 </label>
 <button id="dec" on-click="() => { #qty.set(#qty.value - 1); #preview.set(#qty.value) }">−</button>
 <button id="inc" on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }">+</button>

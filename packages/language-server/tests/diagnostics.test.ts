@@ -151,8 +151,17 @@ test("diagnostics: an old on-x(...) attribute name is reported at the name", () 
   const diagnostic = findByCode(diagnose(text), "parse-error");
   assert.ok(diagnostic);
   assert.match(diagnostic.message, /handler parameter/);
-  assert.match(diagnostic.message, /click="\(\{/);
+  assert.match(diagnostic.message, /click="\(name: type\)/);
   assert.equal(substringOf(text, diagnostic), "on-click(key:string)");
+});
+
+test("diagnostics: the object parameter form is reported with the named form as the fix", () => {
+  const text = fixture("handler-object-parameter.html");
+  const diagnostic = findByCode(diagnose(text), "parse-error");
+  assert.ok(diagnostic);
+  assert.match(diagnostic.message, /handler parameters are named, not an object/);
+  assert.match(diagnostic.message, /\(status: 200\)/);
+  assert.equal(substringOf(text, diagnostic), "({status: 200})");
 });
 
 test("diagnostics: two handlers need brackets, as the parser says", () => {
@@ -222,7 +231,7 @@ test("diagnostics: the owning presence attribute makes the event legal", () => {
 test("diagnostics: offsets stay exact inside a bracketed list after a decoded entity", () => {
   const text =
     '<script type="module" implementations="modifiable"></script>\n' +
-    '<button id="b" modifiable on-keydown="[({ key: \'Enter&amp;x\' }) => { #b.clear() }, ({ key: 5 }) => { #b.clear() }]">x</button>';
+    '<button id="b" modifiable on-keydown="[( key: \'Enter&amp;x\' ) => { #b.clear() }, ( key: 5 ) => { #b.clear() }]">x</button>';
   const diagnostics = diagnose(text);
   const mismatches = diagnostics.filter((diagnostic) => diagnostic.code === "event-field-mismatch");
   assert.equal(mismatches.length, 1);

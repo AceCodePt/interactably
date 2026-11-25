@@ -295,7 +295,7 @@ test("prevent-default silences the native-action warning", async (t) => {
 test("a keyed button on-keydown/on-keyup does not warn; an unkeyed one does", async (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const keyed = hostElement("button", { "on-keydown": "({key: 'Escape'}) => { #recv.go() }" });
+  const keyed = hostElement("button", { "on-keydown": "(key: 'Escape') => { #recv.go() }" });
   document.body.appendChild(keyed);
   const unkeyedDown = hostElement("button", { "on-keydown": "() => { #recv.go() }" });
   document.body.appendChild(unkeyedDown);
@@ -645,7 +645,7 @@ test("an unknown bare attribute is ignored: nothing attaches and nothing is repo
 test("on-intersect needs no implementation attribute and never warns about a missing event", (t) => {
   const dispose = start();
   const warn = t.mock.method(console, "warn");
-  const trigger = hostElement("section", { "on-intersect": "({state: 'enter'}) => { #recv.go() }" });
+  const trigger = hostElement("section", { "on-intersect": "(state: 'enter') => { #recv.go() }" });
   document.body.appendChild(trigger);
   assert.equal(warn.mock.callCount(), 0);
   trigger.remove();
@@ -657,7 +657,7 @@ test("handlers that disagree on the margin are a wire-time error", async () => {
   const receiver = hostElement("div", { id: "spy", alpha: "" });
   const trigger = hostElement("section", {
     "on-intersect":
-      "[({state: 'enter', block-start: '0px'}) => { #spy.go() }, ({state: 'enter', block-start: '50px'}) => { #spy.go() }]",
+      "[(state: 'enter', block-start: '0px') => { #spy.go() }, (state: 'enter', block-start: '50px') => { #spy.go() }]",
   });
   document.body.append(trigger, receiver);
   await flush();
@@ -671,7 +671,7 @@ test("enter fires on entering and leave on leaving from one observer", async () 
   const receiver = hostElement("div", { id: "both", alpha: "" });
   const trigger = hostElement("section", {
     "on-intersect":
-      "[({state: 'enter'}) => { #both.go() }, ({state: 'leave'}) => { #both.go() }]",
+      "[(state: 'enter') => { #both.go() }, (state: 'leave') => { #both.go() }]",
   });
   document.body.append(trigger, receiver);
   await flush();
@@ -690,7 +690,7 @@ test("enter fires on entering and leave on leaving from one observer", async () 
 test("once() is the only filter for intersect crossings", async () => {
   const dispose = start();
   const receiver = hostElement("div", { id: "once", alpha: "" });
-  const trigger = hostElement("section", { "on-intersect": "({state: 'enter'}) => { #once.once().go() }" });
+  const trigger = hostElement("section", { "on-intersect": "(state: 'enter') => { #once.once().go() }" });
   document.body.append(trigger, receiver);
   await flush();
 
@@ -704,7 +704,7 @@ test("once() is the only filter for intersect crossings", async () => {
 
 test("intersect observers are rebuilt on attribute change and torn down on disconnect", async () => {
   const dispose = start();
-  const trigger = hostElement("section", { "on-intersect": "({state: 'enter', block-start: '10px'}) => { #recv.go() }" });
+  const trigger = hostElement("section", { "on-intersect": "(state: 'enter', block-start: '10px') => { #recv.go() }" });
   await flush();
   assert.equal(FakeIntersectionObserver.instances.length, 1);
   assert.equal(FakeIntersectionObserver.instances[0]!.rootMargin, "10px 0px 0px 0px");
@@ -712,7 +712,7 @@ test("intersect observers are rebuilt on attribute change and torn down on disco
   const replaced = replaceAttribute(trigger, "on-intersect", "on-intersect");
   replaced.setAttribute(
     "on-intersect",
-    "({state: 'enter', block-start: '20px'}) => { #recv.go() }",
+    "(state: 'enter', block-start: '20px') => { #recv.go() }",
   );
   await flush();
   assert.equal(FakeIntersectionObserver.instances.length, 2);

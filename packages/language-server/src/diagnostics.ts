@@ -238,7 +238,7 @@ function reportTrigger(
     add(
       attributeValue.nameStart,
       attributeValue.nameEnd,
-      `event data now belongs in a handler parameter; write ${declaredEvent.slice(0, declaredEvent.indexOf("("))}="({ name: type }) => { … }"`,
+      `event data now belongs in a handler parameter; write ${declaredEvent.slice(0, declaredEvent.indexOf("("))}="(name: type) => { … }"`,
       "parse-error",
       DiagnosticSeverity.Error,
     );
@@ -301,23 +301,11 @@ function reportHandlerFields(
   documentOffset: (offset: number) => number,
   add: Adder,
 ): void {
-  const declared = new Set<string>();
   const bound = new Set<string>();
 
   for (const field of handler.parameter.fields) {
     const start = documentOffset(field.start);
     const end = documentOffset(field.end);
-    if (declared.has(field.name)) {
-      add(
-        start,
-        end,
-        `"${field.name}" is declared twice in this handler`,
-        "event-field-mismatch",
-        DiagnosticSeverity.Error,
-      );
-      continue;
-    }
-    declared.add(field.name);
 
     const fieldType = spec?.fields.get(field.name);
     if (spec !== undefined && !spec.open && fieldType === undefined) {
@@ -375,7 +363,7 @@ function reportHandlerFields(
           add(
             documentOffset(name.start),
             documentOffset(name.end),
-            `"${name.name}" is not bound by this handler; declare it in the parameter, for example ({ ${name.name}: string })`,
+            `"${name.name}" is not bound by this handler; declare it in the parameter, for example (${name.name}: string)`,
             "unbound-name",
             DiagnosticSeverity.Error,
           );

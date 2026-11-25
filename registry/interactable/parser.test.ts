@@ -70,7 +70,7 @@ test("a top-level key prefix is a grammar error naming the parameter form", (t) 
   assert.equal(spy.mock.callCount(), 1);
   assert.ok(
     String(spy.mock.calls[0]!.arguments[0]).includes(
-      `phrase keys are not supported; filter with a handler parameter, e.g. "({ name: type }) => { … }"`,
+      `phrase keys are not supported; filter with a handler parameter, e.g. "(name: type) => { … }"`,
     ),
   );
 });
@@ -370,21 +370,23 @@ test("intersect parses a plain body and rejects a key prefix", (t) => {
   assert.deepEqual(parse(`${"enter"}: #a.show()`), []);
   assert.ok(
     String(spy.mock.calls[0]!.arguments[0]).includes(
-      `phrase keys are not supported; filter with a handler parameter, e.g. "({ name: type }) => { … }"`,
+      `phrase keys are not supported; filter with a handler parameter, e.g. "(name: type) => { … }"`,
     ),
   );
 });
 
 test("parseEventValue: one unbracketed handler with an empty parameter", () => {
-  const [ok] = parseEventValue("() => { #f.send() }");
-  assert.ok(ok);
-  assert.deepEqual(ok.parameter.fields, []);
-  assert.equal(ok.phrases.length, 1);
+  for (const value of ["() => { #f.send() }", "( ) => { #f.send() }"]) {
+    const [ok] = parseEventValue(value);
+    assert.ok(ok);
+    assert.deepEqual(ok.parameter.fields, []);
+    assert.equal(ok.phrases.length, 1);
+  }
 });
 
 test("parseEventValue: typed and literal parameter fields mix in one handler", () => {
   const [handler] = parseEventValue(
-    "({status: 200, html: string, key: 'Enter', full: true}) => { #r.set(html) }",
+    "(status: 200, html: string, key: 'Enter', full: true) => { #r.set(html) }",
   );
   assert.ok(handler);
   assert.deepEqual(
@@ -405,7 +407,7 @@ test("parseEventValue: typed and literal parameter fields mix in one handler", (
 
 test("parseEventValue: a bracketed list holds several handlers, and [] is legal", () => {
   const handlers = parseEventValue(
-    "[({status: 200}) => { #a.go() }, ({status: 409}) => { #b.go() }]",
+    "[(status: 200) => { #a.go() }, (status: 409) => { #b.go() }]",
   );
   assert.equal(handlers.length, 2);
   const empty = parseEventValue("[]");
@@ -421,13 +423,13 @@ test("parseEventValue: a single handler may not be followed by a comma", () => {
 
 test("parseEventValue: a separating comma is only legal after a body at depth zero", () => {
   const { errors } = parseEventValueWithErrors(
-    "[() => { #a.go() }, ({n: number}) => { #b.go(n) }]",
+    "[() => { #a.go() }, (n: number) => { #b.go(n) }]",
   );
   assert.deepEqual(errors, []);
 });
 
 test("parseEventValue: concise bodies are a grammar error naming the braced form", () => {
-  const { handlers, errors } = parseEventValueWithErrors("({key: 'Enter'}) => #f.send()");
+  const { handlers, errors } = parseEventValueWithErrors("(key: 'Enter') => #f.send()");
   assert.deepEqual(handlers, []);
   assert.equal(errors.length, 1);
   assert.match(errors[0]!.message, /braced/);
@@ -435,30 +437,50 @@ test("parseEventValue: concise bodies are a grammar error naming the braced form
 });
 
 test("parseEventValue: a backticked literal is a grammar error naming single quotes", () => {
-  const { handlers, errors } = parseEventValueWithErrors("({key: `Enter`}) => { #f.send() }");
+  const { handlers, errors } = parseEventValueWithErrors("(key: `Enter`) => { #f.send() }");
   assert.deepEqual(handlers, []);
   assert.equal(errors.length, 1);
   assert.match(errors[0]!.message, /backticked literals are not supported/);
   assert.match(errors[0]!.message, /single quotes/);
 });
 
-test("parseEventValue: parameters must be () or a parenthesised object", () => {
-  assert.match(
-    parseEventValueWithErrors("({html: string) => { #a.go() }").errors[0]!.message,
-    /parameter must be/,
+test("parseEventValue: the object parameter form is a grammar error naming the named form", () => {
+  const { handlers, errors } = parseEventValueWithErrors(
+    "({status: 200, html: string}) => { #a.go() }",
   );
+  assert.deepEqual(handlers, []);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0]!.message, /handler parameters are named, not an object/);
+  assert.match(errors[0]!.message, /\(status: 200, html: string\)/);
+  assert.match(errors[0]!.message, /instead of/);
+
+  const malformed = parseEventValueWithErrors("({html: string) => { #a.go() }");
+  assert.match(malformed.errors[0]!.message, /handler parameters are named, not an object/);
+  assert.match(malformed.errors[0]!.message, /\(html: string\)/);
+});
+
+test("parseEventValue: a parameter needs a name and a type", () => {
   assert.match(
     parseEventValueWithErrors("(html) => { #a.go() }").errors[0]!.message,
-    /parameter must be/,
+    /needs "name: type"/,
   );
   assert.match(
-    parseEventValueWithErrors("({}) => { #a.go() }").errors[0]!.message,
-    /empty parameter object/,
+    parseEventValueWithErrors("(html:) => { #a.go() }").errors[0]!.message,
+    /missing type/,
   );
 });
 
+test("parseEventValue: a repeated parameter name is a grammar error", () => {
+  const { handlers, errors } = parseEventValueWithErrors(
+    "(status: 200, status: 409) => { #a.go() }",
+  );
+  assert.deepEqual(handlers, []);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0]!.message, /"status" is declared twice in one handler/);
+});
+
 test("parseEventValue: body phrase spans are value-relative", () => {
-  const value = "({html: string}) => { #r.set(html) }";
+  const value = "(html: string) => { #r.set(html) }";
   const [handler] = parseEventValue(value);
   assert.ok(handler);
   const phrase = handler.phrases[0]!;
@@ -482,9 +504,9 @@ test("parseEventValue: a handler needs an arrow and a braced body", () => {
 
 test("parseEventValue: the task's after examples parse", () => {
   for (const value of [
-    "({key: 'Enter'}) => { #f.send() }",
-    "({html: string}) => { #receipt.set(html) }",
-    "[({status: 200, html: string}) => { #receipt.render({payload: html}) }, ({status: 409}) => { #email-taken.show() }]",
+    "(key: 'Enter') => { #f.send() }",
+    "(html: string) => { #receipt.set(html) }",
+    "[(status: 200, html: string) => { #receipt.render({payload: html}) }, (status: 409) => { #email-taken.show() }]",
   ]) {
     const { handlers, errors } = parseEventValueWithErrors(value);
     assert.deepEqual(errors, [], value);

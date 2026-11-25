@@ -28,7 +28,7 @@ const FORM_OPEN = `<form id="order" novalidate
       requestable-url="/api/orders" requestable-method="post"`;
 
 const HAPPY = `${FORM_OPEN}
-      on-response="({html: string}) => { #receipt.render({payload: html}); #receipt.show(); #alert.show(false) }"
+      on-response="(html: string) => { #receipt.render({payload: html}); #receipt.show(); #alert.show(false) }"
       on-request-error="() => { #alert.show() }"
       on-submit="() => { this.reportValidity().send() }">
   <input id="qty" name="qty" type="number" min="1" required>
@@ -38,7 +38,7 @@ const HAPPY = `${FORM_OPEN}
 <div id="alert" revealable hidden role="alert">Couldn't place the order.</div>`;
 
 const UNOWNED = `${FORM_OPEN}
-      on-response="({html: string}) => { #receipt.render({payload: html}); #receipt.show(); this.reset() }"
+      on-response="(html: string) => { #receipt.render({payload: html}); #receipt.show(); this.reset() }"
       on-request-error="() => { #alert.show() }"
       on-submit="() => { this.reportValidity().send() }">
   <input id="qty" name="qty" type="number" min="1" required>

@@ -35,8 +35,8 @@
     <p class="doc-lede">
           Type into the field and the preview follows &mdash; but only 300ms after you stop. The two
           <code class="inline-code">on-keydown</code> attributes match literals rather than binding a type:
-          <code class="inline-code">({code: 'Enter'}) =&gt; { &hellip; }</code> echoes instantly and
-          <code class="inline-code">({code: 'Escape'}) =&gt; { &hellip; }</code> clears, each gated on the physical key.
+          <code class="inline-code">(code: 'Enter') =&gt; { &hellip; }</code> echoes instantly and
+          <code class="inline-code">(code: 'Escape') =&gt; { &hellip; }</code> clears, each gated on the physical key.
           The &ldquo;Toggle tip&rdquo; button spends its <code class="inline-code">once()</code> as the walk passes it:
           the second click is a no-op.
         </p>
@@ -49,7 +49,7 @@
                            on-input="() => { #mirror.debounce(300).set(this.value) }"
                            on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
                            on-clean="() => { this.removeAttr('data-dirty') }"
-                           on-keydown="[({code: 'Enter'}) => { #mirror.set(this.value) }, ({code: 'Escape'}) => { this.clear() }]"
+                           on-keydown="[(code: 'Enter') => { #mirror.set(this.value) }, (code: 'Escape') => { this.clear() }]"
                           >
                   </label>
                   <output id="mirror" modifiable>&hellip;</output>
@@ -73,7 +73,7 @@
        on-input="() => { #mirror.debounce(300).set(this.value) }"
        on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
        on-clean="() => { this.removeAttr('data-dirty') }"
-       on-keydown="[({code: 'Enter'}) => { #mirror.set(this.value) }, ({code: 'Escape'}) => { this.clear() }]"&gt;
+       on-keydown="[(code: 'Enter') => { #mirror.set(this.value) }, (code: 'Escape') => { this.clear() }]"&gt;
 &lt;output id="mirror" modifiable&gt;&hellip;&lt;/output&gt;
 
 &lt;button on-click="() => { #tip.once().toggle() }"&gt;Toggle tip (once)&lt;/button&gt;

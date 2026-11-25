@@ -47,16 +47,16 @@ test("derivedDefaults reads claimed on-* attributes and falls back to the tag", 
   const div = fromMarkup(`<div on-click="() => { #x.go() }" on-submit="() => { #x.go() }" on-input="() => { #x.go() }"></div>`);
   assert.equal(derivedDefaults(div), "click,submit");
 
-  const keyed = fromMarkup(`<div on-click="() => { #x.go() }" on-keydown="({key: 'Enter'}) => { #x.go(); #y.go() }"></div>`);
+  const keyed = fromMarkup(`<div on-click="() => { #x.go() }" on-keydown="(key: 'Enter') => { #x.go(); #y.go() }"></div>`);
   assert.equal(derivedDefaults(keyed), "click,keydown:enter");
 
-  const coded = fromMarkup(`<div on-keydown="({code: 'KeyA'}) => { #x.go() }"></div>`);
+  const coded = fromMarkup(`<div on-keydown="(code: 'KeyA') => { #x.go() }"></div>`);
   assert.equal(derivedDefaults(coded), "keydown:code:keya");
 
   const unkeyed = fromMarkup(`<div on-keydown="() => { #x.go() }"></div>`);
   assert.equal(derivedDefaults(unkeyed), "");
 
-  const typed = fromMarkup(`<div on-keydown="({key: string}) => { #x.go() }"></div>`);
+  const typed = fromMarkup(`<div on-keydown="(key: string) => { #x.go() }"></div>`);
   assert.equal(derivedDefaults(typed), "", "a type declaration binds, it does not derive a claim");
 
   const form = document.createElement("form");
@@ -95,7 +95,7 @@ test("prevent-default derives submit from a claimed on-submit", async (t) => {
 
 test("prevent-default derives keydown:enter from a key literal and leaves other keys alone", async (t) => {
   t.mock.method(console, "error");
-  const input = fromMarkup(`<input prevent-default on-keydown="({key: 'Enter'}) => { #x.go() }">`);
+  const input = fromMarkup(`<input prevent-default on-keydown="(key: 'Enter') => { #x.go() }">`);
   document.body.appendChild(input);
   await flush();
 
@@ -110,7 +110,7 @@ test("prevent-default derives keydown:enter from a key literal and leaves other 
 
 test("prevent-default derives a code claim that matches code, not key", async (t) => {
   t.mock.method(console, "error");
-  const input = fromMarkup(`<input prevent-default on-keydown="({code: 'KeyA'}) => { #x.go() }">`);
+  const input = fromMarkup(`<input prevent-default on-keydown="(code: 'KeyA') => { #x.go() }">`);
   document.body.appendChild(input);
   await flush();
 

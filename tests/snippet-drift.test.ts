@@ -122,17 +122,17 @@ test("each storable example has one owner that declares its own shapes", () => {
   const theme = extractDemo(readExample("remember-theme"));
   assert.equal(count(/storable-id="theme"/g, theme), 1, "remember-theme has one owner");
   assert.equal(count(/on-load="\(\) => \{ this\.restore\(\) \}"/g, theme), 1, "with one restore site");
-  assert.equal(count(/on-restore="[^"]*\(\{[^}]*\}\) =>/g, theme), 1, "and one declared shape");
+  assert.equal(count(/on-restore="[^"]*\([^)]*\) =>/g, theme), 1, "and one declared shape");
 
   const tab = extractDemo(readExample("remembered-tab"));
   assert.equal(count(/storable-id="maintab"/g, tab), 1, "remembered-tab has one owner");
   assert.equal(count(/on-load="\(\) => \{ this\.restore\(\) \}"/g, tab), 1, "with one restore site");
-  assert.equal(count(/\(\{[^}]*\}\) =>/g, tab.match(/on-restore="[^"]*"/g)?.[0] ?? ""), 3, "and one shape per tab");
+  assert.equal(count(/\([^)]*\) =>/g, tab.match(/on-restore="[^"]*"/g)?.[0] ?? ""), 3, "and one shape per tab");
 
   const synced = extractDemo(readExample("synced-sections"));
   assert.equal(count(/storable-id="pm"/g, synced), 1, "synced-sections has one owner");
   assert.equal(count(/on-load="\(\) => \{ this\.restore\(\) \}"/g, synced), 1, "with one restore site");
-  assert.equal(count(/\(\{[^}]*\}\) =>/g, synced.match(/on-restore="[^"]*"/g)?.[0] ?? ""), 3, "and one shape per package manager");
+  assert.equal(count(/\([^)]*\) =>/g, synced.match(/on-restore="[^"]*"/g)?.[0] ?? ""), 3, "and one shape per package manager");
 
   for (const name of ["remember-theme", "remembered-tab", "synced-sections", "shop-cart", "todo-list"]) {
     assert.equal(

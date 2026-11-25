@@ -1120,7 +1120,7 @@ test("a bound name resolves as a bare argument from the handler parameter", () =
 
   runValue(
     el(),
-    "({html: string}) => { #total.set(html) }",
+    "(html: string) => { #total.set(html) }",
     new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } }),
   );
   assert.deepEqual(seen, ["<p>hi</p>"]);
@@ -1133,7 +1133,7 @@ test("a bound name resolves as an object-field value", () => {
 
   runValue(
     el(),
-    "({html: string}) => { #list.render({body: html}) }",
+    "(html: string) => { #list.render({body: html}) }",
     new ImplementationEventClass("response", { values: { html: "<li>one</li>" } }),
   );
   assert.deepEqual(seen, [{ body: "<li>one</li>" }]);
@@ -1147,7 +1147,7 @@ test("a bound name inside a formula expression stays an error", (t) => {
 
   runValue(
     el(),
-    "({html: string}) => { #total.set(replace(html, 'a', '')) }",
+    "(html: string) => { #total.set(replace(html, 'a', '')) }",
     new ImplementationEventClass("response", { values: { html: "ab" } }),
   );
   assert.equal(setCalls, 0, "the formula never resolves the bound name");
@@ -1162,7 +1162,7 @@ test("a name not bound by its own handler fails at fire time", (t) => {
 
   runValue(
     el(),
-    "({html: string}) => { #total.set(text) }",
+    "(html: string) => { #total.set(text) }",
     new ImplementationEventClass("response", { values: { html: "<p>hi</p>", text: "no" } }),
   );
   assert.equal(setCalls, 0, "there is no fallback to event values");
@@ -1174,7 +1174,7 @@ test("a typed name on a plain DOM event matches nothing", () => {
   let setCalls = 0;
   wireHost(receiver, { set: () => void setCalls++ });
 
-  runValue(el(), "({html: string}) => { #total.set(html) }", new Event("click"));
+  runValue(el(), "(html: string) => { #total.set(html) }", new Event("click"));
   assert.equal(setCalls, 0, "the event carries no html field, so the handler does not match");
 });
 
@@ -1182,18 +1182,30 @@ test("a literal field filters and a type field binds in one parameter", () => {
   const receiver = el("total");
   const seen: unknown[] = [];
   wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
-  const value = "({status: 200, html: string}) => { #total.set(html) }";
+  const value = "(status: 200, html: string) => { #total.set(html) }";
 
   runValue(el(), value, new ImplementationEventClass("response", { values: { html: "a", status: "200" } }));
   runValue(el(), value, new ImplementationEventClass("response", { values: { html: "b", status: "409" } }));
   assert.deepEqual(seen, ["a"], "only the matching status runs the handler");
 });
 
+test("parameter order carries no meaning", () => {
+  const receiver = el("total");
+  const seen: unknown[] = [];
+  wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
+  const ev = (): Event =>
+    new ImplementationEventClass("response", { values: { html: "<p>hi</p>", status: "200" } });
+
+  runValue(el(), "(html: string, status: 200) => { #total.set(html) }", ev());
+  runValue(el(), "(status: 200, html: string) => { #total.set(html) }", ev());
+  assert.deepEqual(seen, ["<p>hi</p>", "<p>hi</p>"]);
+});
+
 test("string literals compare exactly and case-sensitively", () => {
   const receiver = el("total");
   let calls = 0;
   wireHost(receiver, { set: () => void calls++ });
-  const value = "({key: 'Enter'}) => { #total.set() }";
+  const value = "(key: 'Enter') => { #total.set() }";
 
   runValue(el(), value, new ImplementationEventClass("keyed", { values: { key: "Enter" } }));
   runValue(el(), value, new ImplementationEventClass("keyed", { values: { key: "enter" } }));
@@ -1205,7 +1217,7 @@ test("number and boolean bindings coerce from the raw value", () => {
   const seen: unknown[] = [];
   wireHost(receiver, { set: (_, arg) => void seen.push(arg) });
   const value =
-    "({status: number, full: boolean}) => { #total.set(status); #total.set(full) }";
+    "(status: number, full: boolean) => { #total.set(status); #total.set(full) }";
 
   runValue(el(), value, new ImplementationEventClass("intersect", { values: { status: "404", full: "true" } }));
   assert.deepEqual(seen, [404, true]);
@@ -1219,7 +1231,7 @@ test("two handlers matching one firing both run in source order", () => {
     second: () => void seen.push("second"),
   });
   const value =
-    "[({state: 'enter'}) => { #total.first() }, ({state: 'enter'}) => { #total.second() }]";
+    "[(state: 'enter') => { #total.first() }, (state: 'enter') => { #total.second() }]";
 
   runValue(el(), value, new ImplementationEventClass("intersect", { values: { state: "enter" } }));
   assert.deepEqual(seen, ["first", "second"]);
@@ -1232,8 +1244,8 @@ test("a single unbracketed handler and a one-element list behave identically", (
   const ev = (): Event =>
     new ImplementationEventClass("response", { values: { html: "<p>hi</p>" } });
 
-  runValue(el(), "({html: string}) => { #total.set(html) }", ev());
-  runValue(el(), "[({html: string}) => { #total.set(html) }]", ev());
+  runValue(el(), "(html: string) => { #total.set(html) }", ev());
+  runValue(el(), "[(html: string) => { #total.set(html) }]", ev());
   assert.deepEqual(seen, ["<p>hi</p>", "<p>hi</p>"]);
 });
 
@@ -1244,7 +1256,7 @@ test("a delayed chain keeps its handler bindings", async () => {
 
   runValue(
     el(),
-    "({html: string}) => { #total.delay(5).set(html) }",
+    "(html: string) => { #total.delay(5).set(html) }",
     new ImplementationEventClass("response", { values: { html: "late" } }),
   );
   assert.deepEqual(seen, []);
@@ -1261,7 +1273,7 @@ test("every matching handler's grouped body runs before the next handler", () =>
     c: () => void seen.push("c"),
   });
   const value =
-    "[({n: 1}) => { #total.a(); #total.b() }, ({n: 1}) => { #total.c() }]";
+    "[(n: 1) => { #total.a(); #total.b() }, (n: 1) => { #total.c() }]";
 
   runValue(el(), value, new ImplementationEventClass("counted", { values: { n: "1" } }));
   assert.deepEqual(seen, ["a", "b", "c"]);
@@ -1278,20 +1290,20 @@ test("the task's before/after examples run through runEventValue", () => {
 
   runValue(
     el(),
-    "({key: 'Enter'}) => { #f.send() }",
+    "(key: 'Enter') => { #f.send() }",
     new dom.window.KeyboardEvent("keydown", { key: "Enter" }),
   );
   assert.deepEqual(order, ["send"]);
 
   runValue(
     el(),
-    "({html: string}) => { #f.render({payload: html}) }",
+    "(html: string) => { #f.render({payload: html}) }",
     new ImplementationEventClass("response", { values: { html: "<p>ok</p>" } }),
   );
   assert.deepEqual(order, ["send", "render:<p>ok</p>"]);
 
   const list =
-    "[({status: 200, html: string}) => { #f.render({payload: html}) }, ({status: 409}) => { #f.show() }]";
+    "[(status: 200, html: string) => { #f.render({payload: html}) }, (status: 409) => { #f.show() }]";
   runValue(el(), list, new ImplementationEventClass("response", { values: { status: "409", html: "x" } }));
   assert.deepEqual(order, ["send", "render:<p>ok</p>", "show"]);
   runValue(el(), list, new ImplementationEventClass("response", { values: { status: "200", html: "y" } }));

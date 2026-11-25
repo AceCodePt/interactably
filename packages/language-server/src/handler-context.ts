@@ -45,7 +45,7 @@ export function handlerContextAt(text: string, offset: number): HandlerContext |
 
   const open = openParameterBefore(text, offset, arrows);
   if (open !== -1) {
-    return contextFor("parameter", open, parseFields(text.slice(open + 2, offset)));
+    return contextFor("parameter", open, parseFields(text.slice(open + 1, offset)));
   }
   return null;
 }
@@ -233,22 +233,25 @@ function matchingBrace(text: string, open: number): number {
 }
 
 function openParameterBefore(text: string, offset: number, arrows: readonly ArrowInfo[]): number {
-  let open = -1;
-  for (let index = 0; index + 1 < offset; index++) {
-    if (text[index] === "'") {
+  const stack: number[] = [];
+  for (let index = 0; index < offset; index++) {
+    const character = text[index]!;
+    if (character === "'") {
       index = skipString(text, index) - 1;
       continue;
     }
-    if (text[index] === "(" && text[index + 1] === "{") open = index;
+    if (character === "(") stack.push(index);
+    else if (character === ")") stack.pop();
   }
-  if (open === -1) return -1;
+  const open = stack[stack.length - 1];
+  if (open === undefined) return -1;
   for (const arrow of arrows) {
     if (arrow.bodyStart !== undefined && arrow.bodyEnd !== undefined) {
       if (open > arrow.bodyStart && open < arrow.bodyEnd) return -1;
     }
   }
-  for (let index = open + 2; index + 1 < offset; index++) {
-    if (text[index] === "}" && text[index + 1] === ")") return -1;
-  }
+  let before = open - 1;
+  while (before >= 0 && /\s/.test(text[before]!)) before -= 1;
+  if (before >= 0 && text[before] !== "[" && text[before] !== ",") return -1;
   return open;
 }

@@ -37,8 +37,8 @@
           names the three panels it opens, the six it closes, and <code class="inline-code">#pm-store.save({npm: true})</code>
           (or <code class="inline-code">bun</code>/<code class="inline-code">pnpm</code>). One element owns the storage:
           <code class="inline-code">#pm-store</code> carries <code class="inline-code">on-load="() => { this.restore() }"</code> and one
-          <code class="inline-code">({npm: boolean}) =&gt; { &hellip; }</code> / <code class="inline-code">({bun: boolean}) =&gt; { &hellip; }</code> /
-          <code class="inline-code">({pnpm: boolean}) =&gt; { &hellip; }</code> handler, so the stored flag matches exactly one phrase and replays that
+          <code class="inline-code">(npm: boolean) =&gt; { &hellip; }</code> / <code class="inline-code">(bun: boolean) =&gt; { &hellip; }</code> /
+          <code class="inline-code">(pnpm: boolean) =&gt; { &hellip; }</code> handler, so the stored flag matches exactly one phrase and replays that
           selection across all three sections. Adding a fourth section means editing every phrase; that is the price of push.
         </p>
     <div class="example-body">
@@ -94,7 +94,7 @@
                 </div>
                 <button id="pm-store" type="button" storable storable-id="pm" hidden
                         on-load="() => { this.restore() }"
-                        on-restore="[({npm: boolean}) => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }, ({bun: boolean}) => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false) }, ({pnpm: boolean}) => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }]"
+                        on-restore="[(npm: boolean) => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }, (bun: boolean) => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false) }, (pnpm: boolean) => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }]"
                        
                        ></button>
               </div>
@@ -143,7 +143,7 @@
 &lt;/div&gt;
 &lt;button id="pm-store" type="button" storable storable-id="pm" hidden
         on-load="() => { this.restore() }"
-        on-restore="[({npm: boolean}) => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }, ({bun: boolean}) => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false) }, ({pnpm: boolean}) => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }]"&gt;&lt;/button&gt;</code></pre>
+        on-restore="[(npm: boolean) => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }, (bun: boolean) => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false) }, (pnpm: boolean) => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }]"&gt;&lt;/button&gt;</code></pre>
             </div>
           </details>
   </main>

@@ -234,7 +234,7 @@ function bindTrigger(el: Element, attachment: Attachment, attribute: string): vo
   if (attribute.includes("(")) {
     console.error(
       `[Interactable] on ${describeElement(el)}, "${attribute}": value declarations no longer belong in the attribute name; ` +
-        `write ${attribute.slice(0, attribute.indexOf("("))}="({ name: type }) => { … }"`,
+        `write ${attribute.slice(0, attribute.indexOf("("))}="(name: type) => { … }"`,
     );
     return;
   }
@@ -302,16 +302,8 @@ function validateHandlers(
   const spec = getEventSpec(el, type);
   const closed = spec !== undefined && spec.open !== true;
   for (const handler of handlers) {
-    const declared = new Set<string>();
     const bound = new Set<string>();
     for (const field of handler.parameter.fields) {
-      if (declared.has(field.name)) {
-        console.error(
-          `[Interactable] on ${describeElement(el)}, "${attribute}": "${field.name}" is declared twice in one handler`,
-        );
-        return false;
-      }
-      declared.add(field.name);
       const fieldType = closed ? spec.fields?.[field.name] : undefined;
       if (closed && fieldType === undefined) {
         console.error(
@@ -354,7 +346,7 @@ function validateHandlers(
             if (bound.has(name)) continue;
             console.error(
               `[Interactable] on ${describeElement(el)}, "${attribute}": "${name}" is not bound by this handler; ` +
-                `declare it in the parameter, e.g. ({ ${name}: string })`,
+                `declare it in the parameter, e.g. (${name}: string)`,
             );
             return false;
           }

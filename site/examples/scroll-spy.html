@@ -54,7 +54,7 @@
 
                   <div class="content spy-content">
                     <section id="spy-section-observe" class="spy-section"
-                             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #spy-toc-observe.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #spy-toc-observe.removeAttr('data-visible') }]"
+                             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #spy-toc-observe.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #spy-toc-observe.removeAttr('data-visible') }]"
                             >
                       <h2 id="spy-heading-observe">Observe, do not poll</h2>
                       <p>An <code class="inline-code">IntersectionObserver</code> reports when a target crosses an observation
@@ -66,18 +66,18 @@
                     </section>
 
                     <section id="spy-section-enter" class="spy-section"
-                             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #spy-toc-enter.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #spy-toc-enter.removeAttr('data-visible') }]"
+                             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #spy-toc-enter.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #spy-toc-enter.removeAttr('data-visible') }]"
                             >
                       <h2 id="spy-heading-enter">Two sides of one crossing</h2>
-                      <p><code class="inline-code">({state: 'enter'})</code> sets <code class="inline-code">data-visible</code> and
-                        <code class="inline-code">({state: 'leave'})</code> removes it. The attribute is the small amount of
+                      <p><code class="inline-code">(state: 'enter')</code> sets <code class="inline-code">data-visible</code> and
+                        <code class="inline-code">(state: 'leave')</code> removes it. The attribute is the small amount of
                         state the pattern needs; the section, not a scroll handler, decides when it changes.</p>
                       <p>The sections are tall enough to make the current entry easy to follow. A shorter section can still
                         be observed, of course, but two entries may be lit while the viewport overlaps both.</p>
                     </section>
 
                     <section id="spy-section-header" class="spy-section"
-                             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #spy-toc-header.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #spy-toc-header.removeAttr('data-visible') }]"
+                             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #spy-toc-header.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #spy-toc-header.removeAttr('data-visible') }]"
                             >
                       <h2 id="spy-heading-header">Start below the header</h2>
                       <p>Every observer uses <code class="inline-code">block-start: '-#spy-header.height'</code>. The
@@ -91,7 +91,7 @@
                     </section>
 
                     <section id="spy-section-read" class="spy-section"
-                             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #spy-toc-read.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #spy-toc-read.removeAttr('data-visible') }, ({full: true, block-start: '-#spy-header.height'}) => { #spy-toc-read.once().setAttr({name: 'data-read', value: ''}) }]"
+                             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #spy-toc-read.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #spy-toc-read.removeAttr('data-visible') }, (full: true, block-start: '-#spy-header.height') => { #spy-toc-read.once().setAttr({name: 'data-read', value: ''}) }]"
                             
                             >
                       <h2 id="spy-heading-read">Read the whole thing</h2>
@@ -106,7 +106,7 @@
                     </section>
 
                     <section id="spy-section-summary" class="spy-section"
-                             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #spy-toc-summary.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #spy-toc-summary.removeAttr('data-visible') }]"
+                             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #spy-toc-summary.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #spy-toc-summary.removeAttr('data-visible') }]"
                             >
                       <h2 id="spy-heading-summary">The whole pattern</h2>
                       <p>A sticky header, a table of contents, a handful of sections and a few declarative phrases are all
@@ -141,31 +141,31 @@
 
   &lt;div class="content"&gt;
     &lt;section id="section-observe"
-             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #toc-observe.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #toc-observe.removeAttr('data-visible') }]"&gt;
+             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #toc-observe.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #toc-observe.removeAttr('data-visible') }]"&gt;
       &lt;h2&gt;Observe, do not poll&lt;/h2&gt;
       &lt;p&gt;An IntersectionObserver reports when a target crosses the observation box.&lt;/p&gt;
     &lt;/section&gt;
 
     &lt;section id="section-enter"
-             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #toc-enter.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #toc-enter.removeAttr('data-visible') }]"&gt;
+             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #toc-enter.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #toc-enter.removeAttr('data-visible') }]"&gt;
       &lt;h2&gt;Enter and leave&lt;/h2&gt;
       &lt;p&gt;Enter sets data-visible; leave removes it.&lt;/p&gt;
     &lt;/section&gt;
 
     &lt;section id="section-header"
-             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #toc-header.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #toc-header.removeAttr('data-visible') }]"&gt;
+             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #toc-header.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #toc-header.removeAttr('data-visible') }]"&gt;
       &lt;h2&gt;Below the header&lt;/h2&gt;
       &lt;p&gt;The header's measured height keeps the observation box below it.&lt;/p&gt;
     &lt;/section&gt;
 
     &lt;section id="section-read"
-             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #toc-read.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #toc-read.removeAttr('data-visible') }, ({full: true, block-start: '-#spy-header.height'}) => { #toc-read.once().setAttr({name: 'data-read', value: ''}) }]"&gt;
+             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #toc-read.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #toc-read.removeAttr('data-visible') }, (full: true, block-start: '-#spy-header.height') => { #toc-read.once().setAttr({name: 'data-read', value: ''}) }]"&gt;
       &lt;h2&gt;Read the whole thing&lt;/h2&gt;
       &lt;p&gt;A fully visible section reveals its read mark, and the mark stays.&lt;/p&gt;
     &lt;/section&gt;
 
     &lt;section id="section-summary"
-             on-intersect="[({state: 'enter', block-start: '-#spy-header.height'}) => { #toc-summary.setAttr({name: 'data-visible', value: ''}) }, ({state: 'leave', block-start: '-#spy-header.height'}) => { #toc-summary.removeAttr('data-visible') }]"&gt;
+             on-intersect="[(state: 'enter', block-start: '-#spy-header.height') => { #toc-summary.setAttr({name: 'data-visible', value: ''}) }, (state: 'leave', block-start: '-#spy-header.height') => { #toc-summary.removeAttr('data-visible') }]"&gt;
       &lt;h2&gt;The whole pattern&lt;/h2&gt;
       &lt;p&gt;No scroll listener and no page-load phrase are required.&lt;/p&gt;
     &lt;/section&gt;

@@ -80,7 +80,7 @@
                      on-input="() => { #preview.set(this.value) }"
                      on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
                      on-clean="() => { this.removeAttr('data-dirty') }"
-                     on-keydown="({code: 'Escape'}) => { this.reset(); #preview.set(this.value) }">
+                     on-keydown="(code: 'Escape') => { this.reset(); #preview.set(this.value) }">
             </label>
             <button id="dec" on-click="() => { #qty.set(#qty.value - 1); #preview.set(#qty.value) }" type="button">&minus;</button>
             <button id="inc" on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }" type="button">+</button>
@@ -140,7 +140,7 @@
           <span class="why-n">4</span>
           <div>
             <span class="why-q">Why should &ldquo;when the request finishes&rdquo; hide in a callback?</span>
-            <span class="why-a">The work that takes time owns its moment. The follow-up is a handler in the markup: <code class="inline-code">on-response="({html: string}) => { #receipt.set(html) }"</code> binds the response body to a name the handler can use, and the handler&rsquo;s braced body places it.</span>
+            <span class="why-a">The work that takes time owns its moment. The follow-up is a handler in the markup: <code class="inline-code">on-response="(html: string) => { #receipt.set(html) }"</code> binds the response body to a name the handler can use, and the handler&rsquo;s braced body places it.</span>
           </div>
         </li>
         <li>

@@ -385,7 +385,7 @@ function resolveArg(
       }
       throw new Error(
         `"${arg.name}" is not bound by this handler; ` +
-          `declare it in the parameter, e.g. ({ ${arg.name}: string })`,
+          `declare it in the parameter, e.g. (${arg.name}: string)`,
       );
     }
     case "expr": {

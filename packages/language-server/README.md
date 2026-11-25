@@ -50,7 +50,7 @@ Completion positions:
 - at an attribute-name position — built-in implementation names, then, once one is
   present, its config and state attribute names and the `on-*` events it declares;
 - inside a script's `implementations="…"` — built-ins not yet listed;
-- inside an `on-*` parameter object `({ … })` — the event's field names;
+- inside an `on-*` parameter list `( … )` — the event's field names not yet used;
 - inside a handler body — the names bound by that handler's parameter.
 
 ## Attach it in an editor

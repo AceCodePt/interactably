@@ -238,7 +238,7 @@ test("an on-restore baseline move after a restore counts as pristine", async () 
   const holder = document.createElement("div");
   holder.innerHTML =
     `<input dirtyable storable modifiable attributable storable-id="draft" ` +
-    `on-restore="({value: string}) => { this.set(value).setAttr({name: 'value', value: value}) }">`;
+    `on-restore="(value: string) => { this.set(value).setAttr({name: 'value', value: value}) }">`;
   const input = holder.firstElementChild as HTMLInputElement;
   document.body.appendChild(input);
   await flush();

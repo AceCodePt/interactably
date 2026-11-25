@@ -531,7 +531,7 @@ test("a handler name not bound by its own parameter is a wire-time error", async
   const dispose = start();
   const { errors, restore } = captureErrors();
   try {
-    mountMarkup(`<div on-response="({html: string}) => { #target.set(text) }"></div>`);
+    mountMarkup(`<div on-response="(html: string) => { #target.set(text) }"></div>`);
     await flush();
   } finally {
     restore();
@@ -547,7 +547,7 @@ test("a bound name used in a handler raises nothing at wire time and resolves at
   const dispose = start();
   const { errors, restore } = captureErrors();
   mountMarkup(
-    `<div id="target" attributable></div><div id="req" requestable on-response="({html: string}) => { #target.setAttr({name: 'data-body', value: html}) }"></div>`,
+    `<div id="target" attributable></div><div id="req" requestable on-response="(html: string) => { #target.setAttr({name: 'data-body', value: html}) }"></div>`,
   );
   try {
     await flush();
@@ -584,7 +584,7 @@ test("an on-x(...) attribute name is a wire-time error naming the new form", asy
   const dispose = start();
   const { errors, restore } = captureErrors();
   try {
-    mountMarkup(`<div on-response(html:string)="({html: string}) => { #target.set(html) }"></div>`);
+    mountMarkup(`<div on-response(html:string)="(html: string) => { #target.set(html) }"></div>`);
     await flush();
   } finally {
     restore();
@@ -600,7 +600,7 @@ test("a non-scalar declared type is a wire-time error", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   try {
-    mountMarkup(`<div on-response="({html: {name:string}}) => { #target.set(html) }"></div>`);
+    mountMarkup(`<div on-response="(html: {name:string}) => { #target.set(html) }"></div>`);
     await flush();
   } finally {
     restore();
@@ -616,7 +616,7 @@ test("several declared values resolve inside the phrase", async () => {
   const dispose = start();
   const { errors, restore } = captureErrors();
   mountMarkup(
-    `<div id="target" attributable></div><div id="req" requestable on-response="({html: string, text: string}) => { #target.setAttr({name: 'data-a', value: html}); #target.setAttr({name: 'data-b', value: text}) }"></div>`,
+    `<div id="target" attributable></div><div id="req" requestable on-response="(html: string, text: string) => { #target.setAttr({name: 'data-a', value: html}); #target.setAttr({name: 'data-b', value: text}) }"></div>`,
   );
   try {
     await flush();
@@ -637,8 +637,8 @@ test("a literal keydown declaration fires only when code matches, and a type dec
   mountMarkup(
     `<div id="t" traceable></div>
      <div id="target" attributable></div>
-     <div id="kbd-lit" on-keydown="({code: 'Escape'}) => { #t.go() }"></div>
-     <div id="kbd-bind" on-keydown="({code: string}) => { #target.setAttr({name: 'data-code', value: code}) }"></div>`,
+     <div id="kbd-lit" on-keydown="(code: 'Escape') => { #t.go() }"></div>
+     <div id="kbd-bind" on-keydown="(code: string) => { #target.setAttr({name: 'data-code', value: code}) }"></div>`,
   );
   await flush();
   const goCount = (): number => lifecycle.filter((entry) => entry === "traceable.go").length;
@@ -659,7 +659,7 @@ test("two overlapping literal declarations on the same element both fire", async
     `<div id="a" attributable></div>
      <div id="b" attributable></div>
      <div id="st" statusful
-          on-status="[({code: 404}) => { #a.setAttr({name: 'data-hit', value: 'code'}) }, ({kind: 'not-found'}) => { #b.setAttr({name: 'data-hit', value: 'kind'}) }]"
+          on-status="[(code: 404) => { #a.setAttr({name: 'data-hit', value: 'code'}) }, (kind: 'not-found') => { #b.setAttr({name: 'data-hit', value: 'kind'}) }]"
          ></div>`,
   );
   await flush();
@@ -675,7 +675,7 @@ test("a numeric literal matches the declared numeric value, compared by type", a
   const dispose = start();
   mountMarkup(
     `<div id="t" attributable></div>
-     <div id="st" statusful on-status="({code: 404}) => { #t.setAttr({name: 'data-code', value: ''}) }"></div>`,
+     <div id="st" statusful on-status="(code: 404) => { #t.setAttr({name: 'data-code', value: ''}) }"></div>`,
   );
   await flush();
   byId("st").dispatchEvent(new ImplementationEventClass("status", { values: { code: "404" } }));
@@ -689,10 +689,10 @@ test("a numeric literal matches the declared numeric value, compared by type", a
 test("wire-time rejects an unknown field, a wrong-typed literal, and a literal on a bare number for a closed event", async () => {
   const dispose = start();
   const cases = [
-    `<div id="t" attributable></div><div statusful on-status="({nope: '404'}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
-    `<div id="t" attributable></div><div statusful on-status="({code: 'abc'}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
-    `<div id="t" attributable></div><div statusful on-status="({count: '3'}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
-    `<div id="t" attributable></div><div statusful on-note="({foo: string}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+    `<div id="t" attributable></div><div statusful on-status="(nope: '404') => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+    `<div id="t" attributable></div><div statusful on-status="(code: 'abc') => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+    `<div id="t" attributable></div><div statusful on-status="(count: '3') => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+    `<div id="t" attributable></div><div statusful on-note="(foo: string) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
   ];
   const messages = [
     '"nope" is not a field of event "status"',
@@ -722,7 +722,7 @@ test("a declared type with no overlap with the event field is a wire-time error"
   const { errors, restore } = captureErrors();
   try {
     mountMarkup(
-      `<div id="t" attributable></div><div statusful on-status="({code: string}) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
+      `<div id="t" attributable></div><div statusful on-status="(code: string) => { #t.setAttr({name: 'data-x', value: ''}) }"></div>`,
     );
     await flush();
   } finally {
@@ -740,8 +740,8 @@ test("open events accept any field and literal at wire time", async () => {
   const { errors, restore } = captureErrors();
   mountMarkup(
     `<div id="t" attributable></div>
-     <div requestable on-response="({code: '404'}) => { #t.setAttr({name: 'data-r', value: ''}) }"></div>
-     <div storable storable-id="k" on-restore="({code: '404'}) => { #t.setAttr({name: 'data-s', value: ''}) }"></div>`,
+     <div requestable on-response="(code: '404') => { #t.setAttr({name: 'data-r', value: ''}) }"></div>
+     <div storable storable-id="k" on-restore="(code: '404') => { #t.setAttr({name: 'data-s', value: ''}) }"></div>`,
   );
   try {
     await flush();
@@ -757,7 +757,7 @@ test("a type binding gates silently: an absent name skips the handler without lo
   const { errors, restore } = captureErrors();
   mountMarkup(
     `<div id="gate" requestable attributable ` +
-      `on-response="({html: string}) => { #gate.setAttr({name: 'data-html', value: html}) }"></div>`,
+      `on-response="(html: string) => { #gate.setAttr({name: 'data-html', value: html}) }"></div>`,
   );
   const gate = byId("gate");
   try {
@@ -779,7 +779,7 @@ test("a binding whose declared type accepts undefined runs when the name is abse
   const dispose = start();
   mountMarkup(
     `<div id="gate" requestable attributable ` +
-      `on-response="({html: string|undefined}) => { #gate.setAttr({name: 'data-ran', value: ''}) }"></div>`,
+      `on-response="(html: string|undefined) => { #gate.setAttr({name: 'data-ran', value: ''}) }"></div>`,
   );
   const gate = byId("gate");
   await flush();
@@ -869,7 +869,7 @@ test("an implementation event is a wire-time error without the owning presence a
   try {
     mountMarkup(
       `<div id="target" attributable></div>` +
-        `<div id="bad" on-response="({html: string}) => { #target.setAttr({name: 'data-body', value: html}) }"></div>`,
+        `<div id="bad" on-response="(html: string) => { #target.setAttr({name: 'data-body', value: html}) }"></div>`,
     );
     await flush();
   } finally {

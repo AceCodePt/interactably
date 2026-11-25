@@ -177,7 +177,7 @@ function parsePhrase(source: string, base: number): Phrase {
   const colon = findTopLevelColon(source);
   if (colon !== -1) {
     throw new ParseError(
-      `phrase keys are not supported; filter with a handler parameter, e.g. "({ name: type }) => { … }"`,
+      `phrase keys are not supported; filter with a handler parameter, e.g. "(name: type) => { … }"`,
       base + colon,
       base + colon + 1,
     );
@@ -405,7 +405,7 @@ function parseHandler(source: string, base: number, errors: ParseError[]): Event
   const arrow = findHandlerArrow(source);
   if (arrow === -1) {
     throw new ParseError(
-      `expected a handler "() => { … }" or "({ name: type }) => { … }", got "${source}"`,
+      `expected a handler "() => { … }" or "(name: type) => { … }", got "${source}"`,
       base,
       base + source.length,
     );
@@ -457,29 +457,43 @@ function findHandlerArrow(source: string): number {
 }
 
 function parseHandlerParameter(source: string, base: number): HandlerParameter {
-  if (source === "()") {
-    return located<{ fields: LocatedHandlerField[] }>({ fields: [] }, base, base + source.length);
-  }
-  if (!source.startsWith("({") || !source.endsWith("})")) {
+  if (source.startsWith("({")) {
+    const inner = source.slice(2, source.endsWith("})") ? -2 : -1);
+    const named = trimPiece({ text: inner, start: base + 2 }).text;
+    const suggestion = named === "" ? "()" : `(${named})`;
     throw new ParseError(
-      `parameter must be "()" or "({ name: type })", got "${source}"`,
+      `handler parameters are named, not an object; write "${suggestion}" instead of "${source}"`,
       base,
       base + source.length,
     );
   }
-  const inner = source.slice(2, -2);
-  const innerBase = base + 2;
+  if (!source.startsWith("(") || !source.endsWith(")")) {
+    throw new ParseError(
+      `parameter must be "()" or "(name: type, …)", got "${source}"`,
+      base,
+      base + source.length,
+    );
+  }
+  const inner = source.slice(1, -1);
+  const innerBase = base + 1;
   if (trimPiece({ text: inner, start: innerBase }).text === "") {
-    throw new ParseError(
-      `empty parameter object; use "()" for no fields`,
-      base,
-      base + source.length,
-    );
+    return located<{ fields: LocatedHandlerField[] }>({ fields: [] }, base, base + source.length);
   }
   const fields = splitTopLevel(inner, ",").map((rawField) => {
     const field = trimPiece({ text: rawField.text, start: innerBase + rawField.start });
     return parseHandlerField(field.text, field.start);
   });
+  const seen = new Set<string>();
+  for (const field of fields) {
+    if (seen.has(field.name)) {
+      throw new ParseError(
+        `"${field.name}" is declared twice in one handler; each event field may appear once`,
+        field.start,
+        field.end,
+      );
+    }
+    seen.add(field.name);
+  }
   return located<{ fields: LocatedHandlerField[] }>({ fields }, base, base + source.length);
 }
 
@@ -512,7 +526,7 @@ function parseHandlerField(source: string, base: number): LocatedHandlerField {
   }
   if (value.includes("`")) {
     throw new ParseError(
-      `backticked literals are not supported; write the literal with single quotes, e.g. ({ name: 'value' })`,
+      `backticked literals are not supported; write the literal with single quotes, e.g. (name: 'value')`,
       valuePiece.start,
       valuePiece.start + value.length,
     );
