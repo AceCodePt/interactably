@@ -65,8 +65,8 @@
                 </button>
               </div>
               <pre class="code" id="code-ex-valid" copyable on-copy="() => { #copy-code-ex-valid.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;form id="signup" novalidate
-          prevent-default validatable attributable
-          on-submit="() => { #signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show() }"&gt;
+      prevent-default validatable attributable
+      on-submit="() => { #signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show() }"&gt;
       &lt;label&gt;Email
         &lt;input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com"&gt;
       &lt;/label&gt;

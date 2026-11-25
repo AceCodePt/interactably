@@ -60,12 +60,12 @@
                 </button>
               </div>
               <pre class="code" id="code-ex-note" copyable on-copy="() => { #copy-code-ex-note.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;textarea id="note"
-              auto-grow dirtyable attributable pastable modifiable
-              rows="2"
-              on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
-              on-clean="() => { this.removeAttr('data-dirty') }"
-              on-pasted="() => { this.set(replace(this.value, '\\s+', ' ')) }"
-              placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;</code></pre>
+          auto-grow dirtyable attributable pastable modifiable
+          rows="2"
+          on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
+          on-clean="() => { this.removeAttr('data-dirty') }"
+          on-pasted="() => { this.set(replace(this.value, '\\s+', ' ')) }"
+          placeholder="Type or paste some text&hellip;"&gt;&lt;/textarea&gt;</code></pre>
             </div>
           </details>
   </main>

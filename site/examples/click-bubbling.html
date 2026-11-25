@@ -62,7 +62,7 @@
                 </button>
               </div>
               <pre class="code" id="code-ex-bubble" copyable on-copy="() => { #copy-code-ex-bubble.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;div id="outer" logger
-         on-click="() => { #outer.log('outer card') }"&gt;
+     on-click="() => { #outer.log('outer card') }"&gt;
       &lt;p&gt;Clicking the plain area logs the outer line.&lt;/p&gt;
       &lt;button on-click="() => { #outer.log('plain inner button') }"&gt;Inner button (bubbles)&lt;/button&gt;
       &lt;button no-propagate

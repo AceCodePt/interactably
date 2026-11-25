@@ -70,10 +70,10 @@
                 </button>
               </div>
               <pre class="code" id="code-ex-grammar" copyable on-copy="() => { #copy-code-ex-grammar.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;input id="typer" modifiable dirtyable attributable prevent-default
-           on-input="() => { #mirror.debounce(300).set(this.value) }"
-           on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
-           on-clean="() => { this.removeAttr('data-dirty') }"
-           on-keydown="[({code: 'Enter'}) => { #mirror.set(this.value) }, ({code: 'Escape'}) => { this.clear() }]"&gt;
+       on-input="() => { #mirror.debounce(300).set(this.value) }"
+       on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
+       on-clean="() => { this.removeAttr('data-dirty') }"
+       on-keydown="[({code: 'Enter'}) => { #mirror.set(this.value) }, ({code: 'Escape'}) => { this.clear() }]"&gt;
     &lt;output id="mirror" modifiable&gt;&hellip;&lt;/output&gt;
 
     &lt;button on-click="() => { #tip.once().toggle() }"&gt;Toggle tip (once)&lt;/button&gt;
