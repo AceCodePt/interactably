@@ -78,16 +78,16 @@
       on-request-timeout="() => { #order-timeout-alert.show() }"
       on-request-offline="() => { #order-offline-alert.show() }"
       on-submit="() => { #alert.show(false); #order-timeout-alert.show(false); #order-offline-alert.show(false); this.send() }"&gt;
-      &lt;label&gt;Qty
-        &lt;input name="qty" type="number" min="1" required value="2"&gt;
-      &lt;/label&gt;
-      &lt;button type="submit"&gt;Place order&lt;/button&gt;
-      &lt;p class="demo-pending" hidden&gt;Sending&hellip;&lt;/p&gt;
-    &lt;/form&gt;
-    &lt;section id="receipt" renderable revealable hidden&gt;&lt;/section&gt;
-    &lt;div id="alert" revealable hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
-    &lt;div id="order-timeout-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order &mdash; the server didn't answer in time.&lt;/div&gt;
-    &lt;div id="order-offline-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order &mdash; you're offline.&lt;/div&gt;</code></pre>
+  &lt;label&gt;Qty
+    &lt;input name="qty" type="number" min="1" required value="2"&gt;
+  &lt;/label&gt;
+  &lt;button type="submit"&gt;Place order&lt;/button&gt;
+  &lt;p class="demo-pending" hidden&gt;Sending&hellip;&lt;/p&gt;
+&lt;/form&gt;
+&lt;section id="receipt" renderable revealable hidden&gt;&lt;/section&gt;
+&lt;div id="alert" revealable hidden role="alert"&gt;Couldn't place the order.&lt;/div&gt;
+&lt;div id="order-timeout-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order &mdash; the server didn't answer in time.&lt;/div&gt;
+&lt;div id="order-offline-alert" class="demo-message" revealable hidden role="alert"&gt;Couldn't place the order &mdash; you're offline.&lt;/div&gt;</code></pre>
             </div>
           </details>
   </main>

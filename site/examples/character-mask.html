@@ -64,13 +64,13 @@
                 </button>
               </div>
               <pre class="code" id="code-ex-mask" copyable on-copy="() => { #copy-code-ex-mask.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;label&gt;Phone
-      &lt;input id="phone" modifiable pastable attributable dirtyable
-             type="text" inputmode="numeric" placeholder="Digits only"
-             on-input="() => { this.set(replace(this.value, '[^0-9]', '')) }"
-             on-pasted="() => { this.set(replace(this.value, '[^0-9]', '')) }"
-             on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
-             on-clean="() => { this.removeAttr('data-dirty') }"&gt;
-    &lt;/label&gt;</code></pre>
+  &lt;input id="phone" modifiable pastable attributable dirtyable
+         type="text" inputmode="numeric" placeholder="Digits only"
+         on-input="() => { this.set(replace(this.value, '[^0-9]', '')) }"
+         on-pasted="() => { this.set(replace(this.value, '[^0-9]', '')) }"
+         on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
+         on-clean="() => { this.removeAttr('data-dirty') }"&gt;
+&lt;/label&gt;</code></pre>
             </div>
           </details>
   </main>

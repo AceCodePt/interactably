@@ -152,17 +152,17 @@
   &lt;legend&gt;Application steps&lt;/legend&gt;
   &lt;div class="stepper-options"&gt;
     &lt;label&gt;&lt;input id="choice-1" type="radio" attributable name="step" value="1" checked
-      on-change="() => { #panel-1.show(); #panel-2.show(false); #panel-3.show(false) }"&gt;
+                        on-change="() => { #panel-1.show(); #panel-2.show(false); #panel-3.show(false) }"&gt;
       &lt;span&gt;1. About you&lt;/span&gt;
     &lt;/label&gt;
     &lt;label&gt;&lt;input id="choice-2" type="radio" attributable name="step" value="2" disabled aria-disabled="true"
-      aria-describedby="gate-2"
-      on-change="() => { #panel-2.show(); #panel-1.show(false); #panel-3.show(false) }"&gt;
+                        aria-describedby="gate-2"
+                        on-change="() => { #panel-2.show(); #panel-1.show(false); #panel-3.show(false) }"&gt;
       &lt;span&gt;2. Project&lt;/span&gt;
     &lt;/label&gt;
     &lt;label&gt;&lt;input id="choice-3" type="radio" attributable name="step" value="3" disabled aria-disabled="true"
-      aria-describedby="gate-3"
-      on-change="() => { #panel-3.show(); #panel-1.show(false); #panel-2.show(false) }"&gt;
+                        aria-describedby="gate-3"
+                        on-change="() => { #panel-3.show(); #panel-1.show(false); #panel-2.show(false) }"&gt;
       &lt;span&gt;3. Confirm&lt;/span&gt;
     &lt;/label&gt;
   &lt;/div&gt;
@@ -174,15 +174,15 @@
 &lt;section id="panel-1" revealable revealable-open="true"&gt;
   &lt;h2&gt;Step 1: About you&lt;/h2&gt;
   &lt;form id="form-1" novalidate validatable validatable-on="change"
-    on-valid="() => { #progress.set('Step 1 of 3 complete') }"
-    on-invalid="() => { #progress.set('Step 1 of 3 incomplete') }"
-    on-user-valid="() => { #choice-2.removeAttr('disabled').removeAttr('aria-disabled').removeAttr('aria-describedby'); #gate-2.show(false) }"
-    on-user-invalid="() => { #choice-2.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-2'}); #choice-3.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-3'}); #gate-2.show(); #gate-3.show(); #choice-1.setAttr({name: 'checked', value: ''}); #choice-2.removeAttr('checked'); #choice-3.removeAttr('checked'); #panel-1.show(); #panel-2.show(false); #panel-3.show(false) }"&gt;
+        on-valid="() => { #progress.set('Step 1 of 3 complete') }"
+        on-invalid="() => { #progress.set('Step 1 of 3 incomplete') }"
+        on-user-valid="() => { #choice-2.removeAttr('disabled').removeAttr('aria-disabled').removeAttr('aria-describedby'); #gate-2.show(false) }"
+        on-user-invalid="() => { #choice-2.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-2'}); #choice-3.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-3'}); #gate-2.show(); #gate-3.show(); #choice-1.setAttr({name: 'checked', value: ''}); #choice-2.removeAttr('checked'); #choice-3.removeAttr('checked'); #panel-1.show(); #panel-2.show(false); #panel-3.show(false) }"&gt;
     &lt;label for="name-1"&gt;Full name
       &lt;input id="name-1" type="text" required autocomplete="name" placeholder="Ada Lovelace"
-        validatable validatable-on="input" aria-describedby="name-message-1"
-        on-user-invalid="() => { #name-message-1.show() }"
-        on-user-valid="() => { #name-message-1.show(false) }"&gt;
+             validatable validatable-on="input" aria-describedby="name-message-1"
+             on-user-invalid="() => { #name-message-1.show() }"
+             on-user-valid="() => { #name-message-1.show(false) }"&gt;
     &lt;/label&gt;
     &lt;p id="name-message-1" revealable hidden role="alert"&gt;Tell us your name.&lt;/p&gt;
     &lt;label for="email-1"&gt;Email
@@ -194,13 +194,13 @@
 &lt;section id="panel-2" revealable hidden&gt;
   &lt;h2&gt;Step 2: Project&lt;/h2&gt;
   &lt;form id="form-2" novalidate validatable validatable-on="change"
-    on-user-valid="() => { #choice-3.removeAttr('disabled').removeAttr('aria-disabled').removeAttr('aria-describedby'); #gate-3.show(false) }"
-    on-user-invalid="() => { #choice-3.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-3'}); #gate-3.show(); #choice-2.setAttr({name: 'checked', value: ''}); #choice-1.removeAttr('checked'); #choice-3.removeAttr('checked'); #panel-2.show(); #panel-1.show(false); #panel-3.show(false) }"&gt;
+        on-user-valid="() => { #choice-3.removeAttr('disabled').removeAttr('aria-disabled').removeAttr('aria-describedby'); #gate-3.show(false) }"
+        on-user-invalid="() => { #choice-3.setAttr({name: 'disabled', value: ''}).setAttr({name: 'aria-disabled', value: 'true'}).setAttr({name: 'aria-describedby', value: 'gate-3'}); #gate-3.show(); #choice-2.setAttr({name: 'checked', value: ''}); #choice-1.removeAttr('checked'); #choice-3.removeAttr('checked'); #panel-2.show(); #panel-1.show(false); #panel-3.show(false) }"&gt;
     &lt;label for="project-2"&gt;Project name
       &lt;input id="project-2" type="text" required placeholder="A small useful thing"
-        validatable validatable-on="input" aria-describedby="project-message-2"
-        on-user-invalid="() => { #project-message-2.show() }"
-        on-user-valid="() => { #project-message-2.show(false) }"&gt;
+             validatable validatable-on="input" aria-describedby="project-message-2"
+             on-user-invalid="() => { #project-message-2.show() }"
+             on-user-valid="() => { #project-message-2.show(false) }"&gt;
     &lt;/label&gt;
     &lt;p id="project-message-2" revealable hidden role="alert"&gt;Give the project a name.&lt;/p&gt;
     &lt;label for="role-2"&gt;Your role
@@ -217,14 +217,14 @@
 &lt;section id="panel-3" revealable hidden&gt;
   &lt;h2&gt;Step 3: Confirm&lt;/h2&gt;
   &lt;form id="form-3" novalidate prevent-default validatable validatable-on="change"
-    on-user-valid="() => { #status-3.show(false) }"
-    on-user-invalid="() => { #status-3.show(); #choice-3.setAttr({name: 'checked', value: ''}); #choice-1.removeAttr('checked'); #choice-2.removeAttr('checked'); #panel-3.show(); #panel-1.show(false); #panel-2.show(false) }"
-    on-submit="() => { this.validate() &amp;&amp; #confirmation.show() }"&gt;
+        on-user-valid="() => { #status-3.show(false) }"
+        on-user-invalid="() => { #status-3.show(); #choice-3.setAttr({name: 'checked', value: ''}); #choice-1.removeAttr('checked'); #choice-2.removeAttr('checked'); #panel-3.show(); #panel-1.show(false); #panel-2.show(false) }"
+        on-submit="() => { this.validate() &amp;&amp; #confirmation.show() }"&gt;
     &lt;label for="note-3"&gt;What should happen next?
       &lt;textarea id="note-3" required minlength="8" placeholder="A short note for the team"
-        validatable validatable-on="input" aria-describedby="note-message-3"
-        on-user-invalid="() => { #note-message-3.show() }"
-        on-user-valid="() => { #note-message-3.show(false) }"&gt;&lt;/textarea&gt;
+                validatable validatable-on="input" aria-describedby="note-message-3"
+                on-user-invalid="() => { #note-message-3.show() }"
+                on-user-valid="() => { #note-message-3.show(false) }"&gt;&lt;/textarea&gt;
     &lt;/label&gt;
     &lt;p id="note-message-3" revealable hidden role="alert"&gt;Add a little more detail.&lt;/p&gt;
     &lt;label for="consent-3"&gt;

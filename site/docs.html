@@ -696,11 +696,11 @@ function   := min | max | floor | ceil | round | sum | count | replace | length 
 
 &lt;ul id="results" role="listbox" renderable&gt;
   &lt;li role="option"&gt;&lt;button id="results-1" focusable prevent-default
-      on-keydown="[({code: 'ArrowDown'}) => { #results-2.focus() }, ({code: 'ArrowUp'}) => { #search.focus() }]"&gt;first&lt;/button&gt;&lt;/li&gt;
+                                  on-keydown="[({code: 'ArrowDown'}) => { #results-2.focus() }, ({code: 'ArrowUp'}) => { #search.focus() }]"&gt;first&lt;/button&gt;&lt;/li&gt;
   &lt;li role="option"&gt;&lt;button id="results-2" focusable prevent-default
-      on-keydown="[({code: 'ArrowDown'}) => { #results-3.focus() }, ({code: 'ArrowUp'}) => { #results-1.focus() }]"&gt;second&lt;/button&gt;&lt;/li&gt;
+                                  on-keydown="[({code: 'ArrowDown'}) => { #results-3.focus() }, ({code: 'ArrowUp'}) => { #results-1.focus() }]"&gt;second&lt;/button&gt;&lt;/li&gt;
   &lt;li role="option"&gt;&lt;button id="results-3" focusable prevent-default
-      on-keydown="[({code: 'ArrowDown'}) => { #results-1.focus() }, ({code: 'ArrowUp'}) => { #results-2.focus() }]"&gt;third&lt;/button&gt;&lt;/li&gt;
+                                  on-keydown="[({code: 'ArrowDown'}) => { #results-1.focus() }, ({code: 'ArrowUp'}) => { #results-2.focus() }]"&gt;third&lt;/button&gt;&lt;/li&gt;
 &lt;/ul&gt;</code></pre>
         </div>
         <p><code class="inline-code">aria-activedescendant</code> is not set and must not be — real focus is on the option, so the screen reader announces it as the current item. The library never walks siblings or picks a &ldquo;first focusable&rdquo; descendant; every hop is a phrase the server wrote when it generated the list. Wrap-around is whatever the last option&rsquo;s phrase points at, a choice visible in the markup, not a mode. Every literal-matched <code class="inline-code">on-keydown</code> here carries <code class="inline-code">prevent-default</code> so the derived <code class="inline-code">keydown:code:arrowdown</code> / <code class="inline-code">keydown:code:arrowup</code> cancel page scroll and caret movement (<a href="#prevent-default">§ prevent-default and no-propagate</a>). <code class="inline-code">blur()</code> is legal on any receiver, logs nothing, and is a native no-op when the element is not the one focused.</p>

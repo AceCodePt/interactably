@@ -79,24 +79,24 @@
        on-input="() => { #city.debounce(250).send() }"
        on-response="({html: string}) => { #city-list.render({payload: html}); #city-list.show() }"
        on-keydown="[({code: 'ArrowDown'}) => { #sug-1.focus() }, ({code: 'Escape'}) => { #city-list.show(false) }]"&gt;
-    &lt;ul id="city-list" renderable revealable hidden&gt;&lt;/ul&gt;
+&lt;ul id="city-list" renderable revealable hidden&gt;&lt;/ul&gt;
 
     &lt;!-- the fragment the response renders in: each option is wired when it lands --&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-1" focusable prevent-default
-        on-click="() => { #city.set('Lisbon'); #city-list.show(false) }"
-        on-keydown="[({code: 'ArrowDown'}) => { #sug-2.focus() }, ({code: 'ArrowUp'}) => { #city.focus() }]"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-2" focusable prevent-default
-        on-click="() => { #city.set('London'); #city-list.show(false) }"
-        on-keydown="[({code: 'ArrowDown'}) => { #sug-3.focus() }, ({code: 'ArrowUp'}) => { #sug-1.focus() }]"&gt;London&lt;/button&gt;&lt;/li&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-3" focusable prevent-default
-        on-click="() => { #city.set('Paris'); #city-list.show(false) }"
-        on-keydown="[({code: 'ArrowDown'}) => { #sug-4.focus() }, ({code: 'ArrowUp'}) => { #sug-2.focus() }]"&gt;Paris&lt;/button&gt;&lt;/li&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-4" focusable prevent-default
-        on-click="() => { #city.set('Tokyo'); #city-list.show(false) }"
-        on-keydown="[({code: 'ArrowDown'}) => { #sug-5.focus() }, ({code: 'ArrowUp'}) => { #sug-3.focus() }]"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
-    &lt;li role="option"&gt;&lt;button id="sug-5" focusable prevent-default
-        on-click="() => { #city.set('Berlin'); #city-list.show(false) }"
-        on-keydown="[({code: 'ArrowDown'}) => { #city.focus() }, ({code: 'ArrowUp'}) => { #sug-4.focus() }]"&gt;Berlin&lt;/button&gt;&lt;/li&gt;</code></pre>
+&lt;li role="option"&gt;&lt;button id="sug-1" focusable prevent-default
+                                    on-click="() => { #city.set('Lisbon'); #city-list.show(false) }"
+                                    on-keydown="[({code: 'ArrowDown'}) => { #sug-2.focus() }, ({code: 'ArrowUp'}) => { #city.focus() }]"&gt;Lisbon&lt;/button&gt;&lt;/li&gt;
+&lt;li role="option"&gt;&lt;button id="sug-2" focusable prevent-default
+                                    on-click="() => { #city.set('London'); #city-list.show(false) }"
+                                    on-keydown="[({code: 'ArrowDown'}) => { #sug-3.focus() }, ({code: 'ArrowUp'}) => { #sug-1.focus() }]"&gt;London&lt;/button&gt;&lt;/li&gt;
+&lt;li role="option"&gt;&lt;button id="sug-3" focusable prevent-default
+                                    on-click="() => { #city.set('Paris'); #city-list.show(false) }"
+                                    on-keydown="[({code: 'ArrowDown'}) => { #sug-4.focus() }, ({code: 'ArrowUp'}) => { #sug-2.focus() }]"&gt;Paris&lt;/button&gt;&lt;/li&gt;
+&lt;li role="option"&gt;&lt;button id="sug-4" focusable prevent-default
+                                    on-click="() => { #city.set('Tokyo'); #city-list.show(false) }"
+                                    on-keydown="[({code: 'ArrowDown'}) => { #sug-5.focus() }, ({code: 'ArrowUp'}) => { #sug-3.focus() }]"&gt;Tokyo&lt;/button&gt;&lt;/li&gt;
+&lt;li role="option"&gt;&lt;button id="sug-5" focusable prevent-default
+                                    on-click="() => { #city.set('Berlin'); #city-list.show(false) }"
+                                    on-keydown="[({code: 'ArrowDown'}) => { #city.focus() }, ({code: 'ArrowUp'}) => { #sug-4.focus() }]"&gt;Berlin&lt;/button&gt;&lt;/li&gt;</code></pre>
             </div>
           </details>
   </main>

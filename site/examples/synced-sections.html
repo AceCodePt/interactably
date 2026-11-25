@@ -109,41 +109,41 @@
                 </button>
               </div>
               <pre class="code" id="code-ex-pkg" copyable on-copy="() => { #copy-code-ex-pkg.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;div class="demo-section"&gt;
-      &lt;div class="tabbar"&gt;
+  &lt;div class="tabbar"&gt;
         &lt;!-- one element owns the storage; each product button saves its own flag --&gt;
-        &lt;button type="button" on-click="() => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({npm: true}) }"&gt;npm&lt;/button&gt;
-        &lt;button type="button" on-click="() => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #pm-store.save({bun: true}) }"&gt;bun&lt;/button&gt;
-        &lt;button type="button" on-click="() => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({pnpm: true}) }"&gt;pnpm&lt;/button&gt;
-      &lt;/div&gt;
-      &lt;div id="install-npm" revealable class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-      &lt;div id="install-pnpm" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-      &lt;div id="install-bun" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-    &lt;/div&gt;
+    &lt;button type="button" on-click="() => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({npm: true}) }"&gt;npm&lt;/button&gt;
+    &lt;button type="button" on-click="() => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #pm-store.save({bun: true}) }"&gt;bun&lt;/button&gt;
+    &lt;button type="button" on-click="() => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({pnpm: true}) }"&gt;pnpm&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div id="install-npm" revealable class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div id="install-pnpm" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="install-bun" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+&lt;/div&gt;
 
-    &lt;div class="demo-section"&gt;
-      &lt;div class="tabbar"&gt;
-        &lt;button type="button" on-click="() => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({npm: true}) }"&gt;npm&lt;/button&gt;
-        &lt;button type="button" on-click="() => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #pm-store.save({bun: true}) }"&gt;bun&lt;/button&gt;
-        &lt;button type="button" on-click="() => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({pnpm: true}) }"&gt;pnpm&lt;/button&gt;
-      &lt;/div&gt;
-      &lt;div id="config-npm" revealable class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-      &lt;div id="config-pnpm" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-      &lt;div id="config-bun" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-    &lt;/div&gt;
+&lt;div class="demo-section"&gt;
+  &lt;div class="tabbar"&gt;
+    &lt;button type="button" on-click="() => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({npm: true}) }"&gt;npm&lt;/button&gt;
+    &lt;button type="button" on-click="() => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #pm-store.save({bun: true}) }"&gt;bun&lt;/button&gt;
+    &lt;button type="button" on-click="() => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({pnpm: true}) }"&gt;pnpm&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div id="config-npm" revealable class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div id="config-pnpm" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="config-bun" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+&lt;/div&gt;
 
-    &lt;div class="demo-section"&gt;
-      &lt;div class="tabbar"&gt;
-        &lt;button type="button" on-click="() => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({npm: true}) }"&gt;npm&lt;/button&gt;
-        &lt;button type="button" on-click="() => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #pm-store.save({bun: true}) }"&gt;bun&lt;/button&gt;
-        &lt;button type="button" on-click="() => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({pnpm: true}) }"&gt;pnpm&lt;/button&gt;
-      &lt;/div&gt;
-      &lt;div id="trouble-npm" revealable class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
-      &lt;div id="trouble-pnpm" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-      &lt;div id="trouble-bun" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
-    &lt;/div&gt;
-    &lt;button id="pm-store" type="button" storable storable-id="pm" hidden
-            on-load="() => { this.restore() }"
-            on-restore="[({npm: boolean}) => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }, ({bun: boolean}) => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false) }, ({pnpm: boolean}) => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }]"&gt;&lt;/button&gt;</code></pre>
+&lt;div class="demo-section"&gt;
+  &lt;div class="tabbar"&gt;
+    &lt;button type="button" on-click="() => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({npm: true}) }"&gt;npm&lt;/button&gt;
+    &lt;button type="button" on-click="() => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #pm-store.save({bun: true}) }"&gt;bun&lt;/button&gt;
+    &lt;button type="button" on-click="() => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false); #pm-store.save({pnpm: true}) }"&gt;pnpm&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div id="trouble-npm" revealable class="tabpanel" revealable-open="true"&gt;&hellip;&lt;/div&gt;
+  &lt;div id="trouble-pnpm" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+  &lt;div id="trouble-bun" revealable class="tabpanel" hidden&gt;&hellip;&lt;/div&gt;
+&lt;/div&gt;
+&lt;button id="pm-store" type="button" storable storable-id="pm" hidden
+        on-load="() => { this.restore() }"
+        on-restore="[({npm: boolean}) => { #install-npm.show(); #config-npm.show(); #trouble-npm.show(); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }, ({bun: boolean}) => { #install-bun.show(); #config-bun.show(); #trouble-bun.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-pnpm.show(false); #config-pnpm.show(false); #trouble-pnpm.show(false) }, ({pnpm: boolean}) => { #install-pnpm.show(); #config-pnpm.show(); #trouble-pnpm.show(); #install-npm.show(false); #config-npm.show(false); #trouble-npm.show(false); #install-bun.show(false); #config-bun.show(false); #trouble-bun.show(false) }]"&gt;&lt;/button&gt;</code></pre>
             </div>
           </details>
   </main>

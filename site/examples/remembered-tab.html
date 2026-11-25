@@ -79,19 +79,19 @@
               </div>
               <pre class="code" id="code-ex-maintab" copyable on-copy="() => { #copy-code-ex-maintab.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;div class="tabbar"&gt;
       &lt;!-- one element owns the storage; each tab saves its own flag and only the matching handler replays --&gt;
-      &lt;button id="mp-tab-overview" type="button" focusable
-              on-click="() => { #mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-store.save({overview: true}) }"&gt;Overview&lt;/button&gt;
-      &lt;button id="mp-tab-specs" type="button" focusable
-              on-click="() => { #mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-store.save({specs: true}) }"&gt;Specs&lt;/button&gt;
-      &lt;button id="mp-tab-notes" type="button" focusable
-              on-click="() => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-store.save({notes: true}) }"&gt;Notes&lt;/button&gt;
-      &lt;button id="mp-store" type="button" storable storable-id="maintab" hidden
-              on-load="() => { this.restore() }"
-              on-restore="[({overview: boolean}) => { #mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-tab-overview.focus() }, ({specs: boolean}) => { #mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus() }, ({notes: boolean}) => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus() }]"&gt;&lt;/button&gt;
-    &lt;/div&gt;
-    &lt;section id="mp-overview" class="tabpanel" revealable revealable-open="true"&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
-    &lt;section id="mp-specs" class="tabpanel" revealable hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
-    &lt;section id="mp-notes" class="tabpanel" revealable hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;</code></pre>
+  &lt;button id="mp-tab-overview" type="button" focusable
+          on-click="() => { #mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-store.save({overview: true}) }"&gt;Overview&lt;/button&gt;
+  &lt;button id="mp-tab-specs" type="button" focusable
+          on-click="() => { #mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-store.save({specs: true}) }"&gt;Specs&lt;/button&gt;
+  &lt;button id="mp-tab-notes" type="button" focusable
+          on-click="() => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-store.save({notes: true}) }"&gt;Notes&lt;/button&gt;
+  &lt;button id="mp-store" type="button" storable storable-id="maintab" hidden
+          on-load="() => { this.restore() }"
+          on-restore="[({overview: boolean}) => { #mp-overview.show(); #mp-specs.show(false); #mp-notes.show(false); #mp-tab-overview.focus() }, ({specs: boolean}) => { #mp-specs.show(); #mp-overview.show(false); #mp-notes.show(false); #mp-tab-specs.focus() }, ({notes: boolean}) => { #mp-notes.show(); #mp-overview.show(false); #mp-specs.show(false); #mp-tab-notes.focus() }]"&gt;&lt;/button&gt;
+&lt;/div&gt;
+&lt;section id="mp-overview" class="tabpanel" revealable revealable-open="true"&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
+&lt;section id="mp-specs" class="tabpanel" revealable hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;
+&lt;section id="mp-notes" class="tabpanel" revealable hidden&gt;&lt;p&gt;&hellip;&lt;/p&gt;&lt;/section&gt;</code></pre>
             </div>
           </details>
   </main>

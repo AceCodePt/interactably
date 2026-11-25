@@ -87,41 +87,41 @@
                 </button>
               </div>
               <pre class="code" id="code-ex-calc" copyable on-copy="() => { #copy-code-ex-calc.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;div class="demo"&gt;
-      &lt;div class="row"&gt;
-        &lt;label&gt;Qty
-          &lt;input id="qty" modifiable dirtyable attributable prevent-default
-                 type="number" value="1" min="1" max="10"
-                 on-input="() => { #preview.set(this.value) }"
-                 on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
-                 on-clean="() => { this.removeAttr('data-dirty') }"
-                 on-keydown="({code: 'Escape'}) => { this.reset(); #preview.set(#qty.value) }"&gt;
-        &lt;/label&gt;
-        &lt;button on-click="() => { #qty.set(#qty.value - 1); #preview.set(#qty.value) }"&gt;&minus;&lt;/button&gt;
-        &lt;button on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }"&gt;+&lt;/button&gt;
-        &lt;button on-click="() => { #qty.set(#qty.value + 5); #preview.set(#qty.value) }"&gt;+5&lt;/button&gt;
-        &lt;button on-click="() => { #qty.reset(); #preview.set(#qty.value) }"&gt;Reset&lt;/button&gt;
-        &lt;output id="preview" modifiable on-load="() => { this.set(#qty.value) }"&gt;1&lt;/output&gt;
-      &lt;/div&gt;
+  &lt;div class="row"&gt;
+    &lt;label&gt;Qty
+      &lt;input id="qty" modifiable dirtyable attributable prevent-default
+             type="number" value="1" min="1" max="10"
+             on-input="() => { #preview.set(this.value) }"
+             on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
+             on-clean="() => { this.removeAttr('data-dirty') }"
+             on-keydown="({code: 'Escape'}) => { this.reset(); #preview.set(#qty.value) }"&gt;
+    &lt;/label&gt;
+    &lt;button on-click="() => { #qty.set(#qty.value - 1); #preview.set(#qty.value) }"&gt;&minus;&lt;/button&gt;
+    &lt;button on-click="() => { #qty.set(#qty.value + 1); #preview.set(#qty.value) }"&gt;+&lt;/button&gt;
+    &lt;button on-click="() => { #qty.set(#qty.value + 5); #preview.set(#qty.value) }"&gt;+5&lt;/button&gt;
+    &lt;button on-click="() => { #qty.reset(); #preview.set(#qty.value) }"&gt;Reset&lt;/button&gt;
+    &lt;output id="preview" modifiable on-load="() => { this.set(#qty.value) }"&gt;1&lt;/output&gt;
+  &lt;/div&gt;
 
-      &lt;ul id="list" renderable&gt;
-        &lt;li id="row-1"&gt;
-          &lt;input class="amount" type="number" value="2.5" step="any" required on-input="() => { #total.set(sum('#list .amount:valid')) }"&gt;
-          &lt;button on-click="() => { #list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid')) }"&gt;&times;&lt;/button&gt;
-        &lt;/li&gt;
-      &lt;/ul&gt;
-      &lt;button on-click="() => { #list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid')) }"&gt;Add row&lt;/button&gt;
-      &lt;template id="row-tpl"&gt;
-        &lt;li id="row-{id}"&gt;
-          &lt;input class="amount" type="number" value="3.25" step="any" required on-input="() => { #total.set(sum('#list .amount:valid')) }"&gt;
-          &lt;button on-click="() => { #list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount:valid')) }"&gt;&times;&lt;/button&gt;
-        &lt;/li&gt;
-      &lt;/template&gt;
-      &lt;p class="total"&gt;Total:
-        &lt;output id="total" modifiable formattable
-                on-load="() => { this.set(sum('#list .amount:valid')) }"
-                formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;
-      &lt;/p&gt;
-    &lt;/div&gt;</code></pre>
+  &lt;ul id="list" renderable&gt;
+    &lt;li id="row-1"&gt;
+      &lt;input class="amount" type="number" value="2.5" step="any" required on-input="() => { #total.set(sum('#list .amount:valid')) }"&gt;
+      &lt;button on-click="() => { #list.render({swap: 'delete', target: '#row-1'}); #total.set(sum('#list .amount:valid')) }"&gt;&times;&lt;/button&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;button on-click="() => { #list.render({template: #row-tpl, swap: 'beforeend', id: now()}); #total.set(sum('#list .amount:valid')) }"&gt;Add row&lt;/button&gt;
+  &lt;template id="row-tpl"&gt;
+    &lt;li id="row-{id}"&gt;
+      &lt;input class="amount" type="number" value="3.25" step="any" required on-input="() => { #total.set(sum('#list .amount:valid')) }"&gt;
+      &lt;button on-click="() => { #list.render({swap: 'delete', target: '#row-{id}'}); #total.set(sum('#list .amount:valid')) }"&gt;&times;&lt;/button&gt;
+    &lt;/li&gt;
+  &lt;/template&gt;
+  &lt;p class="total"&gt;Total:
+    &lt;output id="total" modifiable formattable
+            on-load="() => { this.set(sum('#list .amount:valid')) }"
+            formattable-format="{ style: 'currency', currency: 'USD' }"&gt;0&lt;/output&gt;
+  &lt;/p&gt;
+&lt;/div&gt;</code></pre>
             </div>
           </details>
   </main>

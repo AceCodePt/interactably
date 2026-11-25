@@ -74,12 +74,12 @@
        on-dirty="() => { this.setAttr({name: 'data-dirty', value: ''}) }"
        on-clean="() => { this.removeAttr('data-dirty') }"
        on-keydown="[({code: 'Enter'}) => { #mirror.set(this.value) }, ({code: 'Escape'}) => { this.clear() }]"&gt;
-    &lt;output id="mirror" modifiable&gt;&hellip;&lt;/output&gt;
+&lt;output id="mirror" modifiable&gt;&hellip;&lt;/output&gt;
 
-    &lt;button on-click="() => { #tip.once().toggle() }"&gt;Toggle tip (once)&lt;/button&gt;
-    &lt;section id="tip" revealable hidden&gt;
+&lt;button on-click="() => { #tip.once().toggle() }"&gt;Toggle tip (once)&lt;/button&gt;
+&lt;section id="tip" revealable hidden&gt;
       This sentence appears the first time the chain runs; the second click is a no-op.
-    &lt;/section&gt;</code></pre>
+&lt;/section&gt;</code></pre>
             </div>
           </details>
   </main>

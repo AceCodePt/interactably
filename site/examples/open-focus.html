@@ -64,12 +64,12 @@
               <pre class="code" id="code-ex-open-focus" copyable on-copy="() => { #copy-code-ex-open-focus.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button id="opener" focusable
         on-click="() => { #dlg.show(); #name.focus() }"&gt;Open dialog&lt;/button&gt;
 
-    &lt;dialog id="dlg" revealable&gt;
-      &lt;label&gt;Name
-        &lt;input id="name" modifiable focusable type="text"&gt;
-      &lt;/label&gt;
-      &lt;button on-click="() => { #dlg.show(false); #opener.focus() }"&gt;Close&lt;/button&gt;
-    &lt;/dialog&gt;</code></pre>
+&lt;dialog id="dlg" revealable&gt;
+  &lt;label&gt;Name
+    &lt;input id="name" modifiable focusable type="text"&gt;
+  &lt;/label&gt;
+  &lt;button on-click="() => { #dlg.show(false); #opener.focus() }"&gt;Close&lt;/button&gt;
+&lt;/dialog&gt;</code></pre>
             </div>
           </details>
   </main>

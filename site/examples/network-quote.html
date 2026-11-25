@@ -61,14 +61,14 @@
                 </button>
               </div>
               <pre class="code" id="code-ex-quote" copyable on-copy="() => { #copy-code-ex-quote.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;button on-click="() => { #quote.send() }"&gt;Load a quote&lt;/button&gt;
-    &lt;div id="quote" requestable renderable
-         requestable-url="./fragments/quote.html" requestable-method="get"
-         on-response="({html: string}) => { #quote.render({payload: html}) }"&gt;
+&lt;div id="quote" requestable renderable
+     requestable-url="./fragments/quote.html" requestable-method="get"
+     on-response="({html: string}) => { #quote.render({payload: html}) }"&gt;
       Nothing loaded yet &mdash; click the button above.
-    &lt;/div&gt;
+&lt;/div&gt;
 
     &lt;!-- the response renders ./fragments/quote.html, which loads again --&gt;
-    &lt;button on-click="() => { #quote.send() }"&gt;Load again&lt;/button&gt;</code></pre>
+&lt;button on-click="() => { #quote.send() }"&gt;Load again&lt;/button&gt;</code></pre>
             </div>
           </details>
   </main>
