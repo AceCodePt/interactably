@@ -93,7 +93,7 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/age-gate.html">An age gate</a>
-        <p class="examples-blurb">A guard verb: validate() passes the min=18 constraint and && then shows the consent panel.</p>
+        <p class="examples-blurb">A guard verb: reportValidity() passes the min=18 constraint and && then shows the consent panel; invalid swaps it for a refusal.</p>
         <span class="examples-tags">validatable &middot; revealable</span>
       </li>
       <li>
@@ -118,7 +118,7 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/signup-guard.html">Sign-up form with a guard</a>
-        <p class="examples-blurb">validate() stops the chain on an invalid submit; the || branch shows the alert.</p>
+        <p class="examples-blurb">reportValidity() stops the chain on an invalid submit; the || branch shows the alert.</p>
         <span class="examples-tags">prevent-default &middot; validatable &middot; attributable &middot; revealable</span>
       </li>
       <li>
@@ -182,7 +182,7 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/multi-step-form.html">A multi-step form, gated on validity</a>
-        <p class="examples-blurb">A radio stepper opens only after each form becomes user-valid; breaking an earlier form closes every later step and explains why.</p>
+        <p class="examples-blurb">A radio stepper opens only after each form reports valid; breaking an earlier form closes every later step and explains why.</p>
         <span class="examples-tags">validatable &middot; revealable &middot; attributable &middot; modifiable &middot; prevent-default</span>
       </li>
       <li>
@@ -192,7 +192,7 @@
       </li>
       <li>
         <a class="examples-title" href="./examples/guarded-submit.html">Validate, then send</a>
-        <p class="examples-blurb">this.validate().send() || #alert.show() — the guard meets the async seam.</p>
+        <p class="examples-blurb">this.reportValidity().send() || #alert.show() — the guard meets the async seam.</p>
         <span class="examples-tags">validatable &middot; requestable</span>
       </li>
       <li>

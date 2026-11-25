@@ -421,12 +421,25 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(note.hasAttribute("data-dirty"), true, "dirtyable marks the edited field");
 
   const consent = byId("consent");
+  const denied = byId("denied");
   assert.equal(consent.hidden, true, "the age gate starts closed");
+  assert.equal(denied.hidden, true, "the refusal starts closed");
   const age = byId("age") as HTMLInputElement;
   age.value = "18";
   age.dispatchEvent(new Event("change", { bubbles: true }));
   await flush();
-  assert.equal(consent.hidden, false, "validate() passes the min=18 constraint and show() opens the consent panel");
+  assert.equal(consent.hidden, false, "reportValidity() passes the min=18 constraint and show() opens the consent panel");
+  assert.equal(denied.hidden, true, "the refusal stays closed on a valid age");
+  age.value = "17";
+  age.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
+  assert.equal(consent.hidden, true, "the invalid event closes the consent panel");
+  assert.equal(denied.hidden, false, "the invalid event opens the refusal instead");
+  age.value = "21";
+  age.dispatchEvent(new Event("change", { bubbles: true }));
+  await flush();
+  assert.equal(consent.hidden, false, "a valid age reopens the consent panel");
+  assert.equal(denied.hidden, true, "the valid event closes the refusal again");
 
   const faq = byId("faq") as HTMLDetailsElement;
   assert.equal(faq.open, false);
@@ -440,7 +453,7 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   assert.equal(signupAlert.hidden, true, "the validation-failure alert starts hidden");
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   await flush();
-  assert.equal(signup.hasAttribute("data-signed"), false, "validate() stops the chain when the form is invalid");
+  assert.equal(signup.hasAttribute("data-signed"), false, "reportValidity() stops the chain when the form is invalid");
   assert.equal(signupAlert.hidden, false, "the || branch shows the alert on an invalid submit");
   const email = signup.querySelector("input") as HTMLInputElement;
   email.value = "not-an-email";
@@ -451,7 +464,7 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   email.value = "you@example.com";
   signup.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   await flush();
-  assert.equal(signup.getAttribute("data-signed"), "true", "validate() passes and setAttr() runs");
+  assert.equal(signup.getAttribute("data-signed"), "true", "reportValidity() passes and setAttr() runs");
   assert.equal(signupAlert.hidden, true, "the || branch does not run on a valid submit");
 
   consoleLogs.length = 0;
@@ -484,7 +497,7 @@ test("site: no is= anywhere, the pages declare the bootstrap, and the demo inter
   gsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   await flush();
   assert.equal(gsOk.hidden, true, "an invalid guarded submit never reaches the network");
-  assert.equal(gsAlert.hidden, false, "validate() aborts the chain and the || branch shows the alert");
+  assert.equal(gsAlert.hidden, false, "reportValidity() aborts the chain and the || branch shows the alert");
   assert.equal(fetchCalls.length, 1, "an invalid submit never calls send()");
   const gsEmail = gsForm.querySelector("input") as HTMLInputElement;
   gsEmail.value = "you@example.com";
@@ -988,7 +1001,9 @@ test("site: the multi-step form gates, explains and closes every later step", as
   assert.equal(document.querySelectorAll("input[type=radio][name=step]").length, 3, "the stepper is a three-radio group");
   assert.equal(document.querySelectorAll("form[validatable]").length, 3, "each step is a validatable form");
   assert.equal(document.querySelector("fieldset[validatable]"), null, "the stepper fieldset is not a validity gate");
-  assert.equal(document.querySelectorAll("[on-valid], [on-invalid]").length, 1, "the aggressive pair is used on one live indicator");
+  assert.equal(document.querySelectorAll("[validatable-on]").length, 0, "validatable is demand-driven");
+  assert.equal(document.querySelectorAll("[on-user-valid], [on-user-invalid]").length, 0, "there is no user-* pair");
+  assert.equal(document.querySelectorAll("form[on-valid][on-invalid]").length, 3, "every gate form asks and listens");
   assert.equal(step2Choice.disabled, true, "step 2 starts natively disabled");
   assert.equal(step3Choice.disabled, true, "step 3 starts natively disabled");
   assert.equal(step2Choice.getAttribute("aria-disabled"), "true", "step 2 announces its disabled state");

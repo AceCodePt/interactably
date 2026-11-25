@@ -33,7 +33,7 @@
     <p class="examples-back"><a href="../examples.html">&larr; All examples</a></p>
     <h1 class="doc-title">Sign-up form with a guard</h1>
     <p class="doc-lede">
-          <code class="inline-code">validate()</code> checks the form and stops the chain when it&rsquo;s invalid.
+          <code class="inline-code">reportValidity()</code> checks the form and stops the chain when it&rsquo;s invalid.
           <code class="inline-code">&amp;&amp;</code> continues on completion, <code class="inline-code">||</code> continues
           only on a guard abort: <code class="inline-code">setAttr</code> runs when the form is valid, the alert shows when
           it is not. The field uses <code class="inline-code">pattern</code>
@@ -43,7 +43,7 @@
 
               <div class="demo">
                 <form id="signup" novalidate prevent-default validatable attributable
-                      on-submit="() => { #signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show() }">
+                      on-submit="() => { #signup-alert.show(false); this.reportValidity().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show() }">
                   <div class="row">
                     <label>Email
                       <input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com">
@@ -66,7 +66,7 @@
               </div>
               <pre class="code" id="code-ex-valid" copyable on-copy="() => { #copy-code-ex-valid.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;form id="signup" novalidate
       prevent-default validatable attributable
-      on-submit="() => { #signup-alert.show(false); this.validate().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show() }"&gt;
+      on-submit="() => { #signup-alert.show(false); this.reportValidity().setAttr({name: 'data-signed', value: 'true'}) || #signup-alert.show() }"&gt;
   &lt;label&gt;Email
     &lt;input name="email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" required placeholder="you@example.com"&gt;
   &lt;/label&gt;

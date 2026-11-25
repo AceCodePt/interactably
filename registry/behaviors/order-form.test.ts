@@ -30,7 +30,7 @@ const FORM_OPEN = `<form id="order" novalidate
 const HAPPY = `${FORM_OPEN}
       on-response="({html: string}) => { #receipt.render({payload: html}); #receipt.show(); #alert.show(false) }"
       on-request-error="() => { #alert.show() }"
-      on-submit="() => { this.validate().send() }">
+      on-submit="() => { this.reportValidity().send() }">
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
@@ -40,7 +40,7 @@ const HAPPY = `${FORM_OPEN}
 const UNOWNED = `${FORM_OPEN}
       on-response="({html: string}) => { #receipt.render({payload: html}); #receipt.show(); this.reset() }"
       on-request-error="() => { #alert.show() }"
-      on-submit="() => { this.validate().send() }">
+      on-submit="() => { this.reportValidity().send() }">
   <input id="qty" name="qty" type="number" min="1" required>
   <button>Place order</button>
 </form>
@@ -122,7 +122,7 @@ function submit(): void {
   form().dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 }
 
-test("happy path: validate passes, the POST is sent, the payload renders into the receipt and after runs", async () => {
+test("happy path: reportValidity passes, the POST is sent, the payload renders into the receipt and after runs", async () => {
   mount(HAPPY);
   await flush();
   qty().value = "2";

@@ -34,7 +34,7 @@
     <h1 class="doc-title">Validate, then send</h1>
     <p class="doc-lede">
           <code class="inline-code">validatable</code> &times; <code class="inline-code">requestable</code>. The guard meets
-          the async seam in one phrase: <code class="inline-code">on-submit="() => { this.validate().send() || #gs-alert.show() }"</code>.
+          the async seam in one phrase: <code class="inline-code">on-submit="() => { this.reportValidity().send() || #gs-alert.show() }"</code>.
           An invalid form stops the chain and the <code class="inline-code">||</code> branch shows the validation alert; a
           valid one posts, and <code class="inline-code">on-response</code> /
           <code class="inline-code">on-request-error</code> / <code class="inline-code">on-request-timeout</code> /
@@ -48,7 +48,7 @@
                 <form id="gs-form" novalidate
                       prevent-default validatable requestable
                       requestable-url="/api/signup" requestable-method="post"
-                      on-submit="() => { #gs-ok.show(false); #gs-alert.show(false); #gs-server-error.show(false); #gs-server-timeout.show(false); #gs-server-offline.show(false); this.validate().send() || #gs-alert.show() }"
+                      on-submit="() => { #gs-ok.show(false); #gs-alert.show(false); #gs-server-error.show(false); #gs-server-timeout.show(false); #gs-server-offline.show(false); this.reportValidity().send() || #gs-alert.show() }"
                       on-response="({html: string}) => { #gs-ok.render({payload: html}); #gs-ok.show() }"
                       on-request-error="() => { #gs-server-error.show() }"
                       on-request-timeout="() => { #gs-server-timeout.show() }"
@@ -80,7 +80,7 @@
               <pre class="code" id="code-ex-guarded" copyable on-copy="() => { #copy-code-ex-guarded.setAttr({name: 'data-copied', value: 'true'}).delay(1500).removeAttr('data-copied') }" data-lang="html"><code>&lt;form id="gs-form" novalidate
       prevent-default validatable requestable
       requestable-url="/api/signup" requestable-method="post"
-      on-submit="() => { #gs-ok.show(false); #gs-alert.show(false); #gs-server-error.show(false); #gs-server-timeout.show(false); #gs-server-offline.show(false); this.validate().send() || #gs-alert.show() }"
+      on-submit="() => { #gs-ok.show(false); #gs-alert.show(false); #gs-server-error.show(false); #gs-server-timeout.show(false); #gs-server-offline.show(false); this.reportValidity().send() || #gs-alert.show() }"
       on-response="({html: string}) => { #gs-ok.render({payload: html}); #gs-ok.show() }"
       on-request-error="() => { #gs-server-error.show() }"
       on-request-timeout="() => { #gs-server-timeout.show() }"

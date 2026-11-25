@@ -12,8 +12,6 @@ let ImplementationEventClass: typeof import("@interactable/implementation-event.
 
 before(async () => {
   dom = setupJsdom();
-  await import("@behaviors/requestable/requestable.ts");
-  await import("@behaviors/attributable/attributable.ts");
   await import("@behaviors/modifiable/modifiable.ts");
   await import("@behaviors/storable/storable.ts");
   await import("@behaviors/validatable/validatable.ts");
@@ -58,7 +56,7 @@ function mountForm(): HTMLFormElement {
 
 function track(el: Element): string[] {
   const events: string[] = [];
-  for (const type of ["valid", "invalid", "user-valid", "user-invalid"]) {
+  for (const type of ["valid", "invalid"]) {
     el.addEventListener(type, (event) => {
       if (event instanceof ImplementationEventClass) events.push(type);
     });
@@ -66,78 +64,83 @@ function track(el: Element): string[] {
   return events;
 }
 
-test("validate() lets a valid form through", async () => {
+test("reportValidity() lets a valid form through and announces valid", async () => {
   const form = mountForm();
   await flush();
   (form.elements.namedItem("qty") as HTMLInputElement).value = "2";
-  const event = interact(form, "validate");
+  const events = track(form);
+
+  const event = interact(form, "reportValidity");
+
   assert.equal(event.handled, true);
   assert.equal(event.defaultPrevented, false);
+  assert.deepEqual(events, ["valid"]);
 });
 
-test("validate() calls preventDefault when reportValidity() is false", async () => {
+test("reportValidity() calls preventDefault and announces invalid", async () => {
   const form = mountForm();
   await flush();
-  const event = interact(form, "validate");
+  const events = track(form);
+
+  const event = interact(form, "reportValidity");
+
   assert.equal(event.handled, true);
   assert.equal(event.defaultPrevented, true);
+  assert.deepEqual(events, ["invalid"]);
 });
 
-test("validate() on an input uses the platform's own reportValidity", async () => {
+test("reportValidity() on a field uses the platform's own report", async () => {
   const input = document.createElement("input") as HTMLInputElement;
   input.setAttribute("validatable", "");
   input.required = true;
   document.body.appendChild(input);
   await flush();
-  const event = interact(input, "validate");
+  const events = track(input);
+
+  const event = interact(input, "reportValidity");
+
   assert.equal(event.defaultPrevented, true);
+  assert.deepEqual(events, ["invalid"]);
 });
 
-test("valid and invalid report every evaluation, including an unchanged state", async () => {
+test("checkValidity() announces the answer without preventing the chain", async () => {
   const input = document.createElement("input") as HTMLInputElement;
   input.setAttribute("validatable", "");
-  input.type = "number";
-  input.min = "2";
-  document.body.appendChild(input);
-  await flush();
-  const events = track(input);
-
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  input.value = "1";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  input.value = "3";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-
-  assert.deepEqual(events, ["valid", "invalid", "user-invalid", "valid", "user-valid", "valid"]);
-});
-
-test("user validity events require both touch and a transition", async () => {
-  const input = document.createElement("input") as HTMLInputElement;
-  input.setAttribute("validatable", "");
-  input.type = "number";
-  input.min = "2";
   input.required = true;
   document.body.appendChild(input);
   await flush();
   const events = track(input);
 
-  input.dispatchEvent(new Event("input", { bubbles: true }));
+  const invalid = interact(input, "checkValidity");
+  assert.equal(invalid.handled, true);
+  assert.equal(invalid.defaultPrevented, false);
   assert.deepEqual(events, ["invalid"]);
 
-  input.value = "2";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, ["invalid", "valid", "user-valid"]);
-
-  input.value = "1";
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, ["invalid", "valid", "user-valid", "invalid", "user-invalid"]);
-
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, ["invalid", "valid", "user-valid", "invalid", "user-invalid", "invalid"]);
+  input.value = "Ada";
+  const valid = interact(input, "checkValidity");
+  assert.equal(valid.defaultPrevented, false);
+  assert.deepEqual(events, ["invalid", "valid"]);
 });
 
-test("a storable restore can install invalid data without firing user-invalid", async () => {
+test("every call reports, even when the answer did not change", async () => {
+  const input = document.createElement("input") as HTMLInputElement;
+  input.setAttribute("validatable", "");
+  input.type = "number";
+  input.min = "2";
+  input.value = "3";
+  document.body.appendChild(input);
+  await flush();
+  const events = track(input);
+
+  interact(input, "checkValidity");
+  interact(input, "checkValidity");
+  input.value = "1";
+  interact(input, "checkValidity");
+
+  assert.deepEqual(events, ["valid", "valid", "invalid"]);
+});
+
+test("input, change, attribute writes and restores stay silent until a verb asks", async () => {
   localStorage.setItem("draft", JSON.stringify({ value: "17" }));
   const holder = document.createElement("div");
   holder.innerHTML =
@@ -148,11 +151,15 @@ test("a storable restore can install invalid data without firing user-invalid", 
   await flush();
   const events = track(input);
 
+  input.value = "1";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  input.setAttribute("min", "19");
+  await flush();
   interact(input, "restore");
 
   assert.equal(input.value, "17");
-  assert.ok(events.includes("invalid"));
-  assert.equal(events.includes("user-invalid"), false);
+  assert.deepEqual(events, []);
 });
 
 test("a form reports the aggregate validity of all its controls", async () => {
@@ -168,58 +175,27 @@ test("a form reports the aggregate validity of all its controls", async () => {
   const events = track(form);
 
   first.value = "one";
-  first.dispatchEvent(new Event("input", { bubbles: true }));
+  interact(form, "checkValidity");
   assert.deepEqual(events, ["invalid"]);
 
   second.value = "two";
-  second.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, ["invalid", "valid", "user-valid"]);
+  interact(form, "checkValidity");
+  assert.deepEqual(events, ["invalid", "valid"]);
 
   second.value = "";
-  second.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(events, ["invalid", "valid", "user-valid", "invalid", "user-invalid"]);
+  interact(form, "checkValidity");
+  assert.deepEqual(events, ["invalid", "valid", "invalid"]);
 });
 
-test("validatable-on=change defers evaluation while the default listens to input", async () => {
-  const onChange = document.createElement("input") as HTMLInputElement;
-  onChange.setAttribute("validatable", "");
-  onChange.setAttribute("validatable-on", "change");
-  onChange.type = "number";
-  onChange.required = true;
-  document.body.appendChild(onChange);
+test("a form reports the aggregate event on the form, not its fields", async () => {
+  const form = mountForm();
   await flush();
-  const changeEvents = track(onChange);
+  const field = form.elements.namedItem("qty") as HTMLInputElement;
+  const formEvents = track(form);
+  const fieldEvents = track(field);
 
-  onChange.value = "2";
-  onChange.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(changeEvents, []);
-  onChange.dispatchEvent(new Event("change", { bubbles: true }));
-  assert.deepEqual(changeEvents, ["valid", "user-valid"]);
+  interact(form, "checkValidity");
 
-  const onInput = document.createElement("input") as HTMLInputElement;
-  onInput.setAttribute("validatable", "");
-  onInput.type = "number";
-  onInput.required = true;
-  document.body.appendChild(onInput);
-  await flush();
-  const inputEvents = track(onInput);
-  onInput.value = "2";
-  onInput.dispatchEvent(new Event("input", { bubbles: true }));
-  assert.deepEqual(inputEvents, ["valid", "user-valid"]);
-});
-
-test("changing a constraint attribute re-evaluates validity", async () => {
-  const input = document.createElement("input") as HTMLInputElement;
-  input.setAttribute("validatable", "");
-  document.body.appendChild(input);
-  await flush();
-  const events = track(input);
-
-  input.setAttribute("required", "");
-  await flush();
-  assert.deepEqual(events, ["invalid"]);
-
-  input.removeAttribute("required");
-  await flush();
-  assert.deepEqual(events, ["invalid", "valid"]);
+  assert.deepEqual(formEvents, ["invalid"]);
+  assert.deepEqual(fieldEvents, []);
 });

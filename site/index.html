@@ -154,7 +154,7 @@
           <span class="why-n">6</span>
           <div>
             <span class="why-q">Why should a failed validation be a dead end?</span>
-            <span class="why-a">A guard&rsquo;s <code class="inline-code">preventDefault()</code> stops the chain, and <code class="inline-code">||</code> is the fallback: <code class="inline-code">on-submit="() => { this.validate().send() || #alert.show() }"</code>. <code class="inline-code">&amp;&amp;</code> is the success branch, on whatever element you name.</span>
+            <span class="why-a">A guard&rsquo;s <code class="inline-code">preventDefault()</code> stops the chain, and <code class="inline-code">||</code> is the fallback: <code class="inline-code">on-submit="() => { this.reportValidity().send() || #alert.show() }"</code>. <code class="inline-code">&amp;&amp;</code> is the success branch, on whatever element you name.</span>
           </div>
         </li>
       </ul>
